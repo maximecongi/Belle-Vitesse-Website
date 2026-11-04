@@ -46,6 +46,7 @@ def init_routes(app):
 
     # Flux calendrier ICS public (exempt CSRF — accédé par les apps calendrier)
     from extensions import csrf
+
     csrf.exempt(cal_feed_bp)
     app.register_blueprint(cal_feed_bp)
 
@@ -62,28 +63,45 @@ def init_error_handlers(app):
 
         @app.errorhandler(HTTPException)
         def handle_http_exception(e):
-            if request.path.startswith('/admin'):
-                is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
+            if request.path.startswith("/admin"):
+                is_ajax = (
+                    request.headers.get("X-Requested-With") == "XMLHttpRequest"
+                    or request.accept_mimetypes.accept_json
+                )
                 if e.code == 401:
                     if is_ajax:
-                        return {"status": "error", "message": "Session expirée. Veuillez vous reconnecter."}, 401
+                        return {
+                            "status": "error",
+                            "message": "Session expirée. Veuillez vous reconnecter.",
+                        }, 401
                     flash("Session expirée. Veuillez vous reconnecter.", "error")
-                    return redirect(url_for('admin_auth.admin_login'))
+                    return redirect(url_for("admin_auth.admin_login"))
                 elif e.code == 403:
                     if is_ajax:
-                        return {"status": "error", "message": "Accès refusé. Vous n'avez pas les autorisations nécessaires."}, 403
-                    flash("Accès refusé : vous n'avez pas les autorisations nécessaires.", "error")
-                    return redirect(url_for('admin_dashboard.admin_dashboard'))
+                        return {
+                            "status": "error",
+                            "message": "Accès refusé. Vous n'avez pas les autorisations nécessaires.",
+                        }, 403
+                    flash(
+                        "Accès refusé : vous n'avez pas les autorisations nécessaires.",
+                        "error",
+                    )
+                    return redirect(url_for("admin_dashboard.admin_dashboard"))
                 app.logger.warning(
-                    f"⚠️ Erreur HTTP {e.code} sur {request.path}: {e.description}")
+                    f"⚠️ Erreur HTTP {e.code} sur {request.path}: {e.description}"
+                )
 
-            is_admin = request.path.startswith('/admin')
+            is_admin = request.path.startswith("/admin")
             return render_template(
                 "public/error.html",
                 error_title=f"{e.code} - {e.name}",
                 error_message=e.description,
-                return_url=url_for('admin_dashboard.admin_dashboard') if is_admin else url_for('home'),
-                return_label="Retourner au tableau de bord" if is_admin else "Return to Home",
+                return_url=url_for("admin_dashboard.admin_dashboard")
+                if is_admin
+                else url_for("home"),
+                return_label="Retourner au tableau de bord"
+                if is_admin
+                else "Return to Home",
             ), e.code
 
         @app.errorhandler(Exception)
@@ -91,19 +109,31 @@ def init_error_handlers(app):
             app.logger.error(f"❌ Unhandled exception: {e}", exc_info=True)
             g._rendering_error = True
 
-            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
+            is_ajax = (
+                request.headers.get("X-Requested-With") == "XMLHttpRequest"
+                or request.accept_mimetypes.accept_json
+            )
             if is_ajax:
-                return {"status": "error", "message": "Une erreur serveur interne est survenue."}, 500
+                return {
+                    "status": "error",
+                    "message": "Une erreur serveur interne est survenue.",
+                }, 500
 
-            is_admin = request.path.startswith('/admin')
+            is_admin = request.path.startswith("/admin")
             return render_template(
                 "public/error.html",
-                error_title="500 - Erreur Serveur Interne" if is_admin else "500 - Internal Server Error",
+                error_title="500 - Erreur Serveur Interne"
+                if is_admin
+                else "500 - Internal Server Error",
                 error_message=(
                     "Une erreur inattendue est survenue dans le panneau d'administration. L'incident a été consigné dans les journaux."
-                    if is_admin else
-                    "An unexpected error occurred."
+                    if is_admin
+                    else "An unexpected error occurred."
                 ),
-                return_url=url_for('admin_dashboard.admin_dashboard') if is_admin else url_for('home'),
-                return_label="Retourner au tableau de bord" if is_admin else "Return to Home",
+                return_url=url_for("admin_dashboard.admin_dashboard")
+                if is_admin
+                else url_for("home"),
+                return_label="Retourner au tableau de bord"
+                if is_admin
+                else "Return to Home",
             ), 500

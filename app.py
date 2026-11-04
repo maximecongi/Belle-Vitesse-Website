@@ -8,6 +8,7 @@ load_dotenv()
 if os.getenv("FLASK_ENV") != "production":
     try:
         import pymysql
+
         pymysql.install_as_MySQLdb()
     except ImportError:
         pass
@@ -40,7 +41,7 @@ from utils.context_processors import init_context_processors
 def create_app():
     """Usine de création de l'application Flask (Application Factory)."""
     env = os.getenv("FLASK_ENV", "development")
-    app_config = config.get(env, config['default'])
+    app_config = config.get(env, config["default"])
 
     app = Flask(
         __name__,
@@ -48,7 +49,7 @@ def create_app():
         static_url_path=os.getenv("STATIC_URL_PATH"),
     )
     app.config.from_object(app_config)
-    app.config['FLASK_ENV'] = env
+    app.config["FLASK_ENV"] = env
     app.url_map.strict_slashes = False
 
     # Validation de la configuration critique
@@ -56,7 +57,9 @@ def create_app():
         if env == "production":
             raise RuntimeError("❌ SECRET_KEY doit être définie en production !")
         app.config["SECRET_KEY"] = "dev-only-insecure-key-change-in-production"
-        app.logger.warning("⚠️ SECRET_KEY non définie — clé par défaut utilisée (dev uniquement)")
+        app.logger.warning(
+            "⚠️ SECRET_KEY non définie — clé par défaut utilisée (dev uniquement)"
+        )
 
     if env == "production":
         hmac_key = os.getenv("HASH_SECRET_KEY") or app.config.get("SECRET_KEY")
@@ -65,16 +68,19 @@ def create_app():
             "fallback_secret_for_dev_only",
             "fallback-secret-for-dev-only-change-in-prod",
         ):
-            raise RuntimeError("❌ HASH_SECRET_KEY (ou SECRET_KEY robuste) doit être définie en production !")
-
+            raise RuntimeError(
+                "❌ HASH_SECRET_KEY (ou SECRET_KEY robuste) doit être définie en production !"
+            )
 
     # Correction de Proxy pour SSL derrière Traefik (nécessaire pour url_for HTTPS et détection d'IP)
     from werkzeug.middleware.proxy_fix import ProxyFix
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Tunnel SSH (uniquement en développement pour accéder à la DB distante)
     if env == "development":
         from utils.ssh_helper import get_ssh_tunnel
+
         tunnel, local_port = get_ssh_tunnel()
 
         if tunnel:
@@ -103,9 +109,12 @@ def create_app():
     session_type = app.config.get("SESSION_TYPE")
     if session_type == "redis":
         from redis import Redis
+
         session_redis = app.config.get("SESSION_REDIS")
         if session_redis is None:
-            redis_host = app.config.get("REDIS_HOST", "bv_redis" if env == "production" else "localhost")
+            redis_host = app.config.get(
+                "REDIS_HOST", "bv_redis" if env == "production" else "localhost"
+            )
             redis_port = int(app.config.get("REDIS_PORT", 6379))
             redis_db = int(app.config.get("REDIS_DB_SESSION", 2))
             redis_password = os.getenv("REDIS_PASSWORD", None)
@@ -121,12 +130,20 @@ def create_app():
                 session_redis.ping()
                 app.config["SESSION_REDIS"] = session_redis
                 server_session.init_app(app)
-                app.logger.info("✅ Flask-Session initialisé avec Redis (db=%s sur %s:%s)", redis_db, redis_host, redis_port)
+                app.logger.info(
+                    "✅ Flask-Session initialisé avec Redis (db=%s sur %s:%s)",
+                    redis_db,
+                    redis_host,
+                    redis_port,
+                )
             except Exception as err:
                 app.logger.warning(
                     "⚠️ Redis non joignable pour Flask-Session (%s:%s/db%s: %s). "
                     "Repli automatique sur sessions cookies signées.",
-                    redis_host, redis_port, redis_db, err
+                    redis_host,
+                    redis_port,
+                    redis_db,
+                    err,
                 )
         else:
             server_session.init_app(app)
@@ -160,16 +177,19 @@ def create_app():
     if env == "production":
         try:
             from scripts.build_bundles import ensure_bundles_fresh
+
             ensure_bundles_fresh(app.static_folder)
         except Exception as e:
-            app.logger.warning(f"⚠️ Impossible de vérifier la fraîcheur des bundles CSS : {e}")
-
+            app.logger.warning(
+                f"⚠️ Impossible de vérifier la fraîcheur des bundles CSS : {e}"
+            )
 
     @app.route("/health")
     def health_check():
         """Route de vérification de l'état de l'application (health check)."""
         try:
             from sqlalchemy import text
+
             db.session.execute(text("SELECT 1"))
             return {"status": "healthy", "database": "up"}, 200
         except Exception as e:
@@ -179,11 +199,13 @@ def create_app():
     @app.after_request
     def add_security_headers(response):
         """Ajoute des en-têtes de sécurité standard sur l'ensemble des réponses HTTP."""
-        response.headers['X-Content-Type-Options'] = 'nosniff'
-        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         if os.getenv("FLASK_ENV") == "production":
-            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
 
         # Content Security Policy (CSP) robust
         csp = (
@@ -196,19 +218,25 @@ def create_app():
             "frame-src 'self'; "
             "object-src 'none';"
         )
-        response.headers['Content-Security-Policy'] = csp
+        response.headers["Content-Security-Policy"] = csp
 
         # Gestion de la politique de cache HTTP pour les assets statiques
-        if request.path.startswith('/static/'):
+        if request.path.startswith("/static/"):
             if os.getenv("FLASK_ENV") == "production":
                 # Si l'asset dispose d'un paramètre de version ?v=, il peut être mis en cache de façon immuable.
                 # Sinon, forcer la revalidation avec max-age court pour éviter le blocage des clients.
-                if 'v' in request.args:
-                    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                if "v" in request.args:
+                    response.headers["Cache-Control"] = (
+                        "public, max-age=31536000, immutable"
+                    )
                 else:
-                    response.headers['Cache-Control'] = 'public, max-age=3600, must-revalidate'
+                    response.headers["Cache-Control"] = (
+                        "public, max-age=3600, must-revalidate"
+                    )
             else:
-                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+                response.headers["Cache-Control"] = (
+                    "no-cache, no-store, must-revalidate"
+                )
 
         return response
 
@@ -225,16 +253,21 @@ def create_app():
     if os.getenv("RUN_MIGRATIONS") == "true":
         try:
             from flask_migrate import upgrade as _upgrade
+
             with app.app_context():
                 _upgrade()
-                app.logger.info("✅ Database schema migrated successfully via Flask-Migrate.")
+                app.logger.info(
+                    "✅ Database schema migrated successfully via Flask-Migrate."
+                )
         except Exception as e:
             app.logger.error(f"❌ Failed to run database migrations: {e}")
     elif os.getenv("FLASK_ENV") != "production":
         try:
             with app.app_context():
                 db.create_all()
-                app.logger.info("✅ Development database tables created successfully (db.create_all).")
+                app.logger.info(
+                    "✅ Development database tables created successfully (db.create_all)."
+                )
         except Exception as e:
             app.logger.error(f"❌ Failed to initialize dev database: {e}")
 

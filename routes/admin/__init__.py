@@ -2,7 +2,7 @@ from flask import flash, redirect, request, url_for
 from flask_wtf.csrf import CSRFError
 
 from .api import api_bp
-from .auth import auth_bp, init_auth_routes
+from .auth import auth_bp
 from .booking import booking_bp
 from .calendar import calendar_bp
 from .catalog import catalog_bp
@@ -19,7 +19,7 @@ from .newsletter import newsletter_bp
 from .preview import preview_bp
 from .pricing import pricing_bp
 from .productions import productions_bp
-from .projects import projects_bp, init_projects_routes
+from .projects import projects_bp
 from .settings import settings_bp
 from .tools import tools_bp
 from .users import users_bp
@@ -91,9 +91,14 @@ def init_admin_routes(app):
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         app.logger.warning(f"⚠️ CSRF Error: {e.description}")
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
+        is_ajax = (
+            request.headers.get("X-Requested-With") == "XMLHttpRequest"
+            or request.accept_mimetypes.accept_json
+        )
         if is_ajax:
-            return {"status": "error", "message": "Votre session a expiré. Veuillez vous reconnecter."}, 400
+            return {
+                "status": "error",
+                "message": "Votre session a expiré. Veuillez vous reconnecter.",
+            }, 400
         flash("Votre session a expiré. Veuillez vous reconnecter.", "error")
-        return redirect(url_for('admin_auth.admin_login'))
-
+        return redirect(url_for("admin_auth.admin_login"))

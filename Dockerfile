@@ -7,22 +7,22 @@ WORKDIR /app
 # Installer les dépendances système nécessaires
 ENV TZ=Europe/Paris
 RUN apt-get update && apt-get install -y \
-    tzdata \
-    default-libmysqlclient-dev \
-    default-mysql-client \
-    build-essential \
-    pkg-config \
-    libffi-dev \
-    libssl-dev \
-    python3-dev \
-    libgobject-2.0-0 \
-    libpango-1.0-0 \
-    libpangoft2-1.0-0 \
-    libcairo2 \
-    fonts-liberation \
-    fonts-dejavu-core \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+  tzdata \
+  default-libmysqlclient-dev \
+  default-mysql-client \
+  build-essential \
+  pkg-config \
+  libffi-dev \
+  libssl-dev \
+  python3-dev \
+  libgobject-2.0-0 \
+  libpango-1.0-0 \
+  libpangoft2-1.0-0 \
+  libcairo2 \
+  fonts-liberation \
+  fonts-dejavu-core \
+  curl \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copier le fichier requirements.txt et installer les dépendances Python
 COPY requirements.txt .

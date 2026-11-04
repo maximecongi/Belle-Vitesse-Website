@@ -56,7 +56,9 @@ def incident_submit_signature(token):
             404: "Jeton de signature invalide ou incident introuvable.",
             410: "Ce lien de signature a expiré (délai de 48 heures dépassé).",
         }
-        return jsonify({"error": error_messages.get(status_code, "Erreur de validation du jeton.")}), status_code
+        return jsonify(
+            {"error": error_messages.get(status_code, "Erreur de validation du jeton.")}
+        ), status_code
 
     token_entry, incident = res
 
@@ -66,16 +68,21 @@ def incident_submit_signature(token):
 
     signer_name = (payload.get("signer_name") or "").strip()
     signer_role = (payload.get("signer_role") or "").strip()
-    signature_data = (payload.get("signature") or payload.get("signature_data") or "").strip()
+    signature_data = (
+        payload.get("signature") or payload.get("signature_data") or ""
+    ).strip()
 
     if not signer_name:
         return jsonify({"error": "Le nom et prénom du signataire sont requis."}), 400
     if not signer_role:
-        return jsonify({"error": "La qualité / fonction du signataire est requise."}), 400
+        return jsonify(
+            {"error": "La qualité / fonction du signataire est requise."}
+        ), 400
     if not signature_data:
         return jsonify({"error": "Le tracé manuscrit de signature est requis."}), 400
 
     from utils.request_utils import get_client_ip
+
     ip_addr = get_client_ip()
 
     try:
@@ -88,19 +95,27 @@ def incident_submit_signature(token):
             token_str=token,
         )
 
-        return jsonify({
-            "status": "signed",
-            "success": True,
-            "message": sign_res.get("message", "Signature enregistrée avec succès."),
-            **sign_res,
-        }), 200
+        return jsonify(
+            {
+                "status": "signed",
+                "success": True,
+                "message": sign_res.get(
+                    "message", "Signature enregistrée avec succès."
+                ),
+                **sign_res,
+            }
+        ), 200
 
     except Exception as e:
-        current_app.logger.error(f"❌ Erreur lors de la signature contradictoire de l'incident : {e}")
+        current_app.logger.error(
+            f"❌ Erreur lors de la signature contradictoire de l'incident : {e}"
+        )
         return jsonify({"error": str(e)}), 500
 
 
-@public_incidents_bp.route("/incidents/verify/<string:incident_number>", methods=["GET", "POST"])
+@public_incidents_bp.route(
+    "/incidents/verify/<string:incident_number>", methods=["GET", "POST"]
+)
 @limiter.limit("20 per minute")
 @csrf.exempt
 def incident_verify_doc(incident_number):

@@ -9,5 +9,3 @@ from routes.admin.inspections import register_admin_inspection_routes
 
 checkins_bp = Blueprint("admin_checkins", __name__, url_prefix="/admin")
 register_admin_inspection_routes(checkins_bp, "checkin")
-
-

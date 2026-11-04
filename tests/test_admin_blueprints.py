@@ -86,8 +86,14 @@ class AdminBlueprintsTestCase(unittest.TestCase):
         ]
         self.assertEqual(len(ADMIN_BLUEPRINTS), len(expected_bps))
         for bp in expected_bps:
-            self.assertIsInstance(bp, Blueprint, f"{bp} doit être une instance de Blueprint Flask")
-            self.assertIn(bp.name, self.app.blueprints, f"Blueprint {bp.name} non enregistré sur app")
+            self.assertIsInstance(
+                bp, Blueprint, f"{bp} doit être une instance de Blueprint Flask"
+            )
+            self.assertIn(
+                bp.name,
+                self.app.blueprints,
+                f"Blueprint {bp.name} non enregistré sur app",
+            )
 
     def test_admin_blueprints_url_prefix(self):
         """Vérifie que les Blueprints admin ont le préfixe /admin approprié."""
@@ -112,7 +118,11 @@ class AdminBlueprintsTestCase(unittest.TestCase):
             ("admin_checkins_list", "admin_checkins.admin_checkins_list", None),
             ("admin_incidents_list", "admin_incidents.admin_incidents_list", None),
             ("admin_contacts_list", "admin_contacts.admin_contacts_list", None),
-            ("admin_newsletter_dashboard", "admin_newsletter.admin_newsletter_dashboard", None),
+            (
+                "admin_newsletter_dashboard",
+                "admin_newsletter.admin_newsletter_dashboard",
+                None,
+            ),
             ("admin_pricing", "admin_pricing.admin_pricing", None),
             ("admin_calendar", "admin_calendar.admin_calendar", None),
             ("admin_catalog_preview", "admin_catalog.admin_catalog_preview", None),
