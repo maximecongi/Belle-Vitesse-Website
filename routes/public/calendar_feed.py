@@ -49,6 +49,69 @@ def _get_project_shoot_range(project):
     return min(candidates), max(candidates)
 
 
+def _get_project_shoot_blocks(project):
+    """
+    Détermine la liste des blocs de dates de tournage d'un projet [(start_date, end_date), ...].
+    Pour les projets ponctuels avec intervalles libérés, produit des blocs discontinus.
+    Les jours intermédiaires immobilisés (is_immobilized=True) sont rattachés aux blocs actifs.
+    """
+    is_punctual = (getattr(project, "date_mode", "continuous") == "punctual")
+
+    if not is_punctual or not project.shoot_dates:
+        start_d = project.shoot_start_date
+        end_d = project.shoot_end_date or start_d
+        if start_d and end_d:
+            return [(start_d, end_d)]
+        elif start_d:
+            return [(start_d, start_d)]
+        return []
+
+    # Mode ponctuel : collecter les dates de tournage valides
+    active_days = set()
+    for d in project.shoot_dates:
+        try:
+            active_days.add(datetime.strptime(str(d).strip(), "%Y-%m-%d").date())
+        except Exception:
+            pass
+
+    if not active_days:
+        start_d = project.shoot_start_date
+        end_d = project.shoot_end_date or start_d
+        if start_d and end_d:
+            return [(start_d, end_d)]
+        elif start_d:
+            return [(start_d, start_d)]
+        return []
+
+    # Ajouter les jours d'intervalles qui sont immobilisés sur place
+    if hasattr(project, "get_inter_shoot_intervals"):
+        intervals = project.get_inter_shoot_intervals() or []
+        for inter in intervals:
+            if inter.get("is_immobilized"):
+                for d_str in inter.get("days", []):
+                    try:
+                        active_days.add(datetime.strptime(str(d_str).strip(), "%Y-%m-%d").date())
+                    except Exception:
+                        pass
+
+    # Agréger en plages continues de dates consécutives
+    sorted_days = sorted(list(active_days))
+    blocks = []
+    cur_start = sorted_days[0]
+    cur_end = sorted_days[0]
+
+    for day in sorted_days[1:]:
+        if day == cur_end + timedelta(days=1):
+            cur_end = day
+        else:
+            blocks.append((cur_start, cur_end))
+            cur_start = day
+            cur_end = day
+    blocks.append((cur_start, cur_end))
+
+    return blocks
+
+
 def _build_event_description(project, phase_title="🎬 Tournage", vehicle_map=None, head_map=None, base_url=None):
     """
     Construit une description complète et structurée pour les événements iCal,
@@ -282,8 +345,8 @@ def calendar_feed(token=None):
     now_utc = _utcnow()
 
     for project in projects:
-        shoot_start, shoot_end = _get_project_shoot_range(project)
-        if not shoot_start or not shoot_end:
+        shoot_blocks = _get_project_shoot_blocks(project)
+        if not shoot_blocks:
             continue
 
         name = project.name or "Sans nom"
@@ -292,28 +355,31 @@ def calendar_feed(token=None):
             if getattr(project, "project_id", None)
             else None
         )
-
-        shoot_evt = Event()
-        shoot_evt.add(
-            "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
-        shoot_evt.add("dtstart", shoot_start)
-        shoot_evt.add("dtend", shoot_end + timedelta(days=1))
-        shoot_evt.add("summary", f"🎬 Tournage : {name}")
-        shoot_evt.add("dtstamp", now_utc)
-        shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
-        if project_url:
-            shoot_evt.add("url", project_url)
-        shoot_evt.add(
-            "description",
-            _build_event_description(
-                project,
-                "🎬 Tournage",
-                vehicle_map=vehicle_map,
-                head_map=head_map,
-                base_url=base_url,
-            ),
+        description = _build_event_description(
+            project,
+            "🎬 Tournage",
+            vehicle_map=vehicle_map,
+            head_map=head_map,
+            base_url=base_url,
         )
-        cal.add_component(shoot_evt)
+
+        for block_start, block_end in shoot_blocks:
+            shoot_evt = Event()
+            if len(shoot_blocks) == 1:
+                uid = f"bv-project-{project.id}-shoot@bellevitesse.com"
+            else:
+                uid = f"bv-project-{project.id}-shoot-{block_start.isoformat()}@bellevitesse.com"
+
+            shoot_evt.add("uid", uid)
+            shoot_evt.add("dtstart", block_start)
+            shoot_evt.add("dtend", block_end + timedelta(days=1))
+            shoot_evt.add("summary", f"🎬 Tournage : {name}")
+            shoot_evt.add("dtstamp", now_utc)
+            shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
+            if project_url:
+                shoot_evt.add("url", project_url)
+            shoot_evt.add("description", description)
+            cal.add_component(shoot_evt)
 
     # 7. Retourner la réponse ICS avec les en-têtes de cache appropriés
     return Response(
