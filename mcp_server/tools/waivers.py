@@ -1,6 +1,6 @@
 """Outils MCP : Domaine Contrats de Location (CGL) & Règles de Sécurité."""
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from mcp_server.core import mcp
 from mcp_server.decorators import require_mcp_scope, run_in_flask_context

@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app import create_app
 from models.db import db
-from models.incident import Incident, IncidentSignedDocument, IncidentToken
+from models.incident import Incident, IncidentSignedDocument
 from models.waiver import (
     CheckinSignedDocument,
     CheckoutSignedDocument,

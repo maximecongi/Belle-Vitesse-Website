@@ -7,7 +7,6 @@ Usage :
     python3 scripts/normalize_salary_display_order.py
 """
 
-import os
 import sys
 from pathlib import Path
 

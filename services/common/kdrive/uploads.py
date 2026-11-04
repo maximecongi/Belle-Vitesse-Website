@@ -2,7 +2,6 @@
 Module de téléversement et de synchronisation des documents et bundles sur kDrive.
 Fournit le mixin UploadMixin.
 """
-import hashlib
 import logging
 import os
 from pathlib import Path

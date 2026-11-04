@@ -2,7 +2,6 @@
 import json
 import time
 from functools import wraps
-from typing import Any, Dict
 
 from mcp_auth.auth import check_mcp_scope
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP

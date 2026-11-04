@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timezone
-from functools import wraps
 
-from flask import g
 from models import McpApiToken, User, db
 
 logger = logging.getLogger(__name__)

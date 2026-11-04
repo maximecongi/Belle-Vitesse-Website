@@ -1,7 +1,6 @@
 import os
 import random
 import string
-import uuid
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 

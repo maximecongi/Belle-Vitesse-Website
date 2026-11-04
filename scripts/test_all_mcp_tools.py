@@ -9,8 +9,6 @@ Couvre :
 """
 import sys
 import os
-import json
-import traceback
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
@@ -23,17 +21,13 @@ mock_weasyprint.HTML.return_value = mock_html_inst
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
-import mcp_server
-from mcp_server.core import mcp, flask_app
+from mcp_server.core import flask_app
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
 from mcp_auth.auth import McpUserContext
 from models import (
-    GripProduct,
-    Head,
     McpApiToken,
     McpAuditLog,
     Production,
-    Project,
     User,
     Vehicle,
     VehicleCheckpointConfig,

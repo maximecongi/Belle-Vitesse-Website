@@ -1,6 +1,6 @@
 import time
 import uuid
-from typing import Dict, Optional
+from typing import Dict
 from flask import current_app, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 

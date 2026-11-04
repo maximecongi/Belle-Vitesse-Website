@@ -1,5 +1,4 @@
 """Core de l'application MCP : Initialisation de Flask et FastMCP."""
-import os
 from mcp.server.fastmcp import FastMCP
 from app import create_app
 from mcp_server.config import MCP_SERVER_PORT

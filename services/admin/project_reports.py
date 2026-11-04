@@ -1,14 +1,11 @@
 import logging
-from datetime import datetime, timezone, date, timedelta
+from datetime import datetime, timezone, date
 from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
-    Contact,
-    Production,
     Project,
     ProjectReport,
     User,
-    Incident,
     db
 )
 from models.db import _utcnow

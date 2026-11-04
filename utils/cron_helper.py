@@ -1,5 +1,4 @@
 import json
-import os
 import traceback
 from contextlib import contextmanager
 from datetime import datetime, timezone

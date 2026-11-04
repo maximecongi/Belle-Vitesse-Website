@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, Dict, Any, Union
 
 from mcp_server.cache import mcp_cache, invalidate_mcp_cache
 from mcp_server.core import mcp

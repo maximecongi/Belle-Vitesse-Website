@@ -3,8 +3,6 @@ import io
 import json
 import logging
 import os
-import uuid
-from datetime import datetime
 from pathlib import Path
 
 from flask import current_app, url_for
@@ -37,7 +35,7 @@ from utils.checkpoints import get_checkpoints_for_vehicle
 from services.admin.checkpoint_measurements import snapshot_rules, validate_measurement
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
-from utils.formatting import format_date_fr, format_date_numeric
+from utils.formatting import format_date_numeric
 from services.admin.projects import get_project_shoot_status
 from utils.image_utils import optimize_and_save_image
 from utils.entity_resolvers import resolve_inspection

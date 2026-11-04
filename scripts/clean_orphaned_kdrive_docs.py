@@ -13,9 +13,7 @@ Usage :
 
 import argparse
 import logging
-import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Configuration du chemin pour les imports du projet

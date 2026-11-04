@@ -1,5 +1,5 @@
 """Outils MCP : Domaine Utilisateurs."""
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 
 from mcp_server.core import mcp
 from mcp_server.decorators import run_in_flask_context, require_mcp_scope

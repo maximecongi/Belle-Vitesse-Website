@@ -11,7 +11,6 @@ Optimise les documents PDF sans aucune dépendance externe/cloud :
 import io
 import logging
 import os
-from typing import Optional
 from flask import current_app
 
 logger = logging.getLogger(__name__)

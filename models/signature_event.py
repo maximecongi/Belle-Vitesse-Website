@@ -2,7 +2,6 @@
 Modèle d'audit immuable pour les événements de signature (Append-Only).
 """
 
-from datetime import datetime, timezone
 from sqlalchemy import event
 
 from models.db import db, _utcnow

@@ -15,9 +15,7 @@ Usage :
 
 import argparse
 import logging
-import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Configuration du chemin pour les imports du projet
@@ -36,9 +34,8 @@ logger = logging.getLogger("kdrive_reconcile")
 
 def run_kdrive_reconciliation(dry_run: bool = False):
     """Exécute la vérification et la synchronisation de l'ensemble de l'écosystème kDrive."""
-    from models import Project, KDriveObject, db
+    from models import Project, KDriveObject
     from services.common.kdrive import KDriveService
-    from services.common.kdrive.paths import build_project_path
     from services.common.kdrive.tasks import task_retry_pending_kdrive_objects
 
     app, tunnel = build_minimal_app()
@@ -170,7 +167,6 @@ def run_kdrive_reconciliation(dry_run: bool = False):
             # ── 4. Rattrapage des Documents Signés Non Synchronisés ──────────────────
             if not dry_run:
                 logger.info("🔍 Contrôle des documents signés non synchronisés (décharges)...")
-                import json
                 from models import CglWaiver, SafetyRulesWaiver, CheckoutVehicle, CheckinVehicle, Incident
                 stats["documents_caught_up"] = 0
 

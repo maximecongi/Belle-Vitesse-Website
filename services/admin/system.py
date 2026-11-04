@@ -2,7 +2,6 @@
 Service d'administration Système, Maintenance et Diagnostics pour Belle Vitesse.
 """
 import os
-import sys
 import shutil
 import platform
 import logging

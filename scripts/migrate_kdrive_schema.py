@@ -5,7 +5,6 @@ Applique les modifications de schéma SQL pour l'intégration kDrive (Project co
 Compatible SQLite et MySQL via SQLAlchemy inspect.
 """
 
-import os
 import sys
 from pathlib import Path
 

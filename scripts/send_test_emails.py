@@ -7,7 +7,6 @@ import sys
 import time
 
 from dotenv import load_dotenv
-from flask import Flask
 import qrcode
 
 # Set up paths

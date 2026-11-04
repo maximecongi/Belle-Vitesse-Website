@@ -1,5 +1,5 @@
 """Outils MCP : Domaine Projets."""
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, List, Dict, Any
 
 from mcp_server.core import mcp

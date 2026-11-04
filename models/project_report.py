@@ -1,4 +1,3 @@
-from datetime import timezone
 from models.db import db, _utcnow
 
 

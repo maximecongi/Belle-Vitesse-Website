@@ -213,7 +213,6 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
     """
     Génère ou récupère l'URL complète de signature active pour CGL, BVSR ou Attestation Pilote.
     """
-    from flask import current_app, has_request_context, request
 
     if waiver_type == "safety_rules":
         waiver = resolve_safety_rules_waiver(waiver_id)

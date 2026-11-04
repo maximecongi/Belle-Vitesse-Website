@@ -2,7 +2,7 @@ import functools
 import logging
 import os
 import threading
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from flask import current_app, has_app_context
 

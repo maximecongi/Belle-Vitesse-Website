@@ -1,5 +1,5 @@
 """Outils MCP : Domaine Système, Maintenance & Cache."""
-from typing import Optional, List, Dict, Any
+from typing import Dict, Any
 
 from mcp_server.cache import invalidate_mcp_cache
 from mcp_server.core import mcp

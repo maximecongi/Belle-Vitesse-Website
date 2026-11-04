@@ -4,7 +4,6 @@ Module de résolution des points de contrôle pour un véhicule donné.
 S'appuie exclusivement sur la base de données (CheckpointDefinition via get_all_checkpoints).
 """
 
-from typing import List, Dict, Any, Optional
 
 
 def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_name=None) -> list:

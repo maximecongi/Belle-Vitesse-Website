@@ -6,12 +6,10 @@ from datetime import datetime
 
 from sqlalchemy.orm import joinedload
 
-from models import PilotWaiver, Project, WaiverToken, db
+from models import PilotWaiver, Project, WaiverToken
 from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
-from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import (
-    resolve_pilot_waiver,
     resolve_project,
 )
 

@@ -4,7 +4,7 @@ Utilitaires de requêtes HTTP partagés (extraction IP sécurisée, résolution 
 
 import os
 from typing import Optional
-from flask import current_app, has_app_context, has_request_context, request
+from flask import current_app, has_request_context, request
 
 
 def get_client_ip() -> str:

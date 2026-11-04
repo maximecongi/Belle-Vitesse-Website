@@ -2,7 +2,6 @@
 services/admin/waivers/reminders.py — Gestion des relances automatiques par e-mail (CGL et BVSR).
 """
 import logging
-import os
 import uuid
 from datetime import datetime, timedelta, timezone
 

@@ -222,7 +222,6 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     """
     Envoie l'invitation de signature par e-mail au signataire (CGL, BVSR ou Pilote).
     """
-    from flask import current_app, has_request_context, request
     from utils.mailer import (
         send_cgl_invitation_email,
         send_safety_rules_invitation_email,

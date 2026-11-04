@@ -8,9 +8,7 @@ from flask import current_app, has_app_context
 from redis import Redis
 from rq import Queue as RQQueue
 
-from models.db import db
 from models.kdrive import KDriveObject
-from models.project import Project
 from services.common.kdrive.service import KDriveService
 
 logger = logging.getLogger("kdrive.tasks")

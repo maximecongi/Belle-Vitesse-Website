@@ -1,10 +1,9 @@
 """Middleware ASGI pur pour le serveur MCP (Rate Limiting, CORS, Auth Stricte & Sécurité)."""
 import json
 import time
-from datetime import datetime, timezone
 from urllib.parse import parse_qs
 
-from mcp_auth.auth import authenticate_mcp_token, McpUserContext
+from mcp_auth.auth import authenticate_mcp_token
 from mcp_server.config import (
     logger,
     MCP_RATE_LIMITER,
