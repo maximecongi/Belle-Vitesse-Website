@@ -101,6 +101,9 @@ class BaseTestCase(unittest.TestCase):
     def create_project(self, name="Tournage Test", production_id=None, contact_id=None, departure_date=None, return_date=None, vehicles="1"):
         """Crée et persiste un projet de tournage avec dates et véhicules."""
         today = date.today()
+        if production_id is None:
+            prod = self.create_production()
+            production_id = prod.id
         proj = Project(
             name=name,
             production_id=production_id,

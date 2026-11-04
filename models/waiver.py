@@ -438,18 +438,30 @@ class Waiver(db.Model):
                 })
         elif self.vehicles:
             try:
-                from utils.database import get_vehicles
-                all_vehicles = get_vehicles() or []
+                from flask import g, has_request_context
+                if has_request_context():
+                    if not hasattr(g, "_waiver_name_to_fields"):
+                        from utils.database import get_vehicles
+                        all_vehicles = get_vehicles() or []
+                        ntf = {}
+                        for v in all_vehicles:
+                            f = v.get("fields", {})
+                            v_name = f.get("name")
+                            if v_name:
+                                ntf[v_name.strip().lower()] = (v["id"], f)
+                        g._waiver_name_to_fields = ntf
+                    name_to_fields = g._waiver_name_to_fields
+                else:
+                    from utils.database import get_vehicles
+                    all_vehicles = get_vehicles() or []
+                    name_to_fields = {}
+                    for v in all_vehicles:
+                        f = v.get("fields", {})
+                        v_name = f.get("name")
+                        if v_name:
+                            name_to_fields[v_name.strip().lower()] = (v["id"], f)
             except Exception:
-                all_vehicles = []
-
-            # Dictionnaire nom -> fields
-            name_to_fields = {}
-            for v in all_vehicles:
-                f = v.get("fields", {})
-                v_name = f.get("name")
-                if v_name:
-                    name_to_fields[v_name.strip().lower()] = (v["id"], f)
+                name_to_fields = {}
 
             # Map checkout par vehicle_id
             checkout_map = {}
