@@ -4,7 +4,7 @@ Fournit la vue du parc (/admin/fleet) et la timeline détaillée par véhicule (
 """
 
 import logging
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from services.admin.fleet import get_fleet_overview, get_vehicle_timeline
 from utils.decorators import require_roles
 

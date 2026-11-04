@@ -12,7 +12,6 @@ if os.getenv("FLASK_ENV") != "production":
     except ImportError:
         pass
 
-from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import Flask, request
@@ -32,7 +31,7 @@ from utils.database import (
 )
 from utils.keepalive import init_tcp_keepalive
 from utils.jinja_filters import init_jinja_filters
-from utils.i18n import init_i18n, SUPPORTED_LANGS, DEFAULT_LANG
+from utils.i18n import init_i18n
 from utils.context_processors import init_context_processors
 
 # Configuration
@@ -242,24 +241,38 @@ def create_app():
     return app
 
 
-app = create_app()
+_app_instance = None
 
 
-def warm_cache():
+def __getattr__(name):
+    """Accesseur paresseux (PEP 562) pour l'instance `app` évitant les instanciations prématurées à l'import."""
+    if name == "app":
+        global _app_instance
+        if _app_instance is None:
+            _app_instance = create_app()
+        return _app_instance
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def warm_cache(target_app=None):
     """Pré-charge (warmup) le cache avec les données Airtable pour améliorer les performances."""
+    a = target_app
+    if a is None:
+        global _app_instance
+        if _app_instance is None:
+            _app_instance = create_app()
+        a = _app_instance
     try:
-        with app.app_context():
+        with a.app_context():
             get_vehicles()
             get_heads()
             get_grips_categories()
             get_all_static()
-            app.logger.info("🔥 Cache pré-chargé avec succès")
+            a.logger.info("🔥 Cache pré-chargé avec succès")
     except Exception as e:
-        app.logger.error(f"❌ Erreur lors du pré-chargement du cache : {e}")
-
-
-
+        a.logger.error(f"❌ Erreur lors du pré-chargement du cache : {e}")
 
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=True, port=5001)
+    current_flask_app = create_app()
+    current_flask_app.run(debug=True, use_reloader=True, port=5001)

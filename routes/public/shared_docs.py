@@ -5,7 +5,6 @@ from datetime import datetime
 from flask import abort, current_app, make_response, render_template, request, send_from_directory, session
 
 from utils.document_utils import (
-    generate_pdf_access_token,
     generate_document_verification_token,
     validate_document_verification_token,
     validate_pdf_access_token,

@@ -49,4 +49,4 @@ ENTRYPOINT ["./entrypoint.sh"]
 
 # Commande pour démarrer l'application avec Gunicorn
 # Utilise le fichier de configuration (post_fork, max_requests, etc.)
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "--forwarded-allow-ips=*", "app:app"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "--forwarded-allow-ips=*", "wsgi:application"]

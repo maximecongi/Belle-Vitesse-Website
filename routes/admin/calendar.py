@@ -4,10 +4,9 @@ Accessible aux administrateurs et managers.
 """
 import base64
 import io
-import os
 
 import qrcode
-from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from models import User, db
 from services.admin.calendar_subscriptions import (

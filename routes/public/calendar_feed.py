@@ -3,7 +3,6 @@ Route publique pour le flux calendrier ICS.
 Accessible via un token unique dans l'URL : GET /cal/<token>.ics
 """
 from datetime import datetime, timedelta
-import os
 
 from flask import Blueprint, Response, abort, current_app, redirect, request, url_for
 from icalendar import Calendar, Event

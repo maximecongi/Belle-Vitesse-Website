@@ -25,7 +25,7 @@ def post_fork(server, worker):
     dispose() force chaque worker à créer ses propres connexions fraîches.
     """
     try:
-        from app import app, warm_cache
+        from wsgi import application as app, warm_cache
         with app.app_context():
             from models import db
             db.engine.dispose()

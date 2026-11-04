@@ -1,12 +1,8 @@
-from functools import wraps
-import os
 
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for, current_app, Response
 
 from models import (
     CglWaiver,
-    SafetyRulesWaiver,
-    PilotWaiver,
     Project,
 )
 from services.admin.waivers import (
@@ -17,8 +13,6 @@ from services.admin.waivers import (
     delete_safety_rules_waiver,
     delete_pilot_waiver,
     generate_cgl,
-    generate_safety_rules_waiver,
-    generate_pilot_waiver,
     get_or_create_waiver_signing_url,
     list_cgl,
     list_safety_rules_waivers,
@@ -397,7 +391,6 @@ def admin_safety_rules_preview(waiver_id=None):
     from models import SafetyRulesWaiver as SRW, AppSetting
     from services.admin.safety_rules_config import (
         get_safety_rules_for_vehicles,
-        get_general_safety_rules,
         get_merged_general_safety_rules,
         DEFAULT_HELMETS_INVENTORY,
     )
@@ -619,25 +612,4 @@ def admin_pilot_waivers_preview(waiver_id=None):
         )
 
     return html_content
-
-
-def init_waivers_routes(app):
-    """Enregistre le blueprint admin_waivers et les routes directes de prévisualisation PDF."""
-    if "admin_waivers" not in app.blueprints:
-        app.register_blueprint(waivers_bp)
-
-    @app.route("/preview/pdf/cgl", methods=["GET"], endpoint="preview_pdf_cgl_alias")
-    @require_preview_access
-    def preview_pdf_cgl_alias():
-        return admin_cgl_preview()
-
-    @app.route("/preview/pdf/safety-rules", methods=["GET"], endpoint="preview_pdf_safety_rules_alias")
-    @require_preview_access
-    def preview_pdf_safety_rules_alias():
-        return admin_safety_rules_preview()
-
-    @app.route("/preview/pdf/pilot-waiver", methods=["GET"], endpoint="preview_pdf_pilot_waiver_alias")
-    @require_preview_access
-    def preview_pdf_pilot_waiver_alias():
-        return admin_pilot_waivers_preview()
 

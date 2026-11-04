@@ -37,6 +37,7 @@ from routes.admin import (
     incidents_bp,
     mcp_tokens_bp,
     newsletter_bp,
+    preview_bp,
     pricing_bp,
     productions_bp,
     projects_bp,
@@ -74,6 +75,7 @@ class AdminBlueprintsTestCase(unittest.TestCase):
             incidents_bp,
             mcp_tokens_bp,
             newsletter_bp,
+            preview_bp,
             pricing_bp,
             productions_bp,
             projects_bp,
@@ -90,8 +92,9 @@ class AdminBlueprintsTestCase(unittest.TestCase):
     def test_admin_blueprints_url_prefix(self):
         """Vérifie que les Blueprints admin ont le préfixe /admin approprié."""
         for bp in ADMIN_BLUEPRINTS:
-            if bp.name == "admin_files":
+            if bp.name in ("admin_files", "admin_preview"):
                 # Le blueprint des fichiers privés gère /files/<path>
+                # Le blueprint de prévisualisation gère /preview/pdf/<type>
                 continue
             self.assertTrue(
                 bp.url_prefix.startswith("/admin"),

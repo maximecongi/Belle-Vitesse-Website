@@ -11,7 +11,7 @@ from flask import (
     url_for,
 )
 
-from extensions import cache, limiter
+from extensions import limiter
 from models import User, db
 from services.common.auth import ALLOWED_DOMAINS, request_magic_link, verify_magic_link
 

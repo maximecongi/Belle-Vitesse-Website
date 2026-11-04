@@ -5,7 +5,7 @@ indications par défaut, véhicules concernés et indications techniques par vé
 """
 
 import logging
-from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from services.admin.vehicle_config import (
     create_checkpoint,
     delete_checkpoint,

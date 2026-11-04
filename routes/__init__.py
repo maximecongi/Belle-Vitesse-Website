@@ -1,32 +1,60 @@
 import os
 
-from flask import flash, g, redirect, render_template, request, url_for
+from flask import current_app, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import HTTPException
 
 from routes.admin import init_admin_routes
 from routes.api import init_api_v1_routes
-from routes.public.checkin import init_checkin_routes
-from routes.public.checkout import init_checkout_routes
-from routes.public.incidents import init_incident_public_routes
-from routes.public.waivers import init_waiver_routes
 from routes.public.calendar_feed import cal_feed_bp
-from routes.public.web import init_web_routes
+from routes.public.incidents import public_incidents_bp
+from routes.public.inspections import public_inspections_bp
+from routes.public.waivers import public_waivers_bp
+from routes.public.web import public_web_bp
+
+
+def public_url_alias_handler(error, endpoint, values):
+    """Fallback transparent pour résoudre les endpoints publics non préfixés
+
+    dans url_for (ex: 'home' -> 'public_web.home',
+    'checkout_verify' -> 'public_inspections.checkout_verify').
+    """
+    if "." in endpoint:
+        return None
+    prefixes = (
+        "public_web.",
+        "public_inspections.",
+        "public_waivers.",
+        "public_incidents.",
+    )
+    for prefix in prefixes:
+        candidate = f"{prefix}{endpoint}"
+        if candidate in current_app.view_functions:
+            return url_for(candidate, **values)
+    return None
 
 
 def init_routes(app):
-    """Register all route modules."""
+    """Enregistre tous les Blueprints de l'application (admin, public, API)."""
+    # Enregistrement des Blueprints d'administration
     init_admin_routes(app)
-    init_web_routes(app)
-    init_checkout_routes(app)
-    init_checkin_routes(app)
-    init_waiver_routes(app)
-    init_incident_public_routes(app)
-    init_api_v1_routes(app)
+
+    # Enregistrement des Blueprints publics
+    app.register_blueprint(public_web_bp)
+    app.register_blueprint(public_inspections_bp)
+    app.register_blueprint(public_waivers_bp)
+    app.register_blueprint(public_incidents_bp)
 
     # Flux calendrier ICS public (exempt CSRF — accédé par les apps calendrier)
     from extensions import csrf
     csrf.exempt(cal_feed_bp)
     app.register_blueprint(cal_feed_bp)
+
+    # Enregistrement des Blueprints API REST v1
+    init_api_v1_routes(app)
+
+    # Handler de fallback pour les URL publiques non préfixées dans les templates et le code legacy
+    if public_url_alias_handler not in app.url_build_error_handlers:
+        app.url_build_error_handlers.append(public_url_alias_handler)
 
 
 def init_error_handlers(app):

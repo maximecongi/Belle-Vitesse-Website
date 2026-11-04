@@ -4,9 +4,10 @@ Routes de retour (Check-in) — couche HTTP légère.
 Délègue l'enregistrement des routes au contrôleur factorisé routes.public.inspections.
 """
 
-from routes.public.inspections import register_inspection_routes
+from routes.public.inspections import public_inspections_bp
 
 
 def init_checkin_routes(app):
     """Flux de retour public : affichage, génération, signature, vérification, téléchargement."""
-    register_inspection_routes(app, "checkin")
+    if "public_inspections" not in app.blueprints:
+        app.register_blueprint(public_inspections_bp)

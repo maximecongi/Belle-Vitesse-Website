@@ -11,7 +11,6 @@ from services.admin.pricing import (
     list_logistics_rates,
     list_salary_rates,
     list_salary_rates_grouped,
-    list_salary_groups,
     rename_salary_group,
     reorder_equipment,
     reorder_logistics_rates,

@@ -9,6 +9,7 @@ import os
 import secrets
 
 from flask import (
+    Blueprint,
     abort,
     current_app,
     jsonify,
@@ -236,3 +237,10 @@ def register_inspection_routes(app, mode):
     @csrf.exempt
     def download_inspection_document(filepath):
         return handle_document_download(filepath)
+
+
+# Instance du Blueprint unifié pour les inspections publiques (Check-out et Check-in)
+public_inspections_bp = Blueprint("public_inspections", __name__)
+register_inspection_routes(public_inspections_bp, "checkout")
+register_inspection_routes(public_inspections_bp, "checkin")
+
