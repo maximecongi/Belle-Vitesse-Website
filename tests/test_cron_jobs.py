@@ -1,6 +1,5 @@
 import os
 import unittest
-from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
 
 # Isolation stricte de l'environnement de test

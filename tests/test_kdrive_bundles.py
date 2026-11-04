@@ -3,6 +3,7 @@ Tests unitaires pour le module d'extraction unifiée de bundles kDrive (services
 """
 
 import json
+import unittest
 from services.common.kdrive.bundles import extract_bundle_file_specs, resolve_entity_info
 
 
@@ -41,63 +42,62 @@ class DummyIncident:
         self.documents_list = ["docs/constat.pdf"]
 
 
-def test_resolve_entity_info():
-    sr = DummySafetyRulesWaiver()
-    assert resolve_entity_info(sr, "safety_rules") == ("safety_rules", "BVSR-TEST12345678", 42)
+class KDriveBundlesTestCase(unittest.TestCase):
+    """Suite de tests unitaires pour l'extraction de bundles de fichiers kDrive."""
 
-    cgl = DummyCglWaiver()
-    assert resolve_entity_info(cgl, "cgl") == ("cgl", "BVRA-PROD87654321", 10)
+    def test_resolve_entity_info(self):
+        sr = DummySafetyRulesWaiver()
+        self.assertEqual(resolve_entity_info(sr, "safety_rules"), ("safety_rules", "BVSR-TEST12345678", 42))
 
-    co = DummyInspection("BVCO")
-    assert resolve_entity_info(co, "checkout") == ("checkout", "BVCO-INSP99999999", 15)
+        cgl = DummyCglWaiver()
+        self.assertEqual(resolve_entity_info(cgl, "cgl"), ("cgl", "BVRA-PROD87654321", 10))
 
-    ci = DummyInspection("BVCI")
-    assert resolve_entity_info(ci, "checkin") == ("checkin", "BVCI-INSP99999999", 15)
+        co = DummyInspection("BVCO")
+        self.assertEqual(resolve_entity_info(co, "checkout"), ("checkout", "BVCO-INSP99999999", 15))
 
-    inc = DummyIncident()
-    assert resolve_entity_info(inc, "incident") == ("incident", "BVIC-INCID1111111", 20)
+        ci = DummyInspection("BVCI")
+        self.assertEqual(resolve_entity_info(ci, "checkin"), ("checkin", "BVCI-INSP99999999", 15))
 
+        inc = DummyIncident()
+        self.assertEqual(resolve_entity_info(inc, "incident"), ("incident", "BVIC-INCID1111111", 20))
 
-def test_extract_safety_rules_waiver_file_specs():
-    sr = DummySafetyRulesWaiver()
-    specs = extract_bundle_file_specs(sr, "safety_rules")
-    assert len(specs) == 1
-    roles = {s["role"]: s["path"] for s in specs}
-    assert roles["pdf"] == sr.signed_pdf_path
+    def test_extract_safety_rules_waiver_file_specs(self):
+        sr = DummySafetyRulesWaiver()
+        specs = extract_bundle_file_specs(sr, "safety_rules")
+        self.assertEqual(len(specs), 1)
+        roles = {s["role"]: s["path"] for s in specs}
+        self.assertEqual(roles["pdf"], sr.signed_pdf_path)
 
+    def test_extract_cgl_waiver_file_specs(self):
+        cgl = DummyCglWaiver()
+        specs = extract_bundle_file_specs(cgl, "cgl")
+        self.assertEqual(len(specs), 2)
+        roles = {s["role"]: s["path"] for s in specs}
+        self.assertEqual(roles["pdf"], cgl.signed_pdf_path)
+        self.assertEqual(roles["insurance"], "uploads/prod_insurance.pdf")
 
-def test_extract_cgl_waiver_file_specs():
-    cgl = DummyCglWaiver()
-    specs = extract_bundle_file_specs(cgl, "cgl")
-    assert len(specs) == 2
-    roles = {s["role"]: s["path"] for s in specs}
-    assert roles["pdf"] == cgl.signed_pdf_path
-    assert roles["insurance"] == "uploads/prod_insurance.pdf"
+    def test_extract_inspection_file_specs(self):
+        co = DummyInspection("BVCO")
+        specs = extract_bundle_file_specs(co, "checkout")
+        self.assertEqual(len(specs), 4)  # 1 PDF + 2 interior + 1 exterior
+        self.assertEqual(specs[0]["role"], "pdf")
+        photos = [s["path"] for s in specs if s["role"] == "photo"]
+        self.assertIn("photos/in1.jpg", photos)
+        self.assertIn("photos/in2.jpg", photos)
+        self.assertIn("photos/ex1.jpg", photos)
 
-
-def test_extract_inspection_file_specs():
-    co = DummyInspection("BVCO")
-    specs = extract_bundle_file_specs(co, "checkout")
-    assert len(specs) == 4  # 1 PDF + 2 interior + 1 exterior
-    assert specs[0]["role"] == "pdf"
-    photos = [s["path"] for s in specs if s["role"] == "photo"]
-    assert "photos/in1.jpg" in photos
-    assert "photos/in2.jpg" in photos
-    assert "photos/ex1.jpg" in photos
-
-
-def test_extract_incident_file_specs():
-    inc = DummyIncident()
-    specs = extract_bundle_file_specs(
-        inc,
-        "incident",
-        custom_pdf_filename="Custom_INCIDENT.pdf"
-    )
-    assert len(specs) == 4  # 1 PDF + 2 photos + 1 document
-    assert specs[0]["filename"] == "Custom_INCIDENT.pdf"
-    photos = [s["path"] for s in specs if s["role"] == "photo"]
-    docs = [s["path"] for s in specs if s["role"] == "document"]
-    assert len(photos) == 2
-    assert len(docs) == 1
-    assert "photos/dmg1.jpg" in photos
-    assert "docs/constat.pdf" in docs
+    def test_extract_incident_file_specs(self):
+        inc = DummyIncident()
+        specs = extract_bundle_file_specs(
+            inc,
+            "incident",
+            custom_pdf_filename="Custom_INCIDENT.pdf"
+        )
+        self.assertEqual(len(specs), 4)  # 1 PDF + 2 photos + 1 document
+        self.assertEqual(specs[0]["filename"], "Custom_INCIDENT.pdf")
+        photos = [s["path"] for s in specs if s["role"] == "photo"]
+        docs = [s["path"] for s in specs if s["role"] == "document"]
+        self.assertEqual(len(photos), 2)
+        self.assertEqual(len(docs), 1)
+        self.assertIn("photos/dmg1.jpg", photos)
+        self.assertIn("docs/constat.pdf", docs)

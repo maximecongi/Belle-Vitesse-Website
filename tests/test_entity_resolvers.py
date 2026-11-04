@@ -1,26 +1,7 @@
-import os
-import sys
 import unittest
 from datetime import date
-from unittest.mock import MagicMock
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Isolation stricte de l'environnement de test avant tout import d'app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-# Mock weasyprint si absent
-if "weasyprint" not in sys.modules:
-    mock_weasyprint = MagicMock()
-    mock_weasyprint.HTML = MagicMock()
-    mock_weasyprint.CSS = MagicMock()
-    sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from models import (
     CheckinVehicle,
     CheckoutVehicle,
@@ -42,100 +23,91 @@ from utils.entity_resolvers import (
 )
 
 
-class EntityResolversTestCase(unittest.TestCase):
+class EntityResolversTestCase(BaseTestCase):
     """Tests unitaires pour les résolveurs polymorphiques et le typage unifié des entités."""
 
     def setUp(self):
-        self.app = create_app()
-        self.client = self.app.test_client()
+        super().setUp()
 
-        with self.app.app_context():
-            db.create_all()
+        # Création utilisateur admin de test
+        self.user = User(
+            firstname="Admin",
+            lastname="BV",
+            mail="admin@bellevitesse.com",
+            role="administrator"
+        )
+        db.session.add(self.user)
 
-            # Création utilisateur admin de test
-            self.user = User(
-                firstname="Admin",
-                lastname="BV",
-                mail="admin@bellevitesse.com",
-                role="administrator"
-            )
-            db.session.add(self.user)
+        # Création production
+        self.prod = Production(name="Studio Alpes", mail="alpes@example.com")
+        db.session.add(self.prod)
+        db.session.flush()
 
-            # Création production
-            self.prod = Production(name="Studio Alpes", mail="alpes@example.com")
-            db.session.add(self.prod)
-            db.session.flush()
+        # Création projet
+        self.project = Project(
+            name="Tournage Pub Alpes",
+            project_id="BVPR-ALPTEST001",
+            production_id=self.prod.id,
+            departure_date=date(2026, 10, 1),
+            return_date=date(2026, 10, 5)
+        )
+        db.session.add(self.project)
+        db.session.flush()
 
-            # Création projet
-            self.project = Project(
-                name="Tournage Pub Alpes",
-                project_id="BVPR-ALPTEST001",
-                production_id=self.prod.id,
-                departure_date=date(2026, 10, 1),
-                return_date=date(2026, 10, 5)
-            )
-            db.session.add(self.project)
-            db.session.flush()
+        # Documents juridiques / décharges (CGL et Règles de Sécurité)
+        self.safety_rules_waiver = SafetyRulesWaiver(
+            project_id=self.project.id,
+            waiver_id="BVSR-RULES001",
+            signer_first_name="Jean",
+            signer_last_name="Pilote",
+            status="to_send"
+        )
+        self.cgl_waiver = CglWaiver(
+            project_id=self.project.id,
+            waiver_id="BVRA-CGL001",
+            production_name="Studio Alpes",
+            status="to_send"
+        )
+        db.session.add(self.safety_rules_waiver)
+        db.session.add(self.cgl_waiver)
 
-            # Documents juridiques / décharges (CGL et Règles de Sécurité)
-            self.safety_rules_waiver = SafetyRulesWaiver(
-                project_id=self.project.id,
-                waiver_id="BVSR-RULES001",
-                signer_first_name="Jean",
-                signer_last_name="Pilote",
-                status="to_send"
-            )
-            self.cgl_waiver = CglWaiver(
-                project_id=self.project.id,
-                waiver_id="BVRA-CGL001",
-                production_name="Studio Alpes",
-                status="to_send"
-            )
-            db.session.add(self.safety_rules_waiver)
-            db.session.add(self.cgl_waiver)
+        # Incident
+        self.incident = Incident(
+            incident_number="BVIC-INC001",
+            project_id=self.project.id,
+            title="Impact pare-brise",
+            incident_date=date.today(),
+            severity="modere",
+            status="signale",
+            reported_by_id=self.user.id
+        )
+        db.session.add(self.incident)
 
-            # Incident
-            self.incident = Incident(
-                incident_number="BVIC-INC001",
-                project_id=self.project.id,
-                title="Impact pare-brise",
-                incident_date=date.today(),
-                severity="modere",
-                status="signale",
-                reported_by_id=self.user.id
-            )
-            db.session.add(self.incident)
+        # Inspections
+        self.checkout = CheckoutVehicle(
+            inspection_number="BVCO-OUT001",
+            project_id=self.project.id,
+            vehicle_id="recVehicle1",
+            status="signed"
+        )
+        self.checkin = CheckinVehicle(
+            inspection_number="BVCI-IN001",
+            project_id=self.project.id,
+            vehicle_id="recVehicle1",
+            status="signed"
+        )
+        db.session.add(self.checkout)
+        db.session.add(self.checkin)
 
-            # Inspections
-            self.checkout = CheckoutVehicle(
-                inspection_number="BVCO-OUT001",
-                project_id=self.project.id,
-                vehicle_id="recVehicle1",
-                status="signed"
-            )
-            self.checkin = CheckinVehicle(
-                inspection_number="BVCI-IN001",
-                project_id=self.project.id,
-                vehicle_id="recVehicle1",
-                status="signed"
-            )
-            db.session.add(self.checkout)
-            db.session.add(self.checkin)
+        db.session.commit()
 
-            db.session.commit()
-
-            self.user_id = self.user.id
-            self.project_id = self.project.id
-            self.safety_rules_waiver_id = self.safety_rules_waiver.id
-            self.cgl_waiver_id = self.cgl_waiver.id
-            self.incident_id = self.incident.id
-            self.checkout_id = self.checkout.id
-            self.checkin_id = self.checkin.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.user_id = self.user.id
+        self.project_id = self.project.id
+        self.safety_rules_waiver_id = self.safety_rules_waiver.id
+        self.cgl_waiver_id = self.cgl_waiver.id
+        self.incident_id = self.incident.id
+        self.checkout_id = self.checkout.id
+        self.checkin_id = self.checkin.id
 
     def test_resolve_project(self):
         """Vérifie la résolution de projet par entier, chaîne numérique ou code BVPR-*."""

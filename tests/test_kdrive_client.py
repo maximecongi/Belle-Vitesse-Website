@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock, patch
-import pytest
-import requests
 
-from services.common.kdrive.client import KDriveClient, KDriveError
+from services.common.kdrive.client import KDriveClient
 
 
 def test_client_init():

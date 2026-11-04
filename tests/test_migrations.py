@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from flask_migrate import upgrade, downgrade
+from flask_migrate import upgrade
 import sqlalchemy as sa
 from app import create_app
 from models import db

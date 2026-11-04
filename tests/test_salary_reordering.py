@@ -1,10 +1,6 @@
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from app import create_app
 from models import db, SalaryPosition, SalaryRate
 from services.admin.pricing import (
     reorder_salary_rates,
@@ -13,48 +9,33 @@ from services.admin.pricing import (
 )
 
 
-class SalaryReorderingTest(unittest.TestCase):
+class SalaryReorderingTest(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
+        super().setUp()
 
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
+        # Création de positions de test
+        pos1 = SalaryPosition(group_name="Pilote", position="Pilote A", display_order=14)
+        pos2 = SalaryPosition(group_name="Pilote", position="Pilote B", display_order=22)
+        pos3 = SalaryPosition(group_name="Cadreur", position="Cadreur A", display_order=40)
+        db.session.add_all([pos1, pos2, pos3])
+        db.session.commit()
 
-        with self.app.app_context():
-            db.create_all()
+        # Création de taux (annexes) pour chaque position
+        for pos in [pos1, pos2, pos3]:
+            for annexe in ["Annexe 1", "USPA", "Facture"]:
+                rate = SalaryRate(
+                    position_id=pos.id,
+                    annexe=annexe,
+                    base_hourly=30.0,
+                    inter_8h=240.0,
+                    inter_10h=360.0
+                )
+                db.session.add(rate)
+        db.session.commit()
 
-            # Création de positions de test
-            pos1 = SalaryPosition(group_name="Pilote", position="Pilote A", display_order=14)
-            pos2 = SalaryPosition(group_name="Pilote", position="Pilote B", display_order=22)
-            pos3 = SalaryPosition(group_name="Cadreur", position="Cadreur A", display_order=40)
-            db.session.add_all([pos1, pos2, pos3])
-            db.session.commit()
-
-            # Création de taux (annexes) pour chaque position
-            for pos in [pos1, pos2, pos3]:
-                for annexe in ["Annexe 1", "USPA", "Facture"]:
-                    rate = SalaryRate(
-                        position_id=pos.id,
-                        annexe=annexe,
-                        base_hourly=30.0,
-                        inter_8h=240.0,
-                        inter_10h=360.0
-                    )
-                    db.session.add(rate)
-            db.session.commit()
-
-            self.pos1_id = pos1.id
-            self.pos2_id = pos2.id
-            self.pos3_id = pos3.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.pos1_id = pos1.id
+        self.pos2_id = pos2.id
+        self.pos3_id = pos3.id
 
     def test_reorder_salary_rates_with_position_ids(self):
         """Vérifie que le réordonnancement par position_id génère des display_order séquentiels propres (0, 1, 2...)."""

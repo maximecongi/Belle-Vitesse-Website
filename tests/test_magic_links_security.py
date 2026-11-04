@@ -1,57 +1,28 @@
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
 from unittest.mock import MagicMock, patch
 from redis import Redis
 
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock WeasyPrint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
 from models import User, db
 from services.common.auth import (
     get_auth_serializer,
-    is_jti_consumed,
-    mark_jti_consumed,
     request_magic_link,
     verify_magic_link,
 )
 
 
-class MagicLinksSecurityTestCase(unittest.TestCase):
+class MagicLinksSecurityTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-            self.user = User(
-                firstname="Maxime",
-                lastname="Congi",
-                mail="maxime@bellevitesse.com",
-                role="Super Administrateur",
-            )
-            db.session.add(self.user)
-            db.session.commit()
-            self.user_id = self.user.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        super().setUp()
+        self.user = User(
+            firstname="Maxime",
+            lastname="Congi",
+            mail="maxime@bellevitesse.com",
+            role="Super Administrateur",
+        )
+        db.session.add(self.user)
+        db.session.commit()
+        self.user_id = self.user.id
 
     def test_magic_link_single_use_jti_invalidation(self):
         """Un lien magique ne doit être utilisable qu'une seule et unique fois (JTI invalidé dès le premier usage)."""

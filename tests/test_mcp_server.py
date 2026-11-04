@@ -671,7 +671,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.app.config["WTF_CSRF_ENABLED"] = False
         try:
             for uid, urole in [(901, "technicien"), (902, "commercial"), (903, "manager"), (904, "administrator")]:
-                if not User.query.get(uid):
+                if not db.session.get(User, uid):
                     u = User(id=uid, mail=f"user{uid}@example.com", firstname="Test", lastname=f"User{uid}", role=urole)
                     db.session.add(u)
             db.session.commit()
@@ -1062,6 +1062,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         # Invalidation manuelle
         invalidate_mcp_cache("heavy_tool_calc")
         res4 = heavy_tool_calc(10)
+        self.assertEqual(res4["result"], 20)
         self.assertEqual(call_counter, 3)
 
 

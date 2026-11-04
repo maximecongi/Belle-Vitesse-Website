@@ -1,19 +1,9 @@
-import os
-import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock weasyprint if not present
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from extensions import cache
-from models import GripCategory, GripProduct, Head, User, Vehicle, db
+from models import GripCategory, GripProduct, Head, Vehicle, db
 from services.admin.pricing import reorder_equipment, update_equipment_daily_rate
 from services.admin.projects import get_project_form_context
 from services.admin.safety_rules_config import get_all_vehicle_safety_rules_catalog
@@ -22,27 +12,17 @@ from services.admin.users import invalidate_user_cache
 from utils.database import init_cache
 
 
-class ERPCacheSyncTest(unittest.TestCase):
+class ERPCacheSyncTest(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-            init_cache(cache)
-            cache.clear()
+        super().setUp()
+        init_cache(cache)
+        cache.clear()
 
     def tearDown(self):
-        with self.app.app_context():
+        try:
             cache.clear()
-            db.session.remove()
-            db.drop_all()
+        finally:
+            super().tearDown()
 
     def test_pricing_cache_invalidation_vehicle(self):
         """Vérifie que la modification de prix d'un véhicule invalide les caches appropriés."""

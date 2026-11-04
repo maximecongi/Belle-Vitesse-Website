@@ -1,17 +1,9 @@
-import os
+from tests.base import BaseTestCase
 import time
 import unittest
 from unittest.mock import patch
 
-# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
-os.environ.setdefault("FLASK_ENV", "testing")
-os.environ.setdefault("TESTING", "True")
-os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
-os.environ.setdefault("USE_SSH_TUNNEL", "false")
-os.environ.setdefault("WTF_CSRF_ENABLED", "False")
-
-from app import create_app
-from models import NewsletterSubscriber, db
+from models import NewsletterSubscriber
 from services.public.newsletter import (
     generate_newsletter_token,
     validate_newsletter_submission,
@@ -19,26 +11,9 @@ from services.public.newsletter import (
 from itsdangerous import URLSafeTimedSerializer
 
 
-class NewsletterAntiSpamTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.client = self.app.test_client()
-        self.ctx = self.app.app_context()
-        self.ctx.push()
-        db.create_all()
 
-    def tearDown(self):
-        db.session.rollback()
-        # Nettoyage des abonnés créés pendant les tests
-        NewsletterSubscriber.query.filter(
-            NewsletterSubscriber.email.like("test_antispam_%")
-        ).delete()
-        db.session.commit()
-        db.session.remove()
-        db.drop_all()
-        self.ctx.pop()
 
+class NewsletterAntiSpamTestCase(BaseTestCase):
     def test_token_generation(self):
         """Vérifie que la génération du jeton produit un token valide et décodable."""
         token = generate_newsletter_token()
@@ -71,9 +46,7 @@ class NewsletterAntiSpamTestCase(unittest.TestCase):
 
             # Vérifie qu'aucun email n'a été envoyé et rien en base
             mock_mail.assert_not_called()
-            sub = NewsletterSubscriber.query.filter_by(
-                email=form_data["email"]
-            ).first()
+            sub = NewsletterSubscriber.query.filter_by(email=form_data["email"]).first()
             self.assertIsNone(sub)
 
     def test_dot_stuffing_detection(self):
@@ -84,7 +57,9 @@ class NewsletterAntiSpamTestCase(unittest.TestCase):
             "website_hp": "",
             "subscribe_token": generate_newsletter_token(),
         }
-        is_valid, reason, _ = validate_newsletter_submission(form_data, email=fake_email)
+        is_valid, reason, _ = validate_newsletter_submission(
+            form_data, email=fake_email
+        )
         self.assertFalse(is_valid)
         self.assertEqual(reason, "dot_stuffing")
 

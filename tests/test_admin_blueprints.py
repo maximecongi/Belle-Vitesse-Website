@@ -21,7 +21,6 @@ os.environ.setdefault("WTF_CSRF_ENABLED", "False")
 from app import create_app
 from routes.admin import (
     ADMIN_BLUEPRINTS,
-    admin_url_alias_handler,
     api_bp,
     auth_bp,
     booking_bp,

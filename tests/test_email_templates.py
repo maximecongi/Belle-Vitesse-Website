@@ -2,8 +2,6 @@ from flask import render_template
 from app import create_app
 import os
 import unittest
-from datetime import datetime, timezone
-from unittest.mock import MagicMock
 
 # Isolation stricte de l'environnement de test
 os.environ["FLASK_ENV"] = "testing"

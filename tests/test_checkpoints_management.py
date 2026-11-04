@@ -1,49 +1,28 @@
-import os
-import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock weasyprint if not present
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from extensions import cache
-from models import CheckpointDefinition, User, VehicleCheckpointConfig, db
+from models import CheckpointDefinition, db
 from services.admin.vehicle_config import (
     ensure_default_checkpoints,
     get_all_checkpoints,
-    get_checkpoint_by_id,
     save_vehicle_checkpoint_config,
     update_checkpoint,
 )
 from utils.checkpoints import get_checkpoints_for_vehicle
 
 
-class CheckpointsManagementTest(unittest.TestCase):
+class CheckpointsManagementTest(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-            cache.clear()
+        super().setUp()
+        cache.clear()
 
     def tearDown(self):
-        with self.app.app_context():
+        try:
             cache.clear()
-            db.session.remove()
-            db.drop_all()
+        finally:
+            super().tearDown()
 
     def _login_as(self, role="administrator"):
         with self.client.session_transaction() as sess:

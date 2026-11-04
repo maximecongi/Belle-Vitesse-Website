@@ -1,100 +1,81 @@
-import json
-import os
+from tests.base import BaseTestCase
 import unittest
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-# Isolation stricte de l'environnement de test avant tout import d'app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
 from models import Contact, CglWaiver, PilotWaiver, SafetyRulesWaiver, Production, Project, db
 from services.admin.waivers import auto_remind_pending_waivers
 
 
-class WaiversRemindersTest(unittest.TestCase):
+class WaiversRemindersTest(BaseTestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config['WTF_CSRF_ENABLED'] = False
-        self.client = self.app.test_client()
+        super().setUp()
 
-        with self.app.app_context():
-            db.create_all()
+        # Création de contacts et production
+        self.prod = Production(name="Prod Relance Test")
+        db.session.add(self.prod)
+        db.session.commit()
 
-            # Création de contacts et production
-            self.prod = Production(name="Prod Relance Test")
-            db.session.add(self.prod)
-            db.session.commit()
+        self.contact_prod = Contact(
+            first_name="Jean",
+            last_name="Dupont",
+            mail="jean.dupont@example.com",
+            job_title="production",
+        )
+        self.contact_pilot = Contact(
+            first_name="Luc",
+            last_name="Pilote",
+            mail="luc.pilote@example.com",
+            job_title="pilote",
+        )
+        db.session.add_all([self.contact_prod, self.contact_pilot])
+        db.session.commit()
 
-            self.contact_prod = Contact(
-                first_name="Jean",
-                last_name="Dupont",
-                mail="jean.dupont@example.com",
-                job_title="production",
-            )
-            self.contact_pilot = Contact(
-                first_name="Luc",
-                last_name="Pilote",
-                mail="luc.pilote@example.com",
-                job_title="pilote",
-            )
-            db.session.add_all([self.contact_prod, self.contact_pilot])
-            db.session.commit()
+        # Projet partant demain (J+1)
+        tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
+        end_date = tomorrow + timedelta(days=3)
 
-            # Projet partant demain (J+1)
-            tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
-            end_date = tomorrow + timedelta(days=3)
+        self.project = Project(
+            name="Tournage Urgent J-1",
+            production_id=self.prod.id,
+            production_contact_id=self.contact_prod.id,
+            pilot_contact_id=self.contact_pilot.id,
+            departure_date=tomorrow,
+            return_date=end_date,
+        )
+        db.session.add(self.project)
+        db.session.commit()
 
-            self.project = Project(
-                name="Tournage Urgent J-1",
-                production_id=self.prod.id,
-                production_contact_id=self.contact_prod.id,
-                pilot_contact_id=self.contact_pilot.id,
-                departure_date=tomorrow,
-                return_date=end_date,
-            )
-            db.session.add(self.project)
-            db.session.commit()
+        # CGL et Règles de sécurité non signées
+        self.cgl = CglWaiver(
+            project_id=self.project.id,
+            status="to_sign",
+        )
+        self.bvsr = SafetyRulesWaiver(
+            project_id=self.project.id,
+            signer_role="pilot",
+            signer_first_name="Luc",
+            signer_last_name="Pilote",
+            signer_email="luc.pilote@example.com",
+            status="to_send",
+        )
+        self.pilot_waiver = PilotWaiver(
+            project_id=self.project.id,
+            signer_first_name="Luc",
+            signer_last_name="Pilote",
+            signer_email="luc.pilote@example.com",
+            status="to_sign",
+        )
+        db.session.add_all([self.cgl, self.bvsr, self.pilot_waiver])
+        db.session.commit()
 
-            # CGL et Règles de sécurité non signées
-            self.cgl = CglWaiver(
-                project_id=self.project.id,
-                status="to_sign",
-            )
-            self.bvsr = SafetyRulesWaiver(
-                project_id=self.project.id,
-                signer_role="pilot",
-                signer_first_name="Luc",
-                signer_last_name="Pilote",
-                signer_email="luc.pilote@example.com",
-                status="to_send",
-            )
-            self.pilot_waiver = PilotWaiver(
-                project_id=self.project.id,
-                signer_first_name="Luc",
-                signer_last_name="Pilote",
-                signer_email="luc.pilote@example.com",
-                status="to_sign",
-            )
-            db.session.add_all([self.cgl, self.bvsr, self.pilot_waiver])
-            db.session.commit()
-
-            self.prod_id = self.prod.id
-            self.contact_prod_id = self.contact_prod.id
-            self.contact_pilot_id = self.contact_pilot.id
-            self.project_id = self.project.id
-            self.cgl_id = self.cgl.id
-            self.bvsr_id = self.bvsr.id
-            self.pilot_waiver_id = self.pilot_waiver.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.prod_id = self.prod.id
+        self.contact_prod_id = self.contact_prod.id
+        self.contact_pilot_id = self.contact_pilot.id
+        self.project_id = self.project.id
+        self.cgl_id = self.cgl.id
+        self.bvsr_id = self.bvsr.id
+        self.pilot_waiver_id = self.pilot_waiver.id
 
     @patch("utils.mailer.send_cgl_invitation_email", return_value=True)
     @patch("utils.mailer.send_safety_rules_invitation_email", return_value=True)

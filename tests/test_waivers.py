@@ -3,6 +3,7 @@ Tests unitaires pour le nouveau système unifié de Contrats CGL (BVRA) et Règl
 Remplace intégralement les anciens tests de double décharge pilote/production.
 """
 
+from tests.base import BaseTestCase
 from utils.document_utils import compute_hmac_seal
 from services.common.signatures import finalize_signed_document
 from services.admin.waivers import (
@@ -10,23 +11,13 @@ from services.admin.waivers import (
     create_cgl,
     create_safety_rules_waiver,
     delete_cgl,
-    delete_cgl_internal,
     delete_safety_rules_waiver,
-    delete_safety_rules_waiver_internal,
     delete_waiver,
     delete_waiver_internal,
     format_waiver_shooting_dates,
-    generate_cgl,
-    generate_safety_rules_waiver,
-    generate_waiver,
     list_cgl,
     list_safety_rules_waivers,
-    reset_cgl,
-    reset_safety_rules_waiver,
     reset_waiver,
-    send_cgl,
-    send_safety_rules_waiver,
-    send_waiver,
 )
 from models import (
     CglWaiver,
@@ -35,46 +26,16 @@ from models import (
     Project,
     SafetyRulesWaiver,
     User,
-    Vehicle,
     Waiver,
     WaiverSignedDocument,
-    WaiverToken,
     db,
 )
-from app import create_app
-from datetime import date, datetime, timezone
-import json
-import os
-import sys
+from datetime import date
 import unittest
-from unittest.mock import MagicMock, patch
-
-# Mock weasyprint si non disponible dans l'environnement de test
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
+from unittest.mock import patch
 
 
-class WaiversCglAndSafetyRulesTest(unittest.TestCase):
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+class WaiversCglAndSafetyRulesTest(BaseTestCase):
 
     def _create_mock_data(self):
         user = User(firstname="Admin", lastname="BV",

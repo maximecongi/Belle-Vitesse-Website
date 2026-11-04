@@ -5,18 +5,10 @@ Vérifie la non-persistance en cache client/proxy et la présence des en-têtes 
 import os
 import shutil
 import tempfile
-import unittest
 from unittest.mock import patch
 
-# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
-os.environ.setdefault("FLASK_ENV", "testing")
-os.environ.setdefault("TESTING", "True")
-os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
-os.environ.setdefault("USE_SSH_TUNNEL", "false")
-os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+from tests.base import BaseTestCase
 
-from app import create_app
-from models import db, User
 from services.admin.catalog import (
     get_catalog_directory,
     get_latest_catalog_info,
@@ -25,19 +17,12 @@ from services.admin.catalog import (
 )
 
 
-class TestCatalogCacheAndDownload(unittest.TestCase):
+class TestCatalogCacheAndDownload(BaseTestCase):
 
     def setUp(self):
+        super().setUp()
         self.temp_dir = tempfile.mkdtemp()
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
         self.app.config["OUTPUT_FOLDER"] = self.temp_dir
-
-        self.client = self.app.test_client()
-        self.ctx = self.app.app_context()
-        self.ctx.push()
-        db.create_all()
 
         with self.client.session_transaction() as sess:
             sess["admin_authenticated"] = True
@@ -45,11 +30,11 @@ class TestCatalogCacheAndDownload(unittest.TestCase):
             sess["admin_user_role"] = "super administrateur"
 
     def tearDown(self):
-        db.session.rollback()
-        db.session.remove()
-        db.drop_all()
-        self.ctx.pop()
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
+        try:
+            if hasattr(self, "temp_dir") and os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir, ignore_errors=True)
+        finally:
+            super().tearDown()
 
     def test_catalog_directory_uses_config_output_folder(self):
         """Vérifie que get_catalog_directory utilise bien la configuration OUTPUT_FOLDER."""

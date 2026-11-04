@@ -1,44 +1,18 @@
-import os
-import sys
 import unittest
 from datetime import date
-from unittest.mock import MagicMock
 
-# Mock Weasyprint avant l'import de Flask
-mock_weasyprint = MagicMock()
-mock_html_inst = MagicMock()
-mock_html_inst.write_pdf.return_value = (
-    b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-    b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
-    b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n"
-    b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n190\n%%EOF"
-)
-mock_weasyprint.HTML.return_value = mock_html_inst
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app  # noqa: E402
-from models import db, Project, Production, User, Vehicle  # noqa: E402
-from models.incident import Incident  # noqa: E402
-from services.admin import incidents as incident_service  # noqa: E402
-from mcp_server.tools import incidents as mcp_incidents  # noqa: E402
-from mcp_server.context import CURRENT_MCP_USER  # noqa: E402
-from mcp_auth.auth import McpUserContext  # noqa: E402
+from tests.base import BaseTestCase
+from models import db, Project, Production, User, Vehicle
+from models.incident import Incident
+from services.admin import incidents as incident_service
+from mcp_server.tools import incidents as mcp_incidents
+from mcp_server.context import CURRENT_MCP_USER
+from mcp_auth.auth import McpUserContext
 
 
-class IncidentsTestCase(unittest.TestCase):
+class IncidentsTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
+        super().setUp()
 
         # Création des données de test
         self.prod = Production(name="Production Marvel Studio")
@@ -81,11 +55,6 @@ class IncidentsTestCase(unittest.TestCase):
             scope="admin",
         )
         CURRENT_MCP_USER.set(self.admin_mcp_user)
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_create_incident(self):
         """Vérifie la création d'un incident avec calcul automatique du numéro BVIC."""

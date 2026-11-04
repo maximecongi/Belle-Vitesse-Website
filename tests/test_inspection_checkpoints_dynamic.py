@@ -1,19 +1,9 @@
-import os
-import sys
 import unittest
 from decimal import Decimal
 from datetime import date
-from unittest.mock import MagicMock
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
+from extensions import cache
 from models import (
     db,
     Project,
@@ -27,35 +17,22 @@ from models import (
 from services.admin.inspections import (
     apply_inspection_data,
     _format_base_inspection_admin,
-    get_inspection_detail_unified,
 )
 from services.admin.fleet import _detect_inspection_anomalies
 
 
-class DynamicInspectionCheckpointsTestCase(unittest.TestCase):
+class DynamicInspectionCheckpointsTestCase(BaseTestCase):
     """Tests unitaires pour le modèle relationnel dynamique des checkpoints d'inspection (fresh start)."""
 
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            from extensions import cache
-            cache.clear()
-            db.create_all()
+        super().setUp()
+        cache.clear()
 
     def tearDown(self):
-        with self.app.app_context():
-            from extensions import cache
+        try:
             cache.clear()
-            db.session.remove()
-            db.drop_all()
+        finally:
+            super().tearDown()
 
     def _create_mock_data(self):
         user = User(

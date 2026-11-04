@@ -1,18 +1,9 @@
 import os
-import sys
 import unittest
 from datetime import date
-from unittest.mock import MagicMock
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from models import db, Project, Production, User, CheckoutVehicle, CheckinVehicle
 from services.admin.inspections import (
     list_inspections_unified,
@@ -21,32 +12,19 @@ from services.admin.inspections import (
     get_unified_form_context
 )
 
-class InspectionsTest(unittest.TestCase):
+
+class InspectionsTest(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        from unittest.mock import patch
+        super().setUp()
         self.get_vehicles_patcher = patch(
             "utils.database.get_vehicles",
             return_value=[{"id": "1", "fields": {"name": "Test Car 1"}}]
         )
         self.get_vehicles_patcher.start()
 
-        with self.app.app_context():
-            db.create_all()
-
     def tearDown(self):
         self.get_vehicles_patcher.stop()
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        super().tearDown()
 
     def _create_mock_data(self):
         # Create user
@@ -394,7 +372,6 @@ class InspectionsTest(unittest.TestCase):
         et que l'abandon ne rétrograde jamais un checkout déjà signé."""
         from models import CheckoutSignedDocument
         from services.common.signatures import (
-            abandon_inspection_signature,
             finalize_signed_document,
             generate_inspection_token,
         )
@@ -507,7 +484,6 @@ class InspectionsTest(unittest.TestCase):
         """Vérifie que upload_inspection_photos_shared prend en compte les photos annotées encodées en base64."""
         import json
         from services.admin.inspections import upload_inspection_photos_shared
-        from werkzeug.datastructures import MultiDict
 
         with self.app.app_context():
             user, proj = self._create_mock_data()

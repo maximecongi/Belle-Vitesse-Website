@@ -6,43 +6,25 @@ Vérifie :
 3. Le blocage strict de la signature côté serveur si aucun lieu n'est renseigné sur le projet.
 4. L'immutabilité de l'instantané signé (snapshot) après modification des lieux sur le projet.
 """
-import os
+from tests.base import BaseTestCase
 import json
 import unittest
 from datetime import datetime, date, timezone
 
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["FLASK_ENV"] = "testing"
-
-from app import app
 from models.db import db
-from models.project import Project, Production, Contact
-from models.waiver import CglWaiver, SafetyRulesWaiver, PilotWaiver, WaiverToken
+from models.project import Project, Production
+from models.waiver import CglWaiver, WaiverToken
 from services.admin.projects import create_project, update_project
-from services.common.signatures import finalize_signed_document
 
 
-class ShootingLocationsTestCase(unittest.TestCase):
+class ShootingLocationsTestCase(BaseTestCase):
     def setUp(self):
-        self.app = app
-        self.app.config["TESTING"] = True
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        self.ctx = self.app.app_context()
-        self.ctx.push()
-        db.create_all()
+        super().setUp()
 
         # Données de test
         self.prod = Production(name="SuperProd", address="10 rue de Paris, 75001 Paris")
         db.session.add(self.prod)
         db.session.commit()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.ctx.pop()
 
     def test_project_shooting_locations_crud_and_properties(self):
         """Vérifie la création, modification, nettoyage et formatage des lieux sur un projet."""

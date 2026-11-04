@@ -1,10 +1,9 @@
-import io
 import unittest
 from unittest.mock import patch, MagicMock
 from PIL import Image
 
 from app import create_app
-from utils.pdf_compressor import compress_pdf, compress_pdf_locally, _optimize_image
+from utils.pdf_compressor import compress_pdf, _optimize_image
 from utils.document_utils import render_pdf_from_template
 
 

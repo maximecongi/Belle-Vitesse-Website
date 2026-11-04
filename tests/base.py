@@ -118,3 +118,16 @@ class BaseTestCase(unittest.TestCase):
         db.session.commit()
         return proj
 
+    def login_as_admin(self, user=None, role="Super Administrateur"):
+        """Authentifie le test_client en tant qu'administrateur dans la session."""
+        if user is None:
+            user = self.create_user(role=role)
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user.id
+            sess["admin_user_role"] = role
+            sess["admin_user_firstname"] = user.firstname
+            sess["admin_user_lastname"] = user.lastname
+            sess["admin_user_email"] = user.mail
+        return user
+

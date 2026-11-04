@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from app import create_app
-from models.db import db
 from services.common.mailer_tasks import dispatch_email, task_send_email
 from services.common.redis_queue import (
     clear_redis_cache,

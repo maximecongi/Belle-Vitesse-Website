@@ -1,43 +1,16 @@
-import os
-import sys
 import unittest
 from datetime import date, datetime, timedelta, timezone
-from io import BytesIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-# Mock Weasyprint avant l'import de Flask
-mock_weasyprint = MagicMock()
-mock_html_inst = MagicMock()
-mock_html_inst.write_pdf.return_value = (
-    b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-    b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
-    b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n"
-    b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n190\n%%EOF"
-)
-mock_weasyprint.HTML.return_value = mock_html_inst
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app  # noqa: E402
-from models import db, Project, Production, User, Vehicle  # noqa: E402
-from models.incident import Incident, IncidentToken, IncidentSignedDocument  # noqa: E402
-from services.admin import incidents as incident_service  # noqa: E402
+from tests.base import BaseTestCase
+from models import db, Project, Production, User, Vehicle
+from models.incident import IncidentSignedDocument
+from services.admin import incidents as incident_service
 
 
-class IncidentSignaturesTestCase(unittest.TestCase):
+class IncidentSignaturesTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-        self.client = self.app.test_client()
+        super().setUp()
 
         # Données de test
         self.prod = Production(name="Studio Cinéma Test")
@@ -87,11 +60,6 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             "immediate_actions": "Vérification des fixations sur place.",
         }
         self.incident = incident_service.create_incident(form_data)
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_bv_signature(self):
         """Vérifie l'enregistrement du visa Belle Vitesse."""
@@ -331,6 +299,8 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             to_email="test-prod@example.com",
             pdf_path=None,
         )
+        self.assertTrue(res_confirm)
+
     def test_incident_attached_inspection_linking(self):
         """Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident."""
         from models.inspection import CheckoutVehicle, CheckinVehicle

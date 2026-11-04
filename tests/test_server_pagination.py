@@ -1,16 +1,8 @@
-import os
+from tests.base import BaseTestCase
 import unittest
 from datetime import date, timedelta
 
-# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
-os.environ.setdefault("FLASK_ENV", "testing")
-os.environ.setdefault("TESTING", "True")
-os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
-os.environ.setdefault("USE_SSH_TUNNEL", "false")
-os.environ.setdefault("WTF_CSRF_ENABLED", "False")
-
-from app import create_app
-from models import Project, Production, Incident, CheckoutVehicle, CheckinVehicle, db
+from models import Project, Production, db
 from services.admin.projects import list_projects
 from services.admin.incidents import list_incidents
 from services.admin.checkouts import list_checkouts
@@ -18,21 +10,9 @@ from services.admin.checkins import list_checkins
 from utils.pagination import Pagination
 
 
-class TestServerPagination(unittest.TestCase):
-    def setUp(self):
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.client = self.app.test_client()
-        self.ctx = self.app.app_context()
-        self.ctx.push()
-        db.create_all()
 
-    def tearDown(self):
-        db.session.rollback()
-        db.session.remove()
-        db.drop_all()
-        self.ctx.pop()
 
+class TestServerPagination(BaseTestCase):
     def test_list_projects_backward_compatibility(self):
         """Vérifie que list_projects sans page retourne toujours une liste standard."""
         with self.app.app_context():
@@ -67,10 +47,14 @@ class TestServerPagination(unittest.TestCase):
             db.session.add(test_project)
             db.session.commit()
 
-            p = list_projects(is_archive=False, q="Super Unique Pagination", page=1, per_page=10)
+            p = list_projects(
+                is_archive=False, q="Super Unique Pagination", page=1, per_page=10
+            )
             self.assertIsInstance(p, Pagination)
             self.assertGreaterEqual(p.total, 1)
-            self.assertTrue(any("Super Unique Pagination" in proj["name"] for proj in p.items))
+            self.assertTrue(
+                any("Super Unique Pagination" in proj["name"] for proj in p.items)
+            )
 
             # Nettoyage
             db.session.delete(test_project)

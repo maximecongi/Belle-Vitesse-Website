@@ -1,6 +1,4 @@
-import os
 import unittest
-from pathlib import Path
 
 from scripts.build_bundles import (
     ADMIN_JS_FILES,
@@ -9,7 +7,6 @@ from scripts.build_bundles import (
     build_public_js_bundle,
     ensure_bundles_fresh,
     find_static_dir,
-    is_bundle_outdated,
 )
 
 

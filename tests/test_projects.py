@@ -1,3 +1,4 @@
+from tests.base import BaseTestCase
 from services.admin.projects import (
     create_project,
     update_project,
@@ -13,42 +14,11 @@ from models import (
     CheckoutVehicle, CheckinVehicle, CheckoutToken,
     ProjectReport, Incident
 )
-from app import create_app
-import os
-import sys
 import unittest
 from datetime import date
-from unittest.mock import MagicMock
-
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
 
 
-class ProjectsTest(unittest.TestCase):
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+class ProjectsTest(BaseTestCase):
 
     def test_project_crud_tracking(self):
         with self.app.app_context():
@@ -533,7 +503,6 @@ class ProjectsTest(unittest.TestCase):
         """Vérifie le nettoyage complet lors de delete_project (inspections, tokens, rapports, dossier local) et la préservation des incidents."""
         with self.app.app_context():
             from utils.storage import get_project_base_path
-            from pathlib import Path
 
             user = User(firstname="Alice", lastname="Admin", mail="alice.admin@example.com", role="administrator")
             prod = Production(name="Cascade Prod")

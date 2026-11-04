@@ -1,87 +1,57 @@
-import os
-import sys
 import unittest
-from unittest.mock import MagicMock
-
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock WeasyPrint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from models import CalendarSubscription, User, db
 
 
-class CalendarPermissionsTestCase(unittest.TestCase):
+class CalendarPermissionsTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-        os.environ["USE_SSH_TUNNEL"] = "false"
+        super().setUp()
+        # Create test users with different roles
+        self.user_regular = User(
+            firstname="Regular",
+            lastname="Technician",
+            mail="tech@bellevitesse.com",
+            role="user"
+        )
+        self.user_commercial = User(
+            firstname="Alice",
+            lastname="Commercial",
+            mail="alice@bellevitesse.com",
+            role="commercial"
+        )
+        self.user_manager = User(
+            firstname="Bob",
+            lastname="Manager",
+            mail="bob@bellevitesse.com",
+            role="manager"
+        )
+        self.user_admin = User(
+            firstname="Charlie",
+            lastname="Admin",
+            mail="charlie@bellevitesse.com",
+            role="administrator"
+        )
+        self.user_super_admin = User(
+            firstname="Super",
+            lastname="Admin",
+            mail="super@bellevitesse.com",
+            role="super administrator"
+        )
 
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
+        db.session.add_all([
+            self.user_regular,
+            self.user_commercial,
+            self.user_manager,
+            self.user_admin,
+            self.user_super_admin
+        ])
+        db.session.commit()
 
-        with self.app.app_context():
-            db.create_all()
-
-            # Create test users with different roles
-            self.user_regular = User(
-                firstname="Regular",
-                lastname="Technician",
-                mail="tech@bellevitesse.com",
-                role="user"
-            )
-            self.user_commercial = User(
-                firstname="Alice",
-                lastname="Commercial",
-                mail="alice@bellevitesse.com",
-                role="commercial"
-            )
-            self.user_manager = User(
-                firstname="Bob",
-                lastname="Manager",
-                mail="bob@bellevitesse.com",
-                role="manager"
-            )
-            self.user_admin = User(
-                firstname="Charlie",
-                lastname="Admin",
-                mail="charlie@bellevitesse.com",
-                role="administrator"
-            )
-            self.user_super_admin = User(
-                firstname="Super",
-                lastname="Admin",
-                mail="super@bellevitesse.com",
-                role="super administrator"
-            )
-
-            db.session.add_all([
-                self.user_regular,
-                self.user_commercial,
-                self.user_manager,
-                self.user_admin,
-                self.user_super_admin
-            ])
-            db.session.commit()
-
-            self.user_regular_id = self.user_regular.id
-            self.user_commercial_id = self.user_commercial.id
-            self.user_manager_id = self.user_manager.id
-            self.user_admin_id = self.user_admin.id
-            self.user_super_admin_id = self.user_super_admin.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.user_regular_id = self.user_regular.id
+        self.user_commercial_id = self.user_commercial.id
+        self.user_manager_id = self.user_manager.id
+        self.user_admin_id = self.user_admin.id
+        self.user_super_admin_id = self.user_super_admin.id
 
     def _login_as(self, user):
         with self.client.session_transaction() as sess:

@@ -1,18 +1,7 @@
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
 from datetime import date
-from unittest.mock import MagicMock
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
 from models import db, Project, Production, User, ProjectReport
 from services.admin.project_reports import (
     add_project_report,
@@ -30,63 +19,47 @@ from mcp_server.tools.projects import (
 )
 
 
-class ProjectReportsTest(unittest.TestCase):
+class ProjectReportsTest(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
+        super().setUp()
 
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
+        # Create test production
+        prod = Production(name="Studio 2026")
+        db.session.add(prod)
+        db.session.commit()
 
-        with self.app.app_context():
-            db.create_all()
+        # Create test users
+        admin_user = User(
+            firstname="Maxime",
+            lastname="Admin",
+            mail="admin@bellevitesse.com",
+            role="administrateur"
+        )
+        tech_user = User(
+            firstname="Lucas",
+            lastname="Technicien",
+            mail="tech@bellevitesse.com",
+            role="technicien"
+        )
+        db.session.add_all([admin_user, tech_user])
+        db.session.commit()
 
-            # Create test production
-            prod = Production(name="Studio 2026")
-            db.session.add(prod)
-            db.session.commit()
+        # Create test project
+        project = Project(
+            name="Tournage Pub Sport",
+            production_id=prod.id,
+            departure_date=date(2026, 9, 10),
+            shoot_start_date=date(2026, 9, 11),
+            shoot_end_date=date(2026, 9, 12),
+            return_date=date(2026, 9, 13),
+            notes="Besoins caméra spéciaux"
+        )
+        db.session.add(project)
+        db.session.commit()
 
-            # Create test users
-            admin_user = User(
-                firstname="Maxime",
-                lastname="Admin",
-                mail="admin@bellevitesse.com",
-                role="administrateur"
-            )
-            tech_user = User(
-                firstname="Lucas",
-                lastname="Technicien",
-                mail="tech@bellevitesse.com",
-                role="technicien"
-            )
-            db.session.add_all([admin_user, tech_user])
-            db.session.commit()
-
-            # Create test project
-            project = Project(
-                name="Tournage Pub Sport",
-                production_id=prod.id,
-                departure_date=date(2026, 9, 10),
-                shoot_start_date=date(2026, 9, 11),
-                shoot_end_date=date(2026, 9, 12),
-                return_date=date(2026, 9, 13),
-                notes="Besoins caméra spéciaux"
-            )
-            db.session.add(project)
-            db.session.commit()
-
-            self.project_id = project.id
-            self.admin_id = admin_user.id
-            self.tech_id = tech_user.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.project_id = project.id
+        self.admin_id = admin_user.id
+        self.tech_id = tech_user.id
 
     def test_add_and_list_reports(self):
         with self.app.app_context():

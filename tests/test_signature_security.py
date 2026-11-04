@@ -12,31 +12,15 @@ import hashlib
 import io
 import os
 import shutil
-import sys
 import tempfile
 import unittest
 from datetime import date, datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
+from tests.base import BaseTestCase
 from PIL import Image
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Isolation stricte en mémoire
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-os.environ["HASH_SECRET_KEY"] = "test-secret-key-for-audit-security-tests-12345"
-
-# Mock Weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
 from app import create_app
+
 from models import (
     CglWaiver,
     Contact,
@@ -75,27 +59,21 @@ def _generate_valid_png_base64() -> str:
     return f"data:image/png;base64,{b64_str}"
 
 
-class SignatureSecurityHardeningTest(unittest.TestCase):
+class SignatureSecurityHardeningTest(BaseTestCase):
     """Tests rigoureux de la chaîne de scellement et de la piste d'audit."""
 
     def setUp(self):
+        super().setUp()
         self.temp_dir = tempfile.mkdtemp()
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
         self.app.config["OUTPUT_FOLDER"] = self.temp_dir
         self.app.config["SERVER_NAME"] = "localhost"
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
 
     def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
-        if os.path.exists(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        try:
+            if hasattr(self, "temp_dir") and os.path.exists(self.temp_dir):
+                shutil.rmtree(self.temp_dir)
+        finally:
+            super().tearDown()
 
     def _verification_url(self, route_base, mode, document_id, signed_doc):
         version = int(getattr(signed_doc, "version", 1))
@@ -893,7 +871,6 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
     def test_signature_events_chain_tamper_detection(self):
         """Vérifie que la falsification d'un événement d'audit fait échouer verify_signature_events_chain."""
         from services.common.signatures import verify_signature_events_chain, log_signature_event
-        from models.signature_event import SignatureEvent
         with self.app.app_context():
             doc_id = "BVRA-CHAIN-TEST-001"
             log_signature_event(doc_id, "cgl", "link_generated", {"admin": "test"})

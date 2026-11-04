@@ -1,49 +1,24 @@
+from tests.base import BaseTestCase
 import os
-import sys
 import tempfile
-import time
 import unittest
 from unittest.mock import MagicMock, patch
 
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["USE_SSH_TUNNEL"] = "false"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-
-# Mock Weasyprint pour l'environnement sans GObject/Pango
-mock_weasyprint = MagicMock()
-mock_html_inst = MagicMock()
-mock_html_inst.write_pdf.return_value = (
-    b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-    b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-    b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
-    b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n"
-    b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n190\n%%EOF"
-)
-mock_weasyprint.HTML.return_value = mock_html_inst
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
 from models.db import db
 from models.project import Project, Production
 from models.waiver import SafetyRulesWaiver, WaiverSignedDocument
 from services.common.pdf_tasks import dispatch_pdf_generation, task_render_pdf_to_file
-from services.common.redis_queue import clear_redis_cache, get_rq_queue
+from services.common.redis_queue import clear_redis_cache
 
 
-class PDFTasksRQTestCase(unittest.TestCase):
+class PDFTasksRQTestCase(BaseTestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app_context = self.app.app_context()
-        self.app_context.push()
+        super().setUp()
         clear_redis_cache()
 
     def tearDown(self):
         clear_redis_cache()
-        self.app_context.pop()
+        super().tearDown()
 
     def test_sync_execution_in_testing_mode(self):
         """Vérifie que la compilation s'exécute de façon synchrone et écrit le fichier en mode test."""

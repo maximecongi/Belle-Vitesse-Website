@@ -1,40 +1,15 @@
 """
 Tests unitaires pour vérifier l'accès complet du rôle Commercial aux Décharges & Documents Légaux (CGL et BVSR).
 """
-import os
+from tests.base import BaseTestCase
 import unittest
 
-os.environ["FLASK_ENV"] = "testing"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
 from models import db, User, Project, Production, CglWaiver
 from utils.context_processors import get_user_permissions
 from utils.jwt_auth import generate_token
 
 
-class CommercialWaiversAccessTest(unittest.TestCase):
-
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+class CommercialWaiversAccessTest(BaseTestCase):
 
     def _create_mock_data(self):
         user = User(

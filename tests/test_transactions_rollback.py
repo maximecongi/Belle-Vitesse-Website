@@ -1,42 +1,14 @@
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
 from models import db, Project, Production, AppSetting
 from services.admin.utils import handle_admin_service_error
 from services.admin.projects import create_project
 from services.admin.project_reports import add_project_report
 
 
-class TransactionRollbackTest(unittest.TestCase):
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+class TransactionRollbackTest(BaseTestCase):
 
     def test_handle_admin_service_error_decorator_rolls_back(self):
         """Vérifie que le décorateur handle_admin_service_error rollback la session sur exception."""

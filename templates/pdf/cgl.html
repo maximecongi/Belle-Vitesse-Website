@@ -30,7 +30,6 @@ company_name=company_name
 {% block pdf_title %}
 {{ pdf_title_banner(
 title="Conditions Générales de Location",
-subtitle="Véhicules Techniques de Tournage",
 context_info="Version en vigueur au " ~ (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else
 (cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else cgl.created_at.strftime('%d/%m/%Y') if cgl.created_at
 else ''))

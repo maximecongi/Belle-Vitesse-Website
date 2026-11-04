@@ -3,35 +3,19 @@ Tests unitaires pour la résolution robuste des URLs de base et des liens absolu
 Vérifie qu'en environnement de développement (ou sur 127.0.0.1 / localhost), le protocole est strictement 'http://' et non 'https://'.
 """
 
+from tests.base import BaseTestCase
 import os
 import unittest
 from unittest.mock import patch
 
-# Forcer l'environnement de test mémoire avant create_app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
 from models.db import db
 from utils.request_utils import resolve_base_url
 
 
-class BaseUrlResolutionTest(unittest.TestCase):
+class BaseUrlResolutionTest(BaseTestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        super().setUp()
         self.app.config["SERVER_NAME"] = "127.0.0.1:5001"
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_local_hosts_force_http_scheme(self):
         """Vérifie que pour 127.0.0.1 et localhost, https:// est automatiquement converti en http://."""
@@ -75,7 +59,7 @@ class BaseUrlResolutionTest(unittest.TestCase):
     def test_verification_url_in_pdf_rendering_in_dev(self):
         """Vérifie que le QR code et l'URL de vérification scellés dans le PDF utilisent http:// en dev."""
         from datetime import date
-        from models import CglWaiver, Production, Project, WaiverSignedDocument
+        from models import CglWaiver, Production, Project
         from services.common.signatures import finalize_signed_document
 
         with self.app.test_request_context("http://127.0.0.1:5001/"):

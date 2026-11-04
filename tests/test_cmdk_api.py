@@ -1,39 +1,10 @@
-import os
-import sys
 import unittest
 from datetime import date, timedelta
-from unittest.mock import MagicMock
 
-# Ensure project root is on path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Mock Weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-os.environ.setdefault("FLASK_ENV", "testing")
+from tests.base import BaseTestCase
 
 
-class CmdKSearchApiTestCase(unittest.TestCase):
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["LAUNCH_MODE"] = "false"
-        from app import create_app
-        from models import db
-        self.app = create_app()
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        from models import db
-        with self.app.app_context():
-            db.session.rollback()
-            db.session.remove()
-            db.drop_all()
+class CmdKSearchApiTestCase(BaseTestCase):
 
     def _login_as_manager(self):
         with self.client.session_transaction() as sess:

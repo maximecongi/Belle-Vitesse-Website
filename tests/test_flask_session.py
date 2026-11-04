@@ -1,29 +1,16 @@
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
-from unittest.mock import MagicMock
 from redis import Redis
 
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock WeasyPrint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
 from flask import Flask, session
-from app import create_app
 from extensions import server_session
 from models import User, db
 from services.common.session_manager import (
     get_user_active_sessions,
     invalidate_user_sessions,
     register_user_session,
-    unregister_user_session,
 )
-from services.admin.users import create_user, delete_user, update_user
+from services.admin.users import delete_user, update_user
 
 
 class MockRedisStore(Redis):
@@ -80,17 +67,10 @@ class MockRedisStore(Redis):
         return True
 
 
-class FlaskSessionTestCase(unittest.TestCase):
+class FlaskSessionTestCase(BaseTestCase):
     def setUp(self):
         self.mock_redis = MockRedisStore()
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
+        super().setUp()
         self.app.config["SESSION_TYPE"] = "redis"
         self.app.config["SESSION_REDIS"] = self.mock_redis
         self.app.config["SESSION_KEY_PREFIX"] = "bv_session:"
@@ -99,24 +79,15 @@ class FlaskSessionTestCase(unittest.TestCase):
         # Initialiser Flask-Session avec le mock Redis
         server_session.init_app(self.app)
 
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-            self.user = User(
-                firstname="Alice",
-                lastname="Technicienne",
-                mail="alice@bellevitesse.com",
-                role="Technicien",
-            )
-            db.session.add(self.user)
-            db.session.commit()
-            self.user_id = self.user.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.user = User(
+            firstname="Alice",
+            lastname="Technicienne",
+            mail="alice@bellevitesse.com",
+            role="Technicien",
+        )
+        db.session.add(self.user)
+        db.session.commit()
+        self.user_id = self.user.id
 
     def test_session_stored_in_redis_not_in_cookie(self):
         """Les données de session doivent être stockées dans Redis et non dans le cookie client."""

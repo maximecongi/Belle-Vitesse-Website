@@ -1,51 +1,11 @@
+from tests.base import BaseTestCase
 import os
-import sys
 import unittest
-from unittest.mock import MagicMock
 
-# Add the project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Isolation stricte de l'environnement de test avant tout import d'app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-os.environ["LAUNCH_MODE"] = "false"
-
-# --- Mocking WeasyPrint to avoid OSError on environments without GObject ---
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app  # noqa: E402
-from models import db  # noqa: E402
+from models import db
 
 
-class RouteSmokeTest(unittest.TestCase):
-    def setUp(self):
-        # Use a test config
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-
-        # Prevent SSH tunnel or other prod-only things if possible
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+class RouteSmokeTest(BaseTestCase):
 
     def test_home_page(self):
         """Test that the home page is accessible."""

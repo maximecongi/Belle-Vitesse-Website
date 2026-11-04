@@ -1,53 +1,32 @@
-import json
-import os
-import unittest
+from tests.base import BaseTestCase
 from datetime import date
 from unittest.mock import patch
 
-# Isolation stricte de l'environnement de test
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
 from models import Production, Project, User, db
 
 
-class BookingCalendarTest(unittest.TestCase):
+class BookingCalendarTest(BaseTestCase):
     def setUp(self):
-        self.app = create_app()
-        self.app.config['WTF_CSRF_ENABLED'] = False
-        self.client = self.app.test_client()
+        super().setUp()
 
-        with self.app.app_context():
-            db.create_all()
-
-            # Créer l'utilisateur admin pour les droits de session
-            self.user = User(
-                firstname="Admin",
-                lastname="Test",
-                mail="admin@test.com",
-                role="Super Administrateur",
-            )
-            db.session.add(self.user)
-            self.prod = Production(name="Production Booking Test")
-            db.session.add(self.prod)
-            db.session.commit()
-            self.user_id = self.user.id
-            self.prod_id = self.prod.id
+        # Créer l'utilisateur admin pour les droits de session
+        self.user = User(
+            firstname="Admin",
+            lastname="Test",
+            mail="admin@test.com",
+            role="Super Administrateur",
+        )
+        db.session.add(self.user)
+        self.prod = Production(name="Production Booking Test")
+        db.session.add(self.prod)
+        db.session.commit()
+        self.user_id = self.user.id
+        self.prod_id = self.prod.id
 
         with self.client.session_transaction() as sess:
             sess["admin_authenticated"] = True
             sess["admin_user_id"] = self.user_id
             sess["admin_user_role"] = "super administrateur"
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.rollback()
-            db.session.remove()
-            db.drop_all()
 
     @patch("routes.admin.booking.get_vehicles")
     def test_booking_data_continuous_project(self, mock_get_vehicles):

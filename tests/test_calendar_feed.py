@@ -4,96 +4,66 @@ Couvre la validation des tokens, la génération granulaire des événements
 (départ, tournage continu, tournage ponctuel par blocs, immobilisations, retour),
 et la conformité du format iCalendar.
 """
-from models import CalendarSubscription, Contact, Production, Project, User, db
+from datetime import date
+from unittest.mock import patch
 from icalendar import Calendar
-from app import create_app
-from datetime import date, timedelta
-import os
-import sys
 import unittest
-from unittest.mock import MagicMock, patch
-
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock WeasyPrint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
+from tests.base import BaseTestCase
+from models import CalendarSubscription, Contact, Production, Project, User, db
 
 
-class CalendarFeedTestCase(unittest.TestCase):
+class CalendarFeedTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-        os.environ["USE_SSH_TUNNEL"] = "false"
+        super().setUp()
+        # Utilisateur et token d'abonnement
+        self.user = User(
+            firstname="Jean",
+            lastname="Dupont",
+            mail="jean.dupont@bellevitesse.com",
+            role="administrator",
+        )
+        db.session.add(self.user)
+        db.session.commit()
+        self.user_id = self.user.id
 
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.app.config["TESTING"] = True
-        self.client = self.app.test_client()
+        self.sub = CalendarSubscription(
+            user_id=self.user_id,
+            token="valid_test_token_12345",
+            is_active=True,
+        )
+        db.session.add(self.sub)
 
-        with self.app.app_context():
-            db.create_all()
+        self.sub_inactive = CalendarSubscription(
+            user_id=self.user.id,
+            token="revoked_token_67890",
+            is_active=False,
+        )
+        db.session.add(self.sub_inactive)
 
-            # Utilisateur et token d'abonnement
-            self.user = User(
-                firstname="Jean",
-                lastname="Dupont",
-                mail="jean.dupont@bellevitesse.com",
-                role="administrator",
-            )
-            db.session.add(self.user)
-            db.session.commit()
-            self.user_id = self.user.id
+        # Production & contacts de test
+        self.prod = Production(name="SuperProd Films")
+        db.session.add(self.prod)
+        db.session.commit()
+        self.prod_id = self.prod.id
 
-            self.sub = CalendarSubscription(
-                user_id=self.user_id,
-                token="valid_test_token_12345",
-                is_active=True,
-            )
-            db.session.add(self.sub)
-
-            self.sub_inactive = CalendarSubscription(
-                user_id=self.user.id,
-                token="revoked_token_67890",
-                is_active=False,
-            )
-            db.session.add(self.sub_inactive)
-
-            # Production & contacts de test
-            self.prod = Production(name="SuperProd Films")
-            db.session.add(self.prod)
-            db.session.commit()
-            self.prod_id = self.prod.id
-
-            self.contact_pilot = Contact(
-                first_name="Alain",
-                last_name="Prost",
-                phone="+33 6 11 22 33 44",
-                mail="pilot@bv.fr",
-                production_id=self.prod_id,
-            )
-            self.contact_dop = Contact(
-                first_name="Roger",
-                last_name="Deakins",
-                phone="+33 6 99 88 77 66",
-                mail="dop@bv.fr",
-                production_id=self.prod_id,
-            )
-            db.session.add_all([self.contact_pilot, self.contact_dop])
-            db.session.commit()
-            self.contact_pilot_id = self.contact_pilot.id
-            self.contact_dop_id = self.contact_dop.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        self.contact_pilot = Contact(
+            first_name="Alain",
+            last_name="Prost",
+            phone="+33 6 11 22 33 44",
+            mail="pilot@bv.fr",
+            production_id=self.prod_id,
+        )
+        self.contact_dop = Contact(
+            first_name="Roger",
+            last_name="Deakins",
+            phone="+33 6 99 88 77 66",
+            mail="dop@bv.fr",
+            production_id=self.prod_id,
+        )
+        db.session.add_all([self.contact_pilot, self.contact_dop])
+        db.session.commit()
+        self.contact_pilot_id = self.contact_pilot.id
+        self.contact_dop_id = self.contact_dop.id
 
     def test_calendar_feed_invalid_token(self):
         """Vérifie qu'un token inexistant retourne 404."""

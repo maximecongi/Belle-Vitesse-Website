@@ -1,35 +1,16 @@
-import base64
-import os
-import sys
+from tests.base import BaseTestCase
 import unittest
 from datetime import date
 from pathlib import Path
-from unittest.mock import MagicMock
 
-# Isolation stricte de l'environnement de test avant tout import d'app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-# Mock weasyprint si nécessaire
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
 from models.db import db
-from models.incident import Incident
 from models.project import Project, Production
 from models.user import User
-from models.waiver import SafetyRulesWaiver, WaiverSignedDocument
+from models.waiver import SafetyRulesWaiver
 from services.admin.incidents import create_incident, sign_incident_bv, sign_incident_prod
 from services.common.signatures import finalize_signed_document
 from utils.signature_storage import (
     delete_signature_file,
-    get_signatures_base_dir,
     load_signature_data_uri,
     save_signature_image,
 )
@@ -39,26 +20,10 @@ SAMPLE_BASE64_PNG = (
 )
 
 
-class TestSignatureStorage(unittest.TestCase):
+class TestSignatureStorage(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
+        super().setUp()
         self.app.config["SERVER_NAME"] = "localhost"
-        self.app.config["WTF_CSRF_ENABLED"] = False
-
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_save_and_load_signature_image(self):
         """Vérifie la sauvegarde d'un Base64 en PNG physique et sa relecture en Data URI."""
@@ -120,6 +85,7 @@ class TestSignatureStorage(unittest.TestCase):
             signature_data=SAMPLE_BASE64_PNG,
             signed_ip="127.0.0.1",
         )
+        self.assertTrue(res)
 
         db.session.refresh(waiver)
         # La colonne en BDD doit être un chemin relatif

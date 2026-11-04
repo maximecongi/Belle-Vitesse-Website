@@ -22,7 +22,6 @@ from scripts.cleanup_test_records import (
     discover_cleanup,
     is_test_10,
     is_test_name,
-    is_test_user,
 )
 from sqlalchemy.orm import Session
 
@@ -54,7 +53,7 @@ class TestRecordCleanupTest(unittest.TestCase):
 
     def test_preview_preserves_test10_group_and_skips_mixed_production(self):
         with self.app.app_context():
-            test_production = Production(name="Studio TEST");
+            test_production = Production(name="Studio TEST")
             mixed_production = Production(name="TEST production mixte")
             protected_production = Production(name="  TEST   10 ")
             regular_production = Production(name="Studio ordinaire")

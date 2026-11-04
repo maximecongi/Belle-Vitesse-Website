@@ -1,51 +1,21 @@
-import os
-import sys
 import unittest
-from unittest.mock import MagicMock
-
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Mock WeasyPrint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from models import User, db
 
 
-class DevRoleSwitcherTestCase(unittest.TestCase):
+class DevRoleSwitcherTestCase(BaseTestCase):
     def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["LAUNCH_MODE"] = "false"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-            # Create a user with database role Super Administrateur
-            self.user = User(
-                firstname="Maxime",
-                lastname="Admin",
-                mail="maxime@bellevitesse.com",
-                role="Super Administrateur"
-            )
-            db.session.add(self.user)
-            db.session.commit()
-            self.user_id = self.user.id
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
+        super().setUp()
+        # Create a user with database role Super Administrateur
+        self.user = User(
+            firstname="Maxime",
+            lastname="Admin",
+            mail="maxime@bellevitesse.com",
+            role="Super Administrateur"
+        )
+        db.session.add(self.user)
+        db.session.commit()
+        self.user_id = self.user.id
 
     def _login(self):
         with self.client.session_transaction() as sess:
