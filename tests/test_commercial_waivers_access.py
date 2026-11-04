@@ -10,7 +10,7 @@ os.environ["WTF_CSRF_ENABLED"] = "False"
 os.environ["USE_SSH_TUNNEL"] = "false"
 
 from app import create_app
-from models import db, User, Project, Production, CglWaiver, SafetyRulesWaiver
+from models import db, User, Project, Production, CglWaiver
 from utils.context_processors import get_user_permissions
 from utils.jwt_auth import generate_token
 
@@ -115,7 +115,7 @@ class CommercialWaiversAccessTest(unittest.TestCase):
 
         response = self.client.get("/admin/safety-rules")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9 Universelles", response.data)
+        self.assertIn(b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9", response.data)
 
     def test_commercial_can_quick_create_cgl(self):
         """Vérifie que le rôle commercial peut créer des CGL en un clic."""

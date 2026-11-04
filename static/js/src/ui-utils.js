@@ -16,7 +16,7 @@ function showFeedback(msg, type) {
 
     var processedMsg = msg || '';
     if (processedMsg.indexOf('✅') !== -1) {
-        processedMsg = processedMsg.replace(/✅\s*/g, '<i data-lucide="circle-check-big"></i> ');
+        processedMsg = processedMsg.replace(/✅\s{0,}/g, '<i data-lucide="circle-check-big"></i> ');
     }
 
     // Support both direct text and nested text element (for backward compatibility if needed)

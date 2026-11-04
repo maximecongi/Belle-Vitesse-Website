@@ -15,7 +15,7 @@
     
     <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>mermaid.initialize({startOnLoad:true, theme: 'neutral'});</script>
+    <script src="{{ asset_url('js/src/admin/mermaid-init.js') }}"></script>
 
     {% block extra_head %}{% endblock %}
 </head>

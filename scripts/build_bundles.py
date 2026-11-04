@@ -7,7 +7,6 @@ Peut être exécuté :
 - Dans Docker : appelé par entrypoint.sh au démarrage
 - Dans Flask : appelé par ensure_bundles_fresh()
 """
-import os
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -56,12 +55,15 @@ ADMIN_CSS_FILES: List[str] = [
 
 ADMIN_JS_FILES: List[str] = [
     "js/src/common/image-compressor.js",
+    "js/src/common/signature-pad-controller.js",
     "js/src/admin/flash.js",
     "js/src/admin/nav.js",
     "js/src/admin/selects.js",
     "js/src/admin/tables.js",
     "js/src/admin/charts.js",
     "js/src/admin/calendar.js",
+    "js/src/admin/admin-booking.js",
+    "js/src/admin/admin-pricing.js",
     "js/src/admin/project.js",
     "js/src/admin/cmdk.js",
     "js/src/admin/draft-store.js",
@@ -74,6 +76,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/incident-form.js",
     "js/src/admin/incident-autosave.js",
     "js/src/admin/incident-detail.js",
+    "js/src/admin/project_datepicker.js",
     "js/src/admin/project-detail-calendar.js",
     "js/src/admin/project-form.js",
     "js/src/admin/project-locations.js",
@@ -91,6 +94,8 @@ ADMIN_JS_FILES: List[str] = [
 
 PUBLIC_JS_FILES: List[str] = [
     "js/src/common/image-compressor.js",
+    "js/src/common/signature-pad-controller.js",
+    "js/src/ui-utils.js",
     "js/src/initialization.js",
     "js/src/splide.js",
     "js/src/countup.js",
@@ -368,7 +373,6 @@ def ensure_bundles_fresh(static_dir_path: Optional[str] = None, force: bool = Fa
 
 
 def main():
-    force = "--force" in sys.argv or "-f" in sys.argv
     try:
         s_dir = find_static_dir()
         print(f"📦 Dossier static localisé : {s_dir}")

@@ -3,8 +3,13 @@
  * Stylisé selon le modèle du calendrier du Dashboard et le Design System Belle Vitesse.
  */
 
-$(document).ready(function () {
-    // ── Configuration & State ──
+(function () {
+    function initBookingCalendar() {
+        if (typeof window.jQuery === 'undefined') return;
+        const $ = window.jQuery;
+        if (!$('#ganttTimelineGrid').length) return;
+
+        // ── Configuration & State ──
     let currentDate = new Date(); // Date de référence (défaut: aujourd'hui)
     let currentCategory = 'vehicle'; // Catégorie courante ('vehicle' ou 'head')
     let selectedItemId = ''; // ID de l'équipement sélectionné (optionnel)
@@ -675,4 +680,13 @@ $(document).ready(function () {
             }
         });
     }
-});
+}
+
+    window.initBookingCalendar = initBookingCalendar;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBookingCalendar);
+    } else {
+        initBookingCalendar();
+    }
+})();

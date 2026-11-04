@@ -81,8 +81,3 @@
 {{ projects_json | tojson }}
 </script>
 {% endblock %}
-
-{% block extra_js %}
-<script
-    src="{{ url_for('static', filename='js/src/admin/waiver-search.js') }}?v={{ asset_version('js/src/admin/waiver-search.js') }}"></script>
-{% endblock %}
