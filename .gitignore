@@ -306,6 +306,8 @@ test_results.txt
 # Deploy script
 deploy.sh
 
+.vscode/
+
 #bundles docker
 static/css/*.bundle.css
 static/css/admin/*.bundle.css

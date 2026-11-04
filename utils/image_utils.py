@@ -122,3 +122,57 @@ def optimize_and_save_image(file_storage, target_path, max_dimension=1920, quali
         if hasattr(file_storage, 'save'):
             file_storage.save(target_path)
         return False
+
+
+def extract_vehicle_image(fields) -> str:
+    """Extrait l'URL de l'image principale (thumbnail ou bannière) d'un véhicule ou retourne le placeholder unifié."""
+    if not fields or not isinstance(fields, dict):
+        return "/static/imgs/placeholders/vehicle.svg"
+
+    thumb = fields.get("thumbnail")
+    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
+        thumbnails = thumb[0].get("thumbnails", {})
+        if isinstance(thumbnails, dict):
+            large = thumbnails.get("large", {}).get("url")
+            if large:
+                return large
+            full = thumbnails.get("full", {}).get("url")
+            if full:
+                return full
+        url = thumb[0].get("url")
+        if url:
+            return url
+
+    banner = fields.get("banner")
+    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
+        url = banner[0].get("url")
+        if url:
+            return url
+
+    return "/static/imgs/placeholders/vehicle.svg"
+
+
+def extract_head_image(fields) -> str:
+    """Extrait l'URL de l'image principale d'une tête gyrostabilisée ou retourne le placeholder unifié."""
+    if not fields or not isinstance(fields, dict):
+        return "/static/imgs/placeholders/head.svg"
+
+    thumb = fields.get("thumbnail")
+    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
+        thumbnails = thumb[0].get("thumbnails", {})
+        if isinstance(thumbnails, dict):
+            large = thumbnails.get("large", {}).get("url") or thumbnails.get("full", {}).get("url")
+            if large:
+                return large
+        url = thumb[0].get("url")
+        if url:
+            return url
+
+    banner = fields.get("banner")
+    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
+        url = banner[0].get("url")
+        if url:
+            return url
+
+    return "/static/imgs/placeholders/head.svg"
+

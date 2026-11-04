@@ -18,12 +18,32 @@ from services.admin.status_mapping import (
 )
 
 MONTHS_FR = {
-    1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
-    7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
+    1: "Janvier",
+    2: "Février",
+    3: "Mars",
+    4: "Avril",
+    5: "Mai",
+    6: "Juin",
+    7: "Juillet",
+    8: "Août",
+    9: "Septembre",
+    10: "Octobre",
+    11: "Novembre",
+    12: "Décembre",
 }
 MONTHS_EN = {
-    1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
-    7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
 }
 
 DEFAULT_SETTINGS = {
@@ -46,61 +66,161 @@ DEFAULT_SETTINGS = {
 }
 
 ROLE_PERMISSIONS = {
-    'technicien': {
-        'sections': {'dashboard', 'departs', 'retours', 'flotte', 'tools'},
-        'nav': {
-            'dashboard', 'checkouts',
-            'checkins', 'incidents', 'fleet', 'signature'
+    "technicien": {
+        "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
+        "nav": {
+            "dashboard",
+            "checkouts",
+            "checkins",
+            "incidents",
+            "fleet",
+            "signature",
         },
     },
-    'user': {
-        'sections': {'dashboard', 'departs', 'retours', 'flotte', 'tools'},
-        'nav': {
-            'dashboard', 'checkouts',
-            'checkins', 'incidents', 'fleet', 'signature'
+    "user": {
+        "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
+        "nav": {
+            "dashboard",
+            "checkouts",
+            "checkins",
+            "incidents",
+            "fleet",
+            "signature",
         },
     },
-    'commercial': {
-        'sections': {'dashboard', 'tournages', 'departs', 'flotte', 'admin', 'tools'},
-        'nav': {
-            'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'cgl', 'safety_rules',
-            'fleet', 'pricing', 'catalog_pdf', 'mcp_connector',
-            'calendar', 'signature'
+    "commercial": {
+        "sections": {"dashboard", "tournages", "departs", "flotte", "admin", "tools"},
+        "nav": {
+            "dashboard",
+            "projects",
+            "archives",
+            "booking",
+            "productions",
+            "contacts",
+            "cgl",
+            "safety_rules",
+            "fleet",
+            "pricing",
+            "catalog_pdf",
+            "mcp_connector",
+            "calendar",
+            "signature",
         },
     },
-    'manager': {
-        'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
-        'nav': {
-            'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
-            'checkins', 'incidents', 'fleet', 'safety_rules_config', 'users', 'pricing',
-            'catalog_pdf', 'mcp_connector', 'calendar', 'newsletter',
-            'signature', 'catalog_update'
+    "manager": {
+        "sections": {
+            "dashboard",
+            "tournages",
+            "departs",
+            "retours",
+            "flotte",
+            "admin",
+            "tools",
+        },
+        "nav": {
+            "dashboard",
+            "projects",
+            "archives",
+            "booking",
+            "productions",
+            "contacts",
+            "checkouts",
+            "cgl",
+            "safety_rules",
+            "checkins",
+            "incidents",
+            "fleet",
+            "safety_rules_config",
+            "users",
+            "pricing",
+            "catalog_pdf",
+            "mcp_connector",
+            "calendar",
+            "newsletter",
+            "signature",
+            "catalog_update",
         },
     },
-    'administrateur': {
-        'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
-        'nav': {
-            'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
-            'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints', 'safety_rules_config',
-            'users', 'pricing', 'catalog_pdf', 'mcp_connector', 'settings', 'calendar',
-            'newsletter', 'signature', 'docs', 'api_docs', 'catalog_update'
+    "administrateur": {
+        "sections": {
+            "dashboard",
+            "tournages",
+            "departs",
+            "retours",
+            "flotte",
+            "admin",
+            "tools",
+        },
+        "nav": {
+            "dashboard",
+            "projects",
+            "archives",
+            "booking",
+            "productions",
+            "contacts",
+            "checkouts",
+            "cgl",
+            "safety_rules",
+            "checkins",
+            "incidents",
+            "fleet",
+            "vehicles",
+            "checkpoints",
+            "safety_rules_config",
+            "users",
+            "pricing",
+            "catalog_pdf",
+            "mcp_connector",
+            "settings",
+            "calendar",
+            "newsletter",
+            "signature",
+            "docs",
+            "api_docs",
+            "catalog_update",
         },
     },
-    'administrator': {
-        'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
-        'nav': {
-            'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
-            'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints', 'safety_rules_config',
-            'users', 'pricing', 'catalog_pdf', 'mcp_connector', 'settings', 'calendar',
-            'newsletter', 'signature', 'docs', 'api_docs', 'catalog_update'
+    "administrator": {
+        "sections": {
+            "dashboard",
+            "tournages",
+            "departs",
+            "retours",
+            "flotte",
+            "admin",
+            "tools",
+        },
+        "nav": {
+            "dashboard",
+            "projects",
+            "archives",
+            "booking",
+            "productions",
+            "contacts",
+            "checkouts",
+            "cgl",
+            "safety_rules",
+            "checkins",
+            "incidents",
+            "fleet",
+            "vehicles",
+            "checkpoints",
+            "safety_rules_config",
+            "users",
+            "pricing",
+            "catalog_pdf",
+            "mcp_connector",
+            "settings",
+            "calendar",
+            "newsletter",
+            "signature",
+            "docs",
+            "api_docs",
+            "catalog_update",
         },
     },
-    'super administrateur': {'sections': {'all'}, 'nav': {'all'}},
-    'super administrator': {'sections': {'all'}, 'nav': {'all'}},
+    "super administrateur": {"sections": {"all"}, "nav": {"all"}},
+    "super administrator": {"sections": {"all"}, "nav": {"all"}},
 }
 
 
@@ -108,38 +228,39 @@ def resolve_user_role(current_user_dict: dict, session_role: str = "") -> str:
     """Résolution déterministe du rôle utilisateur pour les permissions d'interface."""
     raw_role = ""
     if current_user_dict:
-        raw_role = current_user_dict.get(
-            'role_lower') or current_user_dict.get('role') or ""
+        raw_role = (
+            current_user_dict.get("role_lower") or current_user_dict.get("role") or ""
+        )
     if not raw_role and session_role:
         raw_role = session_role
     raw_role = str(raw_role).lower().strip()
 
-    if 'super' in raw_role:
-        return 'super administrateur'
-    elif 'admin' in raw_role:
-        return 'administrateur'
-    elif 'manager' in raw_role:
-        return 'manager'
-    elif 'commercial' in raw_role:
-        return 'commercial'
-    elif raw_role in ('technicien', 'user'):
-        return 'technicien'
-    elif current_user_dict and current_user_dict.get('is_admin'):
-        return 'super administrateur'
+    if "super" in raw_role:
+        return "super administrateur"
+    elif "admin" in raw_role:
+        return "administrateur"
+    elif "manager" in raw_role:
+        return "manager"
+    elif "commercial" in raw_role:
+        return "commercial"
+    elif raw_role in ("technicien", "user"):
+        return "technicien"
+    elif current_user_dict and current_user_dict.get("is_admin"):
+        return "super administrateur"
     else:
-        s_lower = str(session_role or '').lower()
-        if 'super' in s_lower:
-            return 'super administrateur'
-        elif 'admin' in s_lower:
-            return 'administrateur'
-        return 'technicien'
+        s_lower = str(session_role or "").lower()
+        if "super" in s_lower:
+            return "super administrateur"
+        elif "admin" in s_lower:
+            return "administrateur"
+        return "technicien"
 
 
 def get_user_permissions(user_role: str, is_admin: bool = False) -> dict:
     """Retourne la matrice des permissions (sections et nav) pour un rôle."""
-    if is_admin or user_role in ('super administrateur', 'super administrator'):
-        return {'sections': {'all'}, 'nav': {'all'}}
-    return ROLE_PERMISSIONS.get(user_role, ROLE_PERMISSIONS['technicien'])
+    if is_admin or user_role in ("super administrateur", "super administrator"):
+        return {"sections": {"all"}, "nav": {"all"}}
+    return ROLE_PERMISSIONS.get(user_role, ROLE_PERMISSIONS["technicien"])
 
 
 @lru_cache(maxsize=1)
@@ -190,25 +311,66 @@ def get_company_context():
         "DELIVERY_CONFIG": {
             "base_distance": _safe_float(settings.get("delivery_base_distance"), 100),
             "base_price": _safe_float(settings.get("delivery_base_price"), 200),
-            "high_rate": _safe_float(settings.get("delivery_high_rate"), 0.5)
+            "high_rate": _safe_float(settings.get("delivery_high_rate"), 0.5),
         },
     }
+
+
+class LazyContextList:
+    """
+    Proxy paresseux (lazy loading) pour les listes d'équipements injectées globalement
+    dans le contexte des templates Jinja2.
+    Évite les requêtes de base de données / Airtable systématiques sur les routes
+    ou pages qui n'en ont pas l'usage.
+    """
+
+    def __init__(self, key, loader_func):
+        self._key = key
+        self._loader = loader_func
+
+    def _load(self):
+        if has_request_context():
+            cached = getattr(g, f"_lazy_ctx_{self._key}", None)
+            if cached is None:
+                cached = self._loader() or []
+                setattr(g, f"_lazy_ctx_{self._key}", cached)
+            return cached
+        return self._loader() or []
+
+    def __iter__(self):
+        return iter(self._load())
+
+    def __len__(self):
+        return len(self._load())
+
+    def __getitem__(self, item):
+        return self._load()[item]
+
+    def __bool__(self):
+        return bool(self._load())
+
+    def __getattr__(self, name):
+        return getattr(self._load(), name)
+
+    def __repr__(self):
+        return repr(self._load())
 
 
 def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
     from utils.countries import COUNTRIES
+
     app.jinja_env.globals["all_countries"] = COUNTRIES
     app.jinja_env.globals["get_all_countries"] = lambda: COUNTRIES
 
     template_path = os.path.join(
-        app.root_path, 'templates', 'public', 'privacy-policy.html')
+        app.root_path, "templates", "public", "privacy-policy.html"
+    )
 
     def asset_version(filename: str) -> str:
         """Retourne l'horodatage mtime du fichier statique pour le cache-busting automatique."""
         try:
-            s_folder = app.static_folder or os.path.join(
-                app.root_path, 'static')
+            s_folder = app.static_folder or os.path.join(app.root_path, "static")
             target = os.path.join(s_folder, filename)
             if os.path.exists(target):
                 return str(int(os.path.getmtime(target)))
@@ -219,9 +381,10 @@ def init_context_processors(app):
     def asset_url(filename: str) -> str:
         """Génère l'URL d'un asset statique avec le paramètre ?v=<mtime> automatique."""
         from flask import url_for
+
         v = asset_version(filename)
         try:
-            base = url_for('static', filename=filename)
+            base = url_for("static", filename=filename)
         except Exception:
             base = f"/static/{filename.lstrip('/')}"
         return f"{base}?v={v}"
@@ -234,9 +397,8 @@ def init_context_processors(app):
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
         privacy_date = _get_privacy_date(template_path)
 
-        lang = g.get(
-            'lang', DEFAULT_LANG) if has_request_context() else DEFAULT_LANG
-        months = MONTHS_FR if lang == 'fr' else MONTHS_EN
+        lang = g.get("lang", DEFAULT_LANG) if has_request_context() else DEFAULT_LANG
+        months = MONTHS_FR if lang == "fr" else MONTHS_EN
         privacy_last_update = f"{months[privacy_date.month]} {privacy_date.year}"
 
         company_ctx = get_company_context()
@@ -246,15 +408,23 @@ def init_context_processors(app):
                 "now": datetime.now(timezone.utc),
                 "is_admin": False,
                 "lang": DEFAULT_LANG,
-                "t": t, "ts": ts, "alt_url": alt_url,
+                "t": t,
+                "ts": ts,
+                "alt_url": alt_url,
                 "launch_mode": launch_mode,
                 "privacy_last_update": privacy_last_update,
                 "asset_version": asset_version,
                 "asset_url": asset_url,
                 "user_role": "technicien",
-                "user_perms": ROLE_PERMISSIONS['technicien'],
-                "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
-                "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
+                "user_perms": ROLE_PERMISSIONS["technicien"],
+                "has_section": lambda s: (
+                    "all" in ROLE_PERMISSIONS["technicien"]["sections"]
+                    or s in ROLE_PERMISSIONS["technicien"]["sections"]
+                ),
+                "has_item": lambda i: (
+                    "all" in ROLE_PERMISSIONS["technicien"]["nav"]
+                    or i in ROLE_PERMISSIONS["technicien"]["nav"]
+                ),
             }
             base_ctx.update(company_ctx)
             return base_ctx
@@ -262,27 +432,37 @@ def init_context_processors(app):
         # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
         # afin de prévenir les pannes en cascade et les blocages au login.
         is_auth_page = request.path in (
-            '/admin/login', '/admin/logout') or request.path.startswith('/admin/auth/')
-        if getattr(g, '_rendering_error', False) or is_auth_page:
+            "/admin/login",
+            "/admin/logout",
+        ) or request.path.startswith("/admin/auth/")
+        if getattr(g, "_rendering_error", False) or is_auth_page:
             base_ctx = {
                 "now": datetime.now(timezone.utc),
-                "is_admin": request.path.startswith('/admin'),
-                "lang": g.get('lang', DEFAULT_LANG),
-                "t": t, "ts": ts, "alt_url": alt_url,
+                "is_admin": request.path.startswith("/admin"),
+                "lang": g.get("lang", DEFAULT_LANG),
+                "t": t,
+                "ts": ts,
+                "alt_url": alt_url,
                 "launch_mode": launch_mode,
                 "privacy_last_update": privacy_last_update,
                 "asset_version": asset_version,
                 "asset_url": asset_url,
                 "user_role": "technicien",
-                "user_perms": ROLE_PERMISSIONS['technicien'],
-                "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
-                "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
+                "user_perms": ROLE_PERMISSIONS["technicien"],
+                "has_section": lambda s: (
+                    "all" in ROLE_PERMISSIONS["technicien"]["sections"]
+                    or s in ROLE_PERMISSIONS["technicien"]["sections"]
+                ),
+                "has_item": lambda i: (
+                    "all" in ROLE_PERMISSIONS["technicien"]["nav"]
+                    or i in ROLE_PERMISSIONS["technicien"]["nav"]
+                ),
             }
             base_ctx.update(company_ctx)
             return base_ctx
 
-        is_admin = request.path.startswith('/admin')
-        lang = g.get('lang', DEFAULT_LANG)
+        is_admin = request.path.startswith("/admin")
+        lang = g.get("lang", DEFAULT_LANG)
 
         # Variables globales de base
         ctx = {
@@ -304,31 +484,47 @@ def init_context_processors(app):
             "INSPECTION_STATUS_MAP": INSPECTION_STATUS_MAP,
             "CHECKPOINT_STATUS_MAP": CHECKPOINT_STATUS_MAP,
             "user_role": "technicien",
-            "user_perms": ROLE_PERMISSIONS['technicien'],
-            "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
-            "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
+            "user_perms": ROLE_PERMISSIONS["technicien"],
+            "has_section": lambda s: (
+                "all" in ROLE_PERMISSIONS["technicien"]["sections"]
+                or s in ROLE_PERMISSIONS["technicien"]["sections"]
+            ),
+            "has_item": lambda i: (
+                "all" in ROLE_PERMISSIONS["technicien"]["nav"]
+                or i in ROLE_PERMISSIONS["technicien"]["nav"]
+            ),
         }
         ctx.update(company_ctx)
 
         def _load_db_context(is_admin):
             """Charge les données dynamiques depuis la base de données pour le contexte."""
             if is_admin:
-                user_id = session.get('admin_user_id')
-                session_role = session.get('admin_user_role')
+                user_id = session.get("admin_user_id")
+                session_role = session.get("admin_user_role")
                 user_dict = None
                 if user_id:
-                    role_cache_part = session_role.lower() if session_role else "default"
+                    role_cache_part = (
+                        session_role.lower() if session_role else "default"
+                    )
                     cache_key = f"user_v3:{user_id}:{role_cache_part}"
                     user_dict = cache.get(cache_key)
 
-                    if not user_dict or not isinstance(user_dict, dict) or "role_lower" not in user_dict:
+                    if (
+                        not user_dict
+                        or not isinstance(user_dict, dict)
+                        or "role_lower" not in user_dict
+                    ):
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
-                            effective_role = session_role if session_role else (
-                                user_obj.role if user_obj.role else "Technicien")
+                            effective_role = (
+                                session_role
+                                if session_role
+                                else (user_obj.role if user_obj.role else "Technicien")
+                            )
                             role_lower = normalize_role(effective_role)
                             role_display = ROLE_TRANSLATION.get(
-                                role_lower, effective_role)
+                                role_lower, effective_role
+                            )
                             # Stocke un dict, pas un objet ORM (évite DetachedInstanceError avec Redis)
                             user_dict = {
                                 "id": user_obj.id,
@@ -336,51 +532,79 @@ def init_context_processors(app):
                                 "lastname": user_obj.lastname,
                                 "role": role_display,
                                 "role_lower": role_lower,
-                                "is_admin": role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator'),
+                                "is_admin": role_lower
+                                in (
+                                    "administrateur",
+                                    "super administrateur",
+                                    "administrator",
+                                    "super administrator",
+                                ),
                                 "db_role": user_obj.role or "Technicien",
                                 "mail": user_obj.mail or "",
-                                "job": getattr(user_obj, 'job', '') or "",
-                                "phone": getattr(user_obj, 'phone', '') or "",
+                                "job": getattr(user_obj, "job", "") or "",
+                                "phone": getattr(user_obj, "phone", "") or "",
                             }
                             cache.set(cache_key, user_dict, timeout=300)
 
-                fallback_role = session.get('admin_user_role', 'Technicien')
+                fallback_role = session.get("admin_user_role", "Technicien")
                 fallback_role_lower = normalize_role(fallback_role)
                 fallback_role_display = ROLE_TRANSLATION.get(
-                    fallback_role_lower, fallback_role)
-                current_user = user_dict if user_dict else {
-                    "id": session.get('admin_user_id', 0),
-                    "firstname": session.get('admin_user_firstname', ''),
-                    "lastname": session.get('admin_user_lastname', ''),
-                    "role": fallback_role_display,
-                    "role_lower": fallback_role_lower,
-                    "is_admin": fallback_role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator'),
-                    "mail": "",
-                    "job": "",
-                    "phone": ""
-                }
+                    fallback_role_lower, fallback_role
+                )
+                current_user = (
+                    user_dict
+                    if user_dict
+                    else {
+                        "id": session.get("admin_user_id", 0),
+                        "firstname": session.get("admin_user_firstname", ""),
+                        "lastname": session.get("admin_user_lastname", ""),
+                        "role": fallback_role_display,
+                        "role_lower": fallback_role_lower,
+                        "is_admin": fallback_role_lower
+                        in (
+                            "administrateur",
+                            "super administrateur",
+                            "administrator",
+                            "super administrator",
+                        ),
+                        "mail": "",
+                        "job": "",
+                        "phone": "",
+                    }
+                )
 
                 user_role = resolve_user_role(current_user, session_role)
                 perms = get_user_permissions(
-                    user_role, is_admin=current_user.get("is_admin", False))
+                    user_role, is_admin=current_user.get("is_admin", False)
+                )
 
                 return {
                     "current_user": current_user,
                     "user_role": user_role,
                     "user_perms": perms,
-                    "has_section": lambda s: 'all' in perms['sections'] or s in perms['sections'],
-                    "has_item": lambda i: 'all' in perms['nav'] or i in perms['nav'],
-                    "vehicles": get_vehicles(),
+                    "has_section": lambda s: (
+                        "all" in perms["sections"] or s in perms["sections"]
+                    ),
+                    "has_item": lambda i: "all" in perms["nav"] or i in perms["nav"],
+                    "vehicles": LazyContextList("vehicles", get_vehicles),
                 }
             else:
                 return {
                     "user_role": "technicien",
-                    "user_perms": ROLE_PERMISSIONS['technicien'],
-                    "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
-                    "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
-                    "vehicles": get_vehicles(),
-                    "heads": get_heads(),
-                    "grips_categories": get_grips_categories(),
+                    "user_perms": ROLE_PERMISSIONS["technicien"],
+                    "has_section": lambda s: (
+                        "all" in ROLE_PERMISSIONS["technicien"]["sections"]
+                        or s in ROLE_PERMISSIONS["technicien"]["sections"]
+                    ),
+                    "has_item": lambda i: (
+                        "all" in ROLE_PERMISSIONS["technicien"]["nav"]
+                        or i in ROLE_PERMISSIONS["technicien"]["nav"]
+                    ),
+                    "vehicles": LazyContextList("vehicles", get_vehicles),
+                    "heads": LazyContextList("heads", get_heads),
+                    "grips_categories": LazyContextList(
+                        "grips_categories", get_grips_categories
+                    ),
                 }
 
         # Tentative de chargement avec retry en cas d'erreur DB
@@ -391,46 +615,60 @@ def init_context_processors(app):
             except Exception as e:
                 if attempt == 0:
                     app.logger.warning(
-                        f"⚠️ Erreur DB dans le context processor (nouvelle tentative) : {e}")
+                        f"⚠️ Erreur DB dans le context processor (nouvelle tentative) : {e}"
+                    )
                     try:
                         db.session.rollback()
                     except Exception:
                         pass
                     continue
                 app.logger.error(
-                    f"❌ Erreur DB dans le context processor (abandon) : {e}")
+                    f"❌ Erreur DB dans le context processor (abandon) : {e}"
+                )
                 if is_admin:
                     ctx["current_user"] = {
-                        "firstname": "", "lastname": "", "role": "User", "role_lower": "user", "is_admin": False}
+                        "firstname": "",
+                        "lastname": "",
+                        "role": "User",
+                        "role_lower": "user",
+                        "is_admin": False,
+                    }
                     ctx["user_role"] = "technicien"
-                    ctx["user_perms"] = ROLE_PERMISSIONS['technicien']
-                    ctx["has_section"] = lambda s: 'all' in ROLE_PERMISSIONS['technicien'][
-                        'sections'] or s in ROLE_PERMISSIONS['technicien']['sections']
-                    ctx["has_item"] = lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav']
+                    ctx["user_perms"] = ROLE_PERMISSIONS["technicien"]
+                    ctx["has_section"] = lambda s: (
+                        "all" in ROLE_PERMISSIONS["technicien"]["sections"]
+                        or s in ROLE_PERMISSIONS["technicien"]["sections"]
+                    )
+                    ctx["has_item"] = lambda i: (
+                        "all" in ROLE_PERMISSIONS["technicien"]["nav"]
+                        or i in ROLE_PERMISSIONS["technicien"]["nav"]
+                    )
                     ctx["vehicles"] = []
                 else:
-                    ctx.update({"vehicles": [], "heads": [],
-                               "grips_categories": []})
+                    ctx.update({"vehicles": [], "heads": [], "grips_categories": []})
 
         return ctx
 
     @app.context_processor
     def inject_newsletter_security():
         from services.public.newsletter import generate_newsletter_token
+
         return {"get_newsletter_token": generate_newsletter_token}
 
     @app.context_processor
     def inject_countries():
         from utils.countries import COUNTRIES
+
         return {"all_countries": COUNTRIES}
 
     @app.template_filter("date_numeric")
     def date_numeric_filter(d):
         from utils.formatting import format_date_numeric
+
         return format_date_numeric(d)
 
     @app.context_processor
     def inject_date_helpers():
         from utils.formatting import format_date_numeric
-        return {"format_date_numeric": format_date_numeric}
 
+        return {"format_date_numeric": format_date_numeric}

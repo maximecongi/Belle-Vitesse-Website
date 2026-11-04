@@ -1,113 +1,39 @@
+"""
+Logique métier CRUD, requêtage, KPIs et formulaires pour la gestion des incidents.
+"""
+
 import json
 import logging
 import os
-import uuid
-import secrets
-from datetime import datetime, date, timezone, timedelta
+from datetime import date, datetime
 from decimal import Decimal
-from pathlib import Path
 
-from flask import current_app, render_template
 from markupsafe import Markup
-from werkzeug.utils import secure_filename
+from sqlalchemy.orm import joinedload, selectinload
 
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import joinedload, selectinload, defer
-from models import db, Project, User, Vehicle, Head
-from models.incident import Incident, IncidentToken, IncidentSignedDocument
+from models import Head, Project, User, Vehicle, db
 from models.db import _utcnow
-from utils.document_utils import (
-    compute_hmac_seal,
-    compute_pdf_hash,
-    generate_pdf_access_token,
-    generate_qr_code,
-    render_pdf_from_template,
+from models.incident import Incident, IncidentSignedDocument, IncidentToken
+from services.admin.incidents.constants import (
+    INCIDENT_CATEGORY_MAP,
+    INCIDENT_IMPACT_MAP,
+    INCIDENT_SEVERITY_MAP,
+    INCIDENT_STATUS_BADGE_VALS,
+    INCIDENT_STATUS_ICONS,
+    INCIDENT_STATUS_LUCIDE_ICONS,
+    INCIDENT_STATUS_MAP,
 )
-from utils.storage import get_incident_path, ensure_dir
-from utils.image_utils import optimize_and_save_image
+from services.admin.incidents.media import _save_uploaded_files
 from services.admin.utils import handle_admin_service_error
+from utils.document_utils import generate_pdf_access_token
 from utils.entity_resolvers import resolve_incident, resolve_project
+from utils.formatting import parse_date
 from utils.pagination import Pagination
-from utils.request_utils import resolve_base_url
-from utils.signature_storage import save_signature_image, load_signature_data_uri, delete_signature_file
 
 logger = logging.getLogger(__name__)
 
-# ── Dictionnaires de Correspondance ──────────────────────────────
-
-INCIDENT_CATEGORY_MAP = {
-    "vehicule": "Véhicule",
-    "materiel_camera": "Matériel Caméra / Tête",
-    "mecanique": "Mécanique",
-    "electrique": "Électrique / Batterie",
-    "carrosserie": "Carrosserie",
-    "accident_tiers": "Accident avec tiers",
-    "meteo": "Intempéries / Météo",
-    "securite": "Sécurité / Humain",
-    "autre": "Autre incident",
-}
-
-INCIDENT_SEVERITY_MAP = {
-    "mineur": "Mineur",
-    "modere": "Modéré",
-    "critique": "Critique",
-}
-
-INCIDENT_STATUS_MAP = {
-    "signale": "Signalé",
-    "en_expertise": "En expertise / Devis",
-    "en_reparation": "En réparation atelier",
-    "assurance": "Assurance",
-    "resolu": "Résolu / Réparé",
-    "cloture": "Clôturé",
-}
-
-INCIDENT_STATUS_ICONS = {
-    "signale": "📣",
-    "en_expertise": "🔍",
-    "en_reparation": "🔧",
-    "assurance": "📋",
-    "resolu": "✅",
-    "cloture": "🔒",
-}
-
-INCIDENT_STATUS_LUCIDE_ICONS = {
-    "signale": "megaphone",
-    "en_expertise": "search",
-    "en_reparation": "wrench",
-    "assurance": "clipboard-list",
-    "resolu": "check-circle",
-    "cloture": "lock",
-}
-
-INCIDENT_SEVERITY_LUCIDE_ICONS = {
-    "mineur": "info",
-    "modere": "alert-triangle",
-    "critique": "alert-octagon",
-}
-
-INCIDENT_IMPACT_LUCIDE_ICONS = {
-    "aucun": "check-circle",
-    "retard": "clock",
-    "interruption": "pause-circle",
-    "annulation": "ban",
-}
-
-INCIDENT_STATUS_BADGE_VALS = {
-    "signale": "neutral",
-    "en_expertise": "warning",
-    "en_reparation": "in_progress",
-    "assurance": "assurance",
-    "resolu": "ok",
-    "cloture": "cloture",
-}
-
-INCIDENT_IMPACT_MAP = {
-    "aucun": "Aucun impact",
-    "retard": "Retard sur planning",
-    "interruption": "Interruption temporaire",
-    "annulation": "Annulation de session",
-}
+# Alias rétro-compatible
+_parse_date = parse_date
 
 
 def _clean_str(val):
@@ -115,20 +41,6 @@ def _clean_str(val):
         return None
     s = str(val).strip()
     return s if s else None
-
-
-def _parse_date(val):
-    if not val:
-        return None
-    if isinstance(val, (date, datetime)):
-        return val if isinstance(val, date) else val.date()
-    val_str = str(val).strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
-        try:
-            return datetime.strptime(val_str, fmt).date()
-        except ValueError:
-            pass
-    return None
 
 
 def _parse_time(val):
@@ -404,7 +316,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
     head_catalog = {}     # lower_name -> {"id": hid, "name": name}
 
     try:
-        from utils.database import get_vehicles, get_heads
+        from utils.database import get_heads, get_vehicles
         for v in (get_vehicles() or []):
             vid = str(v.get("id"))
             f = v.get("fields") or {}
@@ -716,7 +628,6 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
         except Exception:
             reported_by_id = None
     if not reported_by_id:
-        from models import User
         u = User.query.first()
         if u:
             reported_by_id = u.id
@@ -1044,7 +955,6 @@ def delete_incident(record_id, confirm=True):
         return {"success": False, "message": "Incident introuvable."}
 
     incident_number = incident.incident_number
-    project_unique_id = incident.project.project_id if incident.project else None
 
     # 1. Nettoyage des jetons d'invitation et documents signés archivés
     if incident_number:
@@ -1198,335 +1108,3 @@ def get_incident_form_context():
         "status_badge_vals": INCIDENT_STATUS_BADGE_VALS,
         "shooting_impacts": [(k, v) for k, v in INCIDENT_IMPACT_MAP.items()],
     }
-
-
-# ── Double Signature & Scellement ─────────────────────────────────
-
-@handle_admin_service_error
-def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_address=None):
-    """
-    Enregistre le visa et la signature manuscrite de Belle Vitesse pour un incident.
-    """
-    inc = resolve_incident(incident_id)
-    if not inc or inc.deleted_at is not None:
-        raise ValueError(f"Incident #{incident_id} introuvable.")
-
-    if inc.is_fully_signed and inc.signed_pdf_path:
-        return {
-            "success": True,
-            "message": "Le visa Belle Vitesse a déjà été enregistré et le constat est scellé.",
-            "incident_number": inc.incident_number,
-            "signature_status": inc.signature_status,
-            "is_fully_signed": True,
-            "signed_pdf_path": inc.signed_pdf_path,
-            "pdf_url": f"/incidents/document/{inc.signed_pdf_path}",
-            "file_path": None,
-        }
-
-    if not signer_name or not str(signer_name).strip():
-        raise ValueError("Le nom du signataire Belle Vitesse est requis.")
-    if not signature_data or not str(signature_data).strip():
-        raise ValueError("Le tracé de signature est requis.")
-
-    inc.bv_signer_name = str(signer_name).strip()
-    inc.bv_signer_role = str(signer_role).strip(
-    ) if signer_role else "Responsable Technique Belle Vitesse"
-    sig_rel_path = save_signature_image(
-        signature_data,
-        entity_type="incidents",
-        record_id=inc.incident_number,
-        suffix="_bv"
-    )
-    inc.bv_signature_data = sig_rel_path
-    inc.bv_signed_at = datetime.now(timezone.utc)
-    inc.bv_signer_ip = ip_address or "127.0.0.1"
-
-    # Scellement contradictoire UNIQUEMENT si la Production a déjà signé
-    if inc.is_signed_prod:
-        res = finalize_incident_document(inc)
-        message = "Visa Belle Vitesse enregistré et constat scellé contradictoirement avec succès."
-    else:
-        inc.signature_status = "signed_bv"
-        db.session.commit()
-        res = {}
-        message = "Visa Belle Vitesse enregistré avec succès (en attente de la signature Production pour scellement)."
-
-    return {
-        "success": True,
-        "message": message,
-        "incident_number": inc.incident_number,
-        "signature_status": inc.signature_status,
-        "is_fully_signed": inc.is_fully_signed,
-        "signed_pdf_path": inc.signed_pdf_path,
-        "pdf_url": res.get("pdf_url"),
-        "file_path": res.get("file_path"),
-    }
-
-
-@handle_admin_service_error
-def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip_address=None, token_str=None):
-    """
-    Enregistre le visa et la signature manuscrite de la Production (sur place ou via token).
-    Déclenche le scellement contradictoire final UNIQUEMENT si Belle Vitesse a déjà signé.
-    """
-    inc = resolve_incident(incident_id)
-    if not inc or inc.deleted_at is not None:
-        raise ValueError(f"Incident #{incident_id} introuvable.")
-
-    if inc.is_fully_signed and inc.signed_pdf_path:
-        return {
-            "success": True,
-            "message": "La signature Production a déjà été enregistrée et le constat est scellé.",
-            "incident_number": inc.incident_number,
-            "signature_status": inc.signature_status,
-            "is_fully_signed": True,
-            "signed_pdf_path": inc.signed_pdf_path,
-            "pdf_url": f"/incidents/document/{inc.signed_pdf_path}",
-            "file_path": None,
-        }
-
-    if not signer_name or not str(signer_name).strip():
-        raise ValueError("Le nom du représentant de la Production est requis.")
-    if not signature_data or not str(signature_data).strip():
-        raise ValueError("Le tracé de signature est requis.")
-
-    inc.prod_signer_name = str(signer_name).strip()
-    inc.prod_signer_role = str(signer_role).strip(
-    ) if signer_role else "Représentant Production"
-    sig_rel_path = save_signature_image(
-        signature_data,
-        entity_type="incidents",
-        record_id=inc.incident_number,
-        suffix="_prod"
-    )
-    inc.prod_signature_data = sig_rel_path
-    inc.prod_signed_at = datetime.now(timezone.utc)
-    inc.prod_signer_ip = ip_address or "127.0.0.1"
-
-    if token_str:
-        tok = db.session.get(IncidentToken, token_str)
-        if tok:
-            tok.signature = sig_rel_path
-
-    # Scellement contradictoire UNIQUEMENT si Belle Vitesse a déjà signé
-    if inc.is_signed_bv:
-        res = finalize_incident_document(inc)
-        message = "Signature Production enregistrée et constat scellé contradictoirement avec succès."
-    else:
-        inc.signature_status = "signed_prod"
-        db.session.commit()
-        res = {}
-        message = "Signature Production enregistrée avec succès (en attente du visa Belle Vitesse pour scellement)."
-
-    return {
-        "success": True,
-        "message": message,
-        "incident_number": inc.incident_number,
-        "signature_status": inc.signature_status,
-        "is_fully_signed": inc.is_fully_signed,
-        "signed_pdf_path": inc.signed_pdf_path,
-        "pdf_url": res.get("pdf_url"),
-        "file_path": res.get("file_path"),
-    }
-
-
-@handle_admin_service_error
-def generate_incident_token(incident_id, recipient_email=None):
-    """
-    Génère un jeton sécurisé temporaire (48h) pour la signature distante par la Production.
-    """
-    inc = resolve_incident(incident_id)
-    if not inc or inc.deleted_at is not None:
-        raise ValueError(f"Incident #{incident_id} introuvable.")
-
-    token_str = str(uuid.uuid4())
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=48)
-
-    token_entry = IncidentToken(
-        token=token_str,
-        incident_id=inc.id,
-        recipient_email=recipient_email.strip() if recipient_email else None,
-        created_at=datetime.now(timezone.utc),
-        expires_at=expires_at,
-    )
-    db.session.add(token_entry)
-
-    if inc.signature_status != "signed":
-        inc.signature_status = "pending_prod"
-
-    db.session.commit()
-
-    base_url = resolve_base_url()
-    signing_url = f"{base_url}/incidents/sign/{token_str}"
-
-    # Expédition de l'invitation par email si une adresse est renseignée
-    email_sent = False
-    if recipient_email:
-        try:
-            from utils.mailer import send_incident_signature_request_email
-            send_incident_signature_request_email(
-                inc, recipient_email.strip(), signing_url)
-            email_sent = True
-        except Exception as mail_err:
-            logger.warning(
-                f"⚠️ Échec d'envoi de l'invitation email pour l'incident {inc.incident_number}: {mail_err}")
-
-    return {
-        "success": True,
-        "token": token_str,
-        "signing_url": signing_url,
-        "recipient_email": recipient_email,
-        "email_sent": email_sent,
-        "expires_at": expires_at.isoformat(),
-    }
-
-
-def validate_incident_token(token_str):
-    """
-    Valide un jeton de signature publique pour incident.
-    Retourne (token_entry, incident) ou (None, code_erreur).
-    """
-    token_entry = db.session.get(IncidentToken, token_str)
-    if not token_entry:
-        return None, 404
-
-    now_utc = datetime.now(timezone.utc)
-    exp = token_entry.expires_at
-    if exp:
-        if exp.tzinfo is None:
-            exp = exp.replace(tzinfo=timezone.utc)
-        if exp < now_utc:
-            return None, 410  # Expiré
-
-    incident = token_entry.incident
-    if not incident or incident.deleted_at is not None:
-        return None, 404
-
-    return (token_entry, incident), 200
-
-
-def finalize_incident_document(incident, base_url=None):
-    """
-    Finalise et scelle un constat d'incident contradictoirement signé :
-    Délègue l'ensemble du cycle de scellement électronique, d'archivage légal
-    et de synchronisation kDrive au moteur unifié de signatures.py.
-    """
-    from services.common.signatures import seal_incident_contradictory_document
-
-    incident_data = get_incident_detail(incident.id)
-    return seal_incident_contradictory_document(incident, incident_data, base_url=base_url)
-
-
-# ── Génération du Rapport PDF ────────────────────────────────────
-
-def generate_incident_pdf(record_id):
-    """
-    Génère la fiche de constat d'incident officielle au format PDF selon la DA Belle Vitesse.
-    Intègre les signatures réelles, le QR code et le sceau HMAC si le constat est finalisé.
-    """
-    incident_data = get_incident_detail(record_id)
-    if not incident_data:
-        raise ValueError(
-            f"Incident #{record_id} introuvable pour la génération PDF.")
-
-    company_address = ""
-    company_name = "Belle Vitesse SAS"
-    try:
-        from models import AppSetting
-        from utils.context_processors import DEFAULT_SETTINGS
-        company_address = AppSetting.get(
-            "company_address", DEFAULT_SETTINGS.get("company_address", ""))
-        company_name = AppSetting.get(
-            "company_name", DEFAULT_SETTINGS.get("company_name", "Belle Vitesse SAS"))
-    except Exception:
-        pass
-
-    is_sealed = incident_data.get("is_fully_signed", False) or incident_data.get(
-        "signature_status") == "signed"
-
-    # Si le document est scellé et que le PDF signé existe sur le disque, servir l'exemplaire scellé original
-    if is_sealed and incident_data.get("signed_pdf_path"):
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        sealed_file_path = os.path.join(
-            output_base, incident_data["signed_pdf_path"])
-        if os.path.exists(sealed_file_path):
-            with open(sealed_file_path, "rb") as f:
-                return f.read(), os.path.basename(sealed_file_path)
-
-    qr_code_img = None
-    verification_url = None
-    if is_sealed and incident_data.get("hash"):
-        base_url = resolve_base_url()
-        verification_url = f"{base_url}/incidents/verify/{incident_data['incident_number']}"
-        qr_code_img = generate_qr_code(verification_url)
-
-    html = render_template(
-        "pdf/incident_report.html",
-        company_name=company_name,
-        company_address=company_address,
-        incident=incident_data,
-        today=_format_date(date.today()),
-        is_sealed=is_sealed,
-        qr=qr_code_img,
-        hash=incident_data.get("hash"),
-        verification_url=verification_url,
-        signed_at_str=incident_data.get(
-            "prod_signed_at") or _format_date(date.today()),
-    )
-
-    filename = f"Belle_Vitesse_INCIDENT_{incident_data['incident_number']}.pdf"
-    pdf_bytes = render_pdf_from_template(
-        html_content=html,
-        base_url=current_app.root_path,
-        stylesheets=["css/styles.css",
-                     "css/checkout.css", "css/incident_pdf.css"],
-        filename=filename,
-    )
-
-    return pdf_bytes, filename
-
-
-# ── Helpers Internes ─────────────────────────────────────────────
-
-def _save_uploaded_files(file_list, subfolder="photos"):
-    """
-    Sauvegarde une liste de fichiers uploadés dans output/incidents/<subfolder>/ et retourne leurs chemins relatifs.
-    """
-    if not file_list:
-        return []
-
-    output_base = Path(
-        os.getenv("OUTPUT_FOLDER", Path(current_app.root_path) / "output"))
-    dest_dir = output_base / "incidents" / subfolder
-    dest_dir.mkdir(parents=True, exist_ok=True)
-
-    saved_paths = []
-    for f in file_list:
-        if not f or not getattr(f, "filename", None):
-            continue
-        original_name = secure_filename(f.filename)
-        if not original_name:
-            continue
-
-        unique_prefix = uuid.uuid4().hex[:8]
-        stem = Path(original_name).stem
-        ext = Path(original_name).suffix or ".jpg"
-        if subfolder == "photos" and ext.lower() in ('.heic', '.heif'):
-            ext = ".jpg"
-        safe_name = f"{unique_prefix}_{stem}{ext}"
-        target_path = dest_dir / safe_name
-
-        try:
-            if subfolder == "photos":
-                optimize_and_save_image(f, target_path)
-            else:
-                f.save(target_path)
-            # Enregistre le chemin relatif par rapport à output_base
-            rel_path = os.path.relpath(target_path, output_base)
-            saved_paths.append(rel_path)
-        except Exception as err:
-            logger.error(
-                f"Erreur lors de la sauvegarde du fichier {original_name} : {err}")
-
-    return saved_paths

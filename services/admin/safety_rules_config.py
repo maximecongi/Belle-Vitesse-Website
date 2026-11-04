@@ -1,6 +1,8 @@
-import logging
 import json
+import logging
+
 from models import AppSetting
+from utils.image_utils import extract_vehicle_image
 
 logger = logging.getLogger(__name__)
 
@@ -261,29 +263,8 @@ def save_safety_equipment_catalog(equipment_items):
         return False
 
 
-def _extract_vehicle_image(fields):
-    """Extrait l'image principale ou retourne le placeholder par défaut."""
-    if not fields or not isinstance(fields, dict):
-        return "/static/imgs/placeholders/vehicle.svg"
-    thumb = fields.get("thumbnail")
-    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
-        thumbnails = thumb[0].get("thumbnails", {})
-        if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get("url")
-            if large:
-                return large
-            full = thumbnails.get("full", {}).get("url")
-            if full:
-                return full
-        url = thumb[0].get("url")
-        if url:
-            return url
-    banner = fields.get("banner")
-    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
-        url = banner[0].get("url")
-        if url:
-            return url
-    return "/static/imgs/placeholders/vehicle.svg"
+# Alias rétro-compatible
+_extract_vehicle_image = extract_vehicle_image
 
 
 def _find_default_rules(name):
@@ -552,7 +533,13 @@ def get_safety_rules_for_vehicles(vehicles_details, catalog=None):
                 c_id_lower = c_id.lower()
                 c_name_lower = c_data.get("name", "").lower()
                 c_lbl_lower = c_data.get("label", "").lower()
-                if (c_id_lower and c_id_lower in vname_lower) or (vslug and vslug in c_id_lower) or (c_name_lower and c_name_lower in vname_lower) or (vname_lower and vname_lower in c_name_lower):
+                if (
+                    (c_id_lower and c_id_lower in vname_lower)
+                    or (vslug and vslug in c_id_lower)
+                    or (c_name_lower and c_name_lower in vname_lower)
+                    or (c_lbl_lower and c_lbl_lower in vname_lower)
+                    or (vname_lower and vname_lower in c_name_lower)
+                ):
                     entry = c_data
                     break
 

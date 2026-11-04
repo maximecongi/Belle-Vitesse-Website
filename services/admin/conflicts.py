@@ -3,27 +3,20 @@ Service de détection des conflits de réservation de matériel.
 Permet d'identifier les chevauchements de dates entre projets pour les véhicules et têtes gyrostabilisées.
 """
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy.orm import joinedload
 
 from models import Project
 from utils.database import get_heads, get_vehicles
+from utils.formatting import parse_date
 
 logger = logging.getLogger(__name__)
 
+# Alias rétro-compatible
+_parse_date = parse_date
 
-def _parse_date(val: Optional[Union[str, date]]) -> Optional[date]:
-    """Convertit une chaîne ISO ou objet date en instance de date."""
-    if not val:
-        return None
-    if isinstance(val, date):
-        return val
-    try:
-        return datetime.strptime(str(val).strip(), "%Y-%m-%d").date()
-    except (ValueError, TypeError):
-        return None
 
 
 def _expand_date_range(d_start: date, d_end: date) -> set:

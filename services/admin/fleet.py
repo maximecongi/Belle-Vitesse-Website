@@ -12,44 +12,17 @@ from models import (
     CheckoutVehicle,
     Incident,
     Project,
-    User,
-    db,
 )
 from models.catalog import Vehicle
 from services.admin.projects import get_project_shoot_status
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
+from utils.image_utils import extract_vehicle_image
 
 logger = logging.getLogger(__name__)
 
-
-def _extract_vehicle_image(fields: Dict[str, Any]) -> str:
-    """Extrait l'URL de l'image principale (thumbnail ou bannière) du véhicule."""
-    if not fields:
-        return "/static/imgs/placeholders/vehicle.svg"
-
-    thumb = fields.get("thumbnail")
-    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
-        # Chercher dans les tailles générées ou l'URL brute
-        thumbnails = thumb[0].get("thumbnails", {})
-        if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get("url")
-            if large:
-                return large
-            full = thumbnails.get("full", {}).get("url")
-            if full:
-                return full
-        url = thumb[0].get("url")
-        if url:
-            return url
-
-    banner = fields.get("banner")
-    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
-        url = banner[0].get("url")
-        if url:
-            return url
-
-    return "/static/imgs/placeholders/vehicle.svg"
+# Alias rétro-compatible
+_extract_vehicle_image = extract_vehicle_image
 
 
 def _detect_inspection_anomalies(record: Any) -> List[str]:
@@ -164,9 +137,6 @@ def get_fleet_overview() -> Dict[str, Any]:
         CheckinVehicle.deleted_at.is_(None)).all()
     incidents = Incident.query.filter(Incident.deleted_at.is_(None)).all()
     projects = Project.query.filter(Project.deleted_at.is_(None)).all()
-
-    # Dictionnaire des projets
-    project_map = {p.id: p for p in projects}
 
     # Suivi des batteries récentes par véhicule : {vid: (date_or_created, battery_val)}
     latest_batteries: Dict[str, tuple] = {}

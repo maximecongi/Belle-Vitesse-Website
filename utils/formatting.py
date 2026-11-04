@@ -1,4 +1,9 @@
+import re
 from datetime import date, datetime
+
+import bleach
+import markdown
+from markupsafe import Markup
 
 
 def get_today_paris() -> date:
@@ -13,6 +18,29 @@ def get_today_paris() -> date:
 def get_today_paris_iso() -> str:
     """Retourne la date du jour au format ISO YYYY-MM-DD selon le fuseau Europe/Paris."""
     return get_today_paris().strftime("%Y-%m-%d")
+
+
+def parse_date(val) -> date | None:
+    """
+    Parse de manière tolérante une valeur en objet date.
+    Gère les objets date, datetime et les formats textuels courants (YYYY-MM-DD, DD/MM/YYYY, etc.).
+    """
+    if not val:
+        return None
+    if isinstance(val, datetime):
+        return val.date()
+    if isinstance(val, date):
+        return val
+    val_str = str(val).strip()
+    if not val_str:
+        return None
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(val_str[:10], fmt).date()
+        except ValueError:
+            pass
+    return None
+
 
 
 MOIS_FR = [
@@ -90,11 +118,6 @@ def format_date_numeric(d) -> str:
 
 
 # ── Markdown Rendering (Notion-style & Secure) ───────────────────────
-
-import re
-import bleach
-import markdown
-from markupsafe import Markup
 
 ALLOWED_MARKDOWN_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'del',

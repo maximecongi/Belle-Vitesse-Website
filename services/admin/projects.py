@@ -2,18 +2,18 @@ import json
 import logging
 import os
 
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
 
 from models import Contact, Production, Project, User, db
 from services.admin.status_mapping import format_waiver_status
-from utils.database import get_vehicles, get_heads
-from utils.formatting import format_date_fr, get_today_paris
-from utils.document_utils import generate_pdf_access_token
+from utils.database import get_heads, get_vehicles
+from utils.formatting import format_date_fr, get_today_paris, parse_date
 from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import resolve_project
+from utils.image_utils import extract_head_image, extract_vehicle_image
 from utils.pagination import Pagination
 
 logger = logging.getLogger(__name__)
@@ -30,51 +30,11 @@ def _get_secured_document_url(path, doc_type):
 
 # ── Projets (Gestion métier) ─────────────────────────────────────
 
+# Alias rétro-compatibles
+_extract_vehicle_image = extract_vehicle_image
+_extract_head_image = extract_head_image
+_parse_date = parse_date
 
-def _extract_vehicle_image(fields: dict) -> str:
-    """Extrait l'URL de l'image principale d'un véhicule ou retourne le placeholder unifié."""
-    if not fields:
-        return "/static/imgs/placeholders/vehicle.svg"
-    thumb = fields.get("thumbnail")
-    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
-        thumbnails = thumb[0].get("thumbnails", {})
-        if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get(
-                "url") or thumbnails.get("full", {}).get("url")
-            if large:
-                return large
-        url = thumb[0].get("url")
-        if url:
-            return url
-    banner = fields.get("banner")
-    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
-        url = banner[0].get("url")
-        if url:
-            return url
-    return "/static/imgs/placeholders/vehicle.svg"
-
-
-def _extract_head_image(fields: dict) -> str:
-    """Extrait l'URL de l'image principale d'une tête gyrostabilisée ou retourne le placeholder unifié."""
-    if not fields:
-        return "/static/imgs/placeholders/head.svg"
-    thumb = fields.get("thumbnail")
-    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
-        thumbnails = thumb[0].get("thumbnails", {})
-        if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get(
-                "url") or thumbnails.get("full", {}).get("url")
-            if large:
-                return large
-        url = thumb[0].get("url")
-        if url:
-            return url
-    banner = fields.get("banner")
-    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
-        url = banner[0].get("url")
-        if url:
-            return url
-    return "/static/imgs/placeholders/head.svg"
 
 
 def _format_vehicle_state(project, vehicle_id, vehicle_map):
@@ -133,25 +93,6 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
         "checkin_conform": "true" if (c_in and c_in.vehicle_ready) else "false",
         "checkin_ready": "true" if (c_in and c_in.vehicle_ready) else ("false" if c_in else "—"),
     }
-
-
-def _parse_date(d):
-    """Utilitaire pour parser les dates (gère les vides, chaînes ISO et objets date)."""
-    if not d:
-        return None
-    if isinstance(d, datetime):
-        return d.date()
-    if isinstance(d, date):
-        return d
-    if isinstance(d, str):
-        d_str = d.strip()
-        if not d_str:
-            return None
-        try:
-            return datetime.strptime(d_str[:10], "%Y-%m-%d").date()
-        except ValueError:
-            return None
-    return None
 
 
 def get_project_shoot_status(p, today_date=None):
