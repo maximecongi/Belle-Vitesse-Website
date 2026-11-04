@@ -164,3 +164,77 @@ class MockSafetyRulesWaiver:
     @property
     def bv_signature_data_uri(self):
         return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='80' viewBox='0 0 240 80'><path d='M30,45 Q70,20 110,50 T170,25 T220,40' fill='none' stroke='%2315803d' stroke-width='2.5' stroke-linecap='round'/></svg>"
+
+
+class MockPilotWaiver:
+    """Mock représentatif fidèle d'une Attestation Pilote (BVPA / Annexe 3 aux CGL)."""
+    id = 997
+    waiver_id = "BVPA-DEMO-2026"
+    waiver_type = "pilot_waiver"
+    status = "signed"
+    created_at = datetime(2026, 10, 20, 10, 0)
+    generated_at = datetime(2026, 10, 20, 10, 30)
+    signed_at = datetime(2026, 10, 22, 15, 30)
+    signer_ip = "192.168.1.42"
+    project = MockProject()
+
+    signer_role = "pilot"
+    signer_role_custom = ""
+    signer_first_name = "Alexandre"
+    signer_last_name = "Mercier"
+    signer_email = "alexandre.mercier@stunt-pro.com"
+    signer_phone = "+33 6 98 76 54 32"
+    signer_company = "Stunt Precision Drivers"
+
+    vehicles = "eCar, eBike"
+    vehicles_details = [
+        {
+            "name": "eCar",
+            "slug": "ecar",
+            "unique_id": "BV-ECAR-01",
+            "checkout_doc_id": "BVCO-ECAR-01",
+            "thumbnail": "/static/imgs/vehicles/ecar-thumbnail.png",
+        },
+        {
+            "name": "eBike",
+            "slug": "ebike",
+            "unique_id": "BV-EBIKE-02",
+            "checkout_doc_id": "BVCO-EBIKE-02",
+            "thumbnail": "/static/imgs/vehicles/ebike-thumbnail.png",
+        },
+    ]
+
+    hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+    @property
+    def signer_name(self):
+        return f"{self.signer_first_name} {self.signer_last_name}"
+
+    @property
+    def pilot_function_label(self):
+        return "Pilote"
+
+    @property
+    def signer_role_label(self):
+        return "Pilote Déclarant"
+
+    @property
+    def display_project_name(self):
+        return self.project.name
+
+    @property
+    def display_production_name(self):
+        return "Antiestático Barcelona SL"
+
+    @property
+    def display_shooting_dates(self):
+        return "Du 12/11/2026 au 18/11/2026"
+
+    @property
+    def display_shooting_locations(self):
+        return "Circuit de Mornay ; Plateau 3 Studios de Bry"
+
+    @property
+    def signature_data_uri(self):
+        return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='80' viewBox='0 0 240 80'><path d='M25,55 Q55,15 85,40 T150,30 T210,60' fill='none' stroke='%231e3a8a' stroke-width='2.5' stroke-linecap='round'/></svg>"
+

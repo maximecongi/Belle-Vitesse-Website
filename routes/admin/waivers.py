@@ -580,21 +580,35 @@ def admin_pilot_waivers_preview(waiver_id=None):
         ).first()
 
     if not waiver:
-        from services.admin.waivers.mock_data import MockSafetyRulesWaiver
-        waiver = MockSafetyRulesWaiver()
-        waiver.waiver_id = "BVPA-PREVIEW"
-        waiver.signer_role = "pilot"
+        from services.admin.waivers.mock_data import MockPilotWaiver
+        waiver = MockPilotWaiver()
 
     is_pdf_format = request.args.get("format") == "pdf"
+    base_url = request.host_url.rstrip("/")
+    verification_url = f"{base_url}/pilot-attestation/verify/{waiver.waiver_id}"
+    signed_at = getattr(waiver, "signed_at", None)
+    signed_at_str = signed_at.strftime("%d/%m/%Y à %H:%M") if signed_at else None
+    sig_img = getattr(waiver, "signature_data_uri", None)
+    current_hash = getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+    mock_qr = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>"
+
     html_content = render_template(
         "pdf/pilot_waiver.html",
+        pilot_waiver=waiver,
         waiver=waiver,
         vehicles_details=getattr(waiver, "vehicles_details", []),
-        signature=getattr(waiver, "signature_data_uri", None),
+        signature=sig_img,
+        pilot_signature=sig_img,
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
-        base_url=request.host_url.rstrip("/"),
-        qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
-        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        base_url=base_url,
+        verification_url=verification_url,
+        signed_at_str=signed_at_str,
+        signed_ip=getattr(waiver, "signer_ip", "127.0.0.1"),
+        qr=mock_qr,
+        qr_data_uri=mock_qr,
+        hash=current_hash,
+        document_hash=current_hash,
+        seal_hash=current_hash,
         is_preview=(not is_pdf_format),
     )
 

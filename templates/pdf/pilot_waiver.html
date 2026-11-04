@@ -2,6 +2,9 @@
 
 {% block title %}BVPA — {{ waiver.waiver_id }} — {{ waiver.display_project_name }}{% endblock %}
 
+{% block body_class %}bvpa-container{% endblock %}
+{% block document_class %}bvpa-document{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ asset_url('css/admin/pilot-waiver-pdf.css') }}">
 {% endblock %}
