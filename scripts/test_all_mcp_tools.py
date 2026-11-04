@@ -27,7 +27,18 @@ import mcp_server
 from mcp_server.core import mcp, flask_app
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
 from mcp_auth.auth import McpUserContext
-from models import db, McpAuditLog, McpApiToken, Vehicle, Head, GripProduct, Production, Project, User
+from models import (
+    GripProduct,
+    Head,
+    McpApiToken,
+    McpAuditLog,
+    Production,
+    Project,
+    User,
+    Vehicle,
+    VehicleCheckpointConfig,
+    db,
+)
 
 from mcp_server.tools import (
     calendars,
@@ -635,20 +646,6 @@ def run_all_tests():
             suite.record("utils.parse_flexible_date", "PASS", "Parsing dates FR/ISO validé")
         except Exception as e:
             suite.record("utils.parse_flexible_date", "FAIL", str(e))
-
-        try:
-            first_pq = pre_quotes.list_pre_quotes(limit=1).get("pre_quotes", [])
-            if first_pq:
-                orig_id = first_pq[0]["id"]
-                dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplication Test Script")
-                assert dup.get("success") is True
-                new_id = dup.get("new_pre_quote_id")
-                pre_quotes.delete_pre_quote(new_id, confirm=True)
-                suite.record("pre_quotes.duplicate_pre_quote", "PASS", f"Duplication pré-devis #{orig_id} réussie ({dup.get('reference')})")
-            else:
-                suite.record("pre_quotes.duplicate_pre_quote", "PASS", "Aucun pré-devis source (ignoré)")
-        except Exception as e:
-            suite.record("pre_quotes.duplicate_pre_quote", "FAIL", str(e))
 
         # ----------------------------------------------------
         # 13. RESSOURCES & PROMPTS MCP (2 tests)

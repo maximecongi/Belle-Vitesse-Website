@@ -3,7 +3,7 @@ Routes admin pour le calendrier de booking matériel.
 Affiche un diagramme Gantt des réservations par équipement.
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from flask import Blueprint, jsonify, render_template, request
 from sqlalchemy.orm import joinedload
@@ -67,7 +67,7 @@ def admin_booking_data():
         filtered_items = item_map
 
     # Récupérer tous les projets avec dates
-    all_projects = Project.query.filter(Project.deleted_at == None).options(
+    all_projects = Project.query.filter(Project.deleted_at.is_(None)).options(
         joinedload(Project.production)
     ).all()
 

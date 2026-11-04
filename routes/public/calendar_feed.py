@@ -227,7 +227,7 @@ def calendar_feed(token=None):
 
     # 3. Récupérer tous les projets avec au moins une date de tournage (et non archivés/supprimés)
     projects = (
-        Project.query.filter(Project.deleted_at == None)
+        Project.query.filter(Project.deleted_at.is_(None))
         .options(
             joinedload(Project.production),
             joinedload(Project.pilot_contact),

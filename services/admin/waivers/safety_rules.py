@@ -133,7 +133,7 @@ def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vites
 def list_safety_rules_waivers(project_id=None):
     """Liste et formate les engagements aux règles de sécurité (BVSR)."""
     query = SafetyRulesWaiver.query.outerjoin(Project).filter(
-        SafetyRulesWaiver.deleted_at == None
+        SafetyRulesWaiver.deleted_at.is_(None)
     ).options(joinedload(SafetyRulesWaiver.project))
 
     if project_id:

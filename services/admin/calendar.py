@@ -17,7 +17,7 @@ def get_calendar_events():
     """
     records = (
         Project.query.options(joinedload(Project.production))
-        .filter(Project.deleted_at == None)
+        .filter(Project.deleted_at.is_(None))
         .all()
     )
     events = []

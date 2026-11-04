@@ -65,7 +65,7 @@ def delete_pilot_waiver_internal(project_id):
 def list_pilot_waivers(project_id=None):
     """Liste et formate les attestations d'information et d'engagement du pilote (Annexe 3 - BVPA)."""
     query = PilotWaiver.query.outerjoin(Project).filter(
-        PilotWaiver.deleted_at == None
+        PilotWaiver.deleted_at.is_(None)
     ).options(joinedload(PilotWaiver.project))
 
     if project_id:

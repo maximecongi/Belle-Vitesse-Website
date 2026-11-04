@@ -6,43 +6,6 @@ from utils.decorators import require_roles
 mcp_tokens_bp = Blueprint("admin_mcp_tokens", __name__, url_prefix="/admin/mcp-connector")
 
 
-def _ensure_scope_column_exists():
-    """Vérifie et ajoute automatiquement la colonne 'scope' dans mcp_api_tokens si elle manque."""
-    try:
-        from sqlalchemy import text
-        db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-
-
-def _ensure_audit_table_exists():
-    """Vérifie et crée automatiquement la table mcp_audit_logs si elle manque."""
-    try:
-        from sqlalchemy import text
-        db.session.execute(text("""
-            CREATE TABLE IF NOT EXISTS mcp_audit_logs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                user_id INT NULL,
-                token_id INT NULL,
-                tool_name VARCHAR(100) NOT NULL,
-                arguments_json TEXT NULL,
-                status VARCHAR(30) NOT NULL DEFAULT 'success',
-                error_message TEXT NULL,
-                ip_address VARCHAR(45) NULL,
-                execution_time_ms INT NULL,
-                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                INDEX ix_mcp_audit_logs_user_id (user_id),
-                INDEX ix_mcp_audit_logs_token_id (token_id),
-                INDEX ix_mcp_audit_logs_tool_name (tool_name),
-                INDEX ix_mcp_audit_logs_created_at (created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        """))
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-
-
 def get_allowed_scopes_for_role(role_name: str) -> list:
     """Retourne la liste des scopes MCP autorisés pour un rôle utilisateur."""
     from utils.decorators import normalize_role
@@ -77,12 +40,7 @@ def mcp_connector_page():
         tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
     except Exception:
         db.session.rollback()
-        _ensure_scope_column_exists()
-        try:
-            tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
-        except Exception:
-            db.session.rollback()
-            tokens = []
+        tokens = []
 
     audit_logs = []
     if user_role == "super administrateur":
@@ -91,13 +49,7 @@ def mcp_connector_page():
             audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
         except Exception:
             db.session.rollback()
-            _ensure_audit_table_exists()
-            try:
-                from models import McpAuditLog
-                audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
-            except Exception:
-                db.session.rollback()
-                audit_logs = []
+            audit_logs = []
 
     allowed_scopes = get_allowed_scopes_for_role(user_role)
     now = datetime.now(timezone.utc)
@@ -120,8 +72,7 @@ def list_tokens():
         tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
     except Exception:
         db.session.rollback()
-        _ensure_scope_column_exists()
-        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+        tokens = []
 
     return jsonify({"tokens": [t.to_dict() for t in tokens]})
 

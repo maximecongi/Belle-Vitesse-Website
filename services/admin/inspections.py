@@ -191,8 +191,8 @@ def get_inspection_detail_unified(mode, record_id):
 
     record = record_model.query.join(Project).filter(
         record_model.id == record_cand.id,
-        record_model.deleted_at == None,
-        Project.deleted_at == None
+        record_model.deleted_at.is_(None),
+        Project.deleted_at.is_(None)
     ).options(
         joinedload(record_model.project).joinedload(Project.production),
         joinedload(getattr(record_model, resp_attr))
@@ -735,13 +735,13 @@ def get_unified_form_context(mode="checkout"):
     Unifie la récupération du contexte pour les formulaires de départ et de retour.
     Gère les blocages (interdire un nouveau départ si un retour n'a pas été effectué).
     """
-    projects = Project.query.filter(Project.deleted_at == None).options(joinedload(
+    projects = Project.query.filter(Project.deleted_at.is_(None)).options(joinedload(
         Project.production)).order_by(Project.name).all()
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
 
-    checkouts = CheckoutVehicle.query.filter(CheckoutVehicle.deleted_at == None).all()
-    checkins = CheckinVehicle.query.filter(CheckinVehicle.deleted_at == None).all()
+    checkouts = CheckoutVehicle.query.filter(CheckoutVehicle.deleted_at.is_(None)).all()
+    checkins = CheckinVehicle.query.filter(CheckinVehicle.deleted_at.is_(None)).all()
 
     # Mapping des noms de projets pour un accès rapide
     project_names = {str(p.id): p.name for p in projects}

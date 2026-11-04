@@ -159,11 +159,11 @@ def get_fleet_overview() -> Dict[str, Any]:
 
     # 2. Chargement des enregistrements non archivés
     checkouts = CheckoutVehicle.query.filter(
-        CheckoutVehicle.deleted_at == None).all()
+        CheckoutVehicle.deleted_at.is_(None)).all()
     checkins = CheckinVehicle.query.filter(
-        CheckinVehicle.deleted_at == None).all()
-    incidents = Incident.query.filter(Incident.deleted_at == None).all()
-    projects = Project.query.filter(Project.deleted_at == None).all()
+        CheckinVehicle.deleted_at.is_(None)).all()
+    incidents = Incident.query.filter(Incident.deleted_at.is_(None)).all()
+    projects = Project.query.filter(Project.deleted_at.is_(None)).all()
 
     # Dictionnaire des projets
     project_map = {p.id: p for p in projects}
@@ -466,21 +466,21 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     # 2. Récupération des enregistrements associés
     checkouts = CheckoutVehicle.query.filter(
         CheckoutVehicle.vehicle_id == vehicle_id,
-        CheckoutVehicle.deleted_at == None
+        CheckoutVehicle.deleted_at.is_(None)
     ).order_by(CheckoutVehicle.created_at.desc()).all()
 
     checkins = CheckinVehicle.query.filter(
         CheckinVehicle.vehicle_id == vehicle_id,
-        CheckinVehicle.deleted_at == None
+        CheckinVehicle.deleted_at.is_(None)
     ).order_by(CheckinVehicle.created_at.desc()).all()
 
     incidents = Incident.query.filter(
         Incident.vehicle_id == vehicle_id,
-        Incident.deleted_at == None
+        Incident.deleted_at.is_(None)
     ).order_by(Incident.created_at.desc()).all()
 
     # Projets associés : par liste de véhicules ou par présence d'un checkout/checkin
-    all_projects = Project.query.filter(Project.deleted_at == None).all()
+    all_projects = Project.query.filter(Project.deleted_at.is_(None)).all()
     project_ids_with_inspections = {co.project_id for co in checkouts if co.project_id} | {
         ci.project_id for ci in checkins if ci.project_id} | {inc.project_id for inc in incidents if inc.project_id}
 

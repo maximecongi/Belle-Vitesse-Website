@@ -15,7 +15,7 @@ from flask import (
 )
 from itsdangerous import URLSafeSerializer
 
-from extensions import cache, csrf
+from extensions import cache, csrf, limiter
 from services.public.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
@@ -199,6 +199,7 @@ def init_web_routes(app):
 
     @app.route("/subscribe", methods=["POST"])
     @csrf.exempt
+    @limiter.limit("5 per minute")
     def subscribe():
         from utils.mailer import send_subscription_email
 
@@ -358,7 +359,7 @@ def init_web_routes(app):
                 "apps": [],
                 "details": [
                     {
-                        "appIDs": [app_id, f"*.com.bellevitesse.admin"],
+                        "appIDs": [app_id, "*.com.bellevitesse.admin"],
                         "components": [
                             {"/": "/admin/auth/*",
                                 "comment": "Authentification directe par Magic Link"},

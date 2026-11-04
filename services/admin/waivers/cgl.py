@@ -60,7 +60,7 @@ def delete_cgl_internal(project_id):
 def list_cgl():
     """Liste et formate toutes les CGL pour l'administration."""
     waivers = CglWaiver.query.outerjoin(Project).filter(
-        CglWaiver.deleted_at == None
+        CglWaiver.deleted_at.is_(None)
     ).options(joinedload(CglWaiver.project)).all()
 
     waivers.sort(key=lambda w: (

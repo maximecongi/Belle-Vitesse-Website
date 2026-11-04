@@ -296,13 +296,6 @@ def init_context_processors(app):
             "privacy_last_update": privacy_last_update,
             "asset_version": asset_version,
             "asset_url": asset_url,
-            "PRE_QUOTE_CAT_MAP": {
-                "equipment": "Équipement",
-                "salary": "Salaire",
-                "logistics": "Logistique",
-                "insurance": "Assurances",
-                "custom": "Autre"
-            },
             # Utilitaires de mapping de statuts
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,

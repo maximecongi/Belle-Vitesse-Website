@@ -71,9 +71,9 @@ def admin_cgl_new():
             flash(msg, "error")
 
     from models import CglWaiver as CW
-    projects_with_cgl = [w.project_id for w in CW.query.filter(CW.deleted_at == None).all()]
+    projects_with_cgl = [w.project_id for w in CW.query.filter(CW.deleted_at.is_(None)).all()]
     available_projects = Project.query.filter(
-        Project.deleted_at == None,
+        Project.deleted_at.is_(None),
         ~Project.id.in_(projects_with_cgl)
     ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 
