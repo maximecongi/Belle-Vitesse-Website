@@ -1,26 +1,26 @@
-from models.db import db, _utcnow, generate_inspection_number
+from models.db import _utcnow, db, generate_inspection_number
 from models.user import User
-from models.project import Production, Contact, Project
+from models.project import Contact, Production, Project
+from models.mixins import SignedDocumentMixin, TokenMixin
 from models.inspection import (
-    CheckoutVehicle,
+    BaseInspectionVehicle,
+    CheckinSignedDocument,
+    CheckinToken,
     CheckinVehicle,
-    VehicleCheckpointConfig,
+    CheckoutSignedDocument,
+    CheckoutToken,
+    CheckoutVehicle,
     InspectionCheckpoint,
+    VehicleCheckpointConfig,
 )
 from models.checkpoint import CheckpointDefinition
 from models.waiver import (
-    TokenMixin,
-    SignedDocumentMixin,
-    Waiver,
     CglWaiver,
-    SafetyRulesWaiver,
     PilotWaiver,
-    WaiverToken,
+    SafetyRulesWaiver,
+    Waiver,
     WaiverSignedDocument,
-    CheckoutSignedDocument,
-    CheckoutToken,
-    CheckinSignedDocument,
-    CheckinToken,
+    WaiverToken,
 )
 from models.catalog import (
     SyncRecordMixin,

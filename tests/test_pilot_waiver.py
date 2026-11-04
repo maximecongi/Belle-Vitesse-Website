@@ -2,68 +2,32 @@ import os
 import sys
 import unittest
 from datetime import date
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Isolation stricte en mémoire
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
+from tests.base import BaseTestCase
 from models import (
     Contact,
+    PilotWaiver,
     Production,
     Project,
-    PilotWaiver,
+    User,
+    Vehicle,
     WaiverSignedDocument,
     WaiverToken,
-    Vehicle,
-    User,
     db,
 )
 from services.admin.waivers import (
     create_pilot_waiver,
     delete_pilot_waiver,
-    generate_pilot_waiver,
     get_or_create_waiver_signing_url,
     list_pilot_waivers,
-    reset_pilot_waiver,
-    send_pilot_waiver,
 )
-from utils.signature_storage import load_signature_data_uri
 
 
-class PilotWaiverComprehensiveTest(unittest.TestCase):
+class PilotWaiverComprehensiveTest(BaseTestCase):
     """Suite de tests unitaires et d'intégration pour l'Attestation Pilote (Annexe 3 aux CGL - BVPA)."""
-
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
 
     def _create_mock_project(self):
         """Crée un jeu complet de données de test en mémoire (isolé)."""

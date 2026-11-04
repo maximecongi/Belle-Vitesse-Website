@@ -1,52 +1,11 @@
-from datetime import datetime, timedelta, timezone
-from models.db import db, generate_inspection_number, _utcnow
-
-
-# ── Mixins Partagés ──────────────────────────────────────────────
-
-class TokenMixin:
-    """Base pour tous les jetons (tokens) de signature à durée limitée."""
-    token = db.Column(db.String(36), primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=_utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False,
-                           default=lambda: _utcnow() + timedelta(hours=24),
-                           server_default=db.FetchedValue())
-
-    def is_expired(self) -> bool:
-        """Indique si le jeton a dépassé sa durée de validité (24h)."""
-        now = datetime.now(timezone.utc)
-        if self.expires_at:
-            exp = self.expires_at
-            if exp.tzinfo is None:
-                exp = exp.replace(tzinfo=timezone.utc)
-            return now > exp
-        if self.created_at:
-            created = self.created_at
-            if created.tzinfo is None:
-                created = created.replace(tzinfo=timezone.utc)
-            return (now - created) > timedelta(hours=24)
-        return False
-
-
-class SignedDocumentMixin:
-    """Base pour tous les documents signés archivés."""
-    hash = db.Column(
-        db.String(255), nullable=False)  # Empreinte de l'intégrité des données
-    # Hash SHA-256 du fichier PDF binaire
-    pdf_file_hash = db.Column(db.String(64))
-    # Copie conforme des données au moment de la signature
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    # Chemin relatif du fichier signature PNG
-    signature = db.Column(db.String(255), nullable=True)
-    pdf_url = db.Column(db.Text)  # URL (ou chemin) vers le fichier PDF
-    signed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=_utcnow)
-
-    @property
-    def signature_data_uri(self):
-        """Retourne la Data URI de la signature pour injection directe dans les templates ou PDF."""
-        from utils.signature_storage import load_signature_data_uri
-        return load_signature_data_uri(self.signature)
+from models.db import db, generate_inspection_number
+from models.inspection import (
+    CheckinSignedDocument as CheckinSignedDocument,
+    CheckinToken as CheckinToken,
+    CheckoutSignedDocument as CheckoutSignedDocument,
+    CheckoutToken as CheckoutToken,
+)
+from models.mixins import SignedDocumentMixin, TokenMixin
 
 
 # ── Modèle Unifié des Décharges ──────────────────────────────────
@@ -671,31 +630,4 @@ class WaiverSignedDocument(db.Model, SignedDocumentMixin):
     parent_hash = db.Column(db.String(255), nullable=True)
 
 
-# ── Modèles des Inspections (Préservés) ──────────────────────────
 
-class CheckoutSignedDocument(db.Model, SignedDocumentMixin):
-    """Archive d'une inspection au départ signée."""
-    __tablename__ = "checkout_signed_documents"
-    inspection_id = db.Column(db.String(255), primary_key=True)
-
-
-class CheckoutToken(db.Model, TokenMixin):
-    """Jeton de session pour la signature d'un check-out."""
-    __tablename__ = "checkout_tokens"
-    record_id = db.Column(db.String(255), nullable=False)
-    inspection_id = db.Column(db.String(255), nullable=False)
-    signature = db.Column(db.String(255), nullable=True)
-
-
-class CheckinSignedDocument(db.Model, SignedDocumentMixin):
-    """Archive d'une inspection au retour signée."""
-    __tablename__ = "checkin_signed_documents"
-    inspection_id = db.Column(db.String(255), primary_key=True)
-
-
-class CheckinToken(db.Model, TokenMixin):
-    """Jeton de session pour la signature d'un check-in."""
-    __tablename__ = "checkin_tokens"
-    record_id = db.Column(db.String(255), nullable=False)
-    inspection_id = db.Column(db.String(255), nullable=False)
-    signature = db.Column(db.String(255), nullable=True)

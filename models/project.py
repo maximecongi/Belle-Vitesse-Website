@@ -66,6 +66,13 @@ project_bv_referents = db.Table(
     db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
 )
 
+project_vehicles = db.Table(
+    "project_vehicles",
+    db.Column("project_id", db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("vehicle_id", db.String(100), primary_key=True),
+)
+
+
 
 class Project(db.Model):
     """Modèle central représentant un projet (tournage)."""
@@ -176,6 +183,21 @@ class Project(db.Model):
         if not self.bv_referents:
             return ""
         return ", ".join(f"{u.firstname} {u.lastname}".strip() for u in self.bv_referents if (u.firstname or u.lastname))
+
+    @property
+    def vehicle_ids_list(self) -> list:
+        """Retourne la liste ordonnée et nettoyée des IDs de véhicules assignés."""
+        if not self.vehicles_to_check:
+            return []
+        return [v.strip() for v in self.vehicles_to_check.split(",") if v.strip()]
+
+    @property
+    def head_ids_list(self) -> list:
+        """Retourne la liste ordonnée et nettoyée des IDs de têtes assignées."""
+        if not self.heads_to_check:
+            return []
+        return [h.strip() for h in self.heads_to_check.split(",") if h.strip()]
+
 
     @property
     def active_checkout_vehicles(self):

@@ -5,11 +5,12 @@ from pathlib import Path
 
 class Config:
     """Base configuration."""
-    SECRET_KEY = os.getenv("SECRET_KEY")
+    SECRET_KEY = os.getenv("SECRET_KEY", "dev_secret_key_belle_vitesse_2026")
 
-    # Flask settings
+    # Base URL & Host
     APP_BASE_URL = os.getenv("APP_BASE_URL")
-    BASE_URL = os.getenv("BASE_URL")
+    BASE_URL = os.getenv("BASE_URL") or APP_BASE_URL or "http://localhost:5000"
+    SERVER_NAME = os.getenv("SERVER_NAME", None)
     PREFERRED_URL_SCHEME = "https"
     PERMANENT_SESSION_LIFETIME = timedelta(days=90)
     SESSION_COOKIE_NAME = "session"
@@ -21,6 +22,44 @@ class Config:
     RATELIMIT_SWALLOW_ERRORS = True
     # 10 MB (permet les photos haute résolution et documents volumineux)
     MAX_CONTENT_LENGTH = 10 * 1024 * 1024
+
+    # Security & Tokens
+    HASH_SECRET_KEY = os.getenv("HASH_SECRET_KEY") or SECRET_KEY or "dev_secret_key"
+    PDF_ACCESS_TOKEN_TTL_MINUTES = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "120"))
+    ADMIN_CACHE_TOKEN = os.getenv("ADMIN_CACHE_TOKEN", "secret-token")
+    CHECK_API_TOKEN = os.getenv("CHECK_API_TOKEN", "")
+
+    # Airtable
+    AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN", "")
+    AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID", "")
+
+    # kDrive Infomaniak
+    KDRIVE_API_TOKEN = os.getenv("KDRIVE_API_TOKEN", "")
+    KDRIVE_DRIVE_ID = os.getenv("KDRIVE_DRIVE_ID", "")
+    KDRIVE_ROOT_FOLDER_ID = os.getenv("KDRIVE_ROOT_FOLDER_ID", "")
+    KDRIVE_SQL_BACKUP_FOLDER_ID = os.getenv("KDRIVE_SQL_BACKUP_FOLDER_ID", "")
+    KDRIVE_TIMEOUT = int(os.getenv("KDRIVE_TIMEOUT", "30"))
+    KDRIVE_MAX_RETRIES = int(os.getenv("KDRIVE_MAX_RETRIES", "3"))
+
+    # Mail Settings
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "mail.infomaniak.com")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "true").lower() in ("true", "1", "yes")
+    MAIL_NOREPLY_USERNAME = os.getenv("MAIL_NOREPLY_USERNAME", "noreply@bellevitesse.com")
+    MAIL_NOREPLY_PASSWORD = os.getenv("MAIL_NOREPLY_PASSWORD", "")
+    MAIL_CONTACT_USERNAME = os.getenv("MAIL_CONTACT_USERNAME", "contact@bellevitesse.com")
+    MAIL_CONTACT_PASSWORD = os.getenv("MAIL_CONTACT_PASSWORD", "")
+    MAIL_ADMIN_USERNAME = os.getenv("MAIL_ADMIN_USERNAME", "admin@bellevitesse.com")
+    MAIL_ADMIN_PASSWORD = os.getenv("MAIL_ADMIN_PASSWORD", "")
+
+    # Backups & Logs
+    BACKUP_RETENTION_DAYS = int(os.getenv("BACKUP_RETENTION_DAYS", "30"))
+    SQL_LOGGER_ACTIVATED = os.getenv("SQL_LOGGER_ACTIVATED", "false").lower() in ("true", "1", "yes")
+    SQL_LOGGER_THRESHOLD_MS = float(os.getenv("SQL_LOGGER_THRESHOLD_MS", "50.0"))
+
+    # Static & App Mode
+    STATIC_VERSION = os.getenv("STATIC_VERSION", "2.3")
+    LAUNCH_MODE = os.getenv("LAUNCH_MODE", "false").lower() in ("true", "1", "yes")
 
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"

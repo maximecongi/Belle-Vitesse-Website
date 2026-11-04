@@ -1,29 +1,11 @@
-from services.admin.waivers import (
-    countersign_safety_rules,
-    create_safety_rules_waiver,
-    delete_safety_rules_waiver,
-    generate_safety_rules_waiver,
-    list_safety_rules_waivers,
-    reset_safety_rules_waiver,
-    send_safety_rules_waiver,
-)
-from services.admin.safety_rules_config import (
-    DEFAULT_VEHICLE_SAFETY_RULES,
-    get_all_vehicle_safety_rules_catalog,
-    get_safety_rules_for_vehicles,
-    get_safety_equipment_for_vehicles,
-    get_safety_equipment_catalog,
-    save_safety_equipment_catalog,
-    save_vehicle_safety_rules,
-    get_general_safety_rules,
-    save_general_safety_rules,
-    get_bv_referents_safety_rules,
-    save_bv_referents_safety_rules,
-    format_technicians_list,
-    format_bv_referents_rules,
-    get_merged_general_safety_rules,
-)
-from models.db import _utcnow
+import os
+import sys
+import unittest
+from datetime import date, timedelta
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from tests.base import BaseTestCase
 from models import (
     Contact,
     Production,
@@ -34,51 +16,31 @@ from models import (
     WaiverToken,
     db,
 )
-from app import create_app
-import os
-import sys
-import unittest
-from datetime import date, timedelta
-from unittest.mock import MagicMock, patch
+from services.admin.safety_rules_config import (
+    format_bv_referents_rules,
+    format_technicians_list,
+    get_all_vehicle_safety_rules_catalog,
+    get_bv_referents_safety_rules,
+    get_general_safety_rules,
+    get_merged_general_safety_rules,
+    get_safety_equipment_catalog,
+    get_safety_equipment_for_vehicles,
+    get_safety_rules_for_vehicles,
+    save_safety_equipment_catalog,
+    save_vehicle_safety_rules,
+)
+from services.admin.waivers import (
+    countersign_safety_rules,
+    create_safety_rules_waiver,
+    delete_safety_rules_waiver,
+    list_safety_rules_waivers,
+    reset_safety_rules_waiver,
+    send_safety_rules_waiver,
+)
 
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
 
-# Isolation stricte en mémoire
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-# Mock weasyprint pour éviter les dépendances système GTK/Pango en test
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-
-class BvsrComprehensiveTest(unittest.TestCase):
+class BvsrComprehensiveTest(BaseTestCase):
     """Suite de tests unitaires et d'intégration pour les Règles de Sécurité."""
-
-    def setUp(self):
-        os.environ["FLASK_ENV"] = "testing"
-        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        os.environ["WTF_CSRF_ENABLED"] = "False"
-        os.environ["USE_SSH_TUNNEL"] = "false"
-
-        self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["WTF_CSRF_ENABLED"] = False
-        self.client = self.app.test_client()
-
-        with self.app.app_context():
-            db.create_all()
-
-    def tearDown(self):
-        with self.app.app_context():
-            db.session.remove()
-            db.drop_all()
 
     def _create_mock_project(self):
         """Crée un jeu complet de données de test en mémoire (isolé)."""
