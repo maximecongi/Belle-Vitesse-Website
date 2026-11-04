@@ -186,7 +186,7 @@ class MockPilotWaiver:
     signer_phone = "+33 6 98 76 54 32"
     signer_company = "Stunt Precision Drivers"
 
-    vehicles = "eCar, eBike"
+    vehicles = "eCar, eBike, Titan LT"
     vehicles_details = [
         {
             "name": "eCar",
@@ -201,6 +201,13 @@ class MockPilotWaiver:
             "unique_id": "BV-EBIKE-02",
             "checkout_doc_id": "BVCO-EBIKE-02",
             "thumbnail": "/static/imgs/vehicles/ebike-thumbnail.png",
+        },
+        {
+            "name": "Titan LT",
+            "slug": "titan-lt",
+            "unique_id": "BV-TITAN-03",
+            "checkout_doc_id": "BVCO-TITAN-03",
+            "thumbnail": "/static/imgs/vehicles/titan-lt-thumbnail.png",
         },
     ]
 

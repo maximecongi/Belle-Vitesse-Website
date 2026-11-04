@@ -486,21 +486,21 @@ body.pdf-body {
 .public-doc-vehicles-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8pt 10pt;
-    margin-bottom: 10pt;
+    gap: 6pt 8pt;
+    margin-bottom: 8pt;
 }
 
 .public-doc-vehicle-card {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10pt;
+    gap: 6pt;
     background-color: #fafafa;
     border: 1px solid #e2e8f0;
     border-radius: 4pt;
-    padding: 6pt 10pt;
-    width: calc(50% - 5pt);
-    max-width: calc(50% - 5pt);
+    padding: 4.5pt 6pt;
+    width: calc((100% - 16pt) / 3);
+    max-width: calc((100% - 16pt) / 3);
     box-sizing: border-box;
     text-decoration: none;
     color: #111827;
@@ -510,8 +510,8 @@ body.pdf-body {
 
 .public-doc-vehicle-thumb-wrapper {
     flex-shrink: 0;
-    width: 48pt;
-    height: 34pt;
+    width: 38pt;
+    height: 26pt;
     border-radius: 3pt;
     overflow: hidden;
     background-color: #f1f5f9;
@@ -553,10 +553,10 @@ body.pdf-body {
 }
 
 .public-doc-vehicle-title {
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     font-weight: 700;
     color: #0f172a;
-    line-height: 1.25;
+    line-height: 1.2;
 }
 
 .public-doc-vehicle-ids {
