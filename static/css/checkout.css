@@ -692,21 +692,21 @@ body {
 .public-doc-vehicles-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 6pt 8pt;
-    margin-bottom: 8pt;
+    gap: 8pt 10pt;
+    margin-bottom: 10pt;
 }
 
 .public-doc-vehicle-card {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 6pt;
+    gap: 10pt;
     background-color: #fafafa;
     border: 1px solid #e2e8f0;
     border-radius: 4pt;
-    padding: 4.5pt 6pt;
-    width: calc((100% - 16pt) / 3);
-    max-width: calc((100% - 16pt) / 3);
+    padding: 6pt 10pt;
+    width: calc(50% - 5pt);
+    max-width: calc(50% - 5pt);
     box-sizing: border-box;
     text-decoration: none;
     color: #111827;
@@ -716,8 +716,8 @@ body {
 
 .public-doc-vehicle-thumb-wrapper {
     flex-shrink: 0;
-    width: 38pt;
-    height: 26pt;
+    width: 48pt;
+    height: 34pt;
     border-radius: 3pt;
     overflow: hidden;
     background-color: #f1f5f9;
@@ -759,10 +759,10 @@ body {
 }
 
 .public-doc-vehicle-title {
-    font-size: 7.5pt;
+    font-size: 8.5pt;
     font-weight: 700;
     color: #0f172a;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .public-doc-vehicle-ids {
