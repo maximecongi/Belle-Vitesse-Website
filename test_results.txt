@@ -44,6 +44,11 @@ test_resolve_from_request_context_in_dev (test_base_url_resolution.BaseUrlResolu
 Vérifie la résolution dynamique depuis le contexte de requête en développement. ... ok
 test_verification_url_in_pdf_rendering_in_dev (test_base_url_resolution.BaseUrlResolutionTest.test_verification_url_in_pdf_rendering_in_dev)
 Vérifie que le QR code et l'URL de vérification scellés dans le PDF utilisent http:// en dev. ... ok
+test_booking_data_continuous_project (test_booking_calendar.BookingCalendarTest.test_booking_data_continuous_project) ... ok
+test_booking_data_punctual_immobilized_blocks_intermediate_days (test_booking_calendar.BookingCalendarTest.test_booking_data_punctual_immobilized_blocks_intermediate_days)
+Vérifie qu'un projet ponctuel avec intervalle immobilisé bloque tout le span en continu. ... ok
+test_booking_data_punctual_not_immobilized_frees_intermediate_days (test_booking_calendar.BookingCalendarTest.test_booking_data_punctual_not_immobilized_frees_intermediate_days)
+Vérifie qu'un projet ponctuel avec un intervalle non-immobilisé retourne des active_spans ... ok
 test_01_catalog_and_fleet_rules (test_bvsr.BvsrComprehensiveTest.test_01_catalog_and_fleet_rules)
 Vérifie le chargement et la mise à jour dynamique des règles véhicules dans la configuration flotte. ... ok
 test_02_create_multiple_bvsr_waivers_per_project (test_bvsr.BvsrComprehensiveTest.test_02_create_multiple_bvsr_waivers_per_project)
@@ -64,6 +69,8 @@ test_09_project_bv_referents_and_bvsr_propagation (test_bvsr.BvsrComprehensiveTe
 Vérifie l'association de plusieurs référents BV à un projet et leur répercussion dans le BVSR. ... ok
 test_10_bv_referents_safety_rules_formatting_and_merging (test_bvsr.BvsrComprehensiveTest.test_10_bv_referents_safety_rules_formatting_and_merging)
 Vérifie le formatage grammatical (1, 2, 3+ techniciens), l'édition admin et la fusion dans les règles générales. ... ok
+test_bvsr_bilingual_equipment_and_deduplication (test_bvsr.BvsrComprehensiveTest.test_bvsr_bilingual_equipment_and_deduplication)
+Test du catalogue global d'équipements, association par checkboxes et déduplication. ... ok
 test_calendar_feed_alias_route (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_alias_route)
 Vérifie que la route alias /calendar/feed.ics?token=... fonctionne. ... ok
 test_calendar_feed_continuous_project (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_continuous_project)
@@ -92,6 +99,16 @@ test_unauthenticated_access_redirects_to_login (test_calendar_permissions.Calend
 Unauthenticated user should be redirected to login page. ... ok
 test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
 User with role 'user' should be forbidden / redirected to dashboard. ... ok
+test_catalog_directory_uses_config_output_folder (test_catalog_cache.TestCatalogCacheAndDownload.test_catalog_directory_uses_config_output_folder)
+Vérifie que get_catalog_directory utilise bien la configuration OUTPUT_FOLDER. ... ok
+test_download_headers_prevent_caching (test_catalog_cache.TestCatalogCacheAndDownload.test_download_headers_prevent_caching)
+Vérifie que la route /admin/catalog/pdf renvoie des en-têtes anti-cache stricts. ... ok
+test_invalidate_catalog_cache_safe (test_catalog_cache.TestCatalogCacheAndDownload.test_invalidate_catalog_cache_safe)
+Vérifie que l'invalidation du cache ne lève aucune exception. ... ok
+test_preview_contains_cache_buster_timestamp (test_catalog_cache.TestCatalogCacheAndDownload.test_preview_contains_cache_buster_timestamp)
+Vérifie que la prévisualisation HTML injecte le timestamp cache buster sur le lien de téléchargement. ... ok
+test_update_stored_catalog_atomic_and_cleanup (test_catalog_cache.TestCatalogCacheAndDownload.test_update_stored_catalog_atomic_and_cleanup)
+Vérifie que la génération crée le fichier atomiquement et nettoie les anciens. ... ok
 test_01_create_cgl_success (test_cgl.CglComprehensiveTest.test_01_create_cgl_success)
 Vérifie la création d'un enregistrement CGL avec préfixe BVCGL et liaison projet. ... ok
 test_02_create_cgl_duplicate_rejected (test_cgl.CglComprehensiveTest.test_02_create_cgl_duplicate_rejected)
@@ -134,6 +151,26 @@ test_get_protocol_data_matrix (test_checkpoints_management.CheckpointsManagement
 test_matrix_config_sync (test_checkpoints_management.CheckpointsManagementTest.test_matrix_config_sync) ... ok
 test_reorder_checkpoints_api (test_checkpoints_management.CheckpointsManagementTest.test_reorder_checkpoints_api) ... ok
 test_utils_get_checkpoints_for_vehicle_with_custom_definition (test_checkpoints_management.CheckpointsManagementTest.test_utils_get_checkpoints_for_vehicle_with_custom_definition) ... ok
+test_preview_and_cleanup_test_users_and_tokens (test_cleanup_test_records.TestRecordCleanupTest.test_preview_and_cleanup_test_users_and_tokens) ... ok
+test_preview_preserves_test10_group_and_skips_mixed_production (test_cleanup_test_records.TestRecordCleanupTest.test_preview_preserves_test10_group_and_skips_mixed_production) ... ok
+test_shared_test_user_is_retained_with_warning (test_cleanup_test_records.TestRecordCleanupTest.test_shared_test_user_is_retained_with_warning) ... ok
+test_test_name_matching_is_token_based_and_test10_is_exact (test_cleanup_test_records.TestRecordCleanupTest.test_test_name_matching_is_token_based_and_test10_is_exact) ... ok
+test_cmdk_cumulative_scopes_filtering (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_cumulative_scopes_filtering)
+Vérifie que les scopes cumulatifs (ex: scope=project,inspection) filtrent fidèlement les entités. ... ok
+test_cmdk_scope_filtering_prefix (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_scope_filtering_prefix)
+Vérifie que le préfixe de scope (ex: p:nom) isole les résultats. ... ok
+test_cmdk_search_checkouts_and_checkins (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_checkouts_and_checkins)
+Vérifie l'indexation des contrôles BVO et BVI avec lien direct vers leur fiche détaillée. ... ok
+test_cmdk_search_contacts_and_productions_direct_edit (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_contacts_and_productions_direct_edit)
+Vérifie que les contacts et productions pointent directement vers leur fiche d'édition. ... ok
+test_cmdk_search_empty_suggestions_and_active_project (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_empty_suggestions_and_active_project)
+Vérifie que sans terme de recherche, les projets en cours pointent vers le Project Hub. ... ok
+test_cmdk_search_project_by_production_name (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_project_by_production_name)
+Vérifie que chercher le nom de la société de production cliente remonte bien le projet rattaché. ... ok
+test_cmdk_search_project_points_to_hub (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_project_points_to_hub)
+Vérifie que la recherche d'un projet renvoie vers /admin/projects/<id> (Project Hub). ... ok
+test_cmdk_search_waiver_points_to_project_hub_section (test_cmdk_api.CmdKSearchApiTestCase.test_cmdk_search_waiver_points_to_project_hub_section)
+Vérifie que les décharges BVSR/BVRA/BVPA pointent vers le Project Hub avec l'ancre #waivers. ... ok
 test_commercial_api_v1_cgl_access (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_api_v1_cgl_access)
 Vérifie que le rôle commercial a accès à l'API v1 des CGL avec un JWT. ... ok
 test_commercial_can_access_cgl_list (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_cgl_list)
@@ -141,7 +178,7 @@ Vérifie que le rôle commercial peut afficher la liste des CGL sans redirection
 test_commercial_can_access_cgl_new (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_cgl_new)
 Vérifie que le rôle commercial peut afficher le formulaire de création des CGL. ... ok
 test_commercial_can_access_safety_rules_list (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_safety_rules_list)
-Vérifie que le rôle commercial peut afficher la liste des règles de sécurité (BVSR). ... ok
+Vérifie que le rôle commercial peut afficher la liste des règles de sécurité (BVSR). ... FAIL
 test_commercial_can_quick_create_cgl (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_quick_create_cgl)
 Vérifie que le rôle commercial peut créer des CGL en un clic. ... ok
 test_permissions_dictionary_for_commercial (test_commercial_waivers_access.CommercialWaiversAccessTest.test_permissions_dictionary_for_commercial)
@@ -174,6 +211,8 @@ test_format_timestamp_naive_string (test_cron_jobs.CronJobsVerificationTest.test
 test_format_timestamp_summer_paris (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_summer_paris) ... ok
 test_format_timestamp_winter_paris (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_winter_paris) ... ok
 test_format_timestamp_with_z (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_with_z) ... ok
+test_send_report_email_fallback_super_admin (test_cron_jobs.CronJobsVerificationTest.test_send_report_email_fallback_super_admin) ... ok
+test_send_report_email_recipient_monitoring (test_cron_jobs.CronJobsVerificationTest.test_send_report_email_recipient_monitoring) ... ok
 test_verify_jobs (test_cron_jobs.CronJobsVerificationTest.test_verify_jobs) ... ok
 test_docs_restricted_to_admin_and_super_admin (test_dev_role_switcher.DevRoleSwitcherTestCase.test_docs_restricted_to_admin_and_super_admin)
 Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... ok
@@ -244,54 +283,4 @@ Les données de session doivent être stockées dans Redis et non dans le cookie
 test_user_deletion_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_deletion_triggers_session_invalidation)
 La suppression d'un utilisateur révoque immédiatement ses sessions actives. ... ok
 test_user_role_update_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_role_update_triggers_session_invalidation)
-La modification du rôle d'un utilisateur révoque immédiatement ses sessions actives. ... ok
-test_user_session_registration_and_invalidation (test_flask_session.FlaskSessionTestCase.test_user_session_registration_and_invalidation)
-Enregistrement et révocation immédiate de toutes les sessions actives d'un utilisateur. ... ok
-test_checkpoint_type_and_unit_sanitization (test_fleet.FleetTest.test_checkpoint_type_and_unit_sanitization)
-Vérifie que l'unité est conservée pour le type value et vidée pour le type status. ... ok
-test_completed_project_with_unreturned_checkout_remains_available (test_fleet.FleetTest.test_completed_project_with_unreturned_checkout_remains_available)
-Vérifie qu'un véhicule dont le projet est clôturé (dates passées) reste disponible même si un départ n'a pas été soldé. ... ok
-test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
-test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
-test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
-Vérifie que 'Flotte Véhicules' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs. ... ok
-test_incident_moderate_severity_badge_accent (test_fleet.FleetTest.test_incident_moderate_severity_badge_accent)
-Vérifie qu'un incident modéré affiche bien 'Modéré' avec accent (et non 'Modere') sur la timeline. ... ok
-test_placeholders_and_avatar_macros (test_fleet.FleetTest.test_placeholders_and_avatar_macros)
-Vérifie la présence des placeholders unifiés et le rendu sécurisé des macros d'avatar. ... ok
-test_pricing_update_reflected_in_fleet (test_fleet.FleetTest.test_pricing_update_reflected_in_fleet)
-Vérifie que la modification d'un tarif véhicule dans tarification est immédiatement répercutée dans la flotte. ... ok
-test_vehicle_timeline (test_fleet.FleetTest.test_vehicle_timeline) ... ok
-test_vehicle_timeline_with_critical_incident (test_fleet.FleetTest.test_vehicle_timeline_with_critical_incident) ... ok
-test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_jpeg)
-Vérifie qu'une image avec canal alpha (RGBA) est convertie sans erreur en JPEG. ... ok
-test_fallback_non_image (test_image_utils.ImageUtilsTest.test_fallback_non_image)
-Vérifie le fallback gracieux lorsqu'un fichier texte ou corrompu est fourni. ... ok
-test_heic_extension_normalized_to_jpg (test_image_utils.ImageUtilsTest.test_heic_extension_normalized_to_jpg)
-Vérifie qu'une cible avec extension .heic est automatiquement écrite sous format .jpg. ... ok
-test_resize_large_image (test_image_utils.ImageUtilsTest.test_resize_large_image)
-Vérifie qu'une image de grande dimension est redimensionnée à max 1920px. ... ok
-test_save_png_format (test_image_utils.ImageUtilsTest.test_save_png_format)
-Vérifie la sauvegarde d'un fichier PNG. ... ok
-test_bv_signature (test_incident_signatures.IncidentSignaturesTestCase.test_bv_signature)
-Vérifie l'enregistrement du visa Belle Vitesse. ... ok
-test_contradictory_double_signature_and_sealing (test_incident_signatures.IncidentSignaturesTestCase.test_contradictory_double_signature_and_sealing)
-Vérifie le cycle complet BV + Production menant au scellement contradictoire. ... ok
-test_incident_attached_inspection_linking (test_incident_signatures.IncidentSignaturesTestCase.test_incident_attached_inspection_linking)
-Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... ok
-test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
-Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
-test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
-Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... ok
-test_production_signs_first_no_sealing_until_bv_signs (test_incident_signatures.IncidentSignaturesTestCase.test_production_signs_first_no_sealing_until_bv_signs)
-Vérifie que si la Production signe en premier, le document N'EST PAS scellé tant que BV n'a pas visé. ... ok
-test_public_routes_sign_and_verify (test_incident_signatures.IncidentSignaturesTestCase.test_public_routes_sign_and_verify)
-Vérifie le fonctionnement des endpoints HTTP publics. ... ok
-test_token_generation_and_validation (test_incident_signatures.IncidentSignaturesTestCase.test_token_generation_and_validation)
-Vérifie la génération d'un jeton 48h et sa validation. ... ok
-test_admin_incident_status_route (test_incidents.IncidentsTestCase.test_admin_incident_status_route)
-Vérifie la route POST /admin/incidents/<id>/status. ... ok
-test_auto_reporter_and_project_equipment_context (test_incidents.IncidentsTestCase.test_auto_reporter_and_project_equipment_context)
-Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... ok
-test_automatic_transition_on_contradictory_seal (test_incidents.IncidentsTestCase.test_automatic_transition_on_contradictory_seal)
-Vérifie que le scellement contradictoire fait passer le statut de 'signale' à 'en_expertise'. ... 
+La modification du rôle d'un utilisateur révoque immédiatement ses sessions actives. ... 
