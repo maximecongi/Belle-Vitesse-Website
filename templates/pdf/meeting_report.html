@@ -1,0 +1,49 @@
+{% extends "pdf/base_pdf.html" %}
+
+{% block title %}{{ report.doc_id }} — {{ report.title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/pdf/meeting-report-pdf.css') }}">
+{% endblock %}
+
+{% block preview_toolbar %}
+{% if is_preview %}
+{{ pdf_preview_toolbar(
+    doc_title=report.title,
+    doc_id=report.doc_id,
+    format_pdf_url="?format=pdf",
+    show_print=True
+) }}
+{% endif %}
+{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title=doc_header_title or 'COMPTE RENDU DE RÉUNION',
+    doc_id=report.doc_id,
+    date_str=report.date_str,
+    company_name=company_name
+) }}
+{% endblock %}
+
+{% block pdf_title %}
+{{ pdf_title_banner(
+    title=report.title,
+    subtitle=None,
+    badge=None
+) }}
+{% endblock %}
+
+{% block content %}
+<div class="meeting-report-body">
+    {{ report.html_content|safe }}
+</div>
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+    left_text=(company_name or 'Belle Vitesse') ~ ' — Compte-Rendu Officiel',
+    right_text=report.doc_id
+) }}
+{% endblock %}
+

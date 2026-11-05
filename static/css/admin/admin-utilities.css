@@ -482,6 +482,12 @@
     white-space: nowrap !important;
 }
 
+.u-spin {
+    animation: bv-spin 0.8s linear infinite !important;
+    display: inline-block !important;
+    vertical-align: -2px;
+}
+
 /* Border & Border Radius Utilities */
 .u-border-top {
     border-top: 1px solid #f3f4f6 !important;

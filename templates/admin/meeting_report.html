@@ -1,0 +1,132 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Compte-rendu de réunion{% endblock %}
+{% block page_title %}Compte-rendu de réunion{% endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <span id="meeting-draft-status" class="badge-pill u-bg-success-light u-text-success">
+        <i data-lucide="check-circle-2"></i>
+        <span>Brouillon sauvegardé</span>
+    </span>
+    <button type="button" id="meeting-btn-download-pdf" class="admin-btn admin-btn-primary">
+        <i data-lucide="file-down"></i>
+        <span>Télécharger PDF</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-meeting-report.css') }}?v={{ asset_version('css/admin/admin-meeting-report.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pdf/base-pdf.css') }}?v={{ asset_version('css/pdf/base-pdf.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pdf/meeting-report-pdf.css') }}?v={{ asset_version('css/pdf/meeting-report-pdf.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="meeting-report-layout">
+
+    <!-- Grille Split-View ERP -->
+    <div class="meeting-report-grid">
+
+        <!-- CARTE GAUCHE : ÉDITEUR MARKDOWN ERP -->
+        <div class="admin-card meeting-editor-card">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="admin-card-title u-flex u-justify-between u-align-center u-gap-2 u-mb-3">
+                <span class="u-flex u-align-center u-gap-2">
+                    <span>Éditeur</span>
+                </span>
+                <div class="u-flex u-align-center u-gap-1 u-nowrap">
+                    <button type="button" id="meeting-btn-sample" class="admin-btn admin-btn-secondary admin-btn-xs" title="Charger l'exemple BV">
+                        <i data-lucide="file-text"></i>
+                        <span>Exemple</span>
+                    </button>
+                    <button type="button" id="meeting-btn-copy" class="admin-btn admin-btn-secondary admin-btn-xs" title="Copier le code HTML généré">
+                        <i data-lucide="copy"></i>
+                        <span>Copier HTML</span>
+                    </button>
+                    <button type="button" id="meeting-btn-clear" class="admin-btn admin-btn-quaternary admin-btn-xs" title="Réinitialiser">
+                        <i data-lucide="trash-2"></i>
+                        <span>Effacer</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Boîte de métadonnées équilibrée (anti-débordement) -->
+            <div class="meeting-meta-box u-mb-3">
+                <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
+                    <div class="form-group u-mb-0">
+                        <label class="form-label u-text-xs" for="meeting-meta-ref">Référence</label>
+                        <input type="text" id="meeting-meta-ref" class="form-input u-font-mono u-text-xs" placeholder="BVMR-05112026">
+                    </div>
+                    <div class="form-group u-mb-0">
+                        <label class="form-label u-text-xs" for="meeting-meta-date">Date de séance</label>
+                        <input type="date" id="meeting-meta-date" class="form-input u-text-xs">
+                    </div>
+                </div>
+                <div class="form-group u-mb-0">
+                    <label class="form-label u-text-xs" for="meeting-meta-doctype">Intitulé En-tête</label>
+                    <input type="text" id="meeting-meta-doctype" class="form-input u-text-xs" value="COMPTE RENDU DE RÉUNION">
+                </div>
+            </div>
+
+            <!-- Textarea avec style form-input ERP -->
+            <div class="form-group u-mb-0 u-flex-1">
+                <textarea id="meeting-md-input" class="form-input meeting-textarea" placeholder="# Titre de la réunion&#10;&#10;05/11/2026&#10;&#10;## Première section&#10;&#10;- Point clé 1&#10;  - Détail opérationnel..."></textarea>
+            </div>
+        </div>
+
+        <!-- CARTE DROITE : APERÇU A4 ERP -->
+        <div class="admin-card meeting-preview-card">
+            <div class="admin-card-title">
+                <span class="u-flex u-align-center u-gap-2">
+                    <span>Aperçu</span>
+                </span>
+            </div>
+
+            <!-- Viewport simulant le rendu papier -->
+            <div class="meeting-sheet-viewport">
+                <article class="meeting-sheet">
+
+                    <!-- En-tête Aérien Officiel Belle Vitesse -->
+                    <header class="meeting-sheet-header">
+                        <div class="meeting-sheet-logo">
+                            <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}" alt="{{ company_name or 'Belle Vitesse' }}">
+                        </div>
+                        <div class="meeting-sheet-meta">
+                            <div class="meeting-sheet-title-row">
+                                <span class="meeting-sheet-dot">■</span>
+                                <span id="preview-header-title">COMPTE RENDU DE RÉUNION</span>
+                            </div>
+                            <div class="meeting-sheet-ref-row">
+                                <span id="preview-header-ref" class="meeting-sheet-ref">BVMR-05112026</span>
+                            </div>
+                            <div id="preview-header-date" class="meeting-sheet-date-row">05/11/2026</div>
+                        </div>
+                    </header>
+
+                    <!-- Bannière Titre Principal -->
+                    <div class="meeting-sheet-banner">
+                        <h1 id="preview-main-title" class="meeting-sheet-main-title">BV - VÉHICULES ET SÉCURITÉ</h1>
+                    </div>
+
+                    <!-- Contenu dynamique généré -->
+                    <div id="meeting-sheet-content" class="meeting-report-body">
+                        <!-- Le contenu Markdown parsé s'affiche ici -->
+                    </div>
+
+                    <!-- Pied de page officiel -->
+                    <footer class="meeting-sheet-footer">
+                        <span>{{ company_name or 'Belle Vitesse' }} — Compte-Rendu Officiel</span>
+                        <span id="preview-footer-ref" class="meeting-sheet-footer-right">BVMR-05112026</span>
+                    </footer>
+
+                </article>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

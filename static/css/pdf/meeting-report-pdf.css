@@ -1,0 +1,192 @@
+/* ==========================================================================
+   BELLE VITESSE — FEUILLE DE STYLE PDF COMPTE-RENDU DE RÉUNION (BVMR)
+   Mise en page épurée, respect strict de la charte CGL / BVSR
+   ========================================================================== */
+
+:root {
+    --bv-gold: #ffc845;
+}
+
+/* ── 1. Corps du Compte-Rendu ────────────────────────────────────────────── */
+.meeting-report-body {
+    width: 100%;
+    color: #18181b;
+    font-size: 8.5pt;
+    line-height: 1.5;
+}
+
+.meeting-report-body p {
+    margin: 0 0 6pt 0;
+    font-size: 8pt;
+    line-height: 1.5;
+    color: #18181b;
+}
+
+/* ── 2. Titres de Section & Carré Or Signature ───────────────────────────── */
+.meeting-report-body h2.cgl-section-title,
+.meeting-report-body h2.pdf-section-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #18181b;
+    margin: 14pt 0 7pt 0;
+    page-break-after: avoid;
+    border-bottom: 0.5pt solid #e4e4e7;
+    padding-bottom: 3pt;
+}
+
+.meeting-report-body .dot-before:before {
+    content: "■ ";
+    color: var(--bv-gold, #f59e0b);
+    font-size: 0.85em;
+    position: relative;
+    left: -0.2ch;
+    top: -0.1ch;
+}
+
+.meeting-report-body h3.cgl-subtitle,
+.meeting-report-body h3.pdf-subtitle {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #3f3f46;
+    margin: 10pt 0 4pt 0;
+    page-break-after: avoid;
+}
+
+/* ── 3. Listes à Puces Hiérarchiques (Style Sobre Belle Vitesse) ─────────── */
+.meeting-report-body ul.pdf-bullets-list,
+.meeting-report-body ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 9pt 0;
+}
+
+/* Niveau 1 : Puce ronde discrète */
+.meeting-report-body ul.pdf-bullets-list>li,
+.meeting-report-body ul>li {
+    position: relative;
+    padding-left: 14pt;
+    margin-bottom: 4.5pt;
+    font-size: 8pt;
+    line-height: 1.45;
+    color: #18181b;
+    page-break-inside: avoid;
+}
+
+.meeting-report-body ul.pdf-bullets-list>li::before,
+.meeting-report-body ul>li::before {
+    content: "•";
+    position: absolute;
+    left: 4pt;
+    top: -1.5pt;
+    color: #71717a;
+    font-size: 9.5pt;
+    font-weight: 700;
+}
+
+/* Niveau 2 : Sous-puces carrées */
+.meeting-report-body ul>li>ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 3.5pt 0 3.5pt 0;
+}
+
+.meeting-report-body ul>li>ul>li {
+    position: relative;
+    padding-left: 13pt;
+    margin-bottom: 3.5pt;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #27272a;
+    page-break-inside: avoid;
+}
+
+.meeting-report-body ul>li>ul>li::before {
+    content: "▪";
+    position: absolute;
+    left: 4pt;
+    top: 0;
+    color: #a1a1aa;
+    font-size: 7pt;
+}
+
+/* Niveau 3 : Tiret discret */
+.meeting-report-body ul>li>ul>li>ul>li {
+    position: relative;
+    padding-left: 12pt;
+    margin-bottom: 3pt;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #3f3f46;
+}
+
+.meeting-report-body ul>li>ul>li>ul>li::before {
+    content: "–";
+    position: absolute;
+    left: 4pt;
+    top: -0.5pt;
+    color: #d4d4d8;
+    font-weight: 700;
+}
+
+/* Listes numérotées */
+.meeting-report-body ol {
+    margin: 0 0 9pt 0;
+    padding-left: 18pt;
+}
+
+.meeting-report-body ol>li {
+    font-size: 8pt;
+    line-height: 1.45;
+    margin-bottom: 4pt;
+    color: #18181b;
+    page-break-inside: avoid;
+}
+
+/* ── 4. Typographie & Gras ───────────────────────────────────────────────── */
+.meeting-report-body strong {
+    font-weight: 700;
+    color: #09090b;
+}
+
+.meeting-report-body em {
+    font-style: italic;
+    color: #3f3f46;
+}
+
+/* ── 5. Boîte de Contexte & Alertes (Blockquote) ─────────────────────────── */
+.meeting-report-body .pdf-context-box,
+.meeting-report-body blockquote {
+    background-color: #fafafa;
+    border-left: 2.5pt solid var(--bv-gold, #f59e0b);
+    padding: 6pt 10pt;
+    margin: 8pt 0;
+    font-size: 7.5pt;
+    line-height: 1.45;
+    color: #27272a;
+    page-break-inside: avoid;
+    border-radius: 0 3pt 3pt 0;
+}
+
+.meeting-report-body hr {
+    border: none;
+    border-top: 0.5pt solid #e4e4e7;
+    margin: 12pt 0;
+}
+
+.meeting-report-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 7.5pt;
+    background-color: #f4f4f5;
+    padding: 1pt 3pt;
+    border-radius: 2pt;
+    color: #18181b;
+}
+
+/* Saut de page forcé si besoin */
+.page-break {
+    page-break-before: always;
+}

@@ -169,6 +169,7 @@
 
 
                 {% call nav_group('🛠️ Outils', 'tools', 'tools', false) %}
+                {{ nav_item(url_for('admin_tools.admin_meeting_report'), 'Compte-rendu de réunion', 'file-text') }}
                 {{ nav_item(url_for('admin_tools.admin_signature_generator'), 'Générateur de signature mail',
                 'signature') }}
                 {{ nav_item(url_for('admin_tools.admin_docs_index'), 'Documentation technique', 'docs') }}

@@ -1,12 +1,53 @@
-from flask import Blueprint, abort, render_template
+from flask import Blueprint, Response, abort, render_template, request
 from jinja2.exceptions import TemplateNotFound
 
+from extensions import csrf
 from utils.decorators import require_roles
 
 
 
 tools_bp = Blueprint('admin_tools', __name__, url_prefix='/admin')
 """Initialise les routes pour les outils administratifs."""
+
+@tools_bp.route("/tools/meeting-report", methods=["GET"], endpoint='admin_meeting_report')
+@require_roles('administrator', 'manager', 'commercial', 'user')
+def admin_meeting_report():
+    """Outil de mise en forme et génération de comptes-rendus de réunion."""
+    return render_template("admin/meeting_report.html")
+
+@tools_bp.route("/tools/meeting-report/pdf", methods=["POST"], endpoint='admin_meeting_report_pdf')
+@csrf.exempt
+@require_roles('administrator', 'manager', 'commercial', 'user')
+def admin_meeting_report_pdf():
+    """Génération et téléchargement du compte-rendu au format PDF WeasyPrint."""
+    from services.admin.meeting_report_service import generate_meeting_report_pdf, parse_meeting_report
+
+    data = request.get_json(silent=True) or {}
+    markdown_text = data.get("markdown", "")
+    custom_title = data.get("title")
+    custom_date = data.get("date_str")
+    custom_ref = data.get("ref")
+    custom_doc_type = data.get("doc_type")
+
+    report_data = parse_meeting_report(
+        markdown_text=markdown_text,
+        custom_title=custom_title,
+        custom_date=custom_date,
+        custom_ref=custom_ref,
+        custom_doc_type=custom_doc_type,
+    )
+
+    pdf_bytes = generate_meeting_report_pdf(report_data, base_url=request.host_url)
+    filename = f"{report_data.get('doc_id', 'BVMR')}.pdf"
+
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "X-Document-Id": report_data.get("doc_id", "BVMR"),
+        },
+    )
 
 @tools_bp.route("/tools/signature-generator", endpoint='admin_signature_generator')
 @require_roles('administrator', 'manager', 'commercial', 'user')

@@ -1,0 +1,242 @@
+/* ==========================================================================
+   BELLE VITESSE — MODULE DE COMPTE-RENDU DE RÉUNION (INTERFACE ADMIN ERP)
+   Intégration fidèle aux composants natifs ERP (admin-card, admin-btn, form-input)
+   ========================================================================== */
+
+.meeting-report-layout {
+    width: 100%;
+}
+
+/* ── Grille Split-View ERP ──────────────────────────────────────────────── */
+.meeting-report-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (min-width: 1100px) {
+    .meeting-report-grid {
+        grid-template-columns: minmax(420px, 0.95fr) minmax(480px, 1.05fr);
+    }
+}
+
+/* ── Cartes ERP ─────────────────────────────────────────────────────────── */
+.meeting-editor-card,
+.meeting-preview-card {
+    padding: 1.25rem 1.5rem;
+}
+
+.meeting-editor-card .admin-card-title,
+.meeting-preview-card .admin-card-title {
+    margin-bottom: 1rem;
+}
+
+/* ── Boutons ERP Compacts & États de Chargement ──────────────────────────── */
+.admin-btn-sm {
+    padding: 0.42rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    gap: 0.35rem !important;
+    line-height: 1.2 !important;
+}
+
+.admin-btn-loading {
+    opacity: 0.75 !important;
+    pointer-events: none !important;
+    cursor: wait !important;
+}
+
+@keyframes bv-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.u-spin {
+    animation: bv-spin 0.8s linear infinite !important;
+    display: inline-block !important;
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+
+/* ── Boîte des Métadonnées (Équilibrée et Anti-débordement) ─────────────── */
+.meeting-meta-box {
+    background-color: var(--grey-bg, #f8f9fa);
+    border: 1px solid var(--white-3, #e9ecef);
+    padding: 0.75rem 0.9rem;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.meeting-meta-box .form-label {
+    font-size: 0.75rem !important;
+    font-weight: 600;
+    color: var(--grey-2, #515151);
+    margin: 0 0 0.25rem 0 !important;
+    display: block;
+}
+
+.meeting-meta-box .form-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    height: 34px !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.82rem !important;
+    background-color: #ffffff;
+    border: 1px solid var(--white-3, #e9ecef);
+}
+
+.meeting-meta-box .form-input[type="date"] {
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4 !important;
+}
+
+.meeting-meta-box .form-input:focus {
+    border-color: var(--admin-accent, #ffc845);
+    background-color: #ffffff;
+}
+
+/* ── Textarea Styled comme Form-Input ERP ────────────────────────────────── */
+.form-input.meeting-textarea {
+    width: 100%;
+    min-height: 620px;
+    padding: 0.85rem 1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--grey-1, #151515);
+    background-color: #fafafa;
+    border: 1px solid var(--white-3, #e9ecef);
+    resize: vertical;
+    white-space: pre-wrap;
+    box-sizing: border-box;
+}
+
+.form-input.meeting-textarea:focus {
+    background-color: #ffffff;
+    border-color: var(--admin-accent, #ffc845);
+}
+
+/* ── Viewport Feuille A4 (Fidèle à l'Aperçu Officiel Belle Vitesse) ───────── */
+.meeting-sheet-viewport {
+    width: 100%;
+    overflow-x: auto;
+    background-color: #475569;
+    padding: 24px 16px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.meeting-sheet {
+    background: #ffffff;
+    width: 210mm;
+    height: 297mm;
+    overflow-y: scroll;
+    max-width: 210mm;
+    min-height: 297mm;
+    padding: 18mm 14mm 22mm 14mm;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    color: #18181b;
+    font-family: var(--font-primary, "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+    font-size: 8.5pt;
+    line-height: 1.5;
+}
+
+/* En-tête A4 Belle Vitesse */
+.meeting-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 10pt;
+    border-bottom: 0.5pt solid #e4e4e7;
+    margin-bottom: 16pt;
+}
+
+.meeting-sheet-logo img {
+    height: 28pt;
+    width: auto;
+    display: block;
+}
+
+.meeting-sheet-meta {
+    text-align: right;
+    font-size: 8pt;
+    line-height: 1.45;
+}
+
+.meeting-sheet-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4pt;
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: #18181b;
+    letter-spacing: 0.2px;
+}
+
+.meeting-sheet-dot {
+    color: var(--bv-gold, #f59e0b);
+    font-size: 0.85em;
+}
+
+.meeting-sheet-ref-row {
+    margin-top: 2pt;
+}
+
+.meeting-sheet-ref {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 6.5pt;
+    font-weight: 600;
+    color: #52525b;
+    background-color: #f1f5f9;
+    padding: 1.5pt 5pt;
+    border-radius: 2pt;
+    display: inline-block;
+}
+
+.meeting-sheet-date-row {
+    font-size: 7pt;
+    color: #71717a;
+    margin-top: 1pt;
+}
+
+/* Bannière Titre */
+.meeting-sheet-banner {
+    text-align: center;
+    margin-bottom: 16pt;
+}
+
+.meeting-sheet-main-title {
+    font-size: 11.5pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 3pt 0;
+    color: #18181b;
+}
+
+/* Pied de page A4 */
+.meeting-sheet-footer {
+    margin-top: 24pt;
+    padding-top: 8pt;
+    border-top: 0.5pt solid #e4e4e7;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 7.5pt;
+    color: #a1a1aa;
+}
+
+.meeting-sheet-footer-right {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 6.5pt;
+}
