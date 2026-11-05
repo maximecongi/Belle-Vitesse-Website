@@ -255,11 +255,19 @@ def _handle_sign_waiver(mode, token):
                 if len(ph) > 50:
                     return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
                 waiver.signer_phone = ph
-            if data.get("company"):
-                co = data.get("company").strip()
-                if len(co) > 150:
-                    return _fail("La société ne peut dépasser 150 caractères.")
-                waiver.signer_company = co
+            entity_type = data.get("signer_entity_type", "freelance").strip().lower()
+            if entity_type == "company":
+                comp_name = (data.get("company_name") or data.get("company") or "").strip()
+                comp_addr = (data.get("company_address") or "").strip()
+                waiver.signer_company = comp_name
+                waiver.production_name = comp_name
+                waiver.production_address = comp_addr
+            else:
+                entity_type = "freelance"
+                waiver.signer_company = None
+                waiver.production_name = None
+                waiver.production_address = None
+
             if data.get("signer_role"):
                 ro = data.get("signer_role").strip()
                 if len(ro) > 100:
@@ -274,6 +282,10 @@ def _handle_sign_waiver(mode, token):
             )
 
             bvsr_sign_data = dict(waiver.sign_data or {})
+            bvsr_sign_data["entity_type"] = entity_type
+            if entity_type == "company":
+                bvsr_sign_data["company_name"] = comp_name
+                bvsr_sign_data["company_address"] = comp_addr
             bvsr_sign_data["ack_rules"] = True
             bvsr_sign_data["accepted_at"] = datetime.now(
                 timezone.utc).isoformat()

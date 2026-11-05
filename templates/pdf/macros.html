@@ -39,7 +39,7 @@ Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
 {% endmacro %}
 
 
-{# ── 2. En-tête Officiel (Header CGL) ────────────────────────────────────── #}
+{# ── 2. En-tête Officiel (Header Aérien Belle Vitesse) ────────────────────── #}
 {% macro pdf_header(doc_type_title, doc_id=None, date_str=None, company_name=None, logo_url=None) %}
 <header class="public-doc-header cgl-header pdf-header">
     <div class="public-doc-header-logo cgl-header-logo pdf-header-logo">
@@ -47,12 +47,18 @@ Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
             alt="{{ company_name or 'Belle Vitesse' }}">
     </div>
     <div class="public-doc-header-meta cgl-header-meta pdf-header-meta">
-        <strong class="dot-before">{{ doc_type_title }}</strong><br>
-        {% if doc_id %}
-        <span class="checkout-doc-id cgl-header-doc-id pdf-doc-id">{{ doc_id }}</span><br>
-        {% endif %}
+        <div class="pdf-header-title-row">
+            <span class="dot-before">{{ doc_type_title }}</span>
+        </div>
+        <div class="pdf-header-ref-row">
+            {% if doc_id %}
+            <span class="checkout-doc-id">{{ doc_id }}</span>
+            {% else %}
+            <span class="checkout-doc-id">Document officiel</span>
+            {% endif %}
+        </div>
         {% if date_str %}
-        <span class="u-text-xxs pdf-header-date">Émis le {{ date_str }}</span>
+        <div class="pdf-header-date-row">{{ date_str }}</div>
         {% endif %}
     </div>
 </header>
@@ -76,26 +82,26 @@ Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
 {% endmacro %}
 
 
-{# ── 4. Titre de Section CGL (avec carré or) ──────────────────────────────── #}
+{# ── 4. Titre de Section CGL (avec carré or via dot-before) ──────────────── #}
 {% macro pdf_section_title(title, id=None) %}
-<h2 class="cgl-section-title pdf-section-title" {% if id %} id="{{ id }}" {% endif %}>{{ title }}</h2>
+<h2 class="cgl-section-title pdf-section-title dot-before" {% if id %} id="{{ id }}" {% endif %}>{{ title }}</h2>
 {% endmacro %}
 
 
-{# ── 5. Cartes des Parties Contractuelles (CGL) ──────────────────────────── #}
+{# ── 5. Cartes des Parties Contractuelles (Typographie Ouverte Belle Vitesse) ── #}
 {% macro pdf_party_card(role, fields) %}
 <div class="cgl-party-card pdf-party-card">
-    <div class="cgl-party-role pdf-party-role">{{ role }}</div>
+    <div class="cgl-party-role pdf-party-role">{{ role }} :</div>
     {% for label, val in fields %}
     {% if val is not none and val != '' %}
-    <div><span class="cgl-party-field-label pdf-party-field-label">{{ label }} :</span> {{ val }}</div>
+    <div class="pdf-party-field-line"><span class="cgl-party-field-label pdf-party-field-label">{{ label }} :</span> <span class="pdf-party-field-value">{{ val }}</span></div>
     {% endif %}
     {% endfor %}
 </div>
 {% endmacro %}
 
 
-{# ── 6. Grille d'Informations Clé / Valeur ───────────────────────────────── #}
+{# ── 6. Grille d'Informations Clé / Valeur (Typographie Ouverte) ─────────── #}
 {% macro pdf_info_grid(items, columns=2) %}
 <div class="pdf-info-grid{% if columns == 3 %} pdf-info-grid--3cols{% endif %}">
     {% for label, val in items %}
@@ -106,6 +112,95 @@ Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
     </div>
     {% endif %}
     {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# ── 6b. Bloc Objet de la Prestation / Contexte Officiel (Screenshot eRover) ── #}
+{% macro pdf_mission_scope(
+    text,
+    project_name=None,
+    shooting_locations=None,
+    shooting_dates=None,
+    vehicles_details=None,
+    title="Objet de la Prestation",
+    locations_list=None,
+    safety_technicians=None,
+    dates_label="Date(s) de tournage",
+    technicians_label="Référent(s) BV"
+) %}
+<section class="pdf-section pdf-mission-scope-section">
+    <h2 class="cgl-section-title pdf-section-title dot-before">{{ title }}</h2>
+    
+    <div class="pdf-mission-scope-box">
+        <p>{{ text }}</p>
+    </div>
+
+    <div class="pdf-mission-meta-grid{% if safety_technicians %} pdf-mission-meta-grid--4cols{% endif %}">
+        <div class="pdf-mission-meta-item">
+            <span class="pdf-mission-meta-label">Projet</span>
+            <span class="pdf-mission-meta-value">{{ project_name or '—' }}</span>
+        </div>
+        <div class="pdf-mission-meta-item">
+            <span class="pdf-mission-meta-label">Lieu(x) d'utilisation</span>
+            <div class="pdf-mission-meta-value">
+                {% if locations_list and locations_list|length > 0 %}
+                    {% for loc in locations_list %}
+                        <div>{{ loc.name if loc is mapping else loc }}</div>
+                    {% endfor %}
+                {% elif shooting_locations %}
+                    {{ shooting_locations }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+        <div class="pdf-mission-meta-item">
+            <span class="pdf-mission-meta-label">{{ dates_label }}</span>
+            <span class="pdf-mission-meta-value">{{ shooting_dates or '—' }}</span>
+        </div>
+        {% if safety_technicians %}
+        <div class="pdf-mission-meta-item">
+            <span class="pdf-mission-meta-label">{{ technicians_label }}</span>
+            <div class="pdf-mission-meta-value">
+                {% if safety_technicians is iterable and safety_technicians is not string %}
+                    {% for tech in safety_technicians %}
+                        <div>{{ tech }}</div>
+                    {% endfor %}
+                {% else %}
+                    {% for tech in safety_technicians.split(',') %}
+                        <div>{{ tech.strip() }}</div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if vehicles_details and vehicles_details|length > 0 %}
+    <div class="pdf-mission-vehicles-row">
+        <span class="pdf-mission-meta-label">Véhicule(s) concerné(s)</span>
+        <div class="pdf-mission-vehicles-pills">
+            {% for v in vehicles_details %}
+            <span class="pdf-mission-vehicle-pill">{{ v.name if v is mapping else v }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endmacro %}
+
+{# ── 6c. Encart de Contexte Simple (Liseré Or) ───────────────────────────── #}
+{% macro pdf_context_box(text=None, title=None) %}
+<div class="pdf-context-box">
+    {% if title %}
+    <div class="pdf-context-box-title">{{ title }}</div>
+    {% endif %}
+    {% if caller %}
+    {{ caller() }}
+    {% elif text %}
+    <p>{{ text }}</p>
+    {% endif %}
 </div>
 {% endmacro %}
 

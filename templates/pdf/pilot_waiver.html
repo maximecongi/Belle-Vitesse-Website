@@ -22,111 +22,116 @@ show_print=True
 
 {% block pdf_header %}
 {{ pdf_header(
-doc_type_title="Annexe 3 aux CGL — Attestation Pilote",
-doc_id=waiver.waiver_id,
-date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
-company_name=company_name
+    doc_type_title="Attestation Pilote",
+    doc_id=waiver.waiver_id,
+    date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
+    company_name=company_name
 ) }}
 {% endblock %}
 
-{% block pdf_title %}
-{{ pdf_title_banner(
-title="Attestation d'Information & d'Engagement du Pilote",
-context_info="Projet : " ~ waiver.display_project_name ~ " — Production : " ~ waiver.display_production_name
-) }}
-{% endblock %}
+{% block pdf_title %}{% endblock %}
 
 {% block content %}
 <!-- ═══════════ CADRE DU TOURNAGE & PILOTE SIGNATAIRE ═══════════ -->
 <section class="pdf-section">
-    <h2 class="pdf-section-title dot-before">Cadre du Tournage &amp; Pilote Déclarant</h2>
+    <h2 class="pdf-section-title dot-before">IDENTIFICATION DU SIGNATAIRE</h2>
     <div class="pdf-parties-grid">
         {{ pdf_party_card(
         role="Pilote / Opérateur Déclarant",
         fields=[
         ("Nom complet", waiver.signer_name),
-        ("Qualité / Fonction", waiver.pilot_function_label),
-        ("Employeur déclaré", waiver.signer_company or waiver.display_production_name),
+        ("Qualité", waiver.pilot_function_label),
+        ("Employeur (société de production)", waiver.signer_company or waiver.display_production_name),
         ("Contact", (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else ''))
-        ]
-        ) }}
-
-        {{ pdf_party_card(
-        role="Cadre du Tournage",
-        fields=[
-        ("Projet", waiver.display_project_name),
-        ("Production", waiver.display_production_name),
-        ("Période de tournage", waiver.display_shooting_dates),
-        ("Lieu(x) de tournage", waiver.display_shooting_locations or '—')
         ]
         ) }}
     </div>
 </section>
 
-<!-- ═══════════ VÉHICULES CONFIÉS AU PILOTE ═══════════ -->
+<!-- ═══════════ OBJET DE LA PRESTATION ═══════════ -->
+{% set bvpa_scope_text = "La présente attestation formalise les engagements de sécurité et les déclarations sur l'honneur du pilote / cadreur pour l'opération des véhicules techniques de Belle Vitesse SAS sur le tournage de « " ~ waiver.display_project_name ~ " ». Le pilote déclare avoir pris connaissance des consignes opérationnelles et s'engage à les respecter scrupuleusement." %}
+{% set target_vehicles = vehicles_details if (vehicles_details is defined and vehicles_details) else (waiver.vehicles_details if waiver else []) %}
+{{ pdf_mission_scope(
+    text=bvpa_scope_text,
+    project_name=waiver.display_project_name,
+    shooting_locations=waiver.display_shooting_locations,
+    locations_list=waiver.display_shooting_locations_list,
+    shooting_dates=waiver.display_shooting_dates,
+    vehicles_details=target_vehicles,
+    title="Objet de la Prestation"
+) }}
+
+{% if target_vehicles and target_vehicles|length > 0 %}
 <section class="pdf-section bvpa-vehicles-section">
     <h2 class="pdf-section-title dot-before">Véhicules Techniques Mobilisés &amp; Confiés</h2>
-    {% set target_vehicles = vehicles_details if (vehicles_details is defined and vehicles_details) else (waiver.vehicles_details if waiver else []) %}
-    {{ pdf_vehicles_list(target_vehicles, empty_text="Parc de véhicules techniques Belle Vitesse mobilisé sur le tournage.") }}
+    {{ pdf_vehicles_list(target_vehicles) }}
 </section>
+{% endif %}
 
 <!-- ═══════════ CLAUSES & ENGAGEMENTS DU PILOTE ═══════════ -->
 <section class="pdf-section bvpa-clause-section">
     <h2 class="pdf-section-title dot-before">Engagements &amp; Déclarations sur l'Honneur</h2>
 
-    <div class="bvpa-clause-intro">1. Statut &amp; Aptitude à la Conduite</div>
-    <ul class="bvpa-clause-list">
-        <li><strong>Autorité exclusive de l'Employeur &amp; Absence de lien de subordination :</strong> Je
-            déclare être engagé(e) ou missionné(e) par la société de production (l'Employeur) pour la conduite
-            ou l'opération des véhicules ci-dessus désignés, et agir sous son autorité exclusive. Je reconnais
-            n'avoir aucun lien de subordination juridique, hiérarchique ou contractuel avec la société Belle
-            Vitesse.</li>
-        <li><strong>Compétences techniques :</strong> Je déclare détenir l'expérience, les permis de conduire
-            requis en cours de validité et les compétences techniques nécessaires à l'évolution sécurisée avec
-            les véhicules mobilisés.</li>
-        <li><strong>Aptitude physique &amp; Sobriété absolue :</strong> J'atteste sur l'honneur être en pleine
-            possession de mes moyens physiques et mentaux, et n'être sous l'emprise d'aucun état alcoolique,
-            stupéfiant, ni traitement médicamenteux incompatible avec la conduite sécurisée d'un véhicule
-            motorisé.</li>
-    </ul>
+    <!-- 1. Statut & Aptitude à la Conduite -->
+    <div class="bvpa-category-banner">1. Statut &amp; Aptitude à la Conduite</div>
+    <table class="bvpa-rules-table">
+        <tbody>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Autorité exclusive de l'Employeur &amp; Absence de lien de subordination :</strong> Je déclare être engagé(e) ou missionné(e) par la société de production (l'Employeur) pour la conduite ou l'opération des véhicules ci-dessus désignés, et agir sous son autorité exclusive. Je reconnais n'avoir aucun lien de subordination juridique, hiérarchique ou contractuel avec la société Belle Vitesse.</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Compétences techniques :</strong> Je déclare détenir l'expérience, les permis de conduire requis en cours de validité et les compétences techniques nécessaires à l'évolution sécurisée avec les véhicules mobilisés.</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Aptitude physique &amp; Sobriété absolue :</strong> J'atteste sur l'honneur être en pleine possession de mes moyens physiques et mentaux, et n'être sous l'emprise d'aucun état alcoolique, stupéfiant, ni traitement médicamenteux incompatible avec la conduite sécurisée d'un véhicule motorisé.</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <div class="bvpa-clause-intro">2. Règles Opérationnelles &amp; Cadre de Sécurité</div>
-    <ul class="bvpa-clause-list">
-        <li><strong>Évolution sur voies fermées :</strong> Je reconnais que les véhicules techniques de prise de
-            vue ne doivent évoluer que sur des voies rigoureusement fermées à la circulation publique ou sur des
-            terrains privés sécurisés et balisés sous le contrôle de la production.</li>
-        <li><strong>Port systématique des Équipements de Protection Individuelle (EPI) :</strong> Je m'engage à
-            porter systématiquement les EPI adaptés (notamment casque homologué correctement attaché pour les
-            véhicules ouverts, gyropodes, plateformes et deux/trois-roues, chaussures fermées et gants de
-            protection).</li>
-        <li><strong>Maîtrise de la vitesse &amp; Vigilance plateau :</strong> Je conserve en toutes
-            circonstances la maîtrise de ma vitesse et adapte ma conduite à la configuration du terrain, aux
-            conditions météorologiques et à la proximité immédiate des équipes techniques et comédiens.</li>
-        <li><strong>Charge utile &amp; Équilibre des masses :</strong> Je respecte scrupuleusement la charge
-            utile maximale autorisée du véhicule ainsi que les consignes d'équilibrage des têtes caméras et
-            machineries embarquées. Aucun passager n'est admis hors cadre strictement validé.</li>
-        <li><strong>Droit et Devoir d'Interruption :</strong> Je reconnais disposer du droit et du devoir
-            impératif de refuser ou d'interrompre immédiatement toute manoeuvre ou prise de vue que j'estimerais
-            dangereuse pour ma propre sécurité, celle des équipes de tournage ou des tiers, sans qu'aucune
-            pénalité ne puisse m'être opposée.</li>
-    </ul>
+    <!-- 2. Règles Opérationnelles & Cadre de Sécurité -->
+    <div class="bvpa-category-banner">2. Règles Opérationnelles &amp; Cadre de Sécurité</div>
+    <table class="bvpa-rules-table">
+        <tbody>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Évolution sur voies fermées :</strong> Je reconnais que les véhicules techniques de prise de vue ne doivent évoluer que sur des voies rigoureusement fermées à la circulation publique ou sur des terrains privés sécurisés et balisés sous le contrôle de la production.</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Port systématique des Équipements de Protection Individuelle (EPI) :</strong> Je m'engage à porter systématiquement les EPI adaptés (notamment casque homologué correctement attaché pour les véhicules ouverts, gyropodes, plateformes et deux/trois-roues, chaussures fermées et gants de protection).</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Maîtrise de la vitesse &amp; Vigilance plateau :</strong> Je conserve en toutes circonstances la maîtrise de ma vitesse et adapte ma conduite à la configuration du terrain, aux conditions météorologiques et à la proximité immédiate des équipes techniques et comédiens.</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Charge utile &amp; Équilibre des masses :</strong> Je respecte scrupuleusement la charge utile maximale autorisée du véhicule ainsi que les consignes d'équilibrage des têtes caméras et machineries embarquées. Aucun passager n'est admis hors cadre strictement validé.</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Droit et Devoir d'Interruption :</strong> Je reconnais disposer du droit et du devoir impératif de refuser ou d'interrompre immédiatement toute manoeuvre ou prise de vue que j'estimerais dangereuse pour ma propre sécurité, celle des équipes de tournage ou des tiers, sans qu'aucune pénalité ne puisse m'être opposée.</td>
+            </tr>
+        </tbody>
+    </table>
 
-    <div class="bvpa-clause-intro">3. Contrôle Pré-Roulage &amp; Restitution</div>
-    <ul class="bvpa-clause-list">
-        <li><strong>Vérification avant utilisation :</strong> Je m'engage à effectuer une vérification visuelle
-            et fonctionnelle préalable du véhicule avant toute mise en mouvement (pneumatiques, freins,
-            direction, fixations et élingages de sécurité).</li>
-        <li><strong>Signalement immédiat :</strong> Tout dysfonctionnement technique, comportement anormal ou
-            dommage constaté en cours de mission doit être signalé immédiatement au référent Belle Vitesse et à
-            la régie de production.</li>
-    </ul>
-
-    <div class="bvpa-rgpd-box">
-        <strong>Protection des Données Personnelles (RGPD) :</strong> Les données recueillies dans la présente
-        attestation sont traitées par Belle Vitesse aux fins exclusives de gestion de la sécurité, de prévention
-        des risques, de justification assurantielle et de scellement de la conformité légale des opérations.
-        Elles sont conservées pendant la durée légale applicable.
-    </div>
+    <!-- 3. Contrôle Pré-Roulage & Restitution -->
+    <div class="bvpa-category-banner">3. Contrôle Pré-Roulage &amp; Restitution</div>
+    <table class="bvpa-rules-table">
+        <tbody>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Vérification avant utilisation :</strong> Je m'engage à effectuer une vérification visuelle et fonctionnelle préalable du véhicule avant toute mise en mouvement (pneumatiques, freins, direction, fixations et élingages de sécurité).</td>
+            </tr>
+            <tr class="bvpa-rule-row">
+                <td class="bvpa-rule-check">✓</td>
+                <td class="bvpa-rule-text"><strong>Signalement immédiat :</strong> Tout dysfonctionnement technique, comportement anormal ou dommage constaté en cours de mission doit être signalé immédiatement au référent Belle Vitesse et à la régie de production.</td>
+            </tr>
+        </tbody>
+    </table>
 </section>
 {% endblock %}
 
@@ -156,7 +161,7 @@ custom_meta_lines=[
 {% block pdf_footer %}
 {{ pdf_footer(
 company_name=company_name or 'Belle Vitesse',
-note="Belle Vitesse — Annexe 3 aux CGL — Attestation Pilote (BVPA) — Document officiel A4",
+note="Belle Vitesse — Attestation Pilote — Document officiel A4",
 extra_class="bvpa-screen-footer"
 ) }}
 {% endblock %}

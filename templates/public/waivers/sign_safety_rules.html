@@ -242,10 +242,35 @@
                     </div>
 
                     <div class="form-group u-col-span-full">
-                        <label for="safety_company">Société / Employeur (optionnel)</label>
-                        <input class="form-input" type="text" id="safety_company" name="company"
-                            value="{{ waiver.signer_company or '' }}"
-                            placeholder="Ex: Société de production ou Freelance" autocomplete="organization">
+                        <label class="form-label u-font-semibold">Statut juridique</label>
+                        <div class="u-flex u-gap-4 u-mt-1">
+                            <label class="u-flex u-align-center u-gap-2 u-cursor-pointer">
+                                <input type="radio" name="signer_entity_type" id="safety_entity_type_freelance" value="freelance" {% if not (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') %}checked{% endif %}>
+                                <span>Intermittent / Freelance</span>
+                            </label>
+                            <label class="u-flex u-align-center u-gap-2 u-cursor-pointer">
+                                <input type="radio" name="signer_entity_type" id="safety_entity_type_company" value="company" {% if (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') %}checked{% endif %}>
+                                <span>Société</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group u-col-span-full {% if not (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') %}u-d-none{% endif %}" id="safety_company_fields_group">
+                        <div class="public-doc-form-grid">
+                            <div class="form-group">
+                                <label for="safety_company_name">Raison sociale <span class="u-text-danger">*</span></label>
+                                <input class="form-input" type="text" id="safety_company_name" name="company_name"
+                                    value="{{ (waiver.sign_data and waiver.sign_data.get('company_name')) or waiver.signer_company or '' }}"
+                                    placeholder="Ex: Société de production / Stunt Pro SAS" autocomplete="organization">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="safety_company_address">Adresse du siège social <span class="u-text-danger">*</span></label>
+                                <input class="form-input" type="text" id="safety_company_address" name="company_address"
+                                    value="{{ (waiver.sign_data and waiver.sign_data.get('company_address')) or '' }}"
+                                    placeholder="Ex: 12 rue de la Paix, 75002 Paris" autocomplete="street-address">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

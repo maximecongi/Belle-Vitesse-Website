@@ -583,7 +583,11 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         "status_id": status_id,
         "controller": {
             "id": c.controller_id,
-            "name": controller_name
+            "name": controller_name,
+            "job": (controller_obj.job or "").strip() if controller_obj and controller_obj.job else None,
+            "role": controller_obj.role_display if controller_obj else None,
+            "email": (controller_obj.mail or "").strip() if controller_obj and controller_obj.mail else None,
+            "phone": (controller_obj.phone or "").strip() if controller_obj and controller_obj.phone else None,
         },
         "created_at": c.created_at.isoformat() if c.created_at else "",
         "ready": ready,
@@ -724,6 +728,9 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         data["project_id_unique"] = p.project_id
         data["project_name"] = p.name
         data["vehicle_name"] = vehicle_name
+        data["shooting_locations"] = p.display_shooting_locations if hasattr(p, "display_shooting_locations") else (", ".join([loc["name"] for loc in p.locations_list if loc.get("name")]) if getattr(p, "locations_list", None) else "—")
+        data["locations_list"] = getattr(p, "locations_list", []) or []
+        data["safety_technicians"] = getattr(p, "bv_referents_names", None)
 
     return data
 
@@ -871,7 +878,11 @@ def get_mock_inspection_preview_data(mode="checkout"):
         "control_date": "02/11/2026",
         "controller": {
             "id": 1,
-            "name": "Maxime Congi"
+            "name": "Maxime Congi",
+            "job": "Président & Coordinateur Technique",
+            "role": "Super Administrateur",
+            "email": "maxime@bellevitesse.com",
+            "phone": "+33 6 00 00 00 00"
         },
         "vehicle": {
             "fields": {

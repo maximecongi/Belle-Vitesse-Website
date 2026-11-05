@@ -26,157 +26,195 @@ company_name=company_name
 ) }}
 {% endblock %}
 
-{% block pdf_title %}
-{{ pdf_title_banner(
-title="Règles de Sécurité",
-subtitle="Safety Rules & Operational Guidelines",
-context_info="Projet : " ~ waiver.display_project_name ~ " — Production : " ~ waiver.display_production_name
-) }}
-{% endblock %}
+{% block pdf_title %}{% endblock %}
 
 {% block content %}
-<!-- ═══════════ CADRE OPÉRATIONNEL & INTERVENANT ═══════════ -->
+<!-- ═══════════ IDENTIFICATION DES PARTIES ═══════════ -->
 <section class="pdf-section">
-    <h2 class="pdf-section-title dot-before">Cadre Opérationnel &amp; Intervenant</h2>
+    <h2 class="pdf-section-title dot-before">Identification des Parties</h2>
     <div class="pdf-parties-grid">
         {{ pdf_party_card(
-        role="Intervenant / Signataire",
+        role="Prestataire",
         fields=[
-        ("Nom complet", waiver.signer_name),
-        ("Qualité / Fonction", waiver.signer_role_label),
-        ("Société / Entité", waiver.signer_company),
-        ("Contact", (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else ''))
+        ("Société", company_name or "Belle Vitesse SAS"),
+        ("Représentant", company_representative or "Simon Maignan"),
+        ("Adresse", company_address or "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France")
         ]
         ) }}
 
-        {% set supervision = safety_technicians or (waiver.display_safety_technicians if waiver else None) %}
+        {% set is_company = (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') or (waiver.signer_company and waiver.signer_company.strip()) %}
+        {% set rep_role = waiver.signer_role_custom or waiver.signer_role_label or '—' %}
+        {% set rep_display = (waiver.signer_name ~ (', ' ~ rep_role if rep_role and rep_role != '—' else '')) if waiver.signer_name and waiver.signer_name != '—' else (waiver.display_production_representative or '—') %}
+        {% set contact_display = (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else '') %}
+
+        {% set sign_fields = [] %}
+        {% if is_company %}
+            {% set _ = sign_fields.append(("Société", (waiver.sign_data and waiver.sign_data.get('company_name')) or waiver.signer_company or waiver.display_production_name)) %}
+            {% set _ = sign_fields.append(("Représentant", rep_display)) %}
+            {% set comp_addr = (waiver.sign_data and waiver.sign_data.get('company_address')) or waiver.production_address or waiver.display_production_address %}
+            {% if comp_addr and comp_addr != '—' %}
+                {% set _ = sign_fields.append(("Adresse", comp_addr)) %}
+            {% endif %}
+        {% else %}
+            {% set _ = sign_fields.append(("Signataire", rep_display)) %}
+        {% endif %}
+        {% if waiver.signer_email or waiver.signer_phone %}
+            {% set _ = sign_fields.append(("Contact", contact_display)) %}
+        {% endif %}
+
         {{ pdf_party_card(
-        role="Cadre du Tournage",
-        fields=[
-        ("Projet", waiver.display_project_name),
-        ("Production", waiver.display_production_name),
-        ("Période de tournage", waiver.display_shooting_dates),
-        ("Lieu(x) de tournage", waiver.display_shooting_locations or '—'),
-        ("Véhicules mobilisés", waiver.vehicles or 'Parc Belle Vitesse'),
-        ("Supervision BV", supervision)
-        ]
+        role="Signataire",
+        fields=sign_fields
         ) }}
     </div>
 </section>
 
-<!-- ═══════════ SECTION 1 : RÈGLES GÉNÉRALES BILINGUES ═══════════ -->
-<section class="pdf-section bvsr-section">
-    <h2 class="pdf-section-title dot-before">1. Règles Générales de Sécurité — General Safety Rules</h2>
-    <div class="bvsr-rules-bilingual-grid">
-        <div class="bvsr-col-card">
-            <div class="bvsr-col-header">Français</div>
-            <ol class="bvsr-rules-list">
-                {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
-                {% set parts = rfr.split(':', 1) %}
-                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ rfr
-                    }}{% endif %}</li>
-                {% endfor %}
-            </ol>
-        </div>
-
-        <div class="bvsr-col-card">
-            <div class="bvsr-col-header">English</div>
-            <ol class="bvsr-rules-list">
-                {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) %}
-                {% set parts = ren.split(':', 1) %}
-                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ ren
-                    }}{% endif %}</li>
-                {% endfor %}
-            </ol>
-        </div>
-    </div>
-</section>
-
-<!-- ═══════════ SECTION 2 : RÈGLES SPÉCIFIQUES VÉHICULES MOBILISÉS ═══════════ -->
-<section class="pdf-section bvsr-section">
-    <h2 class="pdf-section-title dot-before">2. Règles Spécifiques aux Véhicules Mobilisés — Vehicle-Specific Guidelines
-    </h2>
-    {% if vehicle_rules %}
-    {% for vr in vehicle_rules %}
-    <div class="bvsr-vehicle-rule-card">
-        <div class="bvsr-vehicle-title dot-before">{{ vr.label }}</div>
-        <div class="bvsr-rules-bilingual-grid">
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">Français</div>
-                <ul class="bvsr-rules-list">
-                    {% for rfr in vr.rules_fr %}
-                    <li>{{ rfr }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">English</div>
-                <ul class="bvsr-rules-list">
-                    {% for ren in vr.rules_en %}
-                    <li>{{ ren }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
+<!-- ═══════════ OBJET DE LA PRESTATION ═══════════ -->
+{% set vehicles_names = [] %}
+{% if waiver.vehicles_details %}
+    {% for v in waiver.vehicles_details %}
+        {% set _ = vehicles_names.append(v.name if v is mapping else v) %}
     {% endfor %}
-    {% else %}
-    <div class="bvsr-vehicle-rule-card">
-        <div class="bvsr-vehicle-title dot-before">Véhicules Techniques Polyvalents / Tracking Vehicles</div>
-        <div class="bvsr-rules-bilingual-grid">
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">Français</div>
-                <ul class="bvsr-rules-list">
-                    <li>Casque obligatoire pour toute personne sur plateforme extérieure ou en roulage dynamique.</li>
-                    <li>Double élingage de sécurité obligatoire pour toute tête caméra embarquée.</li>
-                    <li>Respect scrupuleux de la charge utile maximale et équilibrage des masses.</li>
-                </ul>
-            </div>
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">English</div>
-                <ul class="bvsr-rules-list">
-                    <li>Helmet mandatory for anyone on exterior rig or during dynamic driving.</li>
-                    <li>Mandatory safety tethering for all camera heads and equipment rigs.</li>
-                    <li>Strict compliance with maximum payload capacity and weight balance.</li>
-                </ul>
-            </div>
-        </div>
+{% elif waiver.vehicles %}
+    {% for v in waiver.vehicles.split(',') %}
+        {% set _ = vehicles_names.append(v.strip()) %}
+    {% endfor %}
+{% endif %}
+{% set vehicles_str = vehicles_names|join(', ') if vehicles_names else 'techniques' %}
+{% set bvsr_scope_text = "Le présent document fixe les règles de sécurité applicables à l'utilisation des véhicules spéciaux " ~ vehicles_str ~ ", mis à disposition par Belle Vitesse SAS auprès de la Production " ~ waiver.display_production_name ~ ", avec pilote et techniciens véhicule, dans le cadre exclusif du tournage de « " ~ waiver.display_project_name ~ " ». La Production s'engage à les respecter et à les faire respecter par toute son équipe." %}
+{% set active_safety_techs = safety_technicians if safety_technicians is defined and safety_technicians else (waiver.display_safety_technicians if waiver.display_safety_technicians else (waiver.safety_technicians if waiver.safety_technicians else None)) %}
+{{ pdf_mission_scope(
+    text=bvsr_scope_text,
+    project_name=waiver.display_project_name,
+    shooting_locations=waiver.display_shooting_locations,
+    locations_list=waiver.display_shooting_locations_list,
+    shooting_dates=waiver.display_shooting_dates,
+    vehicles_details=waiver.vehicles_details,
+    safety_technicians=active_safety_techs
+) }}
+
+<!-- ═══════════ RÈGLES DE SÉCURITÉ VÉHICULES (FRANÇAIS) ═══════════ -->
+<section class="pdf-section bvsr-section">
+    <h2 class="pdf-section-title">Règles de Sécurité Véhicules</h2>
+
+    <div class="bvsr-rules-container">
+        <!-- Bandeau Tous les véhicules -->
+        <div class="bvsr-category-banner">Tous les véhicules</div>
+        <table class="bvsr-rules-table">
+            <tbody>
+                {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
+                <tr class="bvsr-rule-row">
+                    <td class="bvsr-rule-check">✓</td>
+                    <td class="bvsr-rule-text">{{ rfr }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Règles spécifiques par véhicule -->
+        {% if vehicle_rules %}
+            {% for vr in vehicle_rules %}
+            <div class="bvsr-category-banner">{{ vr.label }}</div>
+            <table class="bvsr-rules-table">
+                <tbody>
+                    {% for rfr in vr.rules_fr %}
+                    <tr class="bvsr-rule-row">
+                        <td class="bvsr-rule-check">✓</td>
+                        <td class="bvsr-rule-text">{{ rfr }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Équipements mis à disposition (FR) -->
+        <hr class="bvsr-equipment-separator">
+        <div class="bvsr-equipment-title">Équipements mis à disposition</div>
+        <ul class="bvsr-equipment-list">
+            {% if safety_equipment and safety_equipment.rules_fr and safety_equipment.rules_fr|length > 0 %}
+                {% for eq_fr in safety_equipment.rules_fr %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>{{ eq_fr }}</span>
+                </li>
+                {% endfor %}
+            {% elif helmets and helmets.description_fr %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>Dotation casques : {{ helmets.description_fr }}</span>
+                </li>
+            {% else %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>Dotation casques : 6 casques jet ouverts (1 Small, 2 Medium, 2 Large, 1 XLarge)</span>
+                </li>
+            {% endif %}
+        </ul>
     </div>
-    {% endif %}
 </section>
 
-<!-- ═══════════ SECTION 3 : CASQUES & ÉQUIPEMENTS DE PROTECTION ═══════════ -->
+<!-- ═══════════ VEHICLE SAFETY RULES (ENGLISH - SAUT DE PAGE) ═══════════ -->
+<div class="bvsr-page-break"></div>
+
 <section class="pdf-section bvsr-section">
-    <h2 class="pdf-section-title dot-before">3. Équipements de Sécurité Mis à Disposition — Safety Equipment</h2>
-    {% if safety_equipment and safety_equipment.rules_fr %}
-    <div class="bvsr-vehicle-rule-card">
-        <div class="bvsr-rules-bilingual-grid">
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">Français</div>
-                <ul class="bvsr-rules-list">
-                    {% for rfr in safety_equipment.rules_fr %}
-                    <li>{{ rfr }}</li>
+    <h2 class="pdf-section-title">Vehicle Safety Rules</h2>
+
+    <div class="bvsr-rules-container">
+        <!-- Bandeau All the vehicles -->
+        <div class="bvsr-category-banner">All the vehicles</div>
+        <table class="bvsr-rules-table">
+            <tbody>
+                {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) %}
+                <tr class="bvsr-rule-row">
+                    <td class="bvsr-rule-check">✓</td>
+                    <td class="bvsr-rule-text">{{ ren }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Règles spécifiques par véhicule en anglais -->
+        {% if vehicle_rules %}
+            {% for vr in vehicle_rules %}
+            <div class="bvsr-category-banner">{{ vr.label }}</div>
+            <table class="bvsr-rules-table">
+                <tbody>
+                    {% for ren in vr.rules_en %}
+                    <tr class="bvsr-rule-row">
+                        <td class="bvsr-rule-check">✓</td>
+                        <td class="bvsr-rule-text">{{ ren }}</td>
+                    </tr>
                     {% endfor %}
-                </ul>
-            </div>
-            <div class="bvsr-col-card">
-                <div class="bvsr-col-header">English</div>
-                <ul class="bvsr-rules-list">
-                    {% for ren in safety_equipment.rules_en %}
-                    <li>{{ ren }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+                </tbody>
+            </table>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Equipment provided (EN) -->
+        <hr class="bvsr-equipment-separator">
+        <div class="bvsr-equipment-title">Equipment Provided</div>
+        <ul class="bvsr-equipment-list">
+            {% if safety_equipment and safety_equipment.rules_en and safety_equipment.rules_en|length > 0 %}
+                {% for eq_en in safety_equipment.rules_en %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>{{ eq_en }}</span>
+                </li>
+                {% endfor %}
+            {% elif helmets and helmets.description_en %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>Helmet inventory : {{ helmets.description_en }}</span>
+                </li>
+            {% else %}
+                <li class="bvsr-equipment-item">
+                    <span class="bvsr-equipment-bullet">•</span>
+                    <span>Helmet inventory : 6 open face jet helmets (1 Small, 2 Medium, 2 Large, 1 XLarge)</span>
+                </li>
+            {% endif %}
+        </ul>
     </div>
-    {% else %}
-    <div class="bvsr-equipment-card">
-        <div><span class="bvsr-party-field-label">Dotation casques :</span> {{ helmets.description_fr if helmets else '6
-            casques jet ouverts homologués' }}</div>
-        <div class="bvsr-equipment-en"><span class="bvsr-party-field-label">Helmet inventory :</span> {{
-            helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
-    </div>
-    {% endif %}
 </section>
 {% endblock %}
 

@@ -26,43 +26,60 @@ company_name=company_name
 ) }}
 {% endblock %}
 
-{% block pdf_title %}
-{{ pdf_title_banner(
-title="Fiche de Restitution & Constat de Retour (Check-In)",
-subtitle="Contrôle technique et constat d'état lors du retour de tournage",
-context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (data.production or '—')
-) }}
-{% endblock %}
+{% block pdf_title %}{% endblock %}
 
 {% block content %}
-<!-- ═══════════ PRODUCTION INFO ═══════════ -->
+<!-- ═══════════ IDENTIFICATION DU RESPONSABLE DU CONTRÔLE ═══════════ -->
+{% set controller_name = data.controller.get('name', '—') if (data.controller is mapping) else (data.controller or '—') %}
+{% set controller_job = (data.controller.get('job') or data.controller.get('role') or 'Contrôleur Technique') if (data.controller is mapping) else 'Contrôleur Technique' %}
+{% set controller_email = data.controller.get('email') if (data.controller is mapping) else None %}
+{% set controller_phone = data.controller.get('phone') if (data.controller is mapping) else None %}
+{% set controller_contact = ((controller_email or '') ~ ((' — ' ~ controller_phone) if (controller_email and controller_phone) else (controller_phone or ''))) if (controller_email or controller_phone) else None %}
+
+{% set controller_fields = [
+    ("Nom complet", controller_name),
+    ("Organisme", company_name or "Belle Vitesse SAS"),
+    ("Fonction", controller_job)
+] %}
+{% if controller_contact %}
+    {% set _ = controller_fields.append(("Contact", controller_contact)) %}
+{% endif %}
+
 <section class="pdf-section">
-    <h2 class="pdf-section-title dot-before">Production &amp; Tournage</h2>
-    {% set controller_name = data.controller.get('name', '—') if (data.controller is mapping) else (data.controller or
-    '—') %}
-    {% set shooting_period = data.shooting_dates if (data.shooting_dates and data.shooting_dates != '—') else ((('Du ' ~ data.shoot_start|date_numeric ~ ' au ' ~ data.shoot_end|date_numeric) if (data.shoot_start and data.shoot_end and data.shoot_start != data.shoot_end and data.shoot_start != '—' and data.shoot_end != '—') else (data.shoot_start or data.return_date or '—')|date_numeric)) %}
-    {{ pdf_info_grid(
-    items=[
-    ("Production", data.production or '—'),
-    ("Projet", data.project or '—'),
-    ("Période de tournage", shooting_period),
-    ("Date de retour", (data.return_date or '—')|date_numeric),
-    ("Date du contrôle", (data.control_date or '—')|date_numeric),
-    ("Responsable du contrôle", controller_name)
-    ],
-    columns=3
-    ) }}
+    <h2 class="pdf-section-title dot-before">IDENTIFICATION DU SIGNATAIRE</h2>
+    <div class="pdf-parties-grid">
+        {{ pdf_party_card(
+            role="Responsable du Contrôle Technique",
+            fields=controller_fields
+        ) }}
+    </div>
 </section>
 
-<!-- ═══════════ VEHICLE INFO ═══════════ -->
+<!-- ═══════════ OBJET DU CONTRÔLE / MISSION SCOPE ═══════════ -->
+{% set shooting_period = data.shooting_dates if (data.shooting_dates and data.shooting_dates != '—') else ((('Du ' ~ data.shoot_start|date_numeric ~ ' au ' ~ data.shoot_end|date_numeric) if (data.shoot_start and data.shoot_end and data.shoot_start != data.shoot_end and data.shoot_start != '—' and data.shoot_end != '—') else (data.shoot_start or data.return_date or '—')|date_numeric)) %}
+{% set target_vehicles = data.vehicles_details if data.vehicles_details else ([data.vehicle.fields if (data.vehicle and data.vehicle.fields) else (data.vehicle or {})] if (data.vehicle or data.vehicle_name) else []) %}
+{% set bvci_scope_text = "La présente fiche formalise le contrôle technique et l'état des lieux au retour (Check-In) du matériel restitué à Belle Vitesse SAS par la Production " ~ (data.production or '—') ~ ", à l'issue du tournage de « " ~ (data.project or '—') ~ " »." %}
+
+{{ pdf_mission_scope(
+    text=bvci_scope_text,
+    project_name=data.project,
+    shooting_locations=data.shooting_locations,
+    locations_list=data.locations_list,
+    shooting_dates=shooting_period,
+    dates_label="Période de tournage",
+    title="OBJET DE LA PRESTATION"
+) }}
+
+{% if target_vehicles and target_vehicles|length > 0 %}
 <section class="pdf-section">
     <h2 class="pdf-section-title dot-before">Véhicule Restitué</h2>
-    {% set vehicles = data.vehicles_details if data.vehicles_details else ([data.vehicle.fields if (data.vehicle and
-    data.vehicle.fields) else (data.vehicle or {})] if (data.vehicle or data.vehicle_name) else []) %}
-    {{ pdf_vehicles_list(vehicles) }}
+    {{ pdf_vehicles_list(target_vehicles) }}
 </section>
+{% endif %}
 
 <!-- ═══════════ CHECK ITEMS ═══════════ -->
+<div class="pdf-page-break-before"></div>
+
 {% set grouped_check_items = {} %}
 {% for item in data.check_items %}
 {% set cat = item.category or 'Autre' %}
@@ -73,7 +90,7 @@ context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (dat
 {% endfor %}
 
 {% for cat, items in grouped_check_items.items() %}
-<div class="pdf-category-subtitle dot-before">{{ cat }}</div>
+<div class="pdf-category-subtitle">{{ cat }}</div>
 <table class="pdf-table">
     <thead>
         <tr>
@@ -112,7 +129,7 @@ context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (dat
 
 <!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
 {% if data.interior_photos %}
-<section class="pdf-section">
+<section class="pdf-section pdf-page-break-before">
     <h2 class="pdf-section-title dot-before">Photos intérieur véhicule</h2>
     <div class="pdf-photos-grid">
         {% for photo in data.interior_photos %}

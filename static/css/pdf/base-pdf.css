@@ -235,23 +235,27 @@ body.pdf-body {
     }
 }
 
-/* ── 3. En-tête du Document (Harmonisé CGL) ─────────────────────────────────── */
+/* ── 3. En-tête du Document (Harmonisé Aérien Belle Vitesse) ─────────────────── */
+:root {
+    --bv-gold: #ffc845;
+}
+
 .cgl-header,
 .public-doc-header,
 .pdf-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 14pt;
-    border-bottom: 1.5pt solid #e2e8f0;
-    margin-bottom: 18pt;
+    padding-bottom: 10pt;
+    border-bottom: 0.5pt solid #e4e4e7;
+    margin-bottom: 16pt;
     page-break-after: avoid;
 }
 
 .cgl-header-logo img,
 .public-doc-header-logo img,
 .pdf-header-logo img {
-    height: 30pt;
+    height: 28pt;
     width: auto;
     display: block;
 }
@@ -260,23 +264,58 @@ body.pdf-body {
 .public-doc-header-meta,
 .pdf-header-meta {
     text-align: right;
+    font-size: 8pt;
+    line-height: 1.45;
+}
+
+.pdf-header-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4pt;
     font-size: 8.5pt;
-    color: #64748b;
-    line-height: 1.6;
+    font-weight: 700;
+    color: #18181b;
+    letter-spacing: 0.2px;
+}
+
+.pdf-header-dot {
+    color: var(--bv-gold, #f59e0b);
+    font-size: 0.75em;
+    line-height: 1;
+}
+
+.pdf-header-ref-row {
+    margin-top: 2pt;
+}
+
+.pdf-header-ref {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #52525b;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.pdf-header-date-row {
+    font-size: 7pt;
+    color: #71717a;
+    margin-top: 1pt;
 }
 
 .cgl-header-meta strong,
 .public-doc-header-meta strong,
 .pdf-header-meta strong {
     color: #0f172a;
-    font-size: 9pt;
+    font-size: 8.5pt;
     font-weight: 700;
 }
 
-/* ── Signature Carré Jaune Belle Vitesse (Dot Before) ── */
+/* ── Signature Carré Or Belle Vitesse (Dot Before) ── */
 .dot-before:before {
     content: "■ ";
-    color: #ffc845;
+    color: var(--bv-gold, #f59e0b);
     font-size: 0.85em;
     position: relative;
     left: -0.2ch;
@@ -290,13 +329,14 @@ body.pdf-body {
 .public-doc-doc-id,
 .pdf-doc-id {
     white-space: nowrap;
-    font-family: monospace;
-    color: var(--grey-1, #64748b);
-    font-size: 6pt;
-    background-color: var(--white-3, #f1f5f9);
-    padding: 2pt 6pt;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #52525b;
+    font-size: 6.5pt;
+    font-weight: 600;
+    background-color: #f1f5f9;
+    padding: 1.5pt 5pt;
     border-radius: 2pt;
-    margin-top: 6pt;
+    margin-top: 3pt;
     width: fit-content;
     vertical-align: middle;
 }
@@ -304,21 +344,21 @@ body.pdf-body {
 .u-text-xxs,
 .cgl-header-date,
 .pdf-header-date {
-    font-size: 7.5pt;
-    color: #64748b;
+    font-size: 7pt;
+    color: #71717a;
 }
 
-/* ── 4. Bannière Titre (Typographie Centrée CGL) ─────────────────────────── */
+/* ── 4. Bannière Titre (Typographie Centrée CGL - Optionnelle) ───────────── */
 .cgl-title-banner,
 .pdf-title-banner {
     text-align: center;
-    margin-bottom: 18pt;
+    margin-bottom: 16pt;
     page-break-after: avoid;
 }
 
 .cgl-main-title,
 .pdf-main-title {
-    font-size: 13pt;
+    font-size: 12pt;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -328,7 +368,7 @@ body.pdf-body {
 
 .cgl-subtitle,
 .pdf-subtitle {
-    font-size: 9.5pt;
+    font-size: 9pt;
     font-weight: 700;
     color: #18181b;
     text-transform: uppercase;
@@ -358,7 +398,7 @@ body.pdf-body {
     margin-bottom: 4pt;
 }
 
-/* ── 5. Titres de Section (Inspiration Décharge BV) ────────────────────────── */
+/* ── 5. Titres de Section (Inspiration Modèle de Référence) ────────────────── */
 .cgl-section-title,
 .pdf-section-title {
     font-size: 8.5pt;
@@ -367,19 +407,7 @@ body.pdf-body {
     letter-spacing: 0.5px;
     color: #18181b;
     margin: 14pt 0 8pt 0;
-    display: flex;
-    align-items: center;
-    gap: 5pt;
     page-break-after: avoid;
-}
-
-.cgl-section-title::before {
-    content: "";
-    display: inline-block;
-    width: 6pt;
-    height: 6pt;
-    background-color: #ffc845;
-    flex-shrink: 0;
 }
 
 .pdf-divider {
@@ -390,21 +418,23 @@ body.pdf-body {
 }
 
 .pdf-category-subtitle {
+    background-color: #18181b;
+    color: #ffffff;
     font-size: 8pt;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-top: 10pt;
-    margin-bottom: 5pt;
-    border-bottom: 0.5pt solid #e4e4e7;
-    padding-bottom: 3pt;
-    color: #27272a;
+    letter-spacing: 0.6px;
+    padding: 5pt 8pt;
+    margin-top: 12pt;
+    margin-bottom: 0;
+    page-break-after: avoid;
+    border-bottom: none;
 }
 
-/* ── 6. Bloc Identification des Parties ─────────────────────────────────── */
+/* ── 6. Bloc Identification des Parties (Typographie Ouverte) ─────────────────── */
 .cgl-parties-section,
 .pdf-parties-section {
-    margin-bottom: 16pt;
+    margin-bottom: 14pt;
     page-break-inside: avoid;
 }
 
@@ -418,36 +448,46 @@ body.pdf-body {
 
 .cgl-party-card,
 .pdf-party-card {
-    background-color: #fafafa;
-    border: 1px solid #e4e4e7;
-    border-left: 3pt solid #ffc845;
-    padding: 8pt 10pt;
+    background-color: transparent;
+    border: none;
+    border-left: none;
+    padding: 0;
     font-size: 7.5pt;
-    line-height: 1.45;
+    line-height: 1.5;
 }
 
 .cgl-party-role,
 .pdf-party-role {
-    font-size: 8pt;
+    font-size: 7.5pt;
     font-weight: 700;
     text-transform: uppercase;
-    color: #18181b;
+    letter-spacing: 0.5px;
+    color: #71717a;
     margin-bottom: 4pt;
-    border-bottom: 1px dashed #d4d4d8;
-    padding-bottom: 3pt;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.pdf-party-field-line {
+    margin-bottom: 1.5pt;
 }
 
 .cgl-party-field-label,
 .pdf-party-field-label {
-    font-weight: 600;
-    color: #52525b;
+    font-weight: 500;
+    color: #71717a;
 }
 
-/* ── 7. Grilles Clé / Valeur & Informations ───────────────────────────────── */
+.pdf-party-field-value {
+    font-weight: 600;
+    color: #18181b;
+}
+
+/* ── 7. Grilles Clé / Valeur & Informations (Typographie Ouverte) ─────────────── */
 .pdf-info-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8pt 12pt;
+    gap: 8pt 14pt;
     margin-bottom: 10pt;
     page-break-inside: avoid;
     break-inside: avoid;
@@ -458,28 +498,191 @@ body.pdf-body {
 }
 
 .pdf-info-item {
-    background-color: #fafafa;
-    border: 1px solid #e4e4e7;
-    border-radius: 3pt;
-    padding: 6pt 8pt;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
     font-size: 7.5pt;
     display: flex;
     flex-direction: column;
-    gap: 2pt;
+    gap: 1.5pt;
 }
 
 .pdf-info-label {
     font-size: 6.5pt;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.4px;
     color: #71717a;
+    margin-bottom: 1pt;
 }
 
 .pdf-info-value {
+    font-size: 8pt;
     font-weight: 600;
     color: #18181b;
     word-break: break-word;
+}
+
+/* ── 7b. Bloc Objet de la Prestation (Modèle de Référence eRover) ─────────────── */
+.pdf-mission-scope-section {
+    margin-bottom: 16pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-mission-scope-box {
+    background-color: #f1f5f9;
+    border-left: 3.5pt solid var(--bv-gold, #f59e0b);
+    padding: 10pt 14pt;
+    font-size: 8pt;
+    line-height: 1.55;
+    color: #1e293b;
+    border-radius: 1pt;
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-mission-scope-box p {
+    margin: 0;
+}
+
+.pdf-mission-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10pt 16pt;
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-mission-meta-grid--4cols {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10pt 12pt;
+}
+
+.pdf-mission-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3pt;
+}
+
+.pdf-mission-meta-label {
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #64748b;
+}
+
+.pdf-mission-meta-value {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.pdf-mission-vehicles-row {
+    margin-top: 8pt;
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-mission-vehicles-row .pdf-mission-meta-label {
+    display: block;
+    margin-bottom: 6pt;
+}
+
+.pdf-mission-vehicles-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6pt;
+}
+
+.pdf-mission-vehicle-pill {
+    display: inline-block;
+    background-color: #e2e8f0;
+    color: #1e293b;
+    font-size: 8pt;
+    font-weight: 600;
+    padding: 3pt 10pt;
+    border-radius: 2pt;
+    letter-spacing: 0.2px;
+}
+
+/* ── 7c. Encarts de Contexte & Mesures (Modèle de Référence) ─────────────────── */
+.pdf-context-box,
+.cgl-annexe2-intro,
+.cgl-annexe2-context {
+    background-color: #f8fafc;
+    border: 0.5pt solid #e2e8f0;
+    border-left: 3pt solid var(--bv-gold, #f59e0b);
+    padding: 7pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.5;
+    color: #18181b;
+    border-radius: 2pt;
+    margin-bottom: 10pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-context-box-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #18181b;
+    margin-bottom: 3pt;
+    letter-spacing: 0.3px;
+}
+
+.pdf-measure-card,
+.pdf-clause-card {
+    background-color: #f8fafc;
+    border: 0.5pt solid #e2e8f0;
+    border-radius: 2pt;
+    padding: 6pt 10pt;
+    margin-bottom: 8pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-measure-title,
+.pdf-clause-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #71717a;
+    letter-spacing: 0.4px;
+    margin-bottom: 4pt;
+}
+
+.pdf-measures-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pdf-measures-list li {
+    position: relative;
+    padding-left: 14pt;
+    margin-bottom: 2pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+    color: #18181b;
+}
+
+.pdf-measures-list li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #15803d;
+    font-weight: 700;
+    font-size: 8pt;
 }
 
 /* ── Cartes Véhicules (Identiques à CGL / Portails publics) ──────────────── */
@@ -766,9 +969,9 @@ body.pdf-body {
 .pdf-seal-title::before {
     content: "";
     display: inline-block;
-    width: 6pt;
-    height: 6pt;
-    background-color: #ffc845;
+    width: 5pt;
+    height: 5pt;
+    background-color: var(--bv-gold, #f59e0b);
     flex-shrink: 0;
 }
 

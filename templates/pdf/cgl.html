@@ -27,68 +27,70 @@ company_name=company_name
 ) }}
 {% endblock %}
 
-{% block pdf_title %}
-{{ pdf_title_banner(
-title="Conditions Générales de Location",
-context_info="Version en vigueur au " ~ (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else
-(cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else cgl.created_at.strftime('%d/%m/%Y') if cgl.created_at
-else ''))
-) }}
-{% endblock %}
+{% block pdf_title %}{% endblock %}
 
 {% block content %}
 <!-- ═══════════ IDENTIFICATION DES PARTIES ═══════════ -->
 <section class="cgl-parties-section">
-    <h2 class="cgl-section-title">Identification des Parties</h2>
+    <h2 class="cgl-section-title dot-before">Identification des Parties</h2>
     <div class="cgl-parties-grid">
         <!-- LE PRESTATAIRE -->
         <div class="cgl-party-card">
-            <div class="cgl-party-role">Prestataire</div>
-            <div><span class="cgl-party-field-label">Société :</span> {{ company_name }}</div>
-            <div><span class="cgl-party-field-label">SIRET :</span> {{ company_siret or '—' }}{% if company_rcs %} ({{
-                company_rcs }}){% endif %}</div>
-            <div><span class="cgl-party-field-label">Représentant :</span> {{ company_representative }}, Président</div>
-            <div><span class="cgl-party-field-label">Adresse :</span> {{ company_address }}</div>
+            <div class="cgl-party-role">Prestataire :</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ company_name }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">SIRET :</span> <span class="pdf-party-field-value">{{ company_siret or '—' }}{% if company_rcs %} ({{
+                company_rcs }}){% endif %}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Représentant :</span> <span class="pdf-party-field-value">{{ company_representative }}, Président</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Adresse :</span> <span class="pdf-party-field-value">{{ company_address }}</span></div>
             {% if company_email or company_phone %}
-            <div><span class="cgl-party-field-label">Contact :</span> {{ company_email }} — {{ company_phone }}</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ company_email }} — {{ company_phone }}</span></div>
             {% endif %}
         </div>
 
         <!-- LA PRODUCTION -->
         <div class="cgl-party-card">
-            <div class="cgl-party-role">Production</div>
-            <div><span class="cgl-party-field-label">Nom :</span> {{ cgl.display_production_name }}{% if
-                cgl.display_legal_form %} ({{ cgl.display_legal_form }}){% endif %}</div>
-            <div><span class="cgl-party-field-label">Représentant :</span> {{ cgl.production_representative or '—' }}{%
-                if cgl.display_representative_role %} — {{ cgl.display_representative_role }}{% endif %}</div>
+            <div class="cgl-party-role">Production :</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ cgl.display_production_name }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme Juridique :</span> <span class="pdf-party-field-value"></span>{% if cgl.display_legal_form %} {{ cgl.display_legal_form }}{% endif %}</span></div>
             {% if cgl.display_legal_country|lower == 'france' or cgl.production_siret %}
-            <div><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> {{
-                cgl.production_siret or '—' }}{% if cgl.production_vat %} — TVA : {{ cgl.production_vat }}{% endif %}
-            </div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> <span class="pdf-party-field-value">{{
+                cgl.production_siret or '—' }}{% if cgl.production_vat %} — <span class="cgl-party-field-label">TVA :</span> {{ cgl.production_vat }}{% endif %}</span></div>
             {% endif %}
-            <div><span class="cgl-party-field-label">Adresse :</span> {{ cgl.production_address or '—' }}</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Représentant :</span> <span class="pdf-party-field-value">{{ cgl.production_representative or '—' }}{%
+                if cgl.display_representative_role %}, {{ cgl.display_representative_role }}{% endif %}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Adresse :</span> <span class="pdf-party-field-value">{{ cgl.production_address or '—' }}</span></div>
             {% if cgl.signer_email or cgl.signer_phone %}
-            <div><span class="cgl-party-field-label">Contact :</span> {{ cgl.signer_email or '—' }}{% if
-                cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ cgl.signer_email or '—' }}{% if
+                cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</span></div>
             {% endif %}
             {% if cgl.production_insurance_company %}
-            <div><span class="cgl-party-field-label">Assurance :</span> {{ cgl.production_insurance_company }}{% if
-                cgl.production_insurance_policy %} (Police : {{ cgl.production_insurance_policy }}){% endif %}</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Assurance :</span> <span class="pdf-party-field-value">{{ cgl.production_insurance_company }}{% if
+                cgl.production_insurance_policy %} (Police : {{ cgl.production_insurance_policy }}){% endif %}</span></div>
             {% endif %}
         </div>
     </div>
 </section>
 
+<!-- ═══════════ OBJET DE LA PRESTATION ═══════════ -->
+{% set cgl_scope_text = "Le présent contrat a pour objet la mise à disposition des véhicules techniques spéciaux ci-après désignés par Belle Vitesse SAS auprès de la Production " ~ cgl.display_production_name ~ ", dans le cadre exclusif du tournage de « " ~ cgl.display_project_name ~ " ». La Production s'engage à en informer toute son équipe." %}
+{{ pdf_mission_scope(
+    text=cgl_scope_text,
+    project_name=cgl.display_project_name,
+    shooting_locations=cgl.display_shooting_locations,
+    locations_list=cgl.display_shooting_locations_list,
+    shooting_dates=cgl.display_shooting_dates,
+    vehicles_details=cgl.vehicles_details
+) }}
+
 <!-- ═══════════ CORPS CONTRACTUEL (ARTICLES 1 À 22) ═══════════ -->
-<h2 class="cgl-section-title">Dispositions Contractuelles</h2>
+<h2 class="cgl-section-title dot-before">Dispositions Contractuelles</h2>
 <div class="cgl-articles-container">
     {% include "public/cgl/_cgl_articles.html" %}
 </div>
 
 <!-- ═══════════ ANNEXE 1 : TABLEAU DE LA FLOTTE ═══════════ -->
 <section class="cgl-annexe-section">
-    <h2 class="cgl-annexe-title">Annexe 1 – Véhicules, statut réglementaire, charges maximales et Valeurs de Référence
-    </h2>
+    <h2 class="cgl-annexe-title dot-before">Annexe 1 – Véhicules, statut réglementaire, charges maximales et Valeurs de Référence</h2>
     <p class="cgl-annexe-desc">
         Les valeurs et tarifs ci-dessous sont exprimés hors taxes, à la date de version des CGL. Ils sont
         revalorisés annuellement par le Loueur. Le prix applicable est celui du Bon de Commande. [Note de
@@ -181,86 +183,43 @@ else ''))
 
 <!-- ═══════════ ANNEXE 2 : ENGAGEMENT DE SÉCURITÉ DU LOCATAIRE ═══════════ -->
 <section class="cgl-annexe-section cgl-annexe2-section">
-    <h2 class="cgl-annexe-title">Annexe 2 aux Conditions Générales de Location de Belle Vitesse<br>Engagement de
-        Sécurité du Locataire</h2>
+    <h2 class="cgl-annexe-title dot-before">Annexe 2 — Engagement de Sécurité du Locataire</h2>
 
-    <div class="cgl-annexe2-intro">
-        <p>Je soussigné(e), dûment habilité(e) à représenter la société de production désignée ci-dessous (le «
-            Locataire ») :</p>
-    </div>
-
-    <div class="cgl-parties-grid">
+    <!-- Identification du Locataire Signataire (Typographie Ouverte) -->
+    <div class="pdf-parties-grid">
         <div class="cgl-party-card">
-            <div><span class="cgl-party-field-label">Nom (dénomination sociale) de la société :</span> {{
-                cgl.display_production_name }}</div>
-            <div><span class="cgl-party-field-label">Forme :</span> {{
-                cgl.display_legal_form or '—' }}</div>
-            <div><span class="cgl-party-field-label">{% if cgl.production_siret %}{{ cgl.display_legal_identifier_label
-                    }} :</span> {{ cgl.production_siret }}{% endif %}</div>
-            <div><span class="cgl-party-field-label">{% if cgl.production_vat %}TVA :</span> {{ cgl.production_vat }}{%
-                endif %}</div>
-            <div><span class="cgl-party-field-label">Nom du représentant :</span> {{ cgl.production_representative or
-                '—' }}</div>
-            <div><span class="cgl-party-field-label">Fonction :</span> {{ cgl.display_representative_role }}</div>
-            <div><span class="cgl-party-field-label">Siège social :</span> {{ cgl.production_address or '—' }}</div>
-            <div><span class="cgl-party-field-label">Téléphone :</span> {{ cgl.signer_phone or '—' }}</div>
-            <div><span class="cgl-party-field-label">E-mail :</span> {{ cgl.signer_email or '—' }}</div>
+            <div class="cgl-party-role">Locataire Déclarant :</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ cgl.display_production_name }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme :</span> <span class="pdf-party-field-value">{{ cgl.display_legal_form or '—' }}</span></div>
+            {% if cgl.production_siret %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> <span class="pdf-party-field-value">{{ cgl.production_siret }}</span></div>
+            {% endif %}
+            {% if cgl.production_vat %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">TVA :</span> <span class="pdf-party-field-value">{{ cgl.production_vat }}</span></div>
+            {% endif %}
+        </div>
+        <div class="cgl-party-card">
+            <div class="cgl-party-role">Représentant Légal / Mandataire :</div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Nom :</span> <span class="pdf-party-field-value">{{ cgl.production_representative or '—' }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Fonction :</span> <span class="pdf-party-field-value">{{ cgl.display_representative_role }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Siège social :</span> <span class="pdf-party-field-value">{{ cgl.production_address or '—' }}</span></div>
+            {% if cgl.signer_email or cgl.signer_phone %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ cgl.signer_email or '—' }}{% if cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</span></div>
+            {% endif %}
         </div>
     </div>
 
-    <div class="cgl-annexe2-context">
-        <p>Atteste avoir pris connaissance des Conditions Générales de Location de la société Belle Vitesse (le « Loueur
-            »), ainsi que des conditions d’utilisation, consignes de sécurité et restrictions liées aux véhicules
-            modifiés loués par le Loueur dans le cadre du tournage suivant :</p>
-        <div class="cgl-parties-grid">
-            <div class="cgl-party-card">
-                <div><span class="cgl-party-field-label">Nom de la production :</span> {{ cgl.display_project_name }}
-                </div>
-                <div><span class="cgl-party-field-label">Date(s) de tournage :</span> {{ cgl.display_shooting_dates }}
-                </div>
-                <div>
-                    <span class="cgl-party-field-label">Lieu(x) de tournage :</span>
-                    {% if cgl.display_shooting_locations_list and cgl.display_shooting_locations_list|length > 0 %}
-                    <ul class="cgl-annexe2-locations-list">
-                        {% for loc in cgl.display_shooting_locations_list %}
-                        <li>
-                            <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} — <span
-                                class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    {{ cgl.display_shooting_locations or '—' }}
-                    {% endif %}
-                </div>
-                <div>
-                    <span class="cgl-party-field-label">Véhicule(s) loué(s) :</span>
-                    {% if cgl.vehicles_details and cgl.vehicles_details|length > 0 %}
-                    <ul class="cgl-annexe2-vehicles-list">
-                        {% for v in cgl.vehicles_details %}
-                        <li>
-                            <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span
-                                class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% elif cgl.vehicles %}
-                    <ul class="cgl-annexe2-vehicles-list">
-                        {% for v in cgl.vehicles.split(',') %}
-                        <li>
-                            <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    —
-                    {% endif %}
-                </div>
-                <div><span class="cgl-party-field-label">Référence du Bon de Commande :</span> {{ cgl.display_order_ref
-                    or '—' }}</div>
-            </div>
-        </div>
-    </div>
+    <!-- Objet et Cadre du Tournage (Bloc Épuré Signature Belle Vitesse) -->
+    {% set annexe2_scope_text = "Je soussigné(e), dûment habilité(e) à représenter la société " ~ cgl.display_production_name ~ " (le « Locataire »), atteste avoir pris pleine connaissance des Conditions Générales de Location de Belle Vitesse SAS (le « Loueur »), ainsi que des conditions d’utilisation, consignes opérationnelles et restrictions liées aux véhicules modifiés loués pour le tournage de « " ~ cgl.display_project_name ~ " »." %}
+    {{ pdf_mission_scope(
+        text=annexe2_scope_text,
+        project_name=cgl.display_project_name,
+        shooting_locations=cgl.display_shooting_locations,
+        locations_list=cgl.display_shooting_locations_list,
+        shooting_dates=cgl.display_shooting_dates,
+        vehicles_details=cgl.vehicles_details,
+        title="Cadre Opérationnel & Véhicules Concernés"
+    ) }}
 
     <div class="cgl-annexe2-obligations">
         <p>Le Locataire reconnaît, accepte et s’engage à respecter ce qui suit :</p>
@@ -322,13 +281,9 @@ else ''))
             préposés, prestataires et intervenants, et à collaborer avec le Loueur pour garantir un environnement de
             travail sécurisé. Le présent engagement fait partie intégrante du contrat de location.</p>
 
-        <div class="cgl-annexe2-sign-info">
-            <p><strong>Fait à :</strong> {{ cgl.display_signature_city }}</p>
-            <p><strong>Le :</strong> {{ signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else
-                cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else '') }}</p>
-            <p><strong>Signature du représentant de la production (nom, qualité et cachet) :</strong></p>
-            <p><strong>Nom :</strong> {{ cgl.production_representative or '—' }} ({{ cgl.display_representative_role }})
-            </p>
+        {% set effective_date = signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else now.strftime('%d/%m/%Y')) %}
+        <div class="cgl-annexe2-date-place">
+            Fait à {{ cgl.display_signature_city or 'Paris' }}, le {{ effective_date }}
         </div>
     </div>
 </section>

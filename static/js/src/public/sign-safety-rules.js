@@ -49,6 +49,23 @@ function initSafetyRulesSign() {
         });
     }
 
+    // ── 2b. Bascule Freelance / Société ────────────────────────────────────
+    const radioFreelance = document.getElementById('safety_entity_type_freelance');
+    const radioCompany = document.getElementById('safety_entity_type_company');
+    const companyFieldsGroup = document.getElementById('safety_company_fields_group');
+
+    function updateCompanyFields() {
+        if (!companyFieldsGroup) return;
+        if (radioCompany && radioCompany.checked) {
+            companyFieldsGroup.classList.remove('u-d-none');
+        } else {
+            companyFieldsGroup.classList.add('u-d-none');
+        }
+    }
+
+    if (radioFreelance) radioFreelance.addEventListener('change', updateCompanyFields);
+    if (radioCompany) radioCompany.addEventListener('change', updateCompanyFields);
+
     // ── 3. Bouton de soumission et signature ──────────────────────────────
     const btnSign = document.getElementById('safety-btn-sign');
     if (!btnSign) return;
@@ -95,6 +112,30 @@ function initSafetyRulesSign() {
         }
 
         if (emailInput) emailInput.classList.remove('is-invalid');
+
+        // A2. Validation si statut Société
+        if (radioCompany && radioCompany.checked) {
+            const companyNameInput = document.getElementById('safety_company_name');
+            const companyAddressInput = document.getElementById('safety_company_address');
+            const compName = companyNameInput ? companyNameInput.value.trim() : '';
+            const compAddr = companyAddressInput ? companyAddressInput.value.trim() : '';
+
+            if (!compName || !compAddr) {
+                if (typeof showFeedback === 'function') {
+                    showFeedback('Veuillez renseigner la raison sociale et l’adresse du siège social de votre société.', 'error');
+                }
+                if (!compName && companyNameInput) {
+                    companyNameInput.classList.add('is-invalid');
+                    companyNameInput.focus();
+                } else if (!compAddr && companyAddressInput) {
+                    companyAddressInput.classList.add('is-invalid');
+                    companyAddressInput.focus();
+                }
+                return;
+            }
+            if (companyNameInput) companyNameInput.classList.remove('is-invalid');
+            if (companyAddressInput) companyAddressInput.classList.remove('is-invalid');
+        }
 
         // B. Validation des engagements obligatoires
         const ackRules = document.getElementById('ack_rules');

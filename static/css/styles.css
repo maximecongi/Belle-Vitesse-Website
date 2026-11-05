@@ -243,3 +243,51 @@ h4 {
 html.is-animating .transition-fade {
     opacity: 0;
 }
+
+/* ── Harmonisation Globale des Boutons Radio (Jaune BV #FFC845) ── */
+input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #cbd5e1;
+    background-color: #ffffff;
+    cursor: pointer;
+    display: inline-grid;
+    place-content: center;
+    margin: 0;
+    vertical-align: middle;
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="radio"]::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.15s ease-in-out;
+    background-color: #ffffff;
+}
+
+input[type="radio"]:hover {
+    border-color: #ffc845;
+}
+
+input[type="radio"]:checked {
+    border-color: #ffc845;
+    background-color: #ffc845;
+}
+
+input[type="radio"]:checked::before {
+    transform: scale(1);
+    background-color: #ffffff;
+}
+
+input[type="radio"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.35);
+}
+
