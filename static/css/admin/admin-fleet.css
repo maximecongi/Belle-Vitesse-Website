@@ -867,3 +867,20 @@
         min-width: 100%;
     }
 }
+
+/* Modale QR Code Véhicule */
+.vehicle-qr-modal-image-wrapper {
+    display: inline-block;
+    padding: 1rem;
+    background: #ffffff;
+    border: 1px solid var(--white-3, #e9ecef);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.vehicle-qr-modal-image {
+    width: 180px;
+    height: 180px;
+    display: block;
+    margin: 0 auto;
+}

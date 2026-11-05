@@ -84,6 +84,91 @@ function initVehicleTimeline() {
             }
         });
     });
+
+    // Initialisation de la modale QR Code
+    initVehicleQrModal();
+}
+
+function initVehicleQrModal() {
+    const btnOpen = document.getElementById('btnOpenVehicleQrModal');
+    const modal = document.getElementById('vehicleQrModal');
+    const btnClose = document.getElementById('btnCloseVehicleQrModal');
+    const btnCopy = document.getElementById('btnCopyVehicleQrUrl');
+    const inputUrl = document.getElementById('vehicleQrPublicUrl');
+    const copyText = document.getElementById('btnCopyVehicleQrText');
+
+    if (!modal) return;
+
+    if (btnOpen && !btnOpen._hasQrListener) {
+        btnOpen._hasQrListener = true;
+        btnOpen.addEventListener('click', function () {
+            modal.classList.remove('u-d-none');
+            modal.classList.add('is-active');
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    }
+
+    const closeModal = function () {
+        modal.classList.add('u-d-none');
+        modal.classList.remove('is-active');
+    };
+
+    if (btnClose && !btnClose._hasQrListener) {
+        btnClose._hasQrListener = true;
+        btnClose.addEventListener('click', closeModal);
+    }
+
+    if (!modal._hasBackdropListener) {
+        modal._hasBackdropListener = true;
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    }
+
+    // Fermeture avec la touche Échap
+    if (!document._hasVehicleQrEscListener) {
+        document._hasVehicleQrEscListener = true;
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal && !modal.classList.contains('u-d-none')) {
+                closeModal();
+            }
+        });
+    }
+
+    if (btnCopy && !btnCopy._hasQrListener) {
+        btnCopy._hasQrListener = true;
+        btnCopy.addEventListener('click', async function () {
+            if (!inputUrl) return;
+            const textToCopy = inputUrl.value;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(textToCopy);
+                } else {
+                    inputUrl.select();
+                    document.execCommand('copy');
+                }
+
+                if (copyText) {
+                    const original = copyText.textContent;
+                    copyText.textContent = 'Copié !';
+                    btnCopy.classList.add('admin-btn-primary');
+                    btnCopy.classList.remove('admin-btn-secondary');
+                    setTimeout(function () {
+                        copyText.textContent = original;
+                        btnCopy.classList.remove('admin-btn-primary');
+                        btnCopy.classList.add('admin-btn-secondary');
+                    }, 2000);
+                }
+            } catch (err) {
+                inputUrl.select();
+                document.execCommand('copy');
+            }
+        });
+    }
 }
 
 window.initVehicleTimeline = initVehicleTimeline;

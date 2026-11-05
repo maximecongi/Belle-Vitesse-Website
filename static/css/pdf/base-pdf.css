@@ -327,16 +327,15 @@ body.pdf-body {
 .checkout-doc-id,
 .cgl-header-doc-id,
 .public-doc-doc-id,
-.pdf-doc-id {
+.pdf-doc-id,
+.doc-id,
+[class*="-doc-id"] {
     white-space: nowrap;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    color: #52525b;
-    font-size: 6.5pt;
-    font-weight: 600;
-    background-color: #f1f5f9;
-    padding: 1.5pt 5pt;
+    font-family: monospace;
+    font-size: 6pt;
+    background-color: var(--white-3, #f1f5f9);
+    padding: 2pt 6pt;
     border-radius: 2pt;
-    margin-top: 3pt;
     width: fit-content;
     vertical-align: middle;
 }

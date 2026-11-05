@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Sticker Sécurité — {{ vehicle.name }}</title>
+    <link rel="stylesheet" href="{{ asset_url('css/pdf/safety-sticker.css') }}">
+</head>
+<body class="sticker-body">
+    <div class="sticker-container">
+        <!-- Bande accent racing green -->
+        <div class="sticker-accent-bar"></div>
+
+        <!-- Colonne Gauche : Identité & Consignes -->
+        <div class="sticker-left">
+            <div class="sticker-header">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                     alt="Belle Vitesse" class="sticker-logo">
+                <div class="sticker-title-group">
+                    <span class="sticker-title">Consignes de Sécurité</span>
+                    <span class="sticker-subtitle">Safety Rules</span>
+                </div>
+            </div>
+
+            <div class="sticker-vehicle-card">
+            <div class="sticker-vehicle-name">{{ vehicle.name }}</div>
+                <div class="sticker-vehicle-id-row">
+                    <span class="sticker-vehicle-badge">{{ vehicle.unique_id or vehicle.slug }}</span>
+                    {% if vehicle.brand or vehicle.model %}
+                    <span class="sticker-vehicle-model">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if vehicle.max_speed or vehicle.passengers %}
+                <div class="sticker-vehicle-specs">
+                    {% if vehicle.max_speed %}Vitesse max : {{ vehicle.max_speed }} km/h{% endif %}
+                    {% if vehicle.max_speed and vehicle.passengers %} • {% endif %}
+                    {% if vehicle.passengers %}{{ vehicle.passengers }} passagers max{% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="sticker-instructions">
+                <strong>Important :</strong> Scannez le QR Code pour consulter le protocole et les règles de sécurité du véhicule.
+            </div>
+        </div>
+
+        <!-- Colonne Droite : QR Code Haute Définition -->
+        <div class="sticker-right">
+            <div class="sticker-qr-box">
+                <img src="data:image/png;base64,{{ qr_hd_base64 }}" alt="QR Code Sécurité {{ vehicle.name }}" class="sticker-qr-img">
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

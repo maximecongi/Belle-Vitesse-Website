@@ -692,9 +692,34 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
 
     missions = _build_vehicle_missions(vehicle_projects, events)
 
+    # 4. Génération de l'URL publique et du QR code des règles de sécurité
+    public_safety_rules_url = ""
+    qr_code_base64 = ""
+    try:
+        from flask import has_request_context, url_for
+        from utils.document_utils import generate_qr_code
+        from utils.request_utils import resolve_base_url
+
+        safety_slug = vehicle_info.get("slug")
+        if not safety_slug and vehicle_info.get("name"):
+            safety_slug = vehicle_info["name"].lower().strip().replace(" ", "-")
+        safety_slug = safety_slug or vehicle_id
+
+        base = resolve_base_url().rstrip("/") if resolve_base_url() else ""
+        if has_request_context():
+            path = url_for("public_safety_rules.view_vehicle_safety_rules", vehicle_id=safety_slug)
+        else:
+            path = f"/safety-rules/v/{safety_slug}"
+        public_safety_rules_url = f"{base}{path}"
+        qr_code_base64 = generate_qr_code(public_safety_rules_url)
+    except Exception as e:
+        logger.warning(f"Erreur lors de la génération du QR code des règles de sécurité ({vehicle_id}) : {e}")
+
     return {
         "vehicle": vehicle_info,
         "events": events,
         "missions": missions,
         "stats": stats,
+        "public_safety_rules_url": public_safety_rules_url,
+        "qr_code_base64": qr_code_base64,
     }

@@ -72,13 +72,17 @@ body {
     color: var(--grey-1);
 }
 
-.checkin-doc-id {
+.checkin-doc-id,
+.checkout-doc-id,
+.doc-id,
+[class*="-doc-id"] {
+    display: inline-block;
+    white-space: nowrap;
     font-family: monospace;
     font-size: 6pt;
     background-color: var(--white-3);
     padding: 2pt 6pt;
     border-radius: 2pt;
-    margin-top: 6pt;
 }
 
 /* ── Document Title ──────────────────── */

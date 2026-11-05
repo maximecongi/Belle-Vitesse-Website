@@ -274,7 +274,8 @@ def render_pdf_from_template(
     stylesheets: list[str] = None,
     compress: bool = True,
     filename: str = "document.pdf",
-    continuous: bool = False
+    continuous: bool = False,
+    include_base_pdf: bool = True,
 ) -> bytes:
     """
     Générateur de PDF générique utilisant WeasyPrint avec compression automatique.
@@ -285,6 +286,7 @@ def render_pdf_from_template(
         compress (bool) : Si True (par défaut), applique la compression PDF locale haute performance.
         filename (str) : Nom indicatif du document pour le traitement de compression.
         continuous (bool) : Si True, génère une page continue sans saut de page (A4) à la hauteur exacte du contenu.
+        include_base_pdf (bool) : Si True (par défaut), injecte css/pdf/base-pdf.css. Mettre à False pour les stickers ou formats personnalisés.
     """
     from flask import current_app
     dummy_pdf = (
@@ -321,7 +323,7 @@ def render_pdf_from_template(
 
         css_list = []
         effective_stylesheets = list(stylesheets) if stylesheets else []
-        if not continuous and "css/pdf/base-pdf.css" not in effective_stylesheets:
+        if include_base_pdf and not continuous and "css/pdf/base-pdf.css" not in effective_stylesheets:
             effective_stylesheets.insert(0, "css/pdf/base-pdf.css")
 
         static_path = Path(current_app.static_folder)

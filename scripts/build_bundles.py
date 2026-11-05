@@ -29,6 +29,7 @@ PUBLIC_CSS_FILES: List[str] = [
     "css/filtersliders.css",
     "css/newsletter.css",
     "css/verification.css",
+    "css/public/vehicle-safety-rules.css",
 ]
 
 ADMIN_CSS_FILES: List[str] = [
@@ -109,6 +110,7 @@ PUBLIC_JS_FILES: List[str] = [
     "js/src/public/sign-incident.js",
     "js/src/public/document-verifier.js",
     "js/src/public/newsletter.js",
+    "js/src/public/vehicle-safety-rules.js",
 ]
 
 

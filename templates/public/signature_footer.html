@@ -6,7 +6,13 @@
     <div class="public-doc-footer-inner">
         <img src="{{ url_for('static', filename='imgs/logos_and_name/blanc-fond-transparent.png') }}"
             alt="Belle Vitesse" class="public-doc-footer-logo">
-        <div class="public-doc-footer-subtitle">Document scellé électroniquement après signature • Conforme eIDAS &amp; Art. 1366 Code civil</div>
+        <div class="public-doc-footer-subtitle">
+            {% if footer_subtitle %}
+                {{ footer_subtitle }}
+            {% else %}
+                Document scellé électroniquement après signature • Conforme eIDAS &amp; Art. 1366 Code civil
+            {% endif %}
+        </div>
 
         <div class="public-doc-footer-coords">
             <span>{{ company_name or 'Belle Vitesse SAS' }}</span>

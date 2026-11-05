@@ -1,0 +1,204 @@
+/* ==========================================================================
+   BELLE VITESSE — STICKER SÉCURITÉ VÉHICULE (100mm x 50mm)
+   Format étiquette adhésive plateau pour WeasyPrint
+   ========================================================================== */
+
+@page {
+    size: 100mm 50mm;
+    margin: 0;
+
+    @bottom-left {
+        content: none !important;
+    }
+
+    @bottom-right {
+        content: none !important;
+    }
+
+    @bottom-center {
+        content: none !important;
+    }
+
+    @top-left {
+        content: none !important;
+    }
+
+    @top-right {
+        content: none !important;
+    }
+
+    @top-center {
+        content: none !important;
+    }
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.sticker-body {
+    margin: 0;
+    padding: 0;
+    width: 100mm;
+    height: 50mm;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #18181b;
+    background-color: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.sticker-container {
+    width: 100mm;
+    height: 50mm;
+    padding: 2.5mm 4mm 2.5mm 5mm;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Bande latérale décorative Belle Vitesse (Vert Racing / Départs) */
+.sticker-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2.8mm;
+    height: 100%;
+    background-color: #ffc845;
+}
+
+.sticker-left {
+    flex: 1;
+    height: 100%;
+    padding-left: 2mm;
+    padding-right: 3mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sticker-header {
+    display: flex;
+    align-items: center;
+    gap: 2.2mm;
+}
+
+.sticker-logo {
+    height: 5.5mm;
+    width: auto;
+    object-fit: contain;
+}
+
+.sticker-title-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.sticker-title {
+    font-size: 6.5pt;
+    font-weight: 800;
+    letter-spacing: 0.35px;
+    color: #09090b;
+    text-transform: uppercase;
+    line-height: 1.1;
+}
+
+.sticker-subtitle {
+    font-size: 4.8pt;
+    font-weight: 600;
+    color: #71717a;
+    letter-spacing: 0.25px;
+    text-transform: uppercase;
+}
+
+.sticker-vehicle-card {
+    background: #f8fafc;
+    border: 0.5pt solid #e2e8f0;
+    border-radius: 1.5mm;
+    padding: 1.4mm 2mm;
+    margin: 0.8mm 0;
+}
+
+.sticker-vehicle-id-row {
+    display: flex;
+    align-items: center;
+    gap: 1.6mm;
+    margin-bottom: 0.4mm;
+}
+
+.sticker-vehicle-badge {
+    display: inline-block;
+    background: #18181b;
+    color: #ffffff;
+    font-size: 4.8pt;
+    font-weight: 700;
+    padding: 0.4mm 1.4mm;
+    border-radius: 0.7mm;
+    letter-spacing: 0.25px;
+}
+
+.sticker-vehicle-model {
+    font-size: 5.2pt;
+    color: #52525b;
+}
+
+.sticker-vehicle-name {
+    font-size: 9.5pt;
+    font-weight: 800;
+    color: #09090b;
+    line-height: 1.1;
+    margin-bottom: 0.3mm;
+}
+
+.sticker-vehicle-specs {
+    font-size: 4.8pt;
+    color: #71717a;
+}
+
+.sticker-instructions {
+    font-size: 4.6pt;
+    color: #71717a;
+    line-height: 1.15;
+}
+
+.sticker-instructions strong {
+    color: #18181b;
+}
+
+.sticker-right {
+    width: 34mm;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-left: 0.5pt dashed #d4d4d8;
+    padding-left: 2.5mm;
+}
+
+.sticker-qr-box {
+    width: 32mm;
+    height: 32mm;
+    background: #ffffff;
+    border: 0.5pt solid #e4e4e7;
+    border-radius: 1.5mm;
+    padding: 1mm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sticker-qr-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}

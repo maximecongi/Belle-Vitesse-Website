@@ -7,9 +7,19 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 {% block page_title %}Timeline{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
-    ← Retour au Parc
-</a>
+<div class="u-flex u-gap-2 u-align-center">
+    <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+        ← Retour au Parc
+    </a>
+    {% if qr_code_base64 %}
+    <button type="button" class="admin-btn admin-btn-secondary" id="btnOpenVehicleQrModal"
+        title="Consulter et imprimer les consignes de sécurité" aria-haspopup="dialog"
+        aria-controls="vehicleQrModal">
+        <i data-lucide="qr-code"></i>
+        <span>Règles &amp; Sticker QR</span>
+    </button>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block content %}
@@ -355,6 +365,50 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     <!-- Message si aucun événement ne correspond au filtre actif -->
     <div id="timeline-empty-filter" class="admin-card u-text-center u-p-4 u-mt-3 is-hidden">
         <p class="u-text-muted u-m-0">Aucun événement de ce type répertorié dans l'historique.</p>
+    </div>
+</div>
+
+<!-- ═══════════ MODALE QR CODE & CONSIGNES DE SÉCURITÉ DU VÉHICULE ═══════════ -->
+<div id="vehicleQrModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-labelledby="vehicleQrModalTitle">
+    <div class="admin-modal-container admin-modal-container--md">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
+            <div>
+                <h3 id="vehicleQrModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
+                    Consignes de Sécurité &amp; QR Code
+                </h3>
+                <span class="u-text-xs u-text-muted">{{ vehicle.name }} ({{ vehicle.unique_id }})</span>
+            </div>
+            <button type="button" class="admin-modal-close" id="btnCloseVehicleQrModal" aria-label="Fermer">&times;</button>
+        </div>
+        <div class="admin-modal-content u-p-4">
+            <div class="u-text-center u-mb-4">
+                <div class="vehicle-qr-modal-image-wrapper">
+                    <img src="{{ qr_code_base64 }}" alt="QR Code Sécurité {{ vehicle.name }}" class="vehicle-qr-modal-image">
+                </div>
+                <p class="u-text-sm u-text-muted u-mt-2 u-mb-0">
+                    Ce QR Code permet d'accéder publiquement aux règles spécifiques du véhicule et aux règles générales universelles Belle Vitesse (FR / EN).
+                </p>
+            </div>
+
+            <div class="form-group u-mb-4">
+                <label for="vehicleQrPublicUrl" class="form-label u-text-xs u-font-semibold">Lien public d'accès direct</label>
+                <div class="u-flex u-gap-2">
+                    <input type="text" id="vehicleQrPublicUrl" class="form-input u-text-xs" value="{{ public_safety_rules_url }}" readonly>
+                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="btnCopyVehicleQrUrl" title="Copier le lien">
+                        <i data-lucide="copy"></i> <span id="btnCopyVehicleQrText">Copier</span>
+                    </button>
+                    <a href="{{ public_safety_rules_url }}" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary admin-btn-sm" title="Ouvrir la page publique">
+                        <i data-lucide="external-link"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="u-border-top u-pt-3 u-flex u-flex-column u-align-end u-flex-wrap u-gap-2">
+                <a href="{{ url_for('admin_fleet.admin_vehicle_sticker_pdf', vehicle_id=vehicle.id) }}" class="admin-btn admin-btn-primary" id="btnDownloadStickerPdf">
+                    <i data-lucide="printer"></i> Télécharger le Sticker PDF
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
