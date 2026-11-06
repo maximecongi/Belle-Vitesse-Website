@@ -17,6 +17,7 @@ from models.checkpoint import CheckpointDefinition
 from models.waiver import (
     CglWaiver,
     PilotWaiver,
+    RiskAssessmentWaiver,
     SafetyRulesWaiver,
     Waiver,
     WaiverSignedDocument,

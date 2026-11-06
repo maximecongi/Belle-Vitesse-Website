@@ -13,6 +13,7 @@ from models import (
     CglWaiver,
     SafetyRulesWaiver,
     PilotWaiver,
+    RiskAssessmentWaiver,
     Project,
     db,
 )
@@ -76,6 +77,11 @@ def resolve_safety_rules_waiver(identifier: Union[int, str, None]) -> Optional[S
 def resolve_pilot_waiver(identifier: Union[int, str, None]) -> Optional[PilotWaiver]:
     """Résout une Attestation Pilote Annexe 3 (BVPA) par son ID ou code BVPA-*."""
     return resolve_waiver(PilotWaiver, identifier)
+
+
+def resolve_risk_assessment_waiver(identifier: Union[int, str, None]) -> Optional[RiskAssessmentWaiver]:
+    """Résout une Analyse des Risques (BVRS) par son ID ou code BVRS-*."""
+    return resolve_waiver(RiskAssessmentWaiver, identifier)
 
 
 def resolve_incident(identifier: Union[int, str, None]) -> Optional[Incident]:

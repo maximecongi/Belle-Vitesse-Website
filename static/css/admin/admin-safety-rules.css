@@ -311,3 +311,28 @@
     border-radius: 4px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
+
+/* ── Modale & éléments d'édition Analyse des Risques (BVRS) ── */
+.bvrs-modal-container {
+    max-width: 940px !important;
+}
+
+.bvrs-risk-edit-card {
+    border-radius: 6px;
+    transition: border-color 0.15s ease;
+}
+
+.bvrs-risk-edit-card--major {
+    border-left: 4px solid var(--status-danger, #EF4444) !important;
+}
+
+.bvrs-risk-edit-card--standard {
+    border-left: 4px solid var(--status-warning, #F59E0B) !important;
+}
+
+.bvrs-rec-item {
+    background: var(--white-2, #F8F9FA);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 4px;
+    padding: 0.35rem 0.5rem;
+}

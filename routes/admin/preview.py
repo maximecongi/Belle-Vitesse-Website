@@ -46,3 +46,11 @@ def preview_pdf_pilot_waiver_alias():
     from routes.admin.waivers import admin_pilot_waivers_preview
     return admin_pilot_waivers_preview()
 
+
+@preview_bp.route("/preview/pdf/risk-assessment", methods=["GET"], endpoint="preview_pdf_risk_assessment_alias")
+@require_preview_access
+def preview_pdf_risk_assessment_alias():
+    from routes.admin.waivers import admin_risk_assessment_preview
+    return admin_risk_assessment_preview()
+
+

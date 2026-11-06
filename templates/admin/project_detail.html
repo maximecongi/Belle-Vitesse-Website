@@ -766,6 +766,103 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% endif %}
         </div>
 
+        <!-- 4. ANALYSE DES RISQUES (BVRS) -->
+        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-danger">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="project-doc-title u-font-semibold u-text-xs">
+                        <i data-lucide="shield-alert" class="u-text-danger"></i> Analyse des Risques (BVRS)
+                    </span>
+                    <span class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">
+                        {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
+                    </span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-risk-signer-modal"
+                    title="Inviter un signataire à l'analyse des risques (Production, Cascade, Machinerie, Régie...)">
+                    <i data-lucide="user-plus"></i> Inviter
+                </button>
+            </div>
+
+            {% if risk_assessment_waivers and risk_assessment_waivers|length > 0 %}
+            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                {% for ra in risk_assessment_waivers %}
+                <div
+                    class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <div>
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <strong class="u-text-xs">{{ ra.signer_name }}</strong>
+                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                {{ ra.signer_role_label }}
+                            </span>
+                        </div>
+                        <div class="u-text-2xs u-text-muted">
+                            {{ ra.signer_email or 'Sans e-mail' }}
+                            {% if ra.signer_company %} — {{ ra.signer_company }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="u-flex u-align-center u-gap-1">
+                        {{ status_badge(ra.status, ra.raw_status) }}
+
+                        {% if ra.raw_status in ['to_send', 'to_generate'] %}
+                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                title="Envoyer le lien par e-mail">
+                                <i data-lucide="send"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif ra.raw_status == 'to_sign' %}
+                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                title="Relancer par e-mail">
+                                <i data-lucide="bell"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif ra.raw_status == 'signed' %}
+                        <a href="{{ ra.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                            rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                            <i data-lucide="file-text"></i> PDF
+                        </a>
+                        {% endif %}
+
+                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=ra.waiver_id) }}"
+                            method="POST" class="u-m-0"
+                            onsubmit="return confirm('Supprimer cette analyse des risques pour {{ ra.signer_name }} ?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="u-flex u-justify-between u-align-center u-mt-2">
+                <p class="u-text-2xs u-text-muted u-mb-0">
+                    Aucun signataire invité pour l'analyse des risques. Cliquez sur <strong>Inviter</strong> pour associer la production, les coordinateurs ou chefs d'équipe.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
 
         <!-- Incidents éventuels -->
         {% if incidents and incidents|length > 0 %}
@@ -1279,6 +1376,104 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     {% if not vehicles or vehicles|length==0 %}disabled{% endif %}>
                     <i data-lucide="send" class="u-mr-1"></i>
                     Créer l'invitation Annexe 3
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal d'invitation d'un signataire (Analyse des Risques - BVRS) -->
+<div id="addRiskSignerModal" class="admin-modal-overlay js-risk-signer-modal u-d-none" role="dialog" aria-modal="true"
+    aria-labelledby="riskSignerModalTitle">
+    <div class="admin-modal-container admin-modal-container--md">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
+            <div class="u-flex u-align-center u-gap-2">
+                <i data-lucide="shield-alert" class="u-text-danger"></i>
+                <h3 id="riskSignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
+                    Inviter un signataire à l'Analyse des Risques (BVRS)
+                </h3>
+            </div>
+            <button type="button" class="admin-modal-close js-close-risk-signer-modal"
+                aria-label="Fermer">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_waivers.admin_risk_assessment_create', project_id=project.id) }}"
+            class="admin-modal-content u-p-4 u-overflow-y-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+
+            <p class="u-text-sm u-text-muted u-mb-4">
+                Générez une analyse des risques bilingue (FR/EN) individuelle pour cet intervenant de plateau. Le
+                document intègre automatiquement les risques généraux et spécifiques aux véhicules réservés.
+            </p>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_risk_signer_role" class="form-label u-font-semibold">Rôle sur le plateau <span
+                            class="u-text-danger">*</span></label>
+                    <select id="new_risk_signer_role" name="signer_role" class="form-select" required>
+                        <option value="production">Directeur de production</option>
+                        <option value="stunt_coordinator">Coordinateur Cascades</option>
+                        <option value="key_grip">Chef Machiniste</option>
+                        <option value="location_manager">Régisseur Général</option>
+                        <option value="pilot">Pilote</option>
+                        <option value="operator">Cadreur</option>
+                        <option value="first_ad">1er Assistant Réalisateur</option>
+                        <option value="other">Autre fonction...</option>
+                    </select>
+                </div>
+
+                <div id="new_risk_signer_role_custom_group" class="form-group u-d-none">
+                    <label for="new_risk_signer_role_custom" class="form-label u-font-semibold">Préciser la fonction <span
+                            class="u-text-danger">*</span></label>
+                    <input type="text" id="new_risk_signer_role_custom" name="signer_role_custom" class="form-input"
+                        placeholder="Ex: Électricien, Régisseur...">
+                </div>
+            </div>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_risk_signer_first_name" class="form-label u-font-semibold">Prénom</label>
+                    <input type="text" id="new_risk_signer_first_name" name="signer_first_name" class="form-input"
+                        placeholder="Ex: Jean">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_risk_signer_last_name" class="form-label u-font-semibold">Nom</label>
+                    <input type="text" id="new_risk_signer_last_name" name="signer_last_name" class="form-input"
+                        placeholder="Ex: Dupont">
+                </div>
+            </div>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_risk_signer_email" class="form-label u-font-semibold">E-mail <span
+                            class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
+                    <input type="email" id="new_risk_signer_email" name="signer_email" class="form-input"
+                        placeholder="jean.dupont@prod.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_risk_signer_phone" class="form-label u-font-semibold">Téléphone mobile</label>
+                    <input type="tel" id="new_risk_signer_phone" name="signer_phone" class="form-input"
+                        placeholder="+33 6 12 34 56 78">
+                </div>
+            </div>
+
+            <div class="form-group u-mb-3">
+                <label for="new_risk_signer_company" class="form-label u-font-semibold">Société / Entité représentée</label>
+                <input type="text" id="new_risk_signer_company" name="signer_company" class="form-input"
+                    value="{{ project.production.name if project.production else '' }}"
+                    placeholder="Ex: Société de production ou Freelance">
+            </div>
+
+            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
+                <button type="button" class="admin-btn admin-btn-secondary js-close-risk-signer-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    <i data-lucide="send" class="u-mr-1"></i>
+                    Créer l'invitation BVRS
                 </button>
             </div>
         </form>

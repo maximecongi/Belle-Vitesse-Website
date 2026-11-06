@@ -245,3 +245,74 @@ class MockPilotWaiver:
     def signature_data_uri(self):
         return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='80' viewBox='0 0 240 80'><path d='M25,55 Q55,15 85,40 T150,30 T210,60' fill='none' stroke='%231e3a8a' stroke-width='2.5' stroke-linecap='round'/></svg>"
 
+
+class MockRiskAssessmentWaiver:
+    """Mock représentatif fidèle d'une Analyse des Risques (Risk Assessment - BVRS)."""
+    id = 996
+    waiver_id = "BVRS-DEMO-2026"
+    waiver_type = "risk_assessment"
+    status = "signed"
+    created_at = datetime(2026, 10, 20, 10, 0)
+    generated_at = datetime(2026, 10, 20, 10, 30)
+    signed_at = datetime(2026, 10, 22, 15, 30)
+    signer_ip = "192.168.1.42"
+    project = MockProject()
+
+    signer_role = "key_grip"
+    signer_role_custom = ""
+    signer_first_name = "Marc"
+    signer_last_name = "Duval"
+    signer_email = "marc.duval@grips-france.com"
+    signer_phone = "+33 6 12 34 56 78"
+    signer_company = "Machinerie Ciné Paris"
+    safety_technicians = "Maxime Perrard, Ewen Gicquel"
+
+    vehicles = "eRover Polaris Kinetic, eRider Stark Varg"
+    vehicles_details = [
+        {"name": "eRover (Polaris Kinetic)", "slug": "erover", "unique_id": "BV-ROVER-01"},
+        {"name": "eRider (Stark Varg)", "slug": "erider", "unique_id": "BV-RIDER-02"},
+    ]
+    sign_data = {
+        "signer_name": "Marc Duval",
+        "signer_role": "Chef Machiniste",
+        "signer_email": "marc.duval@grips-france.com",
+    }
+    hash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+    @property
+    def signer_name(self):
+        return f"{self.signer_first_name} {self.signer_last_name}"
+
+    @property
+    def signer_role_label(self):
+        return "Chef Machiniste"
+
+    @property
+    def display_project_name(self):
+        return self.project.name
+
+    @property
+    def display_production_name(self):
+        return "Antiestático Barcelona SL"
+
+    @property
+    def display_shooting_dates(self):
+        return "Du 12/11/2026 au 18/11/2026"
+
+    @property
+    def display_shooting_locations(self):
+        return "Circuit Paul Ricard, Le Castellet, France"
+
+    @property
+    def display_shooting_locations_list(self):
+        return [{"name": "Circuit Paul Ricard", "address": "Le Castellet, France"}]
+
+    @property
+    def display_safety_technicians(self):
+        return self.safety_technicians
+
+    @property
+    def signature_data_uri(self):
+        return "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='80' viewBox='0 0 240 80'><path d='M25,55 Q55,15 85,40 T150,30 T210,60' fill='none' stroke='%231e3a8a' stroke-width='2.5' stroke-linecap='round'/></svg>"
+
+

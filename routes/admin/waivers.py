@@ -9,20 +9,26 @@ from services.admin.waivers import (
     create_cgl,
     create_safety_rules_waiver,
     create_pilot_waiver,
+    create_risk_assessment_waiver,
     delete_cgl,
     delete_safety_rules_waiver,
     delete_pilot_waiver,
+    delete_risk_assessment_waiver,
     generate_cgl,
+    generate_risk_assessment_waiver,
     get_or_create_waiver_signing_url,
     list_cgl,
     list_safety_rules_waivers,
     list_pilot_waivers,
+    list_risk_assessment_waivers,
     reset_cgl,
     reset_safety_rules_waiver,
     reset_pilot_waiver,
+    reset_risk_assessment_waiver,
     send_cgl,
     send_safety_rules_waiver,
     send_pilot_waiver,
+    send_risk_assessment_waiver,
     countersign_safety_rules,
 )
 from utils.decorators import require_roles, require_preview_access
@@ -623,6 +629,175 @@ def admin_pilot_waivers_preview(waiver_id=None):
             pdf_bytes,
             mimetype="application/pdf",
             headers={"Content-Disposition": f"inline; filename=pilot_waiver_preview_{waiver.waiver_id}.pdf"}
+        )
+
+    return html_content
+
+
+# ── ANALYSE DES RISQUES (BVRS / RISK ASSESSMENT) ─────────────────────
+
+@waivers_bp.route("/projects/<int:project_id>/risk-assessment/create", methods=["POST"], endpoint='admin_risk_assessment_create')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_create(project_id):
+    """Création d'une nouvelle analyse des risques (BVRS) pour un signataire."""
+    signer_role = request.form.get("signer_role", "production").strip()
+    signer_role_custom = request.form.get("signer_role_custom", "").strip()
+    signer_first_name = request.form.get("signer_first_name", "").strip()
+    signer_last_name = request.form.get("signer_last_name", "").strip()
+    signer_email = request.form.get("signer_email", "").strip()
+    signer_phone = request.form.get("signer_phone", "").strip()
+    signer_company = request.form.get("signer_company", "").strip()
+
+    success, msg = create_risk_assessment_waiver(
+        project_id=project_id,
+        signer_role=signer_role,
+        signer_role_custom=signer_role_custom,
+        signer_first_name=signer_first_name,
+        signer_last_name=signer_last_name,
+        signer_email=signer_email,
+        signer_phone=signer_phone,
+        signer_company=signer_company,
+    )
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+
+
+@waivers_bp.route("/risk-assessment/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_risk_assessment_send')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_send(waiver_id):
+    success, msg = send_risk_assessment_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+
+
+@waivers_bp.route("/risk-assessment/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_risk_assessment_delete')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_delete(waiver_id):
+    success, msg = delete_risk_assessment_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+
+
+@waivers_bp.route("/risk-assessment/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_risk_assessment_reset')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_reset(waiver_id):
+    success, msg = reset_risk_assessment_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+
+
+@waivers_bp.route("/risk-assessment/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_risk_assessment_copy_link')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_copy_link(waiver_id):
+    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="risk_assessment")
+    if not success:
+        return jsonify({"success": False, "error": result}), 400
+    return jsonify({"success": True, "url": result})
+
+
+@waivers_bp.route("/risk-assessments", endpoint='admin_risk_assessment_list')
+@waivers_bp.route("/waivers/risk-assessments", endpoint='admin_risk_assessment_list_alias')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_risk_assessment_list():
+    items = list_risk_assessment_waivers()
+    q = request.args.get('q', '').strip().lower()
+    if q:
+        items = [
+            w for w in items
+            if q in (w.get('waiver_id') or '').lower()
+            or q in (w.get('project_name') or '').lower()
+            or q in (w.get('signer_name') or '').lower()
+            or q in (w.get('signer_email') or '').lower()
+            or q in (w.get('signer_role_label') or '').lower()
+            or q in str(w.get('db_id') or '')
+        ]
+    return render_template("admin/risk_assessment_list.html", risk_assessment_items=items)
+
+
+@waivers_bp.route("/risk-assessment/preview", methods=["GET"], endpoint='admin_risk_assessment_preview_direct')
+@waivers_bp.route("/preview/pdf/risk-assessment", methods=["GET"], endpoint='admin_risk_assessment_preview_alias')
+@waivers_bp.route("/risk-assessment/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_risk_assessment_preview')
+@require_preview_access
+def admin_risk_assessment_preview(waiver_id=None):
+    """
+    Prévisualisation directe du PDF d'Analyse des Risques (BVRS / Risk Assessment)
+    pour ajustement du design/CSS en direct.
+    Si waiver_id est absent ou introuvable, injecte un mock représentatif complet.
+    Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
+    """
+    from models import Waiver, AppSetting
+    from services.admin.risk_assessment_config import (
+        get_general_risk_assessment,
+        get_risk_assessment_for_vehicles,
+    )
+
+    waiver = None
+    target_id = waiver_id or request.args.get("waiver_id")
+    if target_id:
+        waiver = Waiver.query.filter(
+            Waiver.waiver_id == target_id,
+            Waiver.waiver_type == "risk_assessment",
+            Waiver.deleted_at.is_(None)
+        ).first()
+
+    if not waiver:
+        from services.admin.waivers.mock_data import MockRiskAssessmentWaiver
+        waiver = MockRiskAssessmentWaiver()
+
+    safety_techs = getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None
+    general_risks = get_general_risk_assessment()
+    vehicle_risks = get_risk_assessment_for_vehicles(getattr(waiver, "vehicles_details", []))
+
+    is_pdf_format = request.args.get("format") == "pdf"
+    html_content = render_template(
+        "pdf/risk_assessment.html",
+        waiver=waiver,
+        general_risks=general_risks,
+        vehicle_risks=vehicle_risks,
+        safety_technicians=safety_techs,
+        company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
+        base_url=request.host_url.rstrip("/"),
+        qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
+        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        is_preview=(not is_pdf_format),
+    )
+
+    if is_pdf_format:
+        from utils.document_utils import render_pdf_from_template
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=current_app.root_path,
+            stylesheets=["css/styles.css", "css/admin/safety-rules-pdf.css", "css/admin/risk-assessment-pdf.css"],
+        )
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"inline; filename=risk_assessment_preview_{waiver.waiver_id}.pdf"}
         )
 
     return html_content

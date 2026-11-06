@@ -17,6 +17,8 @@ def _generate_default_waiver_id(context):
         prefix = "BVRA"
     elif w_type == "pilot_waiver":
         prefix = "BVPA"
+    elif w_type == "risk_assessment":
+        prefix = "BVRS"
     else:
         prefix = "BVSR"
     return generate_inspection_number(prefix)
@@ -172,6 +174,8 @@ class Waiver(db.Model):
             "production": "Directeur de production",
             "director": "Réalisateur",
             "first_ad": "1er Assistant Réalisateur",
+            "key_grip": "Chef Machiniste",
+            "location_manager": "Régisseur Général",
             "technician": "Technicien Plateau",
             "other": self.signer_role_custom or "Intervenant Plateau",
         }
@@ -347,6 +351,8 @@ class Waiver(db.Model):
                 prefix = "BVRA"
             elif wt == "pilot_waiver":
                 prefix = "BVPA"
+            elif wt == "risk_assessment":
+                prefix = "BVRS"
             else:
                 prefix = "BVSR"
             kwargs["waiver_id"] = generate_inspection_number(prefix)
@@ -623,6 +629,16 @@ class LegacyPilotWaiver(PilotWaiver):
 
     def __repr__(self):
         return f"<LegacyPilotWaiver {self.waiver_id} - {self.status}>"
+
+
+class RiskAssessmentWaiver(Waiver):
+    """Analyse des Risques (Risk Assessment - BVRS)."""
+    __mapper_args__ = {
+        "polymorphic_identity": "risk_assessment",
+    }
+
+    def __repr__(self):
+        return f"<RiskAssessmentWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"
 
 
 # ── Tokens et Documents Signés Unifiés ───────────────────────────

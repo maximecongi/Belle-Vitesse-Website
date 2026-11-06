@@ -432,6 +432,18 @@ class CglComprehensiveTest(BaseTestCase):
         resp_pilot_direct = self.client.get("/preview/pdf/pilot-waiver")
         self.assertEqual(resp_pilot_direct.status_code, 200)
 
+        # 4. Prévisualisation directe Analyse des Risques BVRS (mock)
+        resp_risk_admin = self.client.get("/admin/risk-assessment/preview")
+        self.assertEqual(resp_risk_admin.status_code, 200)
+        risk_html = resp_risk_admin.get_data(as_text=True)
+        self.assertIn("Analyse des Risques", risk_html)
+        self.assertIn("pdf-preview-toolbar", risk_html)
+        self.assertIn("PARTIE 1 : RISQUES GÉNÉRAUX", risk_html)
+        self.assertIn("RISQUE MAJEUR", risk_html)
+
+        resp_risk_direct = self.client.get("/preview/pdf/risk-assessment")
+        self.assertEqual(resp_risk_direct.status_code, 200)
+
         # 4. En production, toutes les routes de prévisualisation PDF doivent retourner 404
         prev_env = os.environ.get("FLASK_ENV")
         prev_config = self.app.config.get("FLASK_ENV")

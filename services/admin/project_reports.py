@@ -198,6 +198,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         joinedload(Project.cgl),
         selectinload(Project.safety_rules),
         selectinload(Project.pilot_waivers),
+        selectinload(Project.risk_assessments),
         selectinload(Project.incidents),
         selectinload(Project.reports).joinedload(ProjectReport.user)
     ).first()
@@ -489,5 +490,23 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             }
             for pw in (project.pilot_waivers or [])
             if getattr(pw, "deleted_at", None) is None
+        ],
+        "risk_assessment_waivers": [
+            {
+                "id": ra.id,
+                "waiver_id": ra.waiver_id,
+                "signer_name": ra.signer_name,
+                "signer_role": ra.signer_role,
+                "signer_role_label": ra.signer_role_label,
+                "signer_email": ra.signer_email,
+                "signer_phone": ra.signer_phone,
+                "signer_company": ra.signer_company,
+                "status": format_waiver_status(ra.status),
+                "raw_status": ra.status,
+                "signed_at": ra.signed_at,
+                "pdf_path": _get_secured_document_url(ra.signed_pdf_path, "risk-assessment"),
+            }
+            for ra in (project.risk_assessments or [])
+            if getattr(ra, "deleted_at", None) is None
         ],
     }

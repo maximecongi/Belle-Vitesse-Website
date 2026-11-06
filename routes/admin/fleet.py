@@ -296,6 +296,58 @@ def admin_safety_rules_config():
     )
 
 
+@fleet_bp.route(
+    "/fleet/risk-assessment", methods=["GET", "POST"], endpoint="admin_risk_assessment_config"
+)
+@require_roles("administrator", "manager")
+def admin_risk_assessment_config():
+    """Gestion et personnalisation de l'Analyse des Risques (BVRS)."""
+    import json
+    from services.admin.risk_assessment_config import (
+        get_all_vehicle_risk_assessment_catalog,
+        get_general_risk_assessment,
+        save_general_risk_assessment,
+        save_vehicle_risk_assessment,
+    )
+
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        if action == "save_general":
+            risks_json = request.form.get("risks_json")
+            if risks_json:
+                try:
+                    risks_data = json.loads(risks_json)
+                    ok, msg = save_general_risk_assessment(risks_data)
+                    flash(msg, "success" if ok else "error")
+                except Exception as e:
+                    flash(f"Erreur format JSON : {e}", "error")
+            return redirect(url_for("admin_fleet.admin_risk_assessment_config"))
+
+        elif action == "save_vehicle":
+            vehicle_key = request.form.get("vehicle_key", "").strip()
+            risks_json = request.form.get("risks_json")
+            label = request.form.get("label", "").strip()
+            if vehicle_key and risks_json:
+                try:
+                    risks_data = json.loads(risks_json)
+                    ok, msg = save_vehicle_risk_assessment(
+                        vehicle_key, {"label": label, "risks": risks_data}
+                    )
+                    flash(msg, "success" if ok else "error")
+                except Exception as e:
+                    flash(f"Erreur format JSON : {e}", "error")
+            return redirect(url_for("admin_fleet.admin_risk_assessment_config"))
+
+    general_risks = get_general_risk_assessment()
+    vehicle_catalog = get_all_vehicle_risk_assessment_catalog()
+
+    return render_template(
+        "admin/risk_assessment_catalog.html",
+        general_risks=general_risks,
+        catalog=vehicle_catalog,
+    )
+
+
 def init_fleet_routes(app):
     """Enregistre le blueprint de la flotte admin (compatibilité ascendante)."""
     if "admin_fleet" not in app.blueprints:

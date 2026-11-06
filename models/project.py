@@ -166,6 +166,9 @@ class Project(db.Model):
     # Attestations d'information et d'engagement du pilote (Annexe 3 aux CGL - BVPA)
     pilot_waivers = db.relationship(
         "PilotWaiver", lazy=True, order_by="PilotWaiver.id", overlaps="project,waivers")
+    # Analyses des risques associées (Risk Assessment - BVRS)
+    risk_assessments = db.relationship(
+        "RiskAssessmentWaiver", lazy=True, order_by="RiskAssessmentWaiver.id", overlaps="project,waivers")
     # Utilisateur ayant effectué la dernière action
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)
@@ -214,7 +217,7 @@ class Project(db.Model):
 
     def clear_waiver_cache(self):
         """Réinitialise les caches mémoïsés des décharges actives."""
-        for attr in ("_memo_active_cgl", "_memo_active_safety_rules", "_memo_active_pilot_waivers"):
+        for attr in ("_memo_active_cgl", "_memo_active_safety_rules", "_memo_active_pilot_waivers", "_memo_active_risk_assessments"):
             if attr in self.__dict__:
                 del self.__dict__[attr]
 
@@ -273,6 +276,21 @@ class Project(db.Model):
         else:
             res = [pw for pw in (self.pilot_waivers or []) if getattr(pw, "deleted_at", None) is None]
         self._memo_active_pilot_waivers = res
+        return res
+
+    @property
+    def active_risk_assessments(self):
+        """Retourne la liste des analyses de risques (BVRS) actives pour ce projet."""
+        if hasattr(self, "_memo_active_risk_assessments"):
+            return self._memo_active_risk_assessments
+        if "waivers" in self.__dict__:
+            res = [
+                w for w in (self.waivers or [])
+                if getattr(w, "waiver_type", None) == "risk_assessment" and getattr(w, "deleted_at", None) is None
+            ]
+        else:
+            res = [ra for ra in (self.risk_assessments or []) if getattr(ra, "deleted_at", None) is None]
+        self._memo_active_risk_assessments = res
         return res
 
 

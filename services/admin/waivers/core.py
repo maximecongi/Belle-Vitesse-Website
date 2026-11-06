@@ -10,6 +10,7 @@ from models import (
     CglWaiver,
     SafetyRulesWaiver,
     PilotWaiver,
+    RiskAssessmentWaiver,
     Waiver,
     WaiverToken,
     db,
@@ -22,6 +23,7 @@ from utils.entity_resolvers import (
     resolve_project,
     resolve_safety_rules_waiver,
     resolve_pilot_waiver,
+    resolve_risk_assessment_waiver,
     resolve_waiver,
 )
 
@@ -118,6 +120,25 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
             waiver.signer_email = p.pilot_contact.mail
             waiver.signer_phone = getattr(p.pilot_contact, "tel", "")
 
+    elif waiver_type == "risk_assessment":
+        waiver.signer_role = kwargs.get("signer_role", "production")
+        waiver.signer_role_custom = kwargs.get("signer_role_custom")
+        waiver.signer_first_name = kwargs.get("signer_first_name")
+        waiver.signer_last_name = kwargs.get("signer_last_name")
+        waiver.signer_email = kwargs.get("signer_email")
+        waiver.signer_phone = kwargs.get("signer_phone")
+        waiver.signer_company = kwargs.get("signer_company") or (p.production.name if p.production else "")
+        if waiver.signer_role == "production" and not waiver.signer_first_name and p.production_contact:
+            waiver.signer_first_name = p.production_contact.first_name
+            waiver.signer_last_name = p.production_contact.last_name
+            waiver.signer_email = p.production_contact.mail
+            waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
+        elif waiver.signer_role == "pilot" and not waiver.signer_first_name and p.pilot_contact:
+            waiver.signer_first_name = p.pilot_contact.first_name
+            waiver.signer_last_name = p.pilot_contact.last_name
+            waiver.signer_email = p.pilot_contact.mail
+            waiver.signer_phone = getattr(p.pilot_contact, "tel", "") or getattr(p.pilot_contact, "phone", "")
+
     waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     selected_v = kwargs.get("selected_vehicles")
@@ -155,6 +176,8 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         msg = "Conditions Générales de Location (CGL) créées avec succès."
     elif waiver_type == "pilot_waiver":
         msg = f"Attestation Pilote (Annexe 3) créée avec succès pour {waiver.signer_name}."
+    elif waiver_type == "risk_assessment":
+        msg = f"Analyse des risques (BVRS) créée avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     else:
         msg = f"Règles de sécurité BVSR créées avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     return True, msg
@@ -170,6 +193,8 @@ def generate_waiver(waiver_id, waiver_type: str = None):
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "pilot_waiver":
         waiver = resolve_pilot_waiver(waiver_id)
+    elif waiver_type == "risk_assessment":
+        waiver = resolve_risk_assessment_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
     else:
@@ -188,7 +213,7 @@ def generate_waiver(waiver_id, waiver_type: str = None):
         if p and p.production:
             waiver.production_name = p.production.name
             waiver.production_address = p.production.address
-    elif mode in ("safety_rules", "pilot_waiver"):
+    elif mode in ("safety_rules", "pilot_waiver", "risk_assessment"):
         if p and p.production:
             waiver.production_name = p.production.name
 
@@ -212,6 +237,8 @@ def generate_waiver(waiver_id, waiver_type: str = None):
         msg = "Conditions Générales de Location (CGL) générées avec succès."
     elif mode == "pilot_waiver":
         msg = "Attestation Pilote (Annexe 3) générée avec succès."
+    elif mode == "risk_assessment":
+        msg = "Analyse des risques (BVRS) générée avec succès."
     else:
         msg = "Règles de sécurité BVSR générées avec succès."
     return True, msg
@@ -226,12 +253,15 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         send_cgl_invitation_email,
         send_safety_rules_invitation_email,
         send_pilot_waiver_invitation_email,
+        send_risk_assessment_invitation_email,
     )
 
     if waiver_type == "safety_rules":
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "pilot_waiver":
         waiver = resolve_pilot_waiver(waiver_id)
+    elif waiver_type == "risk_assessment":
+        waiver = resolve_risk_assessment_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
     else:
@@ -249,15 +279,23 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         return False, "Statut invalide pour l'envoi."
 
     p = waiver.project
-    if mode in ("safety_rules", "pilot_waiver"):
+    if mode in ("safety_rules", "pilot_waiver", "risk_assessment"):
         recipient_mail = waiver.signer_email
         recipient_name = waiver.signer_name
         if not recipient_mail and waiver.signer_role == "pilot" and p and p.pilot_contact:
             recipient_mail = p.pilot_contact.mail
             recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
+        elif not recipient_mail and waiver.signer_role == "production" and p and p.production_contact:
+            recipient_mail = p.production_contact.mail
+            recipient_name = f"{p.production_contact.first_name} {p.production_contact.last_name}"
         if not recipient_mail:
             return False, "Le signataire n'a pas d'adresse e-mail renseignée pour l'envoi."
-        route_prefix = "safety-rules" if mode == "safety_rules" else "pilot-attestation"
+        if mode == "safety_rules":
+            route_prefix = "safety-rules"
+        elif mode == "pilot_waiver":
+            route_prefix = "pilot-attestation"
+        else:
+            route_prefix = "risk-assessment"
     else:
         contact = p.production_contact if p else None
         if not contact or not contact.mail:
@@ -287,6 +325,15 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         )
     elif mode == "pilot_waiver":
         success = send_pilot_waiver_invitation_email(
+            to_email=recipient_mail,
+            recipient_name=recipient_name,
+            project_name=p.name if p else "",
+            signature_link=signature_link,
+            is_reminder=is_reminder,
+            production_name=(p.production.name if p and p.production else getattr(waiver, "production_name", None)),
+        )
+    elif mode == "risk_assessment":
+        success = send_risk_assessment_invitation_email(
             to_email=recipient_mail,
             recipient_name=recipient_name,
             project_name=p.name if p else "",
@@ -333,6 +380,10 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         msg_type = "Relance envoyée"
     elif mode == "safety_rules":
         msg_type = "Règles de sécurité (BVSR) envoyées"
+    elif mode == "pilot_waiver":
+        msg_type = "Attestation Pilote (Annexe 3) envoyée"
+    elif mode == "risk_assessment":
+        msg_type = "Analyse des risques (BVRS) envoyée"
     else:
         msg_type = "Conditions Générales de Location (CGL) envoyées"
 
@@ -349,6 +400,8 @@ def delete_waiver(waiver_id, waiver_type: str = None):
         waiver = resolve_cgl(waiver_id)
     elif waiver_type == "pilot_waiver":
         waiver = resolve_pilot_waiver(waiver_id)
+    elif waiver_type == "risk_assessment":
+        waiver = resolve_risk_assessment_waiver(waiver_id)
     else:
         waiver = resolve_waiver(waiver_id)
 
@@ -424,6 +477,8 @@ def reset_waiver(waiver_id, waiver_type: str = None):
         waiver = resolve_cgl(waiver_id)
     elif waiver_type == "pilot_waiver":
         waiver = resolve_pilot_waiver(waiver_id)
+    elif waiver_type == "risk_assessment":
+        waiver = resolve_risk_assessment_waiver(waiver_id)
     else:
         waiver = resolve_waiver(waiver_id)
 
@@ -471,6 +526,8 @@ def delete_waiver_internal(project_id, waiver_type: str = None):
         waivers = SafetyRulesWaiver.query.filter_by(project_id=p.id).all()
     elif waiver_type == "pilot_waiver":
         waivers = PilotWaiver.query.filter_by(project_id=p.id).all()
+    elif waiver_type == "risk_assessment":
+        waivers = RiskAssessmentWaiver.query.filter_by(project_id=p.id).all()
     else:
         waivers = Waiver.query.filter_by(project_id=p.id).all()
 

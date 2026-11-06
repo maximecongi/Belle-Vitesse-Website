@@ -10,6 +10,7 @@ from models import (
     CglWaiver,
     SafetyRulesWaiver,
     PilotWaiver,
+    RiskAssessmentWaiver,
     WaiverToken,
     WaiverSignedDocument,
     db,
@@ -64,6 +65,17 @@ def _get_waiver_route_config(mode):
             "route_base": "pilot-attestation",
             "seal_prefix": "BVPA",
         }
+    elif mode == "risk_assessment":
+        return {
+            "mode": "risk_assessment",
+            "model": RiskAssessmentWaiver,
+            "signed_model": WaiverSignedDocument,
+            "token_model": WaiverToken,
+            "template_sign": "public/waivers/sign_risk_assessment.html",
+            "template_verify": "public/waivers/risk_assessment_verify.html",
+            "route_base": "risk-assessment",
+            "seal_prefix": "BVRS",
+        }
     return {
         "mode": "cgl",
         "model": CglWaiver,
@@ -95,6 +107,11 @@ def sign_safety_rules(token):
 @limiter.limit("20 per minute")
 def sign_pilot_waiver(token):
     return _handle_sign_waiver("pilot_waiver", token)
+
+@public_waivers_bp.route("/sign/risk-assessment/<token>", methods=["GET", "POST"])
+@limiter.limit("20 per minute")
+def sign_risk_assessment(token):
+    return _handle_sign_waiver("risk_assessment", token)
 
 def _handle_sign_waiver(mode, token):
     config = _get_waiver_route_config(mode)
@@ -190,6 +207,15 @@ def _handle_sign_waiver(mode, token):
             extra_ctx["safety_equipment"] = get_safety_equipment_for_vehicles(
                 waiver.vehicles_details)
             extra_ctx["helmets"] = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
+        elif mode == "risk_assessment":
+            from services.admin.risk_assessment_config import (
+                get_general_risk_assessment,
+                get_risk_assessment_for_vehicles,
+            )
+            extra_ctx["general_risks"] = get_general_risk_assessment()
+            extra_ctx["vehicle_sections"] = get_risk_assessment_for_vehicles(
+                waiver.vehicles_details
+            )
         from services.common.signatures import log_signature_event
         log_signature_event(
             waiver.waiver_id, mode, "link_opened", ip=signer_ip, user_agent=user_agent)
@@ -218,7 +244,7 @@ def _handle_sign_waiver(mode, token):
         return jsonify({"success": False, "error": msg}), status_code
 
     try:
-        data = request.form
+        data = request.get_json(silent=True) or request.form
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
@@ -345,6 +371,66 @@ def _handle_sign_waiver(mode, token):
             )
             pilot_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
             waiver.sign_data = pilot_sign_data
+        elif mode == "risk_assessment":
+            if str(data.get("ack_risk_assessment", "")).lower() not in ("1", "on", "true"):
+                return _fail("La prise de connaissance et le respect de l'Analyse des Risques sont obligatoires.")
+
+            if data.get("first_name"):
+                fn = str(data.get("first_name")).strip()
+                if len(fn) > 100:
+                    return _fail("Le prénom ne peut dépasser 100 caractères.")
+                waiver.signer_first_name = fn
+            if data.get("last_name"):
+                ln = str(data.get("last_name")).strip()
+                if len(ln) > 100:
+                    return _fail("Le nom ne peut dépasser 100 caractères.")
+                waiver.signer_last_name = ln
+            if data.get("email"):
+                em = str(data.get("email")).strip()
+                import re
+                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
+                    return _fail("L'adresse e-mail renseignée est invalide.")
+                waiver.signer_email = em
+            if data.get("phone"):
+                ph = str(data.get("phone")).strip()
+                if len(ph) > 50:
+                    return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
+                waiver.signer_phone = ph
+
+            entity_type = str(data.get("signer_entity_type") or data.get("entity_type") or "freelance").strip().lower()
+            if entity_type == "company":
+                comp_name = str(data.get("company_name") or data.get("company") or "").strip()
+                comp_addr = str(data.get("company_address") or "").strip()
+                waiver.signer_company = comp_name
+                waiver.production_name = comp_name
+                waiver.production_address = comp_addr
+            else:
+                entity_type = "freelance"
+                if data.get("company"):
+                    waiver.signer_company = str(data.get("company")).strip()
+
+            if data.get("signer_role") or data.get("role"):
+                ro = str(data.get("signer_role") or data.get("role")).strip()
+                if len(ro) > 100:
+                    return _fail("La fonction ne peut dépasser 100 caractères.")
+                waiver.signer_role = ro
+            if data.get("role_custom"):
+                rc = str(data.get("role_custom")).strip()
+                if len(rc) > 100:
+                    return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
+                waiver.signer_role_custom = rc
+
+            rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
+
+            bvrs_sign_data = dict(waiver.sign_data or {})
+            bvrs_sign_data["entity_type"] = entity_type
+            if entity_type == "company":
+                bvrs_sign_data["company_name"] = comp_name
+                bvrs_sign_data["company_address"] = comp_addr
+            bvrs_sign_data["ack_risk_assessment"] = True
+            bvrs_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+            bvrs_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
+            waiver.sign_data = bvrs_sign_data
         else:
             # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
             if data.get("accepted_terms") != "1":
@@ -539,6 +625,12 @@ def _handle_sign_waiver(mode, token):
                 "signer_name": rep_name,
                 "signer_role": waiver.signer_role,
             }
+        elif mode == "risk_assessment":
+            consent_payload = {
+                "ack_risk_assessment": True,
+                "signer_name": rep_name,
+                "signer_role": waiver.signer_role,
+            }
         else:
             consent_payload = {
                 "accepted_terms": True,
@@ -650,11 +742,29 @@ def verify_cgl(waiver_id):
     config["get_seal_args"] = get_seal_args
     return handle_document_verify(config, waiver_id)
 
+@public_waivers_bp.route("/risk-assessment/verify/<string:waiver_id>", methods=["GET", "POST"])
+@public_waivers_bp.route("/verify/risk-assessment/<string:waiver_id>", methods=["GET", "POST"])
+@limiter.limit("20 per minute")
+@csrf.exempt
+def verify_risk_assessment(waiver_id):
+    config = _get_waiver_route_config("risk_assessment")
+
+    def get_seal_args(data, signed_doc):
+        return [waiver_id,
+                data.get("_seal_signer_name", ""),
+                data.get("_seal_signer_role", ""),
+                signed_doc.signature,
+                data.get("_seal_signed_at", "")]
+
+    config["get_seal_args"] = get_seal_args
+    return handle_document_verify(config, waiver_id)
+
 # ── Routes de Téléchargement ─────────────────────────────────
 
 @public_waivers_bp.route("/cgl/document/<path:filepath>")
 @public_waivers_bp.route("/safety-rules/document/<path:filepath>")
 @public_waivers_bp.route("/pilot-attestation/document/<path:filepath>")
+@public_waivers_bp.route("/risk-assessment/document/<path:filepath>")
 @public_waivers_bp.route("/cgl/attachment/<path:filepath>")
 @csrf.exempt
 def download_waiver_secured_file(filepath):

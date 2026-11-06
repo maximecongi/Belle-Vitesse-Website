@@ -1,0 +1,362 @@
+{% extends "pdf/base_pdf.html" %}
+
+{% block title %}BVRS — {{ waiver.waiver_id }} — {{ waiver.display_project_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/admin/risk-assessment-pdf.css') }}">
+{% endblock %}
+
+{% block preview_toolbar %}
+{% if is_preview %}
+{{ pdf_preview_toolbar(
+doc_title="Analyse des Risques (BVRS)",
+doc_id=waiver.waiver_id,
+format_pdf_url="?format=pdf",
+show_print=True
+) }}
+{% endif %}
+{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+doc_type_title="Analyse des Risques (BVRS)",
+doc_id=waiver.waiver_id,
+date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
+company_name=company_name
+) }}
+{% endblock %}
+
+{% block pdf_title %}{% endblock %}
+
+{% block content %}
+<!-- ═══════════ IDENTIFICATION DES PARTIES ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Identification des Parties</h2>
+    <div class="pdf-parties-grid">
+        {{ pdf_party_card(
+        role="Prestataire",
+        fields=[
+        ("Société", company_name or "Belle Vitesse SAS"),
+        ("Représentant", company_representative or "Simon Maignan"),
+        ("Adresse", company_address or "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France")
+        ]
+        ) }}
+
+        {% set is_company = (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') or (waiver.signer_company and waiver.signer_company.strip()) %}
+        {% set rep_role = waiver.signer_role_custom or waiver.signer_role_label or '—' %}
+        {% set rep_display = (waiver.signer_name ~ (', ' ~ rep_role if rep_role and rep_role != '—' else '')) if waiver.signer_name and waiver.signer_name != '—' else (waiver.display_production_representative or '—') %}
+        {% set contact_display = (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else '') %}
+
+        {% set sign_fields = [] %}
+        {% if is_company %}
+            {% set _ = sign_fields.append(("Société", (waiver.sign_data and waiver.sign_data.get('company_name')) or waiver.signer_company or waiver.display_production_name)) %}
+            {% set _ = sign_fields.append(("Représentant", rep_display)) %}
+            {% set comp_addr = (waiver.sign_data and waiver.sign_data.get('company_address')) or waiver.production_address or waiver.display_production_address %}
+            {% if comp_addr and comp_addr != '—' %}
+                {% set _ = sign_fields.append(("Adresse", comp_addr)) %}
+            {% endif %}
+        {% else %}
+            {% set _ = sign_fields.append(("Signataire", rep_display)) %}
+        {% endif %}
+        {% if waiver.signer_email or waiver.signer_phone %}
+            {% set _ = sign_fields.append(("Contact", contact_display)) %}
+        {% endif %}
+
+        {{ pdf_party_card(
+        role="Signataire",
+        fields=sign_fields
+        ) }}
+    </div>
+</section>
+
+<!-- ═══════════ OBJET DE LA PRESTATION ═══════════ -->
+{% set vehicles_names = [] %}
+{% if waiver.vehicles_details %}
+    {% for v in waiver.vehicles_details %}
+        {% set _ = vehicles_names.append(v.name if v is mapping else v) %}
+    {% endfor %}
+{% elif waiver.vehicles %}
+    {% for v in waiver.vehicles.split(',') %}
+        {% set _ = vehicles_names.append(v.strip()) %}
+    {% endfor %}
+{% endif %}
+{% set vehicles_str = vehicles_names|join(', ') if vehicles_names else 'techniques' %}
+{% set bvrs_scope_text = "Le présent document formalise l'analyse des risques (Risk Assessment) liée à l'utilisation des véhicules travelling et équipements spéciaux " ~ vehicles_str ~ ", mis à disposition par Belle Vitesse SAS auprès de la Production " ~ waiver.display_production_name ~ ", dans le cadre du tournage de « " ~ waiver.display_project_name ~ " ». Le signataire atteste en avoir pris parfaite connaissance et s'engage à respecter et faire respecter l'ensemble des mesures préventives et recommandations prescrites." %}
+
+{{ pdf_mission_scope(
+    text=bvrs_scope_text,
+    project_name=waiver.display_project_name,
+    shooting_locations=waiver.display_shooting_locations,
+    locations_list=waiver.display_shooting_locations_list,
+    shooting_dates=waiver.display_shooting_dates,
+    vehicles_details=waiver.vehicles_details
+) }}
+
+<!-- ═══════════ SECTION FRANÇAISE : ANALYSE DES RISQUES ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Analyse des Risques</h2>
+
+    <!-- Partie 1 : Risques Généraux Travelling -->
+    <div class="bvrs-category-banner">PARTIE 1 : RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
+
+    {% set cat_list = [] %}
+    {% for r in general_risks %}
+        {% set c_name = r.category_fr or r.category %}
+        {% if c_name not in cat_list %}
+            {% set _ = cat_list.append(c_name) %}
+        {% endif %}
+    {% endfor %}
+
+    {% for cat in cat_list %}
+        <div class="bvrs-category-title">{{ cat }}</div>
+        {% for r in general_risks if (r.category_fr or r.category) == cat %}
+        <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
+            <div class="bvrs-risk-header">
+                <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+                    {% if r.level == 'major' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                    {% endif %}
+                </div>
+                <div class="bvrs-risk-header-cell">
+                    <span class="bvrs-risk-title">{{ r.title_fr or r.title }}</span>
+                    {% if r.level == 'major' %}
+                    <span class="bvrs-badge-major">RISQUE MAJEUR</span>
+                    {% else %}
+                    <span class="bvrs-badge-standard">RISQUE</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bvrs-risk-desc">{{ r.description_fr or r.description }}</div>
+
+            {% set recs = r.recommendations_fr or r.recommendations %}
+            {% if recs and recs|length > 0 %}
+            <div class="bvrs-recs-box">
+                <div class="bvrs-recs-title">Recommandations</div>
+                <table class="bvrs-recs-table">
+                    <tbody>
+                        {% for rec in recs %}
+                        <tr class="bvrs-rec-row">
+                            <td class="bvrs-rec-check">✓</td>
+                            <td class="bvrs-rec-text">{{ rec }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    <!-- Partie 2 : Risques Spécifiques par Véhicule (FR) -->
+    {% if vehicle_sections %}
+        {% for vsec in vehicle_sections %}
+        <div class="bvrs-category-banner">PARTIE 2 : RISQUES SPÉCIFIQUES — {{ vsec.label|upper }}</div>
+        {% set vcat_list = [] %}
+        {% for r in vsec.risks %}
+            {% set c_name = r.category_fr or r.category %}
+            {% if c_name not in vcat_list %}
+                {% set _ = vcat_list.append(c_name) %}
+            {% endif %}
+        {% endfor %}
+
+        {% for cat in vcat_list %}
+            <div class="bvrs-category-title">{{ cat }}</div>
+            {% for r in vsec.risks if (r.category_fr or r.category) == cat %}
+            <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
+                <div class="bvrs-risk-header">
+                    <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+                        {% if r.level == 'major' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="bvrs-risk-header-cell">
+                        <span class="bvrs-risk-title">{{ r.title_fr or r.title }}</span>
+                        {% if r.level == 'major' %}
+                        <span class="bvrs-badge-major">RISQUE MAJEUR</span>
+                        {% else %}
+                        <span class="bvrs-badge-standard">RISQUE</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bvrs-risk-desc">{{ r.description_fr or r.description }}</div>
+
+                {% set recs = r.recommendations_fr or r.recommendations %}
+                {% if recs and recs|length > 0 %}
+                <div class="bvrs-recs-box">
+                    <div class="bvrs-recs-title">Recommandations</div>
+                    <table class="bvrs-recs-table">
+                        <tbody>
+                            {% for rec in recs %}
+                            <tr class="bvrs-rec-row">
+                                <td class="bvrs-rec-check">✓</td>
+                                <td class="bvrs-rec-text">{{ rec }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endfor %}
+        {% endfor %}
+    {% endif %}
+</section>
+
+<!-- ═══════════ SAUT DE PAGE VERS LA VERSION ANGLAISE ═══════════ -->
+<div class="bvrs-page-break"></div>
+
+<!-- ═══════════ SECTION ANGLAISE : RISK ASSESSMENT ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Risk Assessment</h2>
+
+    <!-- Part 1: General Risks Tracking Vehicles -->
+    <div class="bvrs-category-banner">PART 1: GENERAL RISKS — TRACKING VEHICLES</div>
+
+    {% set cat_en_list = [] %}
+    {% for r in general_risks %}
+        {% set c_name = r.category_en or r.category_fr or r.category %}
+        {% if c_name not in cat_en_list %}
+            {% set _ = cat_en_list.append(c_name) %}
+        {% endif %}
+    {% endfor %}
+
+    {% for cat in cat_en_list %}
+        <div class="bvrs-category-title">{{ cat }}</div>
+        {% for r in general_risks if (r.category_en or r.category_fr or r.category) == cat %}
+        <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
+            <div class="bvrs-risk-header">
+                <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+                    {% if r.level == 'major' %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    {% else %}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                    {% endif %}
+                </div>
+                <div class="bvrs-risk-header-cell">
+                    <span class="bvrs-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
+                    {% if r.level == 'major' %}
+                    <span class="bvrs-badge-major">HIGH RISK</span>
+                    {% else %}
+                    <span class="bvrs-badge-standard">RISK</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
+
+            {% set recs = r.recommendations_en or r.recommendations_fr or r.recommendations %}
+            {% if recs and recs|length > 0 %}
+            <div class="bvrs-recs-box">
+                <div class="bvrs-recs-title">Recommendations</div>
+                <table class="bvrs-recs-table">
+                    <tbody>
+                        {% for rec in recs %}
+                        <tr class="bvrs-rec-row">
+                            <td class="bvrs-rec-check">✓</td>
+                            <td class="bvrs-rec-text">{{ rec }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    <!-- Part 2: Specific Risks per Vehicle (EN) -->
+    {% if vehicle_sections %}
+        {% for vsec in vehicle_sections %}
+        <div class="bvrs-category-banner">PART 2: SPECIFIC RISKS — {{ (vsec.label_en or vsec.label)|upper }}</div>
+        {% set vcat_en_list = [] %}
+        {% for r in vsec.risks %}
+            {% set c_name = r.category_en or r.category_fr or r.category %}
+            {% if c_name not in vcat_en_list %}
+                {% set _ = vcat_en_list.append(c_name) %}
+            {% endif %}
+        {% endfor %}
+
+        {% for cat in vcat_en_list %}
+            <div class="bvrs-category-title">{{ cat }}</div>
+            {% for r in vsec.risks if (r.category_en or r.category_fr or r.category) == cat %}
+            <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
+                <div class="bvrs-risk-header">
+                    <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+                        {% if r.level == 'major' %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                        {% else %}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                        {% endif %}
+                    </div>
+                    <div class="bvrs-risk-header-cell">
+                        <span class="bvrs-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
+                        {% if r.level == 'major' %}
+                        <span class="bvrs-badge-major">HIGH RISK</span>
+                        {% else %}
+                        <span class="bvrs-badge-standard">RISK</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
+
+                {% set recs = r.recommendations_en or r.recommendations_fr or r.recommendations %}
+                {% if recs and recs|length > 0 %}
+                <div class="bvrs-recs-box">
+                    <div class="bvrs-recs-title">Recommendations</div>
+                    <table class="bvrs-recs-table">
+                        <tbody>
+                            {% for rec in recs %}
+                            <tr class="bvrs-rec-row">
+                                <td class="bvrs-rec-check">✓</td>
+                                <td class="bvrs-rec-text">{{ rec }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% endfor %}
+        {% endfor %}
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block pdf_signatures %}
+{% set target_url = verification_url or ((base_url ~ '/risk-assessment/verify/' ~ waiver.waiver_id) if base_url else ('/risk-assessment/verify/' ~ waiver.waiver_id)) %}
+{{ pdf_signature_and_seal(
+doc_id=waiver.waiver_id,
+signer_name=waiver.signer_name,
+signer_role=(waiver.signer_role_label or 'Signataire') ~ ' (Lu et approuvé)',
+signed_at=signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else None),
+ip=signed_ip or waiver.signer_ip,
+signature_img=signature or waiver.signature_data_uri,
+is_signed=(waiver.status == 'signed'),
+hash_code=waiver.hash or seal_hash or hash,
+qr_code_uri=qr_data_uri or qr,
+verification_url=target_url,
+seal_title="Engagement, Acceptation & Scellement Électronique",
+project_name=waiver.display_project_name,
+custom_meta_lines=[
+("Intervenant", waiver.signer_name ~ ((' (' ~ waiver.signer_company ~ ')') if waiver.signer_company else ''))
+]
+) }}
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+company_name=company_name or 'Belle Vitesse',
+note="Belle Vitesse — Analyse des Risques (BVRS) — Document A4 officiel",
+extra_class="bvsr-screen-footer"
+) }}
+{% endblock %}

@@ -17,6 +17,7 @@ DOC_FOLDERS = {
     "cgl": "4_SÉCURITÉ/3_CGL",
     "pilot_waiver": "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES",
     "checkin": "4_SÉCURITÉ/5_CHECKINS",
+    "risk_assessment": "4_SÉCURITÉ/6_RISK_ASSESSMENTS",
     "incident": "6_INCIDENTS",
 }
 
@@ -25,6 +26,7 @@ ROLE_SUBFOLDERS = {
     ("cgl", "insurance"): "2_ATTESTATION_ASSURANCE",
     ("safety_rules", "pdf"): "",
     ("pilot_waiver", "pdf"): "",
+    ("risk_assessment", "pdf"): "",
     ("checkout", "photo"): "PHOTOS",
     ("checkout", "pdf"): "",
     ("checkin", "photo"): "PHOTOS",

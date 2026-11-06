@@ -11,6 +11,7 @@ from models import (
     CglWaiver,
     SafetyRulesWaiver,
     PilotWaiver,
+    RiskAssessmentWaiver,
     Waiver,
     WaiverSignedDocument,
     WaiverToken,
@@ -96,7 +97,7 @@ def _format_project_shooting_dates(p, default_sep=" au "):
 
 def _get_waiver_config(mode: str):
     """
-    Retourne la configuration selon le type de contrat (cgl, safety_rules ou pilot_waiver).
+    Retourne la configuration selon le type de contrat (cgl, safety_rules, pilot_waiver ou risk_assessment).
     """
     if mode == "safety_rules":
         return {
@@ -108,6 +109,12 @@ def _get_waiver_config(mode: str):
         return {
             "model": PilotWaiver,
             "route_base": "pilot-attestation",
+            "attachment_fields": [],
+        }
+    elif mode == "risk_assessment":
+        return {
+            "model": RiskAssessmentWaiver,
+            "route_base": "risk-assessment",
             "attachment_fields": [],
         }
     return {
@@ -190,13 +197,15 @@ def _reset_waiver_fields(mode: str, waiver: Waiver):
     for f in ["project_name", "vehicles", "shooting_dates"]:
         setattr(waiver, f, None)
 
-    if mode in ("safety_rules", "pilot_waiver"):
+    if mode in ("safety_rules", "pilot_waiver", "risk_assessment"):
         signer_fields = [
             "signer_first_name", "signer_last_name", "signer_email", "signer_phone",
-            "signer_company", "bv_signature_data", "bv_signed_at", "bv_signer_name"
+            "signer_company", "signer_role", "signer_role_custom",
+            "bv_signature_data", "bv_signed_at", "bv_signer_name"
         ]
         for f in signer_fields:
-            setattr(waiver, f, None)
+            if hasattr(waiver, f):
+                setattr(waiver, f, None)
     else:
         cgl_fields = [
             "production_name", "production_representative", "production_address",
@@ -218,6 +227,9 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "pilot_waiver":
         waiver = resolve_pilot_waiver(waiver_id)
+    elif waiver_type == "risk_assessment":
+        from utils.entity_resolvers import resolve_risk_assessment_waiver
+        waiver = resolve_risk_assessment_waiver(waiver_id)
     else:
         waiver = resolve_cgl(waiver_id) or resolve_waiver(waiver_id)
 
@@ -278,6 +290,8 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
         route_prefix = "safety-rules"
     elif mode == "pilot_waiver":
         route_prefix = "pilot-attestation"
+    elif mode == "risk_assessment":
+        route_prefix = "risk-assessment"
     else:
         route_prefix = "cgl"
     signing_url = f"{root_url}/sign/{route_prefix}/{active_token.token}"
@@ -291,13 +305,14 @@ def get_secured_waiver_pdf_url(path, doc_type):
     """
     if not path:
         return None
-    route_prefix = (
-        "pilot-attestation"
-        if doc_type in ("pilot_waiver", "pilot-attestation", "pilot-waiver", "pilot")
-        else "cgl"
-        if doc_type in ("cgl", "production-waiver")
-        else "safety-rules"
-    )
+    if doc_type in ("pilot_waiver", "pilot-attestation", "pilot-waiver", "pilot"):
+        route_prefix = "pilot-attestation"
+    elif doc_type in ("risk_assessment", "risk-assessment", "risk"):
+        route_prefix = "risk-assessment"
+    elif doc_type in ("cgl", "production-waiver"):
+        route_prefix = "cgl"
+    else:
+        route_prefix = "safety-rules"
     clean_path = path.split("?")[0].split(f"/{route_prefix}/document/")[-1].lstrip("/")
     token = generate_pdf_access_token(clean_path)
     return f"/{route_prefix}/document/{clean_path}?t={token}"

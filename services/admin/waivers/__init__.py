@@ -42,6 +42,16 @@ from .pilot import (
 from .reminders import (
     auto_remind_pending_waivers,
 )
+from .risk_assessment import (
+    create_risk_assessment_waiver,
+    delete_risk_assessment_internal,
+    delete_risk_assessment_waiver,
+    delete_risk_assessment_waiver_internal,
+    generate_risk_assessment_waiver,
+    list_risk_assessment_waivers,
+    reset_risk_assessment_waiver,
+    send_risk_assessment_waiver,
+)
 from .safety_rules import (
     countersign_safety_rules,
     create_safety_rules_waiver,
@@ -94,4 +104,13 @@ __all__ = [
     "send_pilot_waiver",
     # Reminders
     "auto_remind_pending_waivers",
+    # Risk Assessment (BVRS)
+    "create_risk_assessment_waiver",
+    "delete_risk_assessment_waiver",
+    "generate_risk_assessment_waiver",
+    "send_risk_assessment_waiver",
+    "reset_risk_assessment_waiver",
+    "delete_risk_assessment_waiver_internal",
+    "delete_risk_assessment_internal",
+    "list_risk_assessment_waivers",
 ]

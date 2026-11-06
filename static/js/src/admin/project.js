@@ -1124,6 +1124,70 @@ function initPilotSignerModal() {
     });
 }
 
+function initRiskSignerModal() {
+    if (document._riskSignerModalBound) return;
+    document._riskSignerModalBound = true;
+
+    // Ouverture déléguée
+    document.addEventListener('click', (e) => {
+        const openBtn = e.target.closest('.js-open-add-risk-signer-modal');
+        if (openBtn) {
+            e.preventDefault();
+            const modal = document.getElementById('addRiskSignerModal');
+            if (modal) {
+                modal.classList.remove('u-d-none');
+                modal.classList.add('is-active');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            }
+            return;
+        }
+
+        const closeBtn = e.target.closest('.js-close-risk-signer-modal');
+        if (closeBtn) {
+            e.preventDefault();
+            const modal = document.getElementById('addRiskSignerModal');
+            if (modal) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
+            }
+            return;
+        }
+
+        const modal = document.getElementById('addRiskSignerModal');
+        if (modal && e.target === modal) {
+            modal.classList.add('u-d-none');
+            modal.classList.remove('is-active');
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            const modal = document.getElementById('addRiskSignerModal');
+            if (modal && modal.classList.contains('is-active')) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
+            }
+        }
+    });
+
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'new_risk_signer_role') {
+            const customRoleGroup = document.getElementById('new_risk_signer_role_custom_group');
+            if (customRoleGroup) {
+                if (e.target.value === 'other') {
+                    customRoleGroup.classList.remove('u-d-none');
+                    const customInput = customRoleGroup.querySelector('input');
+                    if (customInput) customInput.focus();
+                } else {
+                    customRoleGroup.classList.add('u-d-none');
+                }
+            }
+        }
+    });
+}
+
 function initProjectInteractions() {
     try { initProjectFormHighlight(); } catch (e) { console.error('Error in initProjectFormHighlight', e); }
     try { initProjectDateValidation(); } catch (e) { console.error('Error in initProjectDateValidation', e); }
@@ -1134,13 +1198,16 @@ function initProjectInteractions() {
     try { initProjectNotesEdit(); } catch (e) { console.error('Error in initProjectNotesEdit', e); }
     try { initSafetyRulesSignerModal(); } catch (e) { console.error('Error in initSafetyRulesSignerModal', e); }
     try { initPilotSignerModal(); } catch (e) { console.error('Error in initPilotSignerModal', e); }
+    try { initRiskSignerModal(); } catch (e) { console.error('Error in initRiskSignerModal', e); }
 }
 
 window.initSafetyRulesSignerModal = initSafetyRulesSignerModal;
 window.initPilotSignerModal = initPilotSignerModal;
+window.initRiskSignerModal = initRiskSignerModal;
 window.initProjectInteractions = initProjectInteractions;
 
 // Initialisation immédiate des écouteurs de modals dès l'évaluation du script
 initSafetyRulesSignerModal();
 initPilotSignerModal();
+initRiskSignerModal();
 
