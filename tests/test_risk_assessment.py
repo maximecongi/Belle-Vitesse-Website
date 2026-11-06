@@ -489,17 +489,17 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         html1 = res1.data.decode("utf-8")
 
         # Bloc 1 (FR & EN)
-        self.assertIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html1)
+        self.assertIn("Utilisation sur route fermée uniquement", html1)
         self.assertIn("IMPÉRATIF SÉCURITÉ", html1)
-        self.assertIn("USE ON CLOSED ROADS ONLY", html1)
+        self.assertIn("Use on closed roads only", html1)
         self.assertIn("SAFETY MANDATE", html1)
         self.assertIn("L'eRover 01 (Polaris Kinetic) roule uniquement sur une route fermée", html1)
 
         # Bloc 2 & 3
+        self.assertIn("À SIGNER", html1)
         self.assertIn("Règles de sécurité", html1)
-        self.assertIn("Information :", html1)
-        self.assertIn("le manuel officiel du véhicule est disponible à bord", html1)
-        self.assertIn("Notice:", html1)
+        self.assertIn("INFORMATION", html1)
+        self.assertIn("Le manuel officiel du véhicule est disponible à bord", html1)
 
         # 2. Quand le véhicule est basculé en "Homologué route", le bloc 1 doit disparaître
         project.set_vehicle_road_legal("rec_erover", True)
@@ -511,12 +511,13 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertEqual(res2.status_code, 200)
         html2 = res2.data.decode("utf-8")
 
-        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html2)
-        self.assertNotIn("USE ON CLOSED ROADS ONLY", html2)
+        self.assertNotIn("Utilisation sur route fermée uniquement", html2)
+        self.assertNotIn("Use on closed roads only", html2)
         # Mais les blocs 2 et 3 doivent rester affichés
+        self.assertIn("À SIGNER", html2)
         self.assertIn("Règles de sécurité", html2)
-        self.assertIn("Information :", html2)
-        self.assertIn("le manuel officiel du véhicule est disponible à bord", html2)
+        self.assertIn("INFORMATION", html2)
+        self.assertIn("Le manuel officiel du véhicule est disponible à bord", html2)
 
     def test_risk_assessment_preview_mock_and_query_param(self):
         """Vérifie le comportement de la prévisualisation directe avec mock ou simulation ?road_legal=1."""
@@ -529,7 +530,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_default = self.client.get("/preview/pdf/risk-assessment")
         self.assertEqual(res_default.status_code, 200)
         html_default = res_default.data.decode("utf-8")
-        self.assertIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_default)
+        self.assertIn("Utilisation sur route fermée uniquement", html_default)
         self.assertIn(
             "L'eRover (Polaris Kinetic) et l'eRider (Stark Varg) roulent uniquement sur une route fermée",
             html_default,
@@ -539,11 +540,12 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_road_legal = self.client.get("/preview/pdf/risk-assessment?road_legal=1")
         self.assertEqual(res_road_legal.status_code, 200)
         html_road_legal = res_road_legal.data.decode("utf-8")
-        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_road_legal)
-        self.assertNotIn("USE ON CLOSED ROADS ONLY", html_road_legal)
+        self.assertNotIn("Utilisation sur route fermée uniquement", html_road_legal)
+        self.assertNotIn("Use on closed roads only", html_road_legal)
         # Mais les blocs 2 & 3 sont toujours présents
+        self.assertIn("À SIGNER", html_road_legal)
         self.assertIn("Règles de sécurité", html_road_legal)
-        self.assertIn("Information :", html_road_legal)
+        self.assertIn("INFORMATION", html_road_legal)
 
         # 3. Preview avec ?project_id=... pour un projet dont tous les véhicules sont homologués route
         project = self._create_mock_project()
@@ -553,7 +555,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_proj = self.client.get(f"/preview/pdf/risk-assessment?project_id={project.id}")
         self.assertEqual(res_proj.status_code, 200)
         html_proj = res_proj.data.decode("utf-8")
-        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_proj)
+        self.assertNotIn("Utilisation sur route fermée uniquement", html_proj)
 
 
 if __name__ == "__main__":

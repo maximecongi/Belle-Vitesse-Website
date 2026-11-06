@@ -198,10 +198,11 @@
 
 /* ── 6. Encarts d'Avertissement & Sécurité Routière ─────────────────────── */
 .bvrs-road-legal-card {
-    border: 1.5pt solid #dc2626;
-    background-color: #fef2f2;
-    padding: 8pt 10pt;
-    margin-top: 8pt;
+    border: 1px solid #E2E2E2;
+    border-left: 3.5pt solid #dc2626;
+    /* background-color: #fdf2f2; */
+    padding: 8pt 11pt 9pt 11pt;
+    margin-top: 7pt;
     margin-bottom: 7pt;
     page-break-inside: avoid;
     box-sizing: border-box;
@@ -210,7 +211,7 @@
 .bvrs-road-legal-header {
     display: table;
     width: 100%;
-    margin-bottom: 4pt;
+    margin-bottom: 5pt;
 }
 
 .bvrs-road-legal-title-cell {
@@ -218,20 +219,33 @@
     vertical-align: middle;
 }
 
-.bvrs-road-legal-title {
-    color: #dc2626;
-    font-size: 8.5pt;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
+.bvrs-road-legal-icon-wrap {
+    display: inline-block;
     vertical-align: middle;
+    margin-right: 5pt;
+    line-height: 1;
+}
+
+.bvrs-road-legal-icon-svg {
+    display: inline-block;
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+}
+
+.bvrs-road-legal-title {
+    color: #18181b;
+    font-size: 8.5pt;
+    font-weight: 700;
+    vertical-align: middle;
+    letter-spacing: 0.2px;
 }
 
 .bvrs-road-legal-badge {
     display: inline-block;
     background-color: #dc2626;
     color: #ffffff;
-    font-size: 6.5pt;
+    font-size: 6.2pt;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -245,11 +259,70 @@
     font-size: 7.6pt;
     color: #1f2937;
     line-height: 1.45;
-    text-align: justify;
+}
+
+.bvrs-road-legal-desc p {
+    margin: 0 0 5pt 0;
+}
+
+.bvrs-road-legal-desc p:last-child {
+    margin-bottom: 0;
+}
+
+.bvrs-road-legal-highlight {
+    color: #18181b;
+}
+
+/* Encart combiné Règles de sécurité & Informations (Bordure gauche jaune BV, 2 rangées) */
+.bvrs-notice-card {
+    border-left: 3.5pt solid #ffc845;
+    background-color: #f1f5f9;
+    margin-top: 6pt;
+    margin-bottom: 8pt;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bvrs-notice-row {
+    display: table-row;
+}
+
+.bvrs-notice-row--bordered .bvrs-notice-label,
+.bvrs-notice-row--bordered .bvrs-notice-text {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.bvrs-notice-label {
+    display: table-cell;
+    width: 75pt;
+    padding: 7pt 10pt;
+    font-size: 6.8pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #475569;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.bvrs-notice-text {
+    display: table-cell;
+    padding: 7pt 12pt;
+    font-size: 7.6pt;
+    color: #1f2937;
+    line-height: 1.42;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.bvrs-notice-text p {
     margin: 0;
 }
 
-/* Callouts d'information & règles (fond neutre, bordure gauche 4pt) */
+/* Callouts historiques / repli */
 .bvrs-callout-card {
     background-color: #f3f4f6;
     padding: 6pt 9pt;

@@ -138,28 +138,45 @@ company_name=company_name
         <div class="bvrs-road-legal-card">
             <div class="bvrs-road-legal-header">
                 <div class="bvrs-road-legal-title-cell">
-                    <span class="bvrs-road-legal-title">UTILISATION SUR ROUTE FERMÉE UNIQUEMENT</span>
+                    <span class="bvrs-road-legal-icon-wrap">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    </span>
+                    <span class="bvrs-road-legal-title">Utilisation sur route fermée uniquement</span>
                     <span class="bvrs-road-legal-badge">IMPÉRATIF SÉCURITÉ</span>
                 </div>
             </div>
-            <p class="bvrs-road-legal-desc">
-                {% if nrl_with_articles|length == 1 %}
-                    {{ nrl_with_articles[0]|safe }} roule uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifié pour la prise de vue, il n'est pas homologué pour circuler sur une voie ouverte au public. Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est strictement interdite. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque. Tout manquement à cette règle engage la seule responsabilité de la production.
-                {% else %}
-                    {{ (nrl_with_articles[:-1]|join(', ') ~ ' et ' ~ nrl_with_articles[-1])|safe }} roulent uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifiés pour la prise de vue, ils ne sont pas homologués pour circuler sur une voie ouverte au public. Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est strictement interdite. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque. Tout manquement à cette règle engage la seule responsabilité de la production.
-                {% endif %}
-            </p>
+            <div class="bvrs-road-legal-desc bvrs-recs-box">
+                <p>
+                    {% if nrl_with_articles|length == 1 %}
+                        {{ nrl_with_articles[0]|safe }} roule uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifié pour la prise de vue, il n'est pas homologué pour circuler sur une voie ouverte au public.
+                    {% else %}
+                        {{ (nrl_with_articles[:-1]|join(', ') ~ ' et ' ~ nrl_with_articles[-1])|safe }} roulent uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifiés pour la prise de vue, ils ne sont pas homologués pour circuler sur une voie ouverte au public.
+                    {% endif %}
+                </p>
+                <p>
+                    Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est <strong>strictement interdite</strong>. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque.
+                </p>
+                <p class="bvrs-road-legal-highlight">
+                    <strong>Tout manquement à cette règle engage la seule responsabilité de la production.</strong>
+                </p>
+            </div>
         </div>
     {% endif %}
 
-    <!-- Bloc 2 : Règles de Sécurité Plateau -->
-    <div class="bvrs-callout-card bvrs-callout-card--red">
-        <p>Les règles de sécurité à appliquer sur le plateau figurent dans le document <strong>Règles de sécurité</strong>, à signer par la production et le pilote.</p>
-    </div>
-
-    <!-- Bloc 3 : Manuel officiel et QR Code -->
-    <div class="bvrs-callout-card bvrs-callout-card--blue">
-        <p><strong>Information :</strong> le manuel officiel du véhicule est disponible à bord. Le manuel, l’analyse des risques et les règles de sécurité sont aussi accessibles sur téléphone via le QR code collé sur le véhicule.</p>
+    <!-- Bloc 2 & 3 Combinés : Règles de Sécurité Plateau & Manuel / Information -->
+    <div class="bvrs-notice-card">
+        <div class="bvrs-notice-row bvrs-notice-row--bordered">
+            <div class="bvrs-notice-label">À SIGNER</div>
+            <div class="bvrs-notice-text">
+                Les règles de sécurité à appliquer sur le plateau figurent dans le document <strong>Règles de sécurité</strong>, à signer par la production et le pilote.
+            </div>
+        </div>
+        <div class="bvrs-notice-row">
+            <div class="bvrs-notice-label">INFORMATION</div>
+            <div class="bvrs-notice-text">
+                Le manuel officiel du véhicule est disponible à bord. Le manuel, l’analyse des risques et les règles de sécurité sont aussi accessibles sur téléphone via le QR code collé sur le véhicule.
+            </div>
+        </div>
     </div>
 
     {% set cat_list = [] %}
@@ -269,8 +286,8 @@ company_name=company_name
             </div>
             {% endfor %}
         {% endfor %}
-        {% endfor %}
-    {% endif %}
+    {% endfor %}
+{% endif %}
 </section>
 
 <!-- ═══════════ SAUT DE PAGE VERS LA VERSION ANGLAISE ═══════════ -->
@@ -280,7 +297,7 @@ company_name=company_name
 <section class="pdf-section">
 
     <!-- General Risks Tracking Vehicles -->
-    <div class="bvrs-category-title">PART 1: GENERAL RISKS — TRACKING VEHICLES</div>
+    <div class="bvrs-category-title">GENERAL RISKS — TRACKING VEHICLES</div>
 
     <!-- ── WARNING & ROAD SAFETY CALLOUTS (EN) ── -->
     {% if nrl_vehicles and nrl_vehicles|length > 0 %}
@@ -288,28 +305,45 @@ company_name=company_name
         <div class="bvrs-road-legal-card">
             <div class="bvrs-road-legal-header">
                 <div class="bvrs-road-legal-title-cell">
-                    <span class="bvrs-road-legal-title">USE ON CLOSED ROADS ONLY</span>
+                    <span class="bvrs-road-legal-icon-wrap">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    </span>
+                    <span class="bvrs-road-legal-title">Use on closed roads only</span>
                     <span class="bvrs-road-legal-badge">SAFETY MANDATE</span>
                 </div>
             </div>
-            <p class="bvrs-road-legal-desc">
-                {% if nrl_names|length == 1 %}
-                    The {{ nrl_names[0] }} operates exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, it is not certified or homologated for operation on open public roads. Any driving on open public roads, including transit between two locations, is strictly prohibited. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport. Any failure to comply with this requirement engages the sole responsibility of the production.
-                {% else %}
-                    The {{ nrl_names[:-1]|join(', ') ~ ' and ' ~ nrl_names[-1] if nrl_names|length > 2 else nrl_names|join(' and ') }} operate exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, they are not certified or homologated for operation on open public roads. Any driving on open public roads, including transit between two locations, is strictly prohibited. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport. Any failure to comply with this requirement engages the sole responsibility of the production.
-                {% endif %}
-            </p>
+            <div class="bvrs-road-legal-desc bvrs-recs-box">
+                <p>
+                    {% if nrl_names|length == 1 %}
+                        The {{ nrl_names[0] }} operates exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, it is not certified or homologated for operation on open public roads.
+                    {% else %}
+                        The {{ nrl_names[:-1]|join(', ') ~ ' and ' ~ nrl_names[-1] if nrl_names|length > 2 else nrl_names|join(' and ') }} operate exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, they are not certified or homologated for operation on open public roads.
+                    {% endif %}
+                </p>
+                <p>
+                    Any driving on open public roads, including transit between two locations, is <strong>strictly prohibited</strong>. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport.
+                </p>
+                <p class="bvrs-road-legal-highlight">
+                    <strong>Any failure to comply with this requirement engages the sole responsibility of the production.</strong>
+                </p>
+            </div>
         </div>
     {% endif %}
 
-    <!-- Block 2 : On-Set Safety Rules -->
-    <div class="bvrs-callout-card bvrs-callout-card--red">
-        <p>On-set safety guidelines are set out in the document <strong>Safety Rules</strong>, to be signed by the production and the driver/pilot.</p>
-    </div>
-
-    <!-- Block 3 : Vehicle Manual and QR Code -->
-    <div class="bvrs-callout-card bvrs-callout-card--blue">
-        <p><strong>Notice:</strong> the official vehicle manual is available on board. The manual, risk assessment, and safety rules are also accessible on smartphone via the QR code sticker affixed to the vehicle.</p>
+    <!-- Block 2 & 3 Combined: On-Set Safety Rules & Vehicle Manual Notice -->
+    <div class="bvrs-notice-card">
+        <div class="bvrs-notice-row bvrs-notice-row--bordered">
+            <div class="bvrs-notice-label">TO SIGN</div>
+            <div class="bvrs-notice-text">
+                On-set safety guidelines are set out in the document <strong>Safety Rules</strong>, to be signed by the production and the driver/pilot.
+            </div>
+        </div>
+        <div class="bvrs-notice-row">
+            <div class="bvrs-notice-label">INFORMATION</div>
+            <div class="bvrs-notice-text">
+                The official vehicle manual is available on board. The manual, risk assessment, and safety rules are also accessible on smartphone via the QR code sticker affixed to the vehicle.
+            </div>
+        </div>
     </div>
 
     {% set cat_en_list = [] %}
