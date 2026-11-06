@@ -196,7 +196,7 @@
                 <h2 class="public-doc-section-title dot-before">Analyse des Risques &amp; Recommandations de Sécurité</h2>
 
                 <div class="public-doc-rules-viewer">
-                    <h3>PARTIE 1 : RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</h3>
+                    <h3>RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</h3>
                     {% for r in general_risks %}
                     <div class="admin-card u-p-3 u-mb-3 {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
                         <div class="u-flex u-align-center u-gap-2">
@@ -221,7 +221,7 @@
 
                     {% if vehicle_sections %}
                     {% for vsec in vehicle_sections %}
-                    <h3 class="u-mt-4">PARTIE 2 : RISQUES SPÉCIFIQUES — {{ vsec.label }}</h3>
+                    <h3 class="u-mt-4">RISQUES SPÉCIFIQUES — {{ vsec.label }}</h3>
                     {% for r in vsec.risks %}
                     <div class="admin-card u-p-3 u-mb-3 {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
                         <div class="u-flex u-align-center u-gap-2">

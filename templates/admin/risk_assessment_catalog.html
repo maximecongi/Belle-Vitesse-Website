@@ -166,14 +166,21 @@
 <div id="riskModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-hidden="true"
     aria-labelledby="riskModalTitle">
     <div class="admin-modal-container bvsr-modal-container bvrs-modal-container">
-        <!-- En-tête de la modale -->
+        <!-- En-tête de la modale avec identité véhicule et badges KPI -->
         <div class="bvsr-modal-header">
-            <div class="u-flex u-align-center u-gap-3">
+            <div class="u-flex u-align-start u-gap-3">
                 <div id="modalRiskIconWrap" class="badge-pill u-bg-danger-light u-text-danger">
                     <i data-lucide="shield-alert" class="u-w-24 u-h-24 u-m-0"></i>
                 </div>
                 <div>
-                    <h3 id="riskModalTitle" class="u-text-xl u-font-bold u-m-0">Modifier l'Analyse des Risques</h3>
+                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                        <h3 id="riskModalTitle" class="u-text-xl u-font-bold u-m-0">Modifier l'Analyse des Risques</h3>
+                        <div id="modalRiskHeaderBadges" class="u-flex u-align-center u-gap-1">
+                            <span id="modalRiskMajorCount" class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">0 majeur</span>
+                            <span id="modalRiskStdCount" class="badge-pill u-bg-warning-light u-text-warning u-text-2xs">0 standard</span>
+                            <span id="modalRiskTotalCount" class="badge-pill u-bg-neutral-light u-text-muted u-text-2xs">0 risque</span>
+                        </div>
+                    </div>
                     <p id="riskModalSubtitle" class="u-text-sm u-text-muted u-mt-1 u-mb-0">Risques et recommandations de sécurité</p>
                 </div>
             </div>
@@ -192,18 +199,43 @@
             <input type="hidden" id="modal_risks_json" name="risks_json" value="[]">
 
             <div class="bvsr-modal-body">
-                <div id="modal_vehicle_label_wrap" class="form-group u-mb-4 u-d-none">
+                <div id="modal_vehicle_label_wrap" class="form-group u-mb-3 u-d-none">
                     <label for="modal_risk_label" class="form-label u-font-semibold">Nom d'affichage du véhicule dans le protocole <span class="u-text-danger">*</span></label>
                     <input type="text" id="modal_risk_label" name="label" class="form-input" placeholder="ex: eRover (Polaris Kinetic)">
                     <small class="u-text-muted u-text-xs">Titre tel qu'il apparaîtra dans le document BVRS officiel.</small>
                 </div>
 
-                <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+                <!-- Barre de navigation par onglets de catégories (Pill Tabs) -->
+                <div class="bvrs-tabs-wrapper u-mb-3">
+                    <div class="bvrs-category-tabs" id="bvrs-category-tabs"></div>
+                </div>
+
+                <!-- Barre d'action contextuelle par catégorie -->
+                <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2 bvrs-context-bar">
                     <div class="u-flex u-align-center u-gap-2">
-                        <label class="form-label u-mb-0 u-font-bold">Risques répertoriés</label>
+                        <!-- Affichage du nom de catégorie actif avec bouton renommer -->
+                        <div id="bvrs-active-cat-display" class="u-flex u-align-center u-gap-2">
+                            <h4 id="bvrs-active-cat-name" class="u-m-0 u-text-sm u-font-bold u-uppercase">Tous les risques</h4>
+                            <button type="button" id="btn-rename-category" class="admin-btn admin-btn-xs admin-btn-secondary u-d-none" title="Renommer cette catégorie">
+                                <i data-lucide="edit-2"></i>
+                            </button>
+                        </div>
+                        <!-- Formulaire inline pour renommer la catégorie -->
+                        <div id="bvrs-rename-cat-wrap" class="u-flex u-align-center u-gap-1 u-d-none">
+                            <input type="text" id="bvrs-rename-cat-input" class="form-input form-input-2xs bvrs-category-inline-input" placeholder="NOUVEAU NOM..." maxlength="40">
+                            <button type="button" id="btn-confirm-rename-cat" class="bvrs-category-inline-btn bvrs-category-inline-btn--confirm" title="Valider (Entrée ↵)">
+                                <i data-lucide="check" class="u-w-14 u-h-14"></i>
+                            </button>
+                            <button type="button" id="btn-cancel-rename-cat" class="bvrs-category-inline-btn bvrs-category-inline-btn--cancel" title="Annuler (Échap)">
+                                <i data-lucide="x" class="u-w-14 u-h-14"></i>
+                            </button>
+                        </div>
                         <span id="bvrs-risks-count-badge" class="badge-pill u-bg-danger-light u-text-danger u-text-xs">0 risque</span>
                     </div>
                     <div class="u-flex u-align-center u-gap-2">
+                        <button type="button" id="btn-toggle-all-cards" class="admin-btn admin-btn-xs admin-btn-secondary" title="Tout déplier / Tout replier">
+                            <i data-lucide="chevrons-up-down"></i> <span id="toggle-all-label">Tout déplier</span>
+                        </button>
                         <button type="button" id="btn-add-risk-item" class="admin-btn admin-btn-sm admin-btn-primary">
                             <i data-lucide="plus"></i> Ajouter un risque
                         </button>
@@ -213,12 +245,12 @@
                 <!-- État vide -->
                 <div id="bvrs-risks-empty-state" class="bvsr-empty-state u-d-none">
                     <i data-lucide="shield-check" class="u-w-24 u-h-24 u-text-muted u-mb-2"></i>
-                    <p class="u-m-0 u-text-sm u-font-semibold">Aucun risque dans cette section pour le moment.</p>
-                    <p class="u-text-xs u-text-muted u-mt-1">Cliquez sur « Ajouter un risque » ci-dessus pour enrichir le protocole.</p>
+                    <p class="u-m-0 u-text-sm u-font-semibold">Aucun risque dans cette catégorie pour le moment.</p>
+                    <p class="u-text-xs u-text-muted u-mt-1">Cliquez sur « Ajouter un risque » pour enrichir cette section.</p>
                 </div>
 
-                <!-- Conteneur des cartes de risques interactives -->
-                <div id="bvrs-risks-container" class="u-flex u-flex-column u-gap-3"></div>
+                <!-- Conteneur des cartes de risques interactives (accordéons) -->
+                <div id="bvrs-risks-container" class="u-flex u-flex-column u-gap-2"></div>
             </div>
 
             <!-- Pied de page de la modale -->
@@ -237,4 +269,8 @@
         </form>
     </div>
 </div>
+
+<!-- Payloads de données JSON pour l'éditeur modal interactif -->
+<script type="application/json" id="bvrs-general-risks-json">{{ general_risks|tojson }}</script>
+<script type="application/json" id="bvrs-vehicle-catalog-json">{{ catalog|tojson }}</script>
 {% endblock %}

@@ -54,12 +54,16 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
         "trike": "Trike électrique",
     }
     type_fr = type_map.get(raw_type.lower(), brand_model or "Véhicule de tournage")
+    v_name = v_data.get("name") or v_data.get("Nom") or ""
+    v_slug = v_data.get("slug") or ""
+    is_road_legal = project.is_vehicle_road_legal(vehicle_id, v_slug, v_name) if hasattr(project, "is_vehicle_road_legal") else True
 
     return {
         "id": vehicle_id,
         "fields": vehicle_map.get(vehicle_id, {}),
         "image": _extract_vehicle_image(v_data),
         "type_fr": type_fr,
+        "is_road_legal": is_road_legal,
         "checkout_status": format_inspection_status(c_out.status) if c_out else "À contrôler",
         "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
         "checkout_id": c_out.id if c_out else "",

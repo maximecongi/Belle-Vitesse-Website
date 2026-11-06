@@ -18,7 +18,9 @@ from utils.image_utils import extract_vehicle_image
 
 logger = logging.getLogger(__name__)
 
-public_safety_rules_bp = Blueprint("public_safety_rules", __name__, url_prefix="/safety-rules")
+public_safety_rules_bp = Blueprint(
+    "public_safety_rules", __name__, url_prefix="/safety-rules"
+)
 
 
 def _resolve_vehicle_data(vehicle_id: str):
@@ -43,7 +45,9 @@ def _resolve_vehicle_data(vehicle_id: str):
                 if (
                     str(v.id) == clean_id
                     or (f.get("slug") and f.get("slug").lower() == clean_lower)
-                    or (f.get("unique_id") and f.get("unique_id").upper() == clean_upper)
+                    or (
+                        f.get("unique_id") and f.get("unique_id").upper() == clean_upper
+                    )
                     or (f.get("name") and f.get("name").lower() == clean_lower)
                     or (f.get("Nom") and f.get("Nom").lower() == clean_lower)
                 ):
@@ -60,14 +64,17 @@ def _resolve_vehicle_data(vehicle_id: str):
                 "id": str(db_veh.id),
                 "name": vname,
                 "slug": vslug,
-                "unique_id": fields.get("unique_id") or (vslug.upper() if vslug else str(db_veh.id)[:8].upper()),
+                "unique_id": fields.get("unique_id")
+                or (vslug.upper() if vslug else str(db_veh.id)[:8].upper()),
                 "brand": fields.get("brand") or "",
                 "model": fields.get("model") or "",
                 "image_url": extract_vehicle_image(fields),
                 "max_speed": fields.get("max_speed"),
                 "passengers": fields.get("passengers"),
                 "battery_life": fields.get("battery_life"),
-                "daily_rate": float(db_veh.daily_rate) if getattr(db_veh, "daily_rate", None) is not None else fields.get("daily_rate"),
+                "daily_rate": float(db_veh.daily_rate)
+                if getattr(db_veh, "daily_rate", None) is not None
+                else fields.get("daily_rate"),
                 "description": fields.get("description") or "",
                 "fields": fields,
             }
@@ -92,14 +99,17 @@ def _resolve_vehicle_data(vehicle_id: str):
                 or vname == clean_lower
             ):
                 final_slug = vfields.get("slug") or ""
-                disp_name = vfields.get("name") or vfields.get("Nom") or f"Véhicule {vid}"
+                disp_name = (
+                    vfields.get("name") or vfields.get("Nom") or f"Véhicule {vid}"
+                )
                 if not final_slug and disp_name:
                     final_slug = disp_name.lower().strip().replace(" ", "-")
                 return {
                     "id": vid,
                     "name": disp_name,
                     "slug": final_slug,
-                    "unique_id": vfields.get("unique_id") or (final_slug.upper() if final_slug else vid[:8].upper()),
+                    "unique_id": vfields.get("unique_id")
+                    or (final_slug.upper() if final_slug else vid[:8].upper()),
                     "brand": vfields.get("brand") or "",
                     "model": vfields.get("model") or "",
                     "image_url": extract_vehicle_image(vfields),
@@ -111,13 +121,19 @@ def _resolve_vehicle_data(vehicle_id: str):
                     "fields": vfields,
                 }
     except Exception as e:
-        logger.warning(f"Erreur recherche catalogue véhicule pour règles de sécurité : {e}")
+        logger.warning(
+            f"Erreur recherche catalogue véhicule pour règles de sécurité : {e}"
+        )
 
     return None
 
 
-@public_safety_rules_bp.route("/v/<vehicle_id>", methods=["GET"], endpoint="view_vehicle_safety_rules")
-@public_safety_rules_bp.route("/vehicle/<vehicle_id>", methods=["GET"], endpoint="view_vehicle_safety_rules_alt")
+@public_safety_rules_bp.route(
+    "/v/<vehicle_id>", methods=["GET"], endpoint="view_vehicle_safety_rules"
+)
+@public_safety_rules_bp.route(
+    "/vehicle/<vehicle_id>", methods=["GET"], endpoint="view_vehicle_safety_rules_alt"
+)
 def view_vehicle_safety_rules(vehicle_id: str):
     """
     Page publique responsive présentant les consignes de sécurité spécifiques
@@ -162,7 +178,7 @@ def view_vehicle_safety_rules(vehicle_id: str):
     general_rules = get_general_safety_rules()
 
     # 3. Coordonnées d'urgence et contact Belle Vitesse
-    company_phone = AppSetting.get("company_phone", "+33 1 84 25 00 00")
+    company_phone = AppSetting.get("company_phone")
     company_email = AppSetting.get("company_email", "contact@bellevitesse.com")
 
     return render_template(

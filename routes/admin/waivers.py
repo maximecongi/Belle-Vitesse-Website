@@ -1,5 +1,15 @@
-
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for, current_app, Response
+from flask import (
+    Blueprint,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+    current_app,
+    Response,
+)
 
 from models import (
     CglWaiver,
@@ -33,13 +43,18 @@ from services.admin.waivers import (
 )
 from utils.decorators import require_roles, require_preview_access
 
-waivers_bp = Blueprint('admin_waivers', __name__, url_prefix='/admin')
+waivers_bp = Blueprint("admin_waivers", __name__, url_prefix="/admin")
 
 
 # ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVRA) ────────────────────
 
-@waivers_bp.route("/cgl/quick-create/<int:project_id>", methods=["GET", "POST"], endpoint='admin_cgl_quick_create')
-@require_roles('administrator', 'manager', 'commercial')
+
+@waivers_bp.route(
+    "/cgl/quick-create/<int:project_id>",
+    methods=["GET", "POST"],
+    endpoint="admin_cgl_quick_create",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_quick_create(project_id):
     """Création en 1 clic des CGL depuis la fiche projet ou le dashboard."""
     success, msg = create_cgl(project_id)
@@ -47,14 +62,20 @@ def admin_cgl_quick_create(project_id):
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+    return redirect(
+        url_for("admin_projects.admin_project_detail", record_id=project_id)
+    )
 
 
-@waivers_bp.route("/cgl/new", methods=["GET", "POST"], endpoint='admin_cgl_new')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route("/cgl/new", methods=["GET", "POST"], endpoint="admin_cgl_new")
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_new():
     if request.method == "POST":
         project_id = request.form.get("project_id")
@@ -67,20 +88,30 @@ def admin_cgl_new():
                 flash(msg, "success")
                 if return_to:
                     return redirect(return_to)
-                return redirect(url_for('admin_waivers.admin_cgl_list'))
+                return redirect(url_for("admin_waivers.admin_cgl_list"))
             flash(msg, "error")
 
     from models import CglWaiver as CW
-    projects_with_cgl = [w.project_id for w in CW.query.filter(CW.deleted_at.is_(None)).all()]
-    available_projects = Project.query.filter(
-        Project.deleted_at.is_(None),
-        ~Project.id.in_(projects_with_cgl)
-    ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
+
+    projects_with_cgl = [
+        w.project_id for w in CW.query.filter(CW.deleted_at.is_(None)).all()
+    ]
+    available_projects = (
+        Project.query.filter(
+            Project.deleted_at.is_(None), ~Project.id.in_(projects_with_cgl)
+        )
+        .order_by(Project.departure_date.desc(), Project.name.asc())
+        .all()
+    )
 
     projects_data = []
     for p in available_projects:
         prod_name = p.production.name if p.production else ""
-        contact_name = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip() if p.production_contact else ""
+        contact_name = (
+            f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
+            if p.production_contact
+            else ""
+        )
         dates = ""
         if p.shoot_start_date and p.shoot_end_date:
             dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
@@ -88,65 +119,82 @@ def admin_cgl_new():
             dates = f"Départ : {p.departure_date.strftime('%d/%m/%Y')}"
 
         search_tokens = f"{p.name} {prod_name} {contact_name} {dates}".lower()
-        projects_data.append({
-            "id": p.id,
-            "name": p.name,
-            "production": prod_name or "Sans production",
-            "contact": contact_name,
-            "dates": dates or "Dates non définies",
-            "search": search_tokens
-        })
+        projects_data.append(
+            {
+                "id": p.id,
+                "name": p.name,
+                "production": prod_name or "Sans production",
+                "contact": contact_name,
+                "dates": dates or "Dates non définies",
+                "search": search_tokens,
+            }
+        )
 
-    return render_template("admin/cgl_form.html", projects=available_projects, projects_json=projects_data)
+    return render_template(
+        "admin/cgl_form.html", projects=available_projects, projects_json=projects_data
+    )
 
 
-@waivers_bp.route("/cgl", endpoint='admin_cgl_list')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route("/cgl", endpoint="admin_cgl_list")
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_list():
     cgl_items = list_cgl()
-    q = request.args.get('q', '').strip().lower()
+    q = request.args.get("q", "").strip().lower()
     if q:
         cgl_items = [
-            w for w in cgl_items
-            if q in (w.get('waiver_id') or '').lower()
-            or q in (w.get('project_name') or '').lower()
-            or q in (w.get('production_name') or '').lower()
-            or q in (w.get('production_contact_name') or '').lower()
-            or q in str(w.get('db_id') or '')
+            w
+            for w in cgl_items
+            if q in (w.get("waiver_id") or "").lower()
+            or q in (w.get("project_name") or "").lower()
+            or q in (w.get("production_name") or "").lower()
+            or q in (w.get("production_contact_name") or "").lower()
+            or q in str(w.get("db_id") or "")
         ]
     return render_template("admin/cgl_list.html", cgl_items=cgl_items)
 
 
-@waivers_bp.route("/cgl/<string:waiver_id>/generate", methods=["POST"], endpoint='admin_cgl_generate')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/generate", methods=["POST"], endpoint="admin_cgl_generate"
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_generate(waiver_id):
     success, msg = generate_cgl(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    q = request.args.get('q', '')
-    return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
+    q = request.args.get("q", "")
+    return redirect(url_for("admin_waivers.admin_cgl_list", q=q if q else None))
 
 
-@waivers_bp.route("/cgl/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_cgl_send')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/send", methods=["GET", "POST"], endpoint="admin_cgl_send"
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_send(waiver_id):
     success, msg = send_cgl(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    q = request.args.get('q', '')
-    return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
+    q = request.args.get("q", "")
+    return redirect(url_for("admin_waivers.admin_cgl_list", q=q if q else None))
 
 
-@waivers_bp.route("/cgl/preview", methods=["GET"], endpoint='admin_cgl_preview_direct')
-@waivers_bp.route("/preview/pdf/cgl", methods=["GET"], endpoint='admin_cgl_preview_alias')
-@waivers_bp.route("/cgl/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_cgl_preview')
+@waivers_bp.route("/cgl/preview", methods=["GET"], endpoint="admin_cgl_preview_direct")
+@waivers_bp.route(
+    "/preview/pdf/cgl", methods=["GET"], endpoint="admin_cgl_preview_alias"
+)
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/preview", methods=["GET"], endpoint="admin_cgl_preview"
+)
 @require_preview_access
 def admin_cgl_preview(waiver_id=None):
     """
@@ -158,15 +206,16 @@ def admin_cgl_preview(waiver_id=None):
     target_id = waiver_id or request.args.get("waiver_id")
     if target_id:
         waiver = CglWaiver.query.filter(
-            CglWaiver.waiver_id == target_id,
-            CglWaiver.deleted_at.is_(None)
+            CglWaiver.waiver_id == target_id, CglWaiver.deleted_at.is_(None)
         ).first()
 
     if not waiver:
         from services.admin.waivers.mock_data import MockCglWaiver
+
         waiver = MockCglWaiver()
 
     from models import AppSetting
+
     company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
     is_pdf_format = request.args.get("format") == "pdf"
     html_content = render_template(
@@ -177,16 +226,19 @@ def admin_cgl_preview(waiver_id=None):
         company_representative=AppSetting.get("company_representative", "Maxime Congi"),
         company_siret=AppSetting.get("company_siret", "912 345 678 00012"),
         company_vat=AppSetting.get("company_vat", "FR 12 912345678"),
-        company_address=AppSetting.get("company_address", "15 Rue de Turbigo, 75002 Paris"),
+        company_address=AppSetting.get(
+            "company_address", "15 Rue de Turbigo, 75002 Paris"
+        ),
         company_capital=AppSetting.get("company_capital", "10 000 €"),
         company_rcs=AppSetting.get("company_rcs", "RCS Paris 912 345 678"),
         company_email=AppSetting.get("company_email", "contact@bellevitesse.com"),
-        company_phone=AppSetting.get("company_phone", "+33 1 84 25 00 00"),
+        company_phone=AppSetting.get("company_phone"),
         is_preview=(not is_pdf_format),
     )
 
     if is_pdf_format:
         from utils.document_utils import render_pdf_from_template
+
         pdf_bytes = render_pdf_from_template(
             html_content=html_content,
             base_url=current_app.root_path,
@@ -195,45 +247,62 @@ def admin_cgl_preview(waiver_id=None):
         return Response(
             pdf_bytes,
             mimetype="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=cgl_preview_{waiver.waiver_id}.pdf"}
+            headers={
+                "Content-Disposition": f"inline; filename=cgl_preview_{waiver.waiver_id}.pdf"
+            },
         )
 
     return html_content
 
 
-
-@waivers_bp.route("/cgl/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_cgl_delete')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/delete", methods=["POST"], endpoint="admin_cgl_delete"
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_delete(waiver_id):
     success, msg = delete_cgl(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    q = request.args.get('q', '')
-    return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
+    q = request.args.get("q", "")
+    return redirect(url_for("admin_waivers.admin_cgl_list", q=q if q else None))
 
 
-@waivers_bp.route("/cgl/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_cgl_reset')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/reset", methods=["POST"], endpoint="admin_cgl_reset"
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_reset(waiver_id):
     success, msg = reset_cgl(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    q = request.args.get('q', '')
-    return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
+    q = request.args.get("q", "")
+    return redirect(url_for("admin_waivers.admin_cgl_list", q=q if q else None))
 
 
-@waivers_bp.route("/cgl/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_cgl_copy_link')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/cgl/<string:waiver_id>/copy-link",
+    methods=["POST"],
+    endpoint="admin_cgl_copy_link",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_cgl_copy_link(waiver_id):
     """Génère ou récupère l'URL de signature active pour les CGL."""
     success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="cgl")
@@ -244,28 +313,34 @@ def admin_cgl_copy_link(waiver_id):
 
 # ── RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR) ───────────────────────────
 
-@waivers_bp.route("/safety-rules", endpoint='admin_safety_rules_list')
-@waivers_bp.route("/waivers/safety-rules", endpoint='admin_safety_rules_list_alias')
-@require_roles('administrator', 'manager', 'commercial')
+
+@waivers_bp.route("/safety-rules", endpoint="admin_safety_rules_list")
+@waivers_bp.route("/waivers/safety-rules", endpoint="admin_safety_rules_list_alias")
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_list():
     """Liste globale de tous les engagements de sécurité signés ou en attente."""
     items = list_safety_rules_waivers()
-    q = request.args.get('q', '').strip().lower()
+    q = request.args.get("q", "").strip().lower()
     if q:
         items = [
-            w for w in items
-            if q in (w.get('waiver_id') or '').lower()
-            or q in (w.get('project_name') or '').lower()
-            or q in (w.get('signer_name') or '').lower()
-            or q in (w.get('signer_email') or '').lower()
-            or q in (w.get('signer_role_label') or '').lower()
-            or q in str(w.get('db_id') or '')
+            w
+            for w in items
+            if q in (w.get("waiver_id") or "").lower()
+            or q in (w.get("project_name") or "").lower()
+            or q in (w.get("signer_name") or "").lower()
+            or q in (w.get("signer_email") or "").lower()
+            or q in (w.get("signer_role_label") or "").lower()
+            or q in str(w.get("db_id") or "")
         ]
     return render_template("admin/safety_rules_list.html", safety_rules_items=items)
 
 
-@waivers_bp.route("/projects/<int:project_id>/safety-rules/create", methods=["POST"], endpoint='admin_safety_rules_create')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/projects/<int:project_id>/safety-rules/create",
+    methods=["POST"],
+    endpoint="admin_safety_rules_create",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_create(project_id):
     """Création d'un nouvel engagement aux règles de sécurité (BVSR) pour un intervenant."""
     signer_role = request.form.get("signer_role", "pilot").strip()
@@ -293,65 +368,105 @@ def admin_safety_rules_create(project_id):
     else:
         flash(msg, "error")
 
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+    return redirect(
+        url_for("admin_projects.admin_project_detail", record_id=project_id)
+    )
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_safety_rules_send')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/send",
+    methods=["GET", "POST"],
+    endpoint="admin_safety_rules_send",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_send(waiver_id):
     success, msg = send_safety_rules_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_safety_rules_list'))
+    return redirect(url_for("admin_waivers.admin_safety_rules_list"))
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_safety_rules_delete')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/delete",
+    methods=["POST"],
+    endpoint="admin_safety_rules_delete",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_delete(waiver_id):
     success, msg = delete_safety_rules_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_safety_rules_list'))
+    return redirect(url_for("admin_waivers.admin_safety_rules_list"))
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_safety_rules_reset')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/reset",
+    methods=["POST"],
+    endpoint="admin_safety_rules_reset",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_reset(waiver_id):
     success, msg = reset_safety_rules_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_safety_rules_list'))
+    return redirect(url_for("admin_waivers.admin_safety_rules_list"))
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_safety_rules_copy_link')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/copy-link",
+    methods=["POST"],
+    endpoint="admin_safety_rules_copy_link",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_copy_link(waiver_id):
-    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="safety_rules")
+    success, result = get_or_create_waiver_signing_url(
+        waiver_id, waiver_type="safety_rules"
+    )
     if not success:
         return jsonify({"success": False, "error": result}), 400
     return jsonify({"success": True, "url": result})
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/countersign", methods=["POST"], endpoint='admin_safety_rules_countersign')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/countersign",
+    methods=["POST"],
+    endpoint="admin_safety_rules_countersign",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_countersign(waiver_id):
     """Enregistre la contre-signature du superviseur technique Belle Vitesse."""
     sig_data = request.form.get("signature_data")
@@ -359,16 +474,27 @@ def admin_safety_rules_countersign(waiver_id):
         return jsonify({"success": False, "error": "Signature manquante."}), 400
 
     from utils.signature_storage import validate_base64_png
-    valid_sig, sig_err = validate_base64_png(sig_data, min_bytes=100, min_width=50, min_height=20)
+
+    valid_sig, sig_err = validate_base64_png(
+        sig_data, min_bytes=100, min_width=50, min_height=20
+    )
     if not valid_sig:
-        return jsonify({"success": False, "error": f"Signature invalide : {sig_err}"}), 400
+        return jsonify(
+            {"success": False, "error": f"Signature invalide : {sig_err}"}
+        ), 400
 
     # L'identité du signataire provient strictement du compte authentifié en session
     admin_fn = session.get("admin_user_firstname") or ""
     admin_ln = session.get("admin_user_lastname") or ""
-    session_user_name = f"{admin_fn} {admin_ln}".strip() or session.get("user") or session.get("admin_user_mail") or "Belle Vitesse"
+    session_user_name = (
+        f"{admin_fn} {admin_ln}".strip()
+        or session.get("user")
+        or session.get("admin_user_mail")
+        or "Belle Vitesse"
+    )
 
     from utils.request_utils import get_client_ip
+
     signer_ip = get_client_ip()
 
     success, msg = countersign_safety_rules(
@@ -376,7 +502,7 @@ def admin_safety_rules_countersign(waiver_id):
         sig_data,
         signer_name=session_user_name,
         signer_ip=signer_ip,
-        user_agent=request.headers.get("User-Agent")
+        user_agent=request.headers.get("User-Agent"),
     )
     if success:
         flash(msg, "success")
@@ -384,9 +510,21 @@ def admin_safety_rules_countersign(waiver_id):
     return jsonify({"success": False, "error": msg}), 400
 
 
-@waivers_bp.route("/safety-rules/preview", methods=["GET"], endpoint='admin_safety_rules_preview_direct')
-@waivers_bp.route("/preview/pdf/safety-rules", methods=["GET"], endpoint='admin_safety_rules_preview_alias')
-@waivers_bp.route("/safety-rules/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_safety_rules_preview')
+@waivers_bp.route(
+    "/safety-rules/preview",
+    methods=["GET"],
+    endpoint="admin_safety_rules_preview_direct",
+)
+@waivers_bp.route(
+    "/preview/pdf/safety-rules",
+    methods=["GET"],
+    endpoint="admin_safety_rules_preview_alias",
+)
+@waivers_bp.route(
+    "/safety-rules/<string:waiver_id>/preview",
+    methods=["GET"],
+    endpoint="admin_safety_rules_preview",
+)
 @require_preview_access
 def admin_safety_rules_preview(waiver_id=None):
     """
@@ -405,19 +543,28 @@ def admin_safety_rules_preview(waiver_id=None):
     target_id = waiver_id or request.args.get("waiver_id")
     if target_id:
         waiver = SRW.query.filter(
-            SRW.waiver_id == target_id,
-            SRW.deleted_at.is_(None)
+            SRW.waiver_id == target_id, SRW.deleted_at.is_(None)
         ).first()
 
     if not waiver:
         from services.admin.waivers.mock_data import MockSafetyRulesWaiver
+
         waiver = MockSafetyRulesWaiver()
 
-    safety_techs = getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None
+    safety_techs = (
+        getattr(waiver, "display_safety_technicians", None)
+        or getattr(waiver, "safety_technicians", "")
+        or None
+    )
     general_rules = get_merged_general_safety_rules(safety_techs)
-    vehicle_rules = get_safety_rules_for_vehicles(getattr(waiver, "vehicles_details", []))
+    vehicle_rules = get_safety_rules_for_vehicles(
+        getattr(waiver, "vehicles_details", [])
+    )
     from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
-    safety_equipment = get_safety_equipment_for_vehicles(getattr(waiver, "vehicles_details", []))
+
+    safety_equipment = get_safety_equipment_for_vehicles(
+        getattr(waiver, "vehicles_details", [])
+    )
     helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
 
     is_pdf_format = request.args.get("format") == "pdf"
@@ -433,12 +580,17 @@ def admin_safety_rules_preview(waiver_id=None):
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
         base_url=request.host_url.rstrip("/"),
         qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
-        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        seal_hash=getattr(
+            waiver,
+            "hash",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        ),
         is_preview=(not is_pdf_format),
     )
 
     if is_pdf_format:
         from utils.document_utils import render_pdf_from_template
+
         pdf_bytes = render_pdf_from_template(
             html_content=html_content,
             base_url=current_app.root_path,
@@ -447,7 +599,9 @@ def admin_safety_rules_preview(waiver_id=None):
         return Response(
             pdf_bytes,
             mimetype="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=safety_rules_preview_{waiver.waiver_id}.pdf"}
+            headers={
+                "Content-Disposition": f"inline; filename=safety_rules_preview_{waiver.waiver_id}.pdf"
+            },
         )
 
     return html_content
@@ -455,27 +609,33 @@ def admin_safety_rules_preview(waiver_id=None):
 
 # ── ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL - BVPA) ───────────────────
 
-@waivers_bp.route("/pilot-waivers", endpoint='admin_pilot_waivers_list')
-@require_roles('administrator', 'manager', 'commercial')
+
+@waivers_bp.route("/pilot-waivers", endpoint="admin_pilot_waivers_list")
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_list():
     """Liste globale de toutes les attestations pilotes signées ou en attente."""
     items = list_pilot_waivers()
-    q = request.args.get('q', '').strip().lower()
+    q = request.args.get("q", "").strip().lower()
     if q:
         items = [
-            w for w in items
-            if q in (w.get('waiver_id') or '').lower()
-            or q in (w.get('project_name') or '').lower()
-            or q in (w.get('signer_name') or '').lower()
-            or q in (w.get('signer_email') or '').lower()
-            or q in (w.get('signer_role_label') or '').lower()
-            or q in str(w.get('db_id') or '')
+            w
+            for w in items
+            if q in (w.get("waiver_id") or "").lower()
+            or q in (w.get("project_name") or "").lower()
+            or q in (w.get("signer_name") or "").lower()
+            or q in (w.get("signer_email") or "").lower()
+            or q in (w.get("signer_role_label") or "").lower()
+            or q in str(w.get("db_id") or "")
         ]
     return render_template("admin/pilot_waivers_list.html", pilot_waivers_items=items)
 
 
-@waivers_bp.route("/projects/<int:project_id>/pilot-waivers/create", methods=["POST"], endpoint='admin_pilot_waivers_create')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/projects/<int:project_id>/pilot-waivers/create",
+    methods=["POST"],
+    endpoint="admin_pilot_waivers_create",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_create(project_id):
     """Création d'une nouvelle attestation d'information et d'engagement du pilote."""
     signer_role = request.form.get("signer_role", "pilot").strip()
@@ -485,14 +645,25 @@ def admin_pilot_waivers_create(project_id):
     signer_email = request.form.get("signer_email", "").strip()
     signer_phone = request.form.get("signer_phone", "").strip()
     signer_company = request.form.get("signer_company", "").strip()
-    selected_vehicles = [v.strip() for v in request.form.getlist("selected_vehicles") if v and v.strip()]
+    selected_vehicles = [
+        v.strip() for v in request.form.getlist("selected_vehicles") if v and v.strip()
+    ]
 
     if not selected_vehicles:
-        flash("Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote.", "error")
-        return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+        flash(
+            "Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote.",
+            "error",
+        )
+        return_to = (
+            request.form.get("return_to")
+            or request.args.get("return_to")
+            or request.referrer
+        )
         if return_to:
             return redirect(return_to)
-        return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=project_id)
+        )
 
     success, msg = create_pilot_waiver(
         project_id=project_id,
@@ -510,66 +681,114 @@ def admin_pilot_waivers_create(project_id):
     else:
         flash(msg, "error")
 
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+    return redirect(
+        url_for("admin_projects.admin_project_detail", record_id=project_id)
+    )
 
 
-@waivers_bp.route("/pilot-waivers/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_pilot_waivers_send')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/pilot-waivers/<string:waiver_id>/send",
+    methods=["GET", "POST"],
+    endpoint="admin_pilot_waivers_send",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_send(waiver_id):
     success, msg = send_pilot_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+    return redirect(url_for("admin_waivers.admin_pilot_waivers_list"))
 
 
-@waivers_bp.route("/pilot-waivers/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_pilot_waivers_delete')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/pilot-waivers/<string:waiver_id>/delete",
+    methods=["POST"],
+    endpoint="admin_pilot_waivers_delete",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_delete(waiver_id):
     success, msg = delete_pilot_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+    return redirect(url_for("admin_waivers.admin_pilot_waivers_list"))
 
 
-@waivers_bp.route("/pilot-waivers/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_pilot_waivers_reset')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/pilot-waivers/<string:waiver_id>/reset",
+    methods=["POST"],
+    endpoint="admin_pilot_waivers_reset",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_reset(waiver_id):
     success, msg = reset_pilot_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+    return redirect(url_for("admin_waivers.admin_pilot_waivers_list"))
 
 
-@waivers_bp.route("/pilot-waivers/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_pilot_waivers_copy_link')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/pilot-waivers/<string:waiver_id>/copy-link",
+    methods=["POST"],
+    endpoint="admin_pilot_waivers_copy_link",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_copy_link(waiver_id):
-    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="pilot_waiver")
+    success, result = get_or_create_waiver_signing_url(
+        waiver_id, waiver_type="pilot_waiver"
+    )
     if not success:
         return jsonify({"success": False, "error": result}), 400
     return jsonify({"success": True, "url": result})
 
 
-@waivers_bp.route("/pilot-waivers/preview", methods=["GET"], endpoint='admin_pilot_waivers_preview_direct')
-@waivers_bp.route("/preview/pdf/pilot-waiver", methods=["GET"], endpoint='admin_pilot_waivers_preview_alias')
-@waivers_bp.route("/pilot-waivers/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_pilot_waivers_preview')
+@waivers_bp.route(
+    "/pilot-waivers/preview",
+    methods=["GET"],
+    endpoint="admin_pilot_waivers_preview_direct",
+)
+@waivers_bp.route(
+    "/preview/pdf/pilot-waiver",
+    methods=["GET"],
+    endpoint="admin_pilot_waivers_preview_alias",
+)
+@waivers_bp.route(
+    "/pilot-waivers/<string:waiver_id>/preview",
+    methods=["GET"],
+    endpoint="admin_pilot_waivers_preview",
+)
 @require_preview_access
 def admin_pilot_waivers_preview(waiver_id=None):
     """
@@ -577,16 +796,17 @@ def admin_pilot_waivers_preview(waiver_id=None):
     Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
     """
     from models import PilotWaiver as PW, AppSetting
+
     waiver = None
     target_id = waiver_id or request.args.get("waiver_id")
     if target_id:
         waiver = PW.query.filter(
-            PW.waiver_id == target_id,
-            PW.deleted_at.is_(None)
+            PW.waiver_id == target_id, PW.deleted_at.is_(None)
         ).first()
 
     if not waiver:
         from services.admin.waivers.mock_data import MockPilotWaiver
+
         waiver = MockPilotWaiver()
 
     is_pdf_format = request.args.get("format") == "pdf"
@@ -595,7 +815,11 @@ def admin_pilot_waivers_preview(waiver_id=None):
     signed_at = getattr(waiver, "signed_at", None)
     signed_at_str = signed_at.strftime("%d/%m/%Y à %H:%M") if signed_at else None
     sig_img = getattr(waiver, "signature_data_uri", None)
-    current_hash = getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+    current_hash = getattr(
+        waiver,
+        "hash",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    )
     mock_qr = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>"
 
     html_content = render_template(
@@ -620,6 +844,7 @@ def admin_pilot_waivers_preview(waiver_id=None):
 
     if is_pdf_format:
         from utils.document_utils import render_pdf_from_template
+
         pdf_bytes = render_pdf_from_template(
             html_content=html_content,
             base_url=current_app.root_path,
@@ -628,7 +853,9 @@ def admin_pilot_waivers_preview(waiver_id=None):
         return Response(
             pdf_bytes,
             mimetype="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=pilot_waiver_preview_{waiver.waiver_id}.pdf"}
+            headers={
+                "Content-Disposition": f"inline; filename=pilot_waiver_preview_{waiver.waiver_id}.pdf"
+            },
         )
 
     return html_content
@@ -636,8 +863,13 @@ def admin_pilot_waivers_preview(waiver_id=None):
 
 # ── ANALYSE DES RISQUES (BVRS / RISK ASSESSMENT) ─────────────────────
 
-@waivers_bp.route("/projects/<int:project_id>/risk-assessment/create", methods=["POST"], endpoint='admin_risk_assessment_create')
-@require_roles('administrator', 'manager', 'commercial')
+
+@waivers_bp.route(
+    "/projects/<int:project_id>/risk-assessment/create",
+    methods=["POST"],
+    endpoint="admin_risk_assessment_create",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_create(project_id):
     """Création d'une nouvelle analyse des risques (BVRS) pour un signataire."""
     signer_role = request.form.get("signer_role", "production").strip()
@@ -663,85 +895,138 @@ def admin_risk_assessment_create(project_id):
     else:
         flash(msg, "error")
 
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+    return redirect(
+        url_for("admin_projects.admin_project_detail", record_id=project_id)
+    )
 
 
-@waivers_bp.route("/risk-assessment/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_risk_assessment_send')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/risk-assessment/<string:waiver_id>/send",
+    methods=["GET", "POST"],
+    endpoint="admin_risk_assessment_send",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_send(waiver_id):
     success, msg = send_risk_assessment_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+    return redirect(url_for("admin_waivers.admin_risk_assessment_list"))
 
 
-@waivers_bp.route("/risk-assessment/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_risk_assessment_delete')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/risk-assessment/<string:waiver_id>/delete",
+    methods=["POST"],
+    endpoint="admin_risk_assessment_delete",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_delete(waiver_id):
     success, msg = delete_risk_assessment_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+    return redirect(url_for("admin_waivers.admin_risk_assessment_list"))
 
 
-@waivers_bp.route("/risk-assessment/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_risk_assessment_reset')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/risk-assessment/<string:waiver_id>/reset",
+    methods=["POST"],
+    endpoint="admin_risk_assessment_reset",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_reset(waiver_id):
     success, msg = reset_risk_assessment_waiver(waiver_id)
     if success:
         flash(msg, "success")
     else:
         flash(msg, "error")
-    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
     if return_to:
         return redirect(return_to)
-    return redirect(url_for('admin_waivers.admin_risk_assessment_list'))
+    return redirect(url_for("admin_waivers.admin_risk_assessment_list"))
 
 
-@waivers_bp.route("/risk-assessment/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_risk_assessment_copy_link')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route(
+    "/risk-assessment/<string:waiver_id>/copy-link",
+    methods=["POST"],
+    endpoint="admin_risk_assessment_copy_link",
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_copy_link(waiver_id):
-    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="risk_assessment")
+    success, result = get_or_create_waiver_signing_url(
+        waiver_id, waiver_type="risk_assessment"
+    )
     if not success:
         return jsonify({"success": False, "error": result}), 400
     return jsonify({"success": True, "url": result})
 
 
-@waivers_bp.route("/risk-assessments", endpoint='admin_risk_assessment_list')
-@waivers_bp.route("/waivers/risk-assessments", endpoint='admin_risk_assessment_list_alias')
-@require_roles('administrator', 'manager', 'commercial')
+@waivers_bp.route("/risk-assessments", endpoint="admin_risk_assessment_list")
+@waivers_bp.route(
+    "/waivers/risk-assessments", endpoint="admin_risk_assessment_list_alias"
+)
+@require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_list():
     items = list_risk_assessment_waivers()
-    q = request.args.get('q', '').strip().lower()
+    q = request.args.get("q", "").strip().lower()
     if q:
         items = [
-            w for w in items
-            if q in (w.get('waiver_id') or '').lower()
-            or q in (w.get('project_name') or '').lower()
-            or q in (w.get('signer_name') or '').lower()
-            or q in (w.get('signer_email') or '').lower()
-            or q in (w.get('signer_role_label') or '').lower()
-            or q in str(w.get('db_id') or '')
+            w
+            for w in items
+            if q in (w.get("waiver_id") or "").lower()
+            or q in (w.get("project_name") or "").lower()
+            or q in (w.get("signer_name") or "").lower()
+            or q in (w.get("signer_email") or "").lower()
+            or q in (w.get("signer_role_label") or "").lower()
+            or q in str(w.get("db_id") or "")
         ]
-    return render_template("admin/risk_assessment_list.html", risk_assessment_items=items)
+    return render_template(
+        "admin/risk_assessment_list.html", risk_assessment_items=items
+    )
 
 
-@waivers_bp.route("/risk-assessment/preview", methods=["GET"], endpoint='admin_risk_assessment_preview_direct')
-@waivers_bp.route("/preview/pdf/risk-assessment", methods=["GET"], endpoint='admin_risk_assessment_preview_alias')
-@waivers_bp.route("/risk-assessment/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_risk_assessment_preview')
+@waivers_bp.route(
+    "/risk-assessment/preview",
+    methods=["GET"],
+    endpoint="admin_risk_assessment_preview_direct",
+)
+@waivers_bp.route(
+    "/preview/pdf/risk-assessment",
+    methods=["GET"],
+    endpoint="admin_risk_assessment_preview_alias",
+)
+@waivers_bp.route(
+    "/risk-assessment/<string:waiver_id>/preview",
+    methods=["GET"],
+    endpoint="admin_risk_assessment_preview",
+)
 @require_preview_access
 def admin_risk_assessment_preview(waiver_id=None):
     """
@@ -762,16 +1047,72 @@ def admin_risk_assessment_preview(waiver_id=None):
         waiver = Waiver.query.filter(
             Waiver.waiver_id == target_id,
             Waiver.waiver_type == "risk_assessment",
-            Waiver.deleted_at.is_(None)
+            Waiver.deleted_at.is_(None),
         ).first()
+
+    # Si pas de waiver_id mais un projet spécifié (?project_id=... ou ?record_id=...)
+    project_obj = None
+    if not waiver:
+        project_param = request.args.get("project_id") or request.args.get("record_id")
+        if project_param:
+            project_obj = Project.query.filter(
+                (Project.id == project_param) | (Project.project_id == project_param),
+                Project.deleted_at.is_(None),
+            ).first()
+            if project_obj:
+                waiver = Waiver.query.filter(
+                    Waiver.project_id == project_obj.id,
+                    Waiver.waiver_type == "risk_assessment",
+                    Waiver.deleted_at.is_(None),
+                ).first()
+
+    # Paramètre de simulation pour le mock ou surcharge en preview : ?road_legal=1 / ?road_legal=0
+    road_legal_param = request.args.get("road_legal") or request.args.get("all_road_legal")
 
     if not waiver:
         from services.admin.waivers.mock_data import MockRiskAssessmentWaiver
-        waiver = MockRiskAssessmentWaiver()
 
-    safety_techs = getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None
+        is_mock_all_legal = (
+            road_legal_param.lower() in ("1", "true", "yes")
+            if road_legal_param is not None
+            else False
+        )
+        waiver = MockRiskAssessmentWaiver(all_road_legal=is_mock_all_legal)
+        if project_obj:
+            waiver.project = project_obj
+            if project_obj.vehicles_to_check:
+                v_ids = project_obj.vehicle_ids_list
+                v_details = []
+                for vid in v_ids:
+                    from models.catalog import Vehicle
+                    from models.db import db
+                    db_v = db.session.get(Vehicle, vid) if hasattr(db.session, "get") else Vehicle.query.get(vid)
+                    f = db_v.fields if db_v else {}
+                    v_details.append({
+                        "id": str(vid),
+                        "name": f.get("name") or f.get("Nom") or str(vid),
+                        "slug": f.get("slug") or "",
+                        "unique_id": f.get("unique_id") or f.get("ID Unique") or "",
+                    })
+                if v_details:
+                    waiver.vehicles_details = v_details
+    elif road_legal_param is not None:
+        force_legal = road_legal_param.lower() in ("1", "true", "yes")
+        setattr(waiver, "all_road_legal", force_legal)
+        if getattr(waiver, "project", None) and hasattr(waiver.project, "set_vehicle_road_legal"):
+            for v in getattr(waiver, "vehicles_details", []):
+                vid = v.get("id") or v.get("slug") or v.get("name")
+                waiver.project.set_vehicle_road_legal(vid, force_legal)
+
+    safety_techs = (
+        getattr(waiver, "display_safety_technicians", None)
+        or getattr(waiver, "safety_technicians", "")
+        or None
+    )
     general_risks = get_general_risk_assessment()
-    vehicle_risks = get_risk_assessment_for_vehicles(getattr(waiver, "vehicles_details", []))
+    vehicle_risks = get_risk_assessment_for_vehicles(
+        getattr(waiver, "vehicles_details", [])
+    )
 
     is_pdf_format = request.args.get("format") == "pdf"
     html_content = render_template(
@@ -779,26 +1120,37 @@ def admin_risk_assessment_preview(waiver_id=None):
         waiver=waiver,
         general_risks=general_risks,
         vehicle_risks=vehicle_risks,
+        vehicle_sections=vehicle_risks,
         safety_technicians=safety_techs,
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
         base_url=request.host_url.rstrip("/"),
         qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
-        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        seal_hash=getattr(
+            waiver,
+            "hash",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        ),
         is_preview=(not is_pdf_format),
     )
 
     if is_pdf_format:
         from utils.document_utils import render_pdf_from_template
+
         pdf_bytes = render_pdf_from_template(
             html_content=html_content,
             base_url=current_app.root_path,
-            stylesheets=["css/styles.css", "css/admin/safety-rules-pdf.css", "css/admin/risk-assessment-pdf.css"],
+            stylesheets=[
+                "css/styles.css",
+                "css/admin/safety-rules-pdf.css",
+                "css/admin/risk-assessment-pdf.css",
+            ],
         )
         return Response(
             pdf_bytes,
             mimetype="application/pdf",
-            headers={"Content-Disposition": f"inline; filename=risk_assessment_preview_{waiver.waiver_id}.pdf"}
+            headers={
+                "Content-Disposition": f"inline; filename=risk_assessment_preview_{waiver.waiver_id}.pdf"
+            },
         )
 
     return html_content
-

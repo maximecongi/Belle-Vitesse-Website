@@ -1188,6 +1188,69 @@ function initRiskSignerModal() {
     });
 }
 
+function initRoadLegalToggle() {
+    document.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.js-toggle-road-legal');
+        if (!btn || btn.classList.contains('is-loading')) return;
+
+        e.preventDefault();
+        const url = btn.dataset.url;
+        if (!url) return;
+
+        btn.classList.add('is-loading');
+
+        try {
+            const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+            const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({})
+            });
+
+            if (!resp.ok) {
+                throw new Error('Erreur réseau lors de la bascule');
+            }
+
+            const data = await resp.json();
+            if (data.status === 'success') {
+                const isLegal = data.is_road_legal;
+                btn.classList.toggle('is-road-legal', isLegal);
+                btn.classList.toggle('is-closed-road', !isLegal);
+
+                const label = btn.querySelector('.js-road-legal-label');
+                if (label) {
+                    label.textContent = isLegal ? 'Homologué route' : 'Route fermée';
+                }
+
+                const icon = btn.querySelector('i, svg');
+                if (icon) {
+                    const newIconName = isLegal ? 'check-circle' : 'alert-triangle';
+                    icon.setAttribute('data-lucide', newIconName);
+                    // Remplacement dynamique du markup SVG si nécessaire
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                        window.lucide.createIcons({
+                            root: btn
+                        });
+                    }
+                }
+            } else {
+                alert(data.message || 'Erreur lors de la modification.');
+            }
+        } catch (err) {
+            console.error('Erreur toggle road legal:', err);
+            alert('Impossible de mettre à jour le statut du véhicule.');
+        } finally {
+            btn.classList.remove('is-loading');
+        }
+    });
+}
+
 function initProjectInteractions() {
     try { initProjectFormHighlight(); } catch (e) { console.error('Error in initProjectFormHighlight', e); }
     try { initProjectDateValidation(); } catch (e) { console.error('Error in initProjectDateValidation', e); }
@@ -1199,15 +1262,18 @@ function initProjectInteractions() {
     try { initSafetyRulesSignerModal(); } catch (e) { console.error('Error in initSafetyRulesSignerModal', e); }
     try { initPilotSignerModal(); } catch (e) { console.error('Error in initPilotSignerModal', e); }
     try { initRiskSignerModal(); } catch (e) { console.error('Error in initRiskSignerModal', e); }
+    try { initRoadLegalToggle(); } catch (e) { console.error('Error in initRoadLegalToggle', e); }
 }
 
 window.initSafetyRulesSignerModal = initSafetyRulesSignerModal;
 window.initPilotSignerModal = initPilotSignerModal;
 window.initRiskSignerModal = initRiskSignerModal;
+window.initRoadLegalToggle = initRoadLegalToggle;
 window.initProjectInteractions = initProjectInteractions;
 
 // Initialisation immédiate des écouteurs de modals dès l'évaluation du script
 initSafetyRulesSignerModal();
 initPilotSignerModal();
 initRiskSignerModal();
+initRoadLegalToggle();
 

@@ -1,13 +1,14 @@
 """
 tests/test_risk_assessment.py — Tests unitaires et d'intégration pour le Risk Assessment (BVRS).
 """
+
 import json
 import os
 import sys
 import unittest
 from datetime import date
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tests.base import BaseTestCase
 from models import (
@@ -50,7 +51,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             firstname="Admin",
             lastname="BV",
             mail="admin@bellevitesse.com",
-            role="administrator"
+            role="administrator",
         )
         db.session.add(user)
 
@@ -64,18 +65,21 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             mail="regisseur@studioaction.com",
             phone="0611223344",
             job_title="Régisseur Général",
-            production_id=prod.id
+            production_id=prod.id,
         )
         db.session.add(contact)
         db.session.flush()
 
-        v1 = Vehicle(id="rec_erover", fields={
-            "Nom": "eRover 01 (Polaris Kinetic)",
-            "name": "eRover 01 (Polaris Kinetic)",
-            "slug": "erover",
-            "type": "Travelling",
-            "Statut": "Disponible"
-        })
+        v1 = Vehicle(
+            id="rec_erover",
+            fields={
+                "Nom": "eRover 01 (Polaris Kinetic)",
+                "name": "eRover 01 (Polaris Kinetic)",
+                "slug": "erover",
+                "type": "Travelling",
+                "Statut": "Disponible",
+            },
+        )
         db.session.add(v1)
 
         project = Project(
@@ -86,7 +90,9 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             return_date=date(2026, 6, 5),
             date_mode="continuous",
             vehicles_to_check="rec_erover",
-            shooting_locations=[{"name": "Circuit de Mortefontaine", "address": "Mortefontaine"}]
+            shooting_locations=[
+                {"name": "Circuit de Mortefontaine", "address": "Mortefontaine"}
+            ],
         )
         db.session.add(project)
         db.session.commit()
@@ -96,12 +102,14 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         """Vérifie la dotation par défaut du catalogue de risques et les fonctions CRUD."""
         general = get_general_risk_assessment()
         self.assertGreaterEqual(len(general), 16)
-        
+
         # Vérification des deux niveaux de risques
         major_risks = [r for r in general if r["level"] == "major"]
         standard_risks = [r for r in general if r["level"] == "standard"]
         self.assertGreater(len(major_risks), 0, "Doit comporter des risques majeurs")
-        self.assertGreater(len(standard_risks), 0, "Doit comporter des risques standards")
+        self.assertGreater(
+            len(standard_risks), 0, "Doit comporter des risques standards"
+        )
 
         # Vérification du bilinguisme
         first_risk = general[0]
@@ -133,7 +141,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             signer_first_name="Luc",
             signer_last_name="Machiniste",
             signer_email="luc.machiniste@prod.com",
-            signer_company="Studio Action SAS"
+            signer_company="Studio Action SAS",
         )
         self.assertTrue(ok, f"Échec de la création : {msg}")
         waiver = RiskAssessmentWaiver.query.filter_by(project_id=project.id).first()
@@ -141,7 +149,10 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         waiver_id = waiver.waiver_id
 
         # Vérification du préfixe BVRS-
-        self.assertTrue(waiver_id.startswith("BVRS-"), f"L'ID doit commencer par BVRS- (obtenu: {waiver_id})")
+        self.assertTrue(
+            waiver_id.startswith("BVRS-"),
+            f"L'ID doit commencer par BVRS- (obtenu: {waiver_id})",
+        )
 
         # Vérification de l'accès via le projet
         project.clear_waiver_cache()
@@ -179,7 +190,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             signer_role="location_manager",
             signer_first_name="Claire",
             signer_last_name="Régisseuse",
-            signer_email="claire@prod.com"
+            signer_email="claire@prod.com",
         )
         self.assertTrue(ok, f"Échec création : {msg}")
         waiver = RiskAssessmentWaiver.query.filter_by(project_id=project.id).first()
@@ -210,13 +221,13 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             "role": "location_manager",
             "role_custom": "",
             "entity_type": "freelance",
-            "ack_risk_assessment": True
+            "ack_risk_assessment": True,
         }
 
         res_post = self.client.post(
             f"/sign/risk-assessment/{token_obj.token}",
             data=json.dumps(payload),
-            content_type="application/json"
+            content_type="application/json",
         )
         self.assertEqual(res_post.status_code, 200)
         res_json = res_post.get_json()
@@ -229,14 +240,21 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertIsNotNone(waiver.hash)
 
         # Vérification du document scellé
-        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+        signed_doc = WaiverSignedDocument.query.filter_by(
+            waiver_id=waiver.waiver_id
+        ).first()
         self.assertIsNotNone(signed_doc)
         self.assertEqual(signed_doc.hash, waiver.hash)
 
         # 3. Vérification publique de l'attestation scellée
         from utils.document_utils import generate_document_verification_token
-        verify_token = generate_document_verification_token("risk_assessment", waiver.waiver_id, 1, signed_doc.hash)
-        verify_url = f"/risk-assessment/verify/{waiver.waiver_id}?version=1&t={verify_token}"
+
+        verify_token = generate_document_verification_token(
+            "risk_assessment", waiver.waiver_id, 1, signed_doc.hash
+        )
+        verify_url = (
+            f"/risk-assessment/verify/{waiver.waiver_id}?version=1&t={verify_token}"
+        )
         res_verify = self.client.get(verify_url)
         self.assertEqual(res_verify.status_code, 200)
         self.assertIn(b"Analyse des Risques BVRS", res_verify.data)
@@ -304,18 +322,21 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
                 "level": "major",
                 "description_fr": "Risque majeur d'impact cinétique.",
                 "description_en": "Major kinetic impact risk.",
-                "recommendations_fr": ["Ralentir immédiatement.", "Porter un casque homologué."],
-                "recommendations_en": ["Slow down immediately.", "Wear an approved helmet."]
+                "recommendations_fr": [
+                    "Ralentir immédiatement.",
+                    "Porter un casque homologué.",
+                ],
+                "recommendations_en": [
+                    "Slow down immediately.",
+                    "Wear an approved helmet.",
+                ],
             }
         ]
 
         res_post_gen = self.client.post(
             "/admin/fleet/risk-assessment",
-            data={
-                "action": "save_general",
-                "risks_json": json.dumps(updated_general)
-            },
-            follow_redirects=True
+            data={"action": "save_general", "risks_json": json.dumps(updated_general)},
+            follow_redirects=True,
         )
         self.assertEqual(res_post_gen.status_code, 200)
         saved_gen = get_general_risk_assessment()
@@ -335,7 +356,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
                 "description_fr": "Arrêt inopiné du système d'alimentation électrique.",
                 "description_en": "Unexpected power shutdown.",
                 "recommendations_fr": ["Contrôler le coupe-circuit."],
-                "recommendations_en": ["Check kill-switch."]
+                "recommendations_en": ["Check kill-switch."],
             }
         ]
 
@@ -345,9 +366,9 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
                 "action": "save_vehicle",
                 "vehicle_key": "erover",
                 "label": "eRover Polaris Custom",
-                "risks_json": json.dumps(updated_erover_risks)
+                "risks_json": json.dumps(updated_erover_risks),
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(res_post_veh.status_code, 200)
         cat = get_all_vehicle_risk_assessment_catalog()
@@ -355,6 +376,184 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertEqual(cat["erover"]["label"], "eRover Polaris Custom")
         self.assertEqual(len(cat["erover"]["risks"]), 1)
         self.assertEqual(cat["erover"]["risks"][0]["title_fr"], "Coupure moteur eRover")
+
+    def test_risk_assessment_pdf_preview_and_render_contains_vehicle_risks(self):
+        """Vérifie que l'aperçu PDF et les documents générés contiennent bien les risques spécifiques aux véhicules."""
+        with self.client.session_transaction() as sess:
+            sess["user_id"] = 1
+            sess["_fresh"] = True
+
+        # 1. Test de la route d'aperçu général (Mock)
+        res_preview = self.client.get("/preview/pdf/risk-assessment")
+        self.assertEqual(res_preview.status_code, 200)
+        html_preview = res_preview.data.decode("utf-8")
+        self.assertIn("RISQUES SPÉCIFIQUES", html_preview)
+        self.assertIn("SPECIFIC RISKS", html_preview)
+        self.assertIn("eRover (Polaris Kinetic)", html_preview)
+
+        # 2. Test avec un projet réel et véhicule assigné
+        project = self._create_mock_project()
+        ok, msg = create_risk_assessment_waiver(
+            project_id=project.id,
+            signer_role="stunt_coordinator",
+            signer_first_name="Alex",
+            signer_last_name="Cascadeur",
+            signer_email="alex@stunts.com",
+        )
+        self.assertTrue(ok, f"Échec création : {msg}")
+        waiver = RiskAssessmentWaiver.query.filter_by(project_id=project.id).first()
+        self.assertIsNotNone(waiver)
+
+        # Vérification des détails véhicules et sections de risques
+        details = waiver.vehicles_details
+        self.assertGreaterEqual(len(details), 1)
+        self.assertEqual(details[0]["slug"], "erover")
+
+        v_sections = get_risk_assessment_for_vehicles(details)
+        self.assertGreaterEqual(len(v_sections), 1)
+        self.assertIn("eRover", v_sections[0]["label"])
+
+        # Test de l'aperçu spécifique à ce waiver
+        res_waiver_preview = self.client.get(
+            f"/preview/pdf/risk-assessment?waiver_id={waiver.waiver_id}"
+        )
+        self.assertEqual(res_waiver_preview.status_code, 200)
+        html_waiver = res_waiver_preview.data.decode("utf-8")
+        self.assertIn("RISQUES SPÉCIFIQUES", html_waiver)
+        self.assertIn("eRover", html_waiver)
+
+    def test_project_vehicle_toggle_road_legal_ajax(self):
+        """Vérifie l'API AJAX de basculement du statut Road Legal / Route fermée d'un véhicule."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 1
+            sess["admin_user_role"] = "administrateur"
+
+        project = self._create_mock_project()
+
+        # eRover est non-homologué route par défaut
+        self.assertFalse(project.is_vehicle_road_legal("rec_erover"))
+
+        # 1. Bascule vers homologué route
+        resp = self.client.post(
+            f"/admin/projects/{project.id}/vehicle/rec_erover/toggle-road-legal",
+            json={},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "success")
+        self.assertTrue(data["is_road_legal"])
+        self.assertEqual(data["label_fr"], "Homologué route")
+
+        db.session.refresh(project)
+        self.assertTrue(project.is_vehicle_road_legal("rec_erover"))
+
+        # 2. Re-bascule vers non-homologué (route fermée uniquement)
+        resp2 = self.client.post(
+            f"/admin/projects/{project.id}/vehicle/rec_erover/toggle-road-legal",
+            json={},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(resp2.status_code, 200)
+        data2 = resp2.get_json()
+        self.assertFalse(data2["is_road_legal"])
+        self.assertEqual(data2["label_fr"], "Route fermée")
+
+        db.session.refresh(project)
+        self.assertFalse(project.is_vehicle_road_legal("rec_erover"))
+
+    def test_risk_assessment_road_legal_callouts_render_and_condition(self):
+        """Vérifie l'intégration et le conditionnement dynamique des 3 blocs d'avertissement dans le PDF BVRS."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 1
+            sess["admin_user_role"] = "administrateur"
+
+        project = self._create_mock_project()
+        ok, msg = create_risk_assessment_waiver(
+            project_id=project.id,
+            signer_role="stunt_coordinator",
+            signer_first_name="Max",
+            signer_last_name="Cascade",
+            signer_email="max@stunts.com",
+        )
+        self.assertTrue(ok)
+        waiver = RiskAssessmentWaiver.query.filter_by(project_id=project.id).first()
+
+        # 1. Avec eRover non-homologué : les 3 blocs doivent être présents
+        res1 = self.client.get(
+            f"/preview/pdf/risk-assessment?waiver_id={waiver.waiver_id}"
+        )
+        self.assertEqual(res1.status_code, 200)
+        html1 = res1.data.decode("utf-8")
+
+        # Bloc 1 (FR & EN)
+        self.assertIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html1)
+        self.assertIn("IMPÉRATIF SÉCURITÉ", html1)
+        self.assertIn("USE ON CLOSED ROADS ONLY", html1)
+        self.assertIn("SAFETY MANDATE", html1)
+        self.assertIn("L'eRover 01 (Polaris Kinetic) roule uniquement sur une route fermée", html1)
+
+        # Bloc 2 & 3
+        self.assertIn("Règles de sécurité", html1)
+        self.assertIn("Information :", html1)
+        self.assertIn("le manuel officiel du véhicule est disponible à bord", html1)
+        self.assertIn("Notice:", html1)
+
+        # 2. Quand le véhicule est basculé en "Homologué route", le bloc 1 doit disparaître
+        project.set_vehicle_road_legal("rec_erover", True)
+        db.session.commit()
+
+        res2 = self.client.get(
+            f"/preview/pdf/risk-assessment?waiver_id={waiver.waiver_id}"
+        )
+        self.assertEqual(res2.status_code, 200)
+        html2 = res2.data.decode("utf-8")
+
+        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html2)
+        self.assertNotIn("USE ON CLOSED ROADS ONLY", html2)
+        # Mais les blocs 2 et 3 doivent rester affichés
+        self.assertIn("Règles de sécurité", html2)
+        self.assertIn("Information :", html2)
+        self.assertIn("le manuel officiel du véhicule est disponible à bord", html2)
+
+    def test_risk_assessment_preview_mock_and_query_param(self):
+        """Vérifie le comportement de la prévisualisation directe avec mock ou simulation ?road_legal=1."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 1
+            sess["admin_user_role"] = "administrateur"
+
+        # 1. Preview direct sans argument : le mock a des véhicules non-road legal par défaut (eRover, eRider)
+        res_default = self.client.get("/preview/pdf/risk-assessment")
+        self.assertEqual(res_default.status_code, 200)
+        html_default = res_default.data.decode("utf-8")
+        self.assertIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_default)
+        self.assertIn(
+            "L'eRover (Polaris Kinetic) et l'eRider (Stark Varg) roulent uniquement sur une route fermée",
+            html_default,
+        )
+
+        # 2. Preview avec ?road_legal=1 : le bloc fermé ne doit PAS s'afficher
+        res_road_legal = self.client.get("/preview/pdf/risk-assessment?road_legal=1")
+        self.assertEqual(res_road_legal.status_code, 200)
+        html_road_legal = res_road_legal.data.decode("utf-8")
+        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_road_legal)
+        self.assertNotIn("USE ON CLOSED ROADS ONLY", html_road_legal)
+        # Mais les blocs 2 & 3 sont toujours présents
+        self.assertIn("Règles de sécurité", html_road_legal)
+        self.assertIn("Information :", html_road_legal)
+
+        # 3. Preview avec ?project_id=... pour un projet dont tous les véhicules sont homologués route
+        project = self._create_mock_project()
+        project.set_vehicle_road_legal("rec_erover", True)
+        db.session.commit()
+
+        res_proj = self.client.get(f"/preview/pdf/risk-assessment?project_id={project.id}")
+        self.assertEqual(res_proj.status_code, 200)
+        html_proj = res_proj.data.decode("utf-8")
+        self.assertNotIn("UTILISATION SUR ROUTE FERMÉE UNIQUEMENT", html_proj)
 
 
 if __name__ == "__main__":

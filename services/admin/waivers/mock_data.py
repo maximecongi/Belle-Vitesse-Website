@@ -17,6 +17,30 @@ class MockProject:
     return_date = date(2026, 11, 20)
     deposit_amount = 5000.0
     quote_number = "BVPR-DEMO2026"
+    vehicle_road_legal_statuses = None
+
+    def __init__(self):
+        self.vehicle_road_legal_statuses = {}
+
+    def is_vehicle_road_legal(self, vehicle_id: str = "", vehicle_slug: str = "", vehicle_name: str = "") -> bool:
+        statuses = self.vehicle_road_legal_statuses or {}
+        for k in [str(vehicle_id).strip(), (vehicle_slug or "").lower().strip(), (vehicle_name or "").lower().strip()]:
+            if k and k in statuses:
+                return bool(statuses[k])
+        non_road_keywords = ["erover", "erider", "stark", "polar"]
+        slug_l = (vehicle_slug or "").lower()
+        name_l = (vehicle_name or "").lower()
+        vid_l = str(vehicle_id).lower()
+        if any(kw in vid_l or kw in slug_l or kw in name_l for kw in non_road_keywords):
+            return False
+        return True
+
+    def set_vehicle_road_legal(self, vehicle_id: str, is_road_legal: bool):
+        if self.vehicle_road_legal_statuses is None:
+            self.vehicle_road_legal_statuses = {}
+        vid_str = str(vehicle_id).strip()
+        self.vehicle_road_legal_statuses[vid_str] = bool(is_road_legal)
+        self.vehicle_road_legal_statuses[vid_str.lower()] = bool(is_road_legal)
 
 
 class MockCglWaiver:
@@ -127,6 +151,32 @@ class MockSafetyRulesWaiver:
         {"name": "eRover (Polaris Kinetic)", "slug": "erover", "unique_id": "BV-ROVER-01"},
         {"name": "eRider (Stark Varg)", "slug": "erider", "unique_id": "BV-RIDER-02"},
     ]
+
+    all_road_legal = False
+
+    def __init__(self, all_road_legal: bool = False):
+        self.project = MockProject()
+        self.all_road_legal = all_road_legal
+        if all_road_legal:
+            for v in self.vehicles_details:
+                self.project.set_vehicle_road_legal(v.get("slug", ""), True)
+                self.project.set_vehicle_road_legal(v.get("name", ""), True)
+
+    @property
+    def non_road_legal_vehicles(self):
+        if getattr(self, "all_road_legal", False):
+            return []
+        p = getattr(self, "project", None)
+        if p and hasattr(p, "is_vehicle_road_legal"):
+            return [
+                v for v in self.vehicles_details
+                if not p.is_vehicle_road_legal(v.get("id", ""), v.get("slug", ""), v.get("name", ""))
+            ]
+        non_road_keywords = ["erover", "erider", "stark", "polar"]
+        return [
+            v for v in self.vehicles_details
+            if any(k in (v.get("slug") or "").lower() or k in (v.get("name") or "").lower() for k in non_road_keywords)
+        ]
     helmets_inventory = {
         "S": 2,
         "M": 4,
@@ -272,6 +322,32 @@ class MockRiskAssessmentWaiver:
         {"name": "eRover (Polaris Kinetic)", "slug": "erover", "unique_id": "BV-ROVER-01"},
         {"name": "eRider (Stark Varg)", "slug": "erider", "unique_id": "BV-RIDER-02"},
     ]
+
+    all_road_legal = False
+
+    def __init__(self, all_road_legal: bool = False):
+        self.project = MockProject()
+        self.all_road_legal = all_road_legal
+        if all_road_legal:
+            for v in self.vehicles_details:
+                self.project.set_vehicle_road_legal(v.get("slug", ""), True)
+                self.project.set_vehicle_road_legal(v.get("name", ""), True)
+
+    @property
+    def non_road_legal_vehicles(self):
+        if getattr(self, "all_road_legal", False):
+            return []
+        p = getattr(self, "project", None)
+        if p and hasattr(p, "is_vehicle_road_legal"):
+            return [
+                v for v in self.vehicles_details
+                if not p.is_vehicle_road_legal(v.get("id", ""), v.get("slug", ""), v.get("name", ""))
+            ]
+        non_road_keywords = ["erover", "erider", "stark", "polar"]
+        return [
+            v for v in self.vehicles_details
+            if any(k in (v.get("slug") or "").lower() or k in (v.get("name") or "").lower() for k in non_road_keywords)
+        ]
     sign_data = {
         "signer_name": "Marc Duval",
         "signer_role": "Chef Machiniste",

@@ -421,6 +421,16 @@ class Waiver(db.Model):
             except Exception:
                 vehicle_map = {}
 
+            missing_ids = [vid for vid in veh_ids if str(vid) not in vehicle_map]
+            if missing_ids:
+                try:
+                    from models.catalog import Vehicle
+                    db_vehicles = Vehicle.query.filter(Vehicle.id.in_(missing_ids)).all()
+                    for db_v in db_vehicles:
+                        vehicle_map[str(db_v.id)] = db_v.fields or {}
+                except Exception:
+                    pass
+
             # Map des checkouts actifs par vehicle_id pour ce projet
             checkout_map = {}
             if p and p.active_checkout_vehicles:
@@ -430,12 +440,13 @@ class Waiver(db.Model):
 
             for vid in veh_ids:
                 v_fields = vehicle_map.get(str(vid), {})
-                v_name = v_fields.get("name") or f"ID {vid}"
-                u_id = v_fields.get("unique_id") or ""
+                v_name = v_fields.get("Nom") or v_fields.get("name") or f"ID {vid}"
+                u_id = v_fields.get("unique_id") or v_fields.get("ID Unique") or ""
                 co_num = checkout_map.get(str(vid)) or ""
                 thumb = _extract_vehicle_thumbnail(v_fields)
                 v_slug = v_fields.get("slug") or ""
                 results.append({
+                    "id": str(vid),
                     "name": v_name,
                     "unique_id": u_id,
                     "checkout_doc_id": co_num,
@@ -488,6 +499,7 @@ class Waiver(db.Model):
                 thumb = _extract_vehicle_thumbnail(match_fields)
                 v_slug = match_fields.get("slug") or ""
                 results.append({
+                    "id": str(match_id) if match_id else "",
                     "name": clean,
                     "unique_id": u_id,
                     "checkout_doc_id": co_num,
@@ -496,6 +508,25 @@ class Waiver(db.Model):
                 })
 
         return results
+
+    @property
+    def non_road_legal_vehicles(self):
+        """
+        Retourne la liste des véhicules non-homologués route (route fermée uniquement) pour ce document.
+        Prend en compte la configuration spécifique du projet si disponible, avec repli sur les détections par défaut.
+        """
+        details = self.vehicles_details or []
+        p = self.project
+        if not p:
+            non_road_keywords = ["erover", "erider", "stark", "polar"]
+            return [
+                v for v in details
+                if any(k in (v.get("slug") or "").lower() or k in (v.get("name") or "").lower() for k in non_road_keywords)
+            ]
+        return [
+            v for v in details
+            if not p.is_vehicle_road_legal(v.get("id"), v.get("slug", ""), v.get("name", ""))
+        ]
 
     @property
     def signed_documents(self):
@@ -636,6 +667,59 @@ class RiskAssessmentWaiver(Waiver):
     __mapper_args__ = {
         "polymorphic_identity": "risk_assessment",
     }
+
+    @property
+    def vehicles_details(self):
+        """
+        Retourne la liste détaillée des véhicules concernés par l'analyse des risques.
+        Récupère automatiquement tous les véhicules du projet (ou self.vehicles en repli).
+        """
+        details = super().vehicles_details
+        if details:
+            return details
+
+        # Repli si le projet n'avait pas encore vehicles_to_check mais waiver.vehicles est renseigné
+        if self.vehicles:
+            try:
+                from utils.database import get_vehicles
+                all_vehicles = get_vehicles() or []
+                vehicle_by_name = {}
+                for v in all_vehicles:
+                    f = v.get("fields", {})
+                    v_name = f.get("Nom") or f.get("name")
+                    if v_name:
+                        vehicle_by_name[v_name.strip().lower()] = (v["id"], f)
+            except Exception:
+                vehicle_by_name = {}
+
+            try:
+                from models.catalog import Vehicle
+                db_vehicles = Vehicle.query.all()
+                for db_v in db_vehicles:
+                    f = db_v.fields or {}
+                    v_name = f.get("Nom") or f.get("name")
+                    if v_name and v_name.strip().lower() not in vehicle_by_name:
+                        vehicle_by_name[v_name.strip().lower()] = (db_v.id, f)
+            except Exception:
+                pass
+
+            results = []
+            for v_str in self.vehicles.split(","):
+                clean = v_str.strip()
+                if not clean:
+                    continue
+                match_id, match_fields = vehicle_by_name.get(clean.lower(), (None, {}))
+                results.append({
+                    "id": str(match_id) if match_id else "",
+                    "name": clean,
+                    "unique_id": match_fields.get("unique_id") or match_fields.get("ID Unique") or "",
+                    "checkout_doc_id": "",
+                    "thumbnail": _extract_vehicle_thumbnail(match_fields),
+                    "slug": match_fields.get("slug") or "",
+                })
+            return results
+
+        return []
 
     def __repr__(self):
         return f"<RiskAssessmentWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"

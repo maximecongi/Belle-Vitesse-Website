@@ -314,22 +314,371 @@
 
 /* ── Modale & éléments d'édition Analyse des Risques (BVRS) ── */
 .bvrs-modal-container {
-    max-width: 940px !important;
+    max-width: 960px !important;
 }
 
-.bvrs-risk-edit-card {
-    border-radius: 6px;
-    transition: border-color 0.15s ease;
+/* ── Barre d'onglets de catégories (Pill Tabs) ── */
+.bvrs-tabs-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color, #E2E8F0);
 }
 
-.bvrs-risk-edit-card--major {
+.bvrs-category-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 2px 0;
+    scrollbar-width: thin;
+}
+
+.bvrs-category-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 32px;
+    padding: 0 0.75rem;
+    box-sizing: border-box;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--grey-2, #4B5563);
+    background-color: var(--white-2, #F3F4F6);
+    border: 1px solid var(--border-color, #E5E7EB);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+
+.bvrs-category-tab:hover {
+    background-color: var(--white-3, #E5E7EB);
+    color: var(--grey-1, #111827);
+    border-color: #D1D5DB;
+}
+
+.bvrs-category-tab.is-active {
+    background-color: var(--grey-1, #111827);
+    color: #FFFFFF;
+    border-color: var(--grey-1, #111827);
+}
+
+.bvrs-category-tab .bvrs-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: inherit;
+    box-sizing: border-box;
+}
+
+.bvrs-category-tab.is-active .bvrs-tab-badge {
+    background-color: rgba(255, 255, 255, 0.25);
+    color: #FFFFFF;
+}
+
+/* Pilule d'ajout de catégorie (mêmes proportions exactes : hauteur 32px, padding 0.75rem, radius 9999px) */
+.bvrs-category-tab--add {
+    border-style: dashed !important;
+    border-color: #CBD5E1 !important;
+    background-color: transparent !important;
+    color: var(--grey-2, #64748B) !important;
+}
+
+.bvrs-category-tab--add:hover {
+    border-color: var(--grey-1, #111827) !important;
+    color: var(--grey-1, #111827) !important;
+    background-color: var(--white-2, #F8FAFC) !important;
+}
+
+.bvrs-category-tab--add .bvrs-tab-badge--add {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: inherit;
+}
+
+/* Formulaire inline de création de catégorie dans le ruban (mêmes proportions exactes : hauteur 32px) */
+.bvrs-category-tab-inline-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    height: 32px;
+    padding: 0 0.4rem 0 0.75rem;
+    box-sizing: border-box;
+    background-color: #FFFFFF;
+    border: 1px solid var(--grey-1, #111827);
+    border-radius: 9999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.bvrs-category-inline-input {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 0.25rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    width: 140px !important;
+    height: 24px !important;
+    line-height: 24px !important;
+    color: var(--grey-1, #111827) !important;
+}
+
+.bvrs-category-inline-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--grey-2, #64748B);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.bvrs-category-inline-btn--confirm:hover {
+    background-color: #DCFCE7;
+    color: #15803D;
+}
+
+.bvrs-category-inline-btn--cancel:hover {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+.bvrs-category-inline-btn--confirm:hover {
+    background-color: #DCFCE7;
+    color: #15803D;
+}
+
+.bvrs-category-inline-btn--cancel:hover {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+/* ── Barre de contexte / sous-en-tête ── */
+.bvrs-context-bar {
+    padding: 0.25rem 0;
+}
+
+/* ── Carte accordéon de risque ── */
+.bvrs-risk-accordion {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color, #E2E8F0);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+}
+
+.bvrs-risk-accordion:hover {
+    border-color: #CBD5E1;
+}
+
+.bvrs-risk-accordion--major {
     border-left: 4px solid var(--status-danger, #EF4444) !important;
 }
 
-.bvrs-risk-edit-card--standard {
+.bvrs-risk-accordion--standard {
     border-left: 4px solid var(--status-warning, #F59E0B) !important;
 }
 
+.bvrs-risk-accordion.is-expanded {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #94A3B8;
+}
+
+/* En-tête accordéon */
+.bvrs-risk-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    cursor: pointer;
+    background-color: #FFFFFF;
+    user-select: none;
+    transition: background-color 0.15s ease;
+}
+
+.bvrs-risk-accordion:not(.is-expanded) .bvrs-risk-accordion-header:hover {
+    background-color: var(--white-2, #F8FAFC);
+}
+
+.bvrs-risk-accordion.is-expanded .bvrs-risk-accordion-header {
+    background-color: var(--white-2, #F8FAFC);
+    border-bottom: 1px solid var(--border-color, #E2E8F0);
+}
+
+.bvrs-risk-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.bvrs-risk-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.bvrs-risk-title-preview {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.bvrs-risk-title-fr-text {
+    color: var(--grey-1, #0F172A);
+}
+
+.bvrs-risk-title-en-text {
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--grey-2, #64748B);
+}
+
+.bvrs-risk-cat-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--grey-2, #64748B);
+    background-color: var(--white-3, #F1F5F9);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Badge de niveau cliquable */
+.bvrs-level-pill {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    padding: 2px 7px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    transition: opacity 0.15s ease;
+}
+
+.bvrs-level-pill:hover {
+    opacity: 0.85;
+}
+
+.bvrs-level-pill--major {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.bvrs-level-pill--standard {
+    background-color: #FEF3C7;
+    color: #B45309;
+}
+
+.bvrs-rec-count-pill {
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.bvrs-risk-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.bvrs-accordion-chevron {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--grey-2, #64748B);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.bvrs-accordion-chevron:hover {
+    color: var(--grey-1, #0F172A);
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.bvrs-risk-accordion.is-expanded .bvrs-accordion-chevron {
+    transform: rotate(180deg);
+}
+
+/* Corps accordéon */
+.bvrs-risk-accordion-body {
+    padding: 1rem;
+    background-color: #FFFFFF;
+}
+
+/* Sélecteur de niveau segmenté */
+.bvrs-level-toggle {
+    display: inline-flex;
+    border-radius: 6px;
+    background: var(--white-2, #F1F5F9);
+    padding: 2px;
+    border: 1px solid var(--border-color, #E2E8F0);
+}
+
+.bvrs-level-btn {
+    border: none;
+    background: transparent;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    color: var(--grey-2, #64748B);
+}
+
+.bvrs-level-btn--major.is-active {
+    background: #EF4444;
+    color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
+}
+
+.bvrs-level-btn--standard.is-active {
+    background: #F59E0B;
+    color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+}
+
+/* Recommandations */
 .bvrs-rec-item {
     background: var(--white-2, #F8F9FA);
     border: 1px solid var(--border-color, #E2E8F0);

@@ -1594,21 +1594,23 @@ def get_risk_assessment_for_vehicles(vehicles_details, catalog=None):
         vid = ''
         vname = ''
         vslug = ''
+        vuid = ''
         if isinstance(item, dict):
             vid = str(item.get('id') or '').strip()
             vname = str(item.get('name') or '').strip()
             vslug = str(item.get('slug') or '').strip().lower()
+            vuid = str(item.get('unique_id') or '').strip().lower()
         elif isinstance(item, str):
             vid = item.strip()
             vname = item.strip()
             vslug = item.strip().lower()
 
-        entry = catalog.get(vid) or (catalog.get(vslug) if vslug else None)
+        entry = (catalog.get(vid) if vid else None) or (catalog.get(vslug) if vslug else None)
 
         if not entry:
             vname_lower = vname.lower()
             for c_id, c_data in catalog.items():
-                if c_id.lower() == vname_lower or (vslug and c_id.lower() == vslug):
+                if (c_id.lower() == vname_lower) or (vslug and c_id.lower() == vslug) or (vid and c_id.lower() == vid.lower()):
                     entry = c_data
                     break
                 if c_data.get('name', '').lower() == vname_lower or c_data.get('label', '').lower() == vname_lower:
@@ -1618,18 +1620,22 @@ def get_risk_assessment_for_vehicles(vehicles_details, catalog=None):
         if not entry:
             vname_lower = vname.lower()
             for c_id, c_data in catalog.items():
-                keywords = c_data.get('keywords', [])
-                if any(kw in vname_lower or (vslug and kw in vslug) for kw in keywords):
+                keywords = [kw.lower() for kw in c_data.get('keywords', [])]
+                if any(kw in vname_lower or (vslug and kw in vslug) or (vuid and kw in vuid) for kw in keywords):
                     entry = c_data
                     break
 
         if entry:
-            lbl = entry.get('label') or entry.get('name') or vname or 'Véhicule Spécifique'
-            if lbl not in matched_categories:
-                matched_categories[lbl] = {
-                    'label': lbl,
-                    'risks': entry.get('risks', [])
-                }
+            entry_risks = entry.get('risks', [])
+            if entry_risks and len(entry_risks) > 0:
+                lbl = entry.get('label') or entry.get('name') or vname or 'Véhicule Spécifique'
+                lbl_en = entry.get('label_en') or entry.get('label') or entry.get('name') or vname or 'Specific Vehicle'
+                if lbl not in matched_categories:
+                    matched_categories[lbl] = {
+                        'label': lbl,
+                        'label_en': lbl_en,
+                        'risks': entry_risks
+                    }
 
     return list(matched_categories.values())
 

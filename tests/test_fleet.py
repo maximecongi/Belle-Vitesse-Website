@@ -302,13 +302,13 @@ class FleetTest(BaseTestCase):
             self.assertIn("/admin/fleet", resp.data.decode("utf-8"), f"Lien /admin/fleet absent pour le rôle {r}")
             self.assertIn("Flotte Véhicules", resp.data.decode("utf-8"), f"Flotte Véhicules absent pour le rôle {r}")
 
-            # 2. Vérification sur la page /admin/fleet (bouton Points de Contrôle réservé admin)
+            # 2. Vérification sur la page /admin/fleet (boutons de configuration réservés admin)
             resp_fleet = self.client.get("/admin/fleet")
             self.assertEqual(resp_fleet.status_code, 200)
             if r in ["administrateur", "super administrateur"]:
-                self.assertIn("/admin/vehicle-configs", resp_fleet.data.decode("utf-8"), f"Points de Contrôle absent pour {r}")
+                self.assertIn("/admin/checkpoints", resp_fleet.data.decode("utf-8"), f"Points de Contrôle absent pour {r}")
             else:
-                self.assertNotIn("/admin/vehicle-configs", resp_fleet.data.decode("utf-8"), f"Points de Contrôle exposé pour {r}")
+                self.assertNotIn("/admin/checkpoints", resp_fleet.data.decode("utf-8"), f"Points de Contrôle exposé pour {r}")
 
     @patch("services.admin.fleet.get_vehicles")
     def test_incident_moderate_severity_badge_accent(self, mock_get_vehicles):

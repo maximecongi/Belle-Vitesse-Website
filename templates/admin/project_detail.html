@@ -361,15 +361,26 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
             {% for v in vehicles %}
             <div class="project-equipment-card">
-                <div class="u-flex u-align-center u-gap-2">
-                    {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
-                    v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
-                    }}
-                    <div>
-                        <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
-                            }}</div>
-                        <div class="checkout-doc-id">{{ v.fields.unique_id }}</div>
+                <div class="u-flex u-align-center u-justify-between u-gap-2">
+                    <div class="u-flex u-align-center u-gap-2">
+                        {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
+                        v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
+                        }}
+                        <div>
+                            <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
+                                }}</div>
+                            <div class="checkout-doc-id">{{ v.fields.unique_id }}</div>
+                        </div>
                     </div>
+                    <button type="button"
+                        class="project-road-legal-badge js-toggle-road-legal {% if v.is_road_legal %}is-road-legal{% else %}is-closed-road{% endif %}"
+                        data-project-id="{{ project.id }}"
+                        data-vehicle-id="{{ v.id }}"
+                        data-url="{{ url_for('admin_projects.admin_project_vehicle_toggle_road_legal', record_id=project.id, vehicle_id=v.id) }}"
+                        title="Cliquer pour basculer : Homologué route / Route fermée">
+                        <i data-lucide="{% if v.is_road_legal %}check-circle{% else %}alert-triangle{% endif %}"></i>
+                        <span class="js-road-legal-label">{% if v.is_road_legal %}Homologué route{% else %}Route fermée{% endif %}</span>
+                    </button>
                 </div>
                 <div class="project-equipment-inspections u-mt-3 u-flex u-flex-column u-gap-2">
                     <!-- Contrôle de départ -->
@@ -803,6 +814,12 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
                     <div class="u-flex u-align-center u-gap-1">
                         {{ status_badge(ra.status, ra.raw_status) }}
+
+                        <a href="{{ url_for('admin_waivers.admin_risk_assessment_preview', waiver_id=ra.waiver_id) }}"
+                            class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                            rel="noopener noreferrer" title="Aperçu du document d'analyse des risques">
+                            <i data-lucide="eye"></i>
+                        </a>
 
                         {% if ra.raw_status in ['to_send', 'to_generate'] %}
                         <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"

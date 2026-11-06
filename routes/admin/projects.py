@@ -1,4 +1,3 @@
-
 from flask import (
     Blueprint,
     abort,
@@ -27,71 +26,73 @@ from services.admin import (
     update_project_notes,
     update_project_report,
 )
+from models.db import db
 from utils.decorators import require_roles
 from utils.entity_resolvers import resolve_project
 
 
-
-projects_bp = Blueprint('admin_projects', __name__, url_prefix='/admin')
+projects_bp = Blueprint("admin_projects", __name__, url_prefix="/admin")
 # ── CRUD Projets ──────────────────────────────────────────────
 
+
 @projects_bp.route("/projects")
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_projects_list():
     try:
-        q = request.args.get('q', '').strip()
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        q = request.args.get("q", "").strip()
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
 
         pagination = list_projects(
-            is_archive=False,
-            q=q if q else None,
-            page=page,
-            per_page=per_page
+            is_archive=False, q=q if q else None, page=page, per_page=per_page
         )
         return render_template(
             "admin/projects_list.html",
             projects=pagination.items,
             pagination=pagination,
-            is_archive=False
+            is_archive=False,
         )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_projects_list : {e}")
         flash("Erreur lors de la récupération des projets.", "error")
-        return render_template("admin/projects_list.html", projects=[], pagination=None, is_archive=False)
+        return render_template(
+            "admin/projects_list.html", projects=[], pagination=None, is_archive=False
+        )
+
 
 @projects_bp.route("/projects/archives")
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_projects_archives():
     try:
-        q = request.args.get('q', '').strip()
-        page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        q = request.args.get("q", "").strip()
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
 
         pagination = list_projects(
-            is_archive=True,
-            q=q if q else None,
-            page=page,
-            per_page=per_page
+            is_archive=True, q=q if q else None, page=page, per_page=per_page
         )
         return render_template(
             "admin/projects_list.html",
             projects=pagination.items,
             pagination=pagination,
-            is_archive=True
+            is_archive=True,
         )
     except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur dans admin_projects_archives : {e}")
+        current_app.logger.error(f"❌ Erreur dans admin_projects_archives : {e}")
         flash("Erreur lors de la récupération des archives.", "error")
-        return render_template("admin/projects_list.html", projects=[], pagination=None, is_archive=True)
+        return render_template(
+            "admin/projects_list.html", projects=[], pagination=None, is_archive=True
+        )
+
 
 @projects_bp.route("/projects/new", methods=["GET", "POST"])
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_project_new():
     duplicate_from = request.args.get("duplicate_from", type=int)
     if request.method == "GET" and duplicate_from:
-        return redirect(url_for("admin_projects.admin_project_duplicate", record_id=duplicate_from))
+        return redirect(
+            url_for("admin_projects.admin_project_duplicate", record_id=duplicate_from)
+        )
 
     context = get_project_form_context()
 
@@ -100,24 +101,34 @@ def admin_project_new():
             if not request.form.get("name"):
                 flash("Le nom du projet est requis.", "error")
                 return render_template(
-                    "admin/project_form.html", data=request.form, is_edit=False, **context
+                    "admin/project_form.html",
+                    data=request.form,
+                    is_edit=False,
+                    **context,
                 )
             created = create_project(request.form, user_id=session.get("admin_user_id"))
             flash("Projet créé avec succès !", "success")
             new_id = created.id if hasattr(created, "id") else created
-            return redirect(url_for("admin_projects.admin_project_detail", record_id=new_id))
+            return redirect(
+                url_for("admin_projects.admin_project_detail", record_id=new_id)
+            )
         except Exception as e:
             from services.admin.utils import format_user_friendly_error
+
             current_app.logger.error(f"❌ Erreur lors de la création du projet : {e}")
-            flash(format_user_friendly_error(e, "Erreur lors de la création du projet."), "error")
+            flash(
+                format_user_friendly_error(e, "Erreur lors de la création du projet."),
+                "error",
+            )
             return render_template(
                 "admin/project_form.html", data=request.form, is_edit=False, **context
             )
 
     return render_template("admin/project_form.html", is_edit=False, **context)
 
+
 @projects_bp.route("/projects/<int:record_id>/duplicate", methods=["GET"])
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_project_duplicate(record_id):
     try:
         data = get_project_for_duplicate(record_id)
@@ -134,37 +145,63 @@ def admin_project_duplicate(record_id):
             is_duplicate=True,
             source_project_id=record_id,
             source_project_name=source_name,
-            **context
+            **context,
         )
     except Exception as e:
         from services.admin.utils import format_user_friendly_error
-        current_app.logger.error(f"❌ Erreur lors de la duplication du projet {record_id} : {e}")
-        flash(format_user_friendly_error(e, "Erreur lors de la préparation de la duplication du tournage."), "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+
+        current_app.logger.error(
+            f"❌ Erreur lors de la duplication du projet {record_id} : {e}"
+        )
+        flash(
+            format_user_friendly_error(
+                e, "Erreur lors de la préparation de la duplication du tournage."
+            ),
+            "error",
+        )
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
+
 
 @projects_bp.route("/projects/<int:record_id>/edit", methods=["GET", "POST"])
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_project_edit(record_id):
     context = get_project_form_context()
 
     try:
         if request.method == "POST":
-            update_project(record_id, request.form, user_id=session.get("admin_user_id"))
+            update_project(
+                record_id, request.form, user_id=session.get("admin_user_id")
+            )
             flash("Projet modifié avec succès !", "success")
-            return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+            return redirect(
+                url_for("admin_projects.admin_project_detail", record_id=record_id)
+            )
 
         data = get_project_for_edit(record_id)
         if not data:
             abort(404)
-        return render_template("admin/project_form.html", data=data, is_edit=True, record_id=record_id, **context)
+        return render_template(
+            "admin/project_form.html",
+            data=data,
+            is_edit=True,
+            record_id=record_id,
+            **context,
+        )
     except Exception as e:
         from services.admin.utils import format_user_friendly_error
+
         current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
-        flash(format_user_friendly_error(e, "Erreur lors de la modification du projet."), "error")
+        flash(
+            format_user_friendly_error(e, "Erreur lors de la modification du projet."),
+            "error",
+        )
         return redirect(url_for("admin_projects.admin_projects_list"))
 
+
 @projects_bp.route("/projects/<int:record_id>/delete", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_project_delete(record_id):
     try:
         delete_project(record_id, user_id=session.get("admin_user_id"))
@@ -172,20 +209,34 @@ def admin_project_delete(record_id):
         return redirect(url_for("admin_projects.admin_projects_list"))
     except Exception as e:
         from services.admin.utils import format_user_friendly_error
+
         current_app.logger.error(f"❌ Erreur lors de la suppression du projet : {e}")
-        flash(format_user_friendly_error(e, "Erreur lors de la suppression du projet."), "error")
-        return redirect(url_for("admin_projects.admin_project_edit", record_id=record_id))
+        flash(
+            format_user_friendly_error(e, "Erreur lors de la suppression du projet."),
+            "error",
+        )
+        return redirect(
+            url_for("admin_projects.admin_project_edit", record_id=record_id)
+        )
+
 
 # ── Hub / Fiche Projet & Rapports Collectifs ──────────────────
 @projects_bp.route("/projects/<int:record_id>", methods=["GET"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_detail(record_id):
     try:
         current_user_id = session.get("admin_user_id")
         role_str = (session.get("admin_user_role") or "").strip().lower()
-        is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+        is_admin = role_str in (
+            "administrateur",
+            "super administrateur",
+            "administrator",
+            "super administrator",
+        )
 
-        context = get_project_detail_context(record_id, current_user_id=current_user_id, is_admin=is_admin)
+        context = get_project_detail_context(
+            record_id, current_user_id=current_user_id, is_admin=is_admin
+        )
         if not context:
             abort(404)
 
@@ -195,8 +246,9 @@ def admin_project_detail(record_id):
         flash("Erreur lors de l'accès à la fiche projet.", "error")
         return redirect(url_for("admin_projects.admin_projects_list"))
 
+
 @projects_bp.route("/projects/<string:project_code>", methods=["GET"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_detail_by_code(project_code):
     """Redirige les requêtes utilisant le code métier BVPR-* vers la route canonique avec ID."""
     p = resolve_project(project_code)
@@ -204,8 +256,9 @@ def admin_project_detail_by_code(project_code):
         abort(404)
     return redirect(url_for("admin_projects.admin_project_detail", record_id=p.id))
 
+
 @projects_bp.route("/projects/<int:record_id>/kdrive/resync", methods=["POST"])
-@require_roles('administrator', 'manager')
+@require_roles("administrator", "manager")
 def admin_project_kdrive_resync(record_id):
     try:
         project = resolve_project(record_id)
@@ -213,16 +266,22 @@ def admin_project_kdrive_resync(record_id):
             abort(404)
 
         from services.common.kdrive import dispatch_create_project_tree
+
         dispatch_create_project_tree(project.id)
         flash("Synchronisation kDrive relancée.", "success")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur resync kDrive : {e}")
         flash(f"Erreur lors de la synchronisation : {e}", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
+
 
 @projects_bp.route("/projects/<int:record_id>/notes", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_notes_edit(record_id):
     try:
         payload = request.get_json(silent=True) or request.form or {}
@@ -233,20 +292,67 @@ def admin_project_notes_edit(record_id):
         if not project:
             abort(404)
 
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "success", "notes": project.notes or ""}), 200
 
         flash("Notes du projet enregistrées avec succès.", "success")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur enregistrement note projet : {e}")
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": "Erreur serveur"}), 500
         flash(f"Erreur lors de l'enregistrement de la note : {str(e)}", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
+
+
+@projects_bp.route(
+    "/projects/<int:record_id>/vehicle/<string:vehicle_id>/toggle-road-legal",
+    methods=["POST"],
+)
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
+def admin_project_vehicle_toggle_road_legal(record_id, vehicle_id):
+    """Bascule le statut Road Legal (homologué route vs route fermée uniquement) d'un véhicule pour ce projet."""
+    try:
+        project = resolve_project(record_id)
+        if not project or project.deleted_at is not None:
+            return jsonify({"status": "error", "message": "Projet introuvable."}), 404
+
+        payload = request.get_json(silent=True) or request.form or {}
+        current_legal = project.is_vehicle_road_legal(vehicle_id)
+        if "is_road_legal" in payload:
+            target_legal = bool(payload.get("is_road_legal"))
+        else:
+            target_legal = not current_legal
+
+        project.set_vehicle_road_legal(vehicle_id, target_legal)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "status": "success",
+                "vehicle_id": vehicle_id,
+                "is_road_legal": target_legal,
+                "label_fr": "Homologué route" if target_legal else "Route fermée",
+            }
+        ), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur toggle road legal : {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @projects_bp.route("/projects/<int:record_id>/reports", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_reports_add(record_id):
     try:
         payload = request.get_json(silent=True) or request.form or {}
@@ -254,54 +360,105 @@ def admin_project_reports_add(record_id):
         title = payload.get("title", "")
         current_user_id = session.get("admin_user_id")
 
-        report = add_project_report(record_id, user_id=current_user_id, content=content, title=title)
+        report = add_project_report(
+            record_id, user_id=current_user_id, content=content, title=title
+        )
 
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "success", "report": report.to_dict()}), 201
 
         flash("Rapport / commentaire ajouté avec succès.", "success")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
     except ValueError as ve:
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": str(ve)}), 400
         flash(str(ve), "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur ajout rapport projet : {e}")
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": "Erreur serveur"}), 500
         flash(f"Erreur lors de l'enregistrement : {str(e)}", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
 
-@projects_bp.route("/projects/<int:record_id>/reports/<int:report_id>/delete", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+
+@projects_bp.route(
+    "/projects/<int:record_id>/reports/<int:report_id>/delete", methods=["POST"]
+)
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_report_delete(record_id, report_id):
     try:
         current_user_id = session.get("admin_user_id")
         role_str = (session.get("admin_user_role") or "").strip().lower()
-        is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+        is_admin = role_str in (
+            "administrateur",
+            "super administrateur",
+            "administrator",
+            "super administrator",
+        )
 
-        delete_project_report(report_id, current_user_id=current_user_id, is_admin=is_admin)
+        delete_project_report(
+            report_id, current_user_id=current_user_id, is_admin=is_admin
+        )
 
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "success"}), 200
 
         flash("Commentaire supprimé.", "success")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
     except PermissionError as pe:
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": str(pe)}), 403
         flash(str(pe), "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur suppression rapport projet : {e}")
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": "Erreur serveur"}), 500
         flash("Erreur lors de la suppression.", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + "#reports"
+        )
 
-@projects_bp.route("/projects/<int:record_id>/reports/<int:report_id>/edit", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+
+@projects_bp.route(
+    "/projects/<int:record_id>/reports/<int:report_id>/edit", methods=["POST"]
+)
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_report_edit(record_id, report_id):
     try:
         payload = request.get_json(silent=True) or request.form or {}
@@ -309,47 +466,84 @@ def admin_project_report_edit(record_id, report_id):
         title = payload.get("title", "")
         current_user_id = session.get("admin_user_id")
         role_str = (session.get("admin_user_role") or "").strip().lower()
-        is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+        is_admin = role_str in (
+            "administrateur",
+            "super administrateur",
+            "administrator",
+            "super administrator",
+        )
 
         report = update_project_report(
             report_id,
             current_user_id=current_user_id,
             content=content,
             title=title,
-            is_admin=is_admin
+            is_admin=is_admin,
         )
 
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "success", "report": report.to_dict()}), 200
 
         flash("Rapport modifié avec succès.", "success")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + f"#report-{report_id}"
+        )
     except PermissionError as pe:
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": str(pe)}), 403
         flash(str(pe), "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + f"#report-{report_id}"
+        )
     except ValueError as ve:
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": str(ve)}), 400
         flash(str(ve), "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + f"#report-{report_id}"
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur modification rapport projet : {e}")
-        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if (
+            request.is_json
+            or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        ):
             return jsonify({"status": "error", "message": "Erreur serveur"}), 500
         flash(f"Erreur lors de la modification : {str(e)}", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+            + f"#report-{report_id}"
+        )
+
 
 @projects_bp.route("/projects/<int:record_id>/print", methods=["GET"])
-@require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+@require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_print(record_id):
     try:
         current_user_id = session.get("admin_user_id")
         role_str = (session.get("admin_user_role") or "").strip().lower()
-        is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+        is_admin = role_str in (
+            "administrateur",
+            "super administrateur",
+            "administrator",
+            "super administrator",
+        )
 
-        context = get_project_detail_context(record_id, current_user_id=current_user_id, is_admin=is_admin)
+        context = get_project_detail_context(
+            record_id, current_user_id=current_user_id, is_admin=is_admin
+        )
         if not context:
             abort(404)
 
@@ -357,16 +551,27 @@ def admin_project_print(record_id):
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_project_print : {e}")
         flash("Erreur lors de la génération de la vue d'impression.", "error")
-        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
+        return redirect(
+            url_for("admin_projects.admin_project_detail", record_id=record_id)
+        )
+
 
 # ── API Détection Conflits de Réservation ──────────────────────
 @projects_bp.route("/api/projects/check-conflicts", methods=["POST"])
-@require_roles('administrator', 'manager', 'commercial')
+@require_roles("administrator", "manager", "commercial")
 def admin_api_check_conflicts():
     try:
         payload = request.get_json(silent=True) or request.form or {}
-        start_date = payload.get("start_date") or payload.get("departure_date") or payload.get("shoot_start")
-        end_date = payload.get("end_date") or payload.get("return_date") or payload.get("shoot_end")
+        start_date = (
+            payload.get("start_date")
+            or payload.get("departure_date")
+            or payload.get("shoot_start")
+        )
+        end_date = (
+            payload.get("end_date")
+            or payload.get("return_date")
+            or payload.get("shoot_end")
+        )
 
         vehicle_ids = payload.get("vehicle_ids")
         if isinstance(vehicle_ids, str):
@@ -380,7 +585,9 @@ def admin_api_check_conflicts():
         elif head_ids is None:
             head_ids = []
 
-        exclude_id = payload.get("project_id") or payload.get("record_id") or payload.get("id")
+        exclude_id = (
+            payload.get("project_id") or payload.get("record_id") or payload.get("id")
+        )
         if str(exclude_id).strip() in ("", "null", "None", "undefined"):
             exclude_id = None
 
@@ -389,11 +596,14 @@ def admin_api_check_conflicts():
         if is_immob is None:
             is_immob = True
         else:
-            is_immob = True if str(is_immob).lower() in ("true", "1", "yes", "on") else False
+            is_immob = (
+                True if str(is_immob).lower() in ("true", "1", "yes", "on") else False
+            )
 
         shoot_dates = payload.get("shoot_dates")
         if isinstance(shoot_dates, str):
             import json
+
             try:
                 shoot_dates = json.loads(shoot_dates)
             except Exception:
@@ -402,6 +612,7 @@ def admin_api_check_conflicts():
         inter_shoot_statuses = payload.get("inter_shoot_statuses")
         if isinstance(inter_shoot_statuses, str):
             import json
+
             try:
                 inter_shoot_statuses = json.loads(inter_shoot_statuses)
             except Exception:

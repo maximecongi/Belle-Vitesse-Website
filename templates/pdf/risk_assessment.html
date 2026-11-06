@@ -19,7 +19,7 @@ show_print=True
 
 {% block pdf_header %}
 {{ pdf_header(
-doc_type_title="Analyse des Risques (BVRS)",
+doc_type_title="Analyse des Risques",
 doc_id=waiver.waiver_id,
 date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
 company_name=company_name
@@ -93,11 +93,74 @@ company_name=company_name
 ) }}
 
 <!-- ═══════════ SECTION FRANÇAISE : ANALYSE DES RISQUES ═══════════ -->
+<div class="bvrs-page-break"></div>
 <section class="pdf-section">
-    <h2 class="pdf-section-title dot-before">Analyse des Risques</h2>
+    <!-- Risques Généraux Travelling -->
+    <div class="bvrs-category-title">RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
 
-    <!-- Partie 1 : Risques Généraux Travelling -->
-    <div class="bvrs-category-banner">PARTIE 1 : RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
+    <!-- ── BLOCS D'AVERTISSEMENT & SÉCURITÉ ROUTIÈRE (FR) ── -->
+    {% set nrl_vehicles = waiver.non_road_legal_vehicles if (waiver and waiver.non_road_legal_vehicles is defined) else [] %}
+    {% set all_v_names = [] %}
+    {% if waiver and waiver.vehicles_details %}
+        {% for v in waiver.vehicles_details %}
+            {% set _ = all_v_names.append(v.name if v is mapping else v) %}
+        {% endfor %}
+    {% elif waiver and waiver.vehicles %}
+        {% for v in waiver.vehicles.split(',') %}
+            {% set _ = all_v_names.append(v.strip()) %}
+        {% endfor %}
+    {% endif %}
+    {% set safety_rules_doc_target = (all_v_names|join(' et ')) if all_v_names else 'des véhicules' %}
+    {% set safety_rules_doc_target_en = (all_v_names|join(' and ')) if all_v_names else 'vehicles' %}
+
+    {% if nrl_vehicles and nrl_vehicles|length > 0 %}
+        {% set nrl_names = [] %}
+        {% for v in nrl_vehicles %}
+            {% set _ = nrl_names.append(v.name if v is mapping else v) %}
+        {% endfor %}
+        {% set nrl_with_articles = [] %}
+        {% for raw_name in nrl_names %}
+            {% set v_clean = raw_name|trim %}
+            {% if v_clean[:2]|lower in ["l'", "l’"] %}
+                {% set v_clean = v_clean[2:]|trim %}
+            {% elif v_clean[:3]|lower in ["le ", "la "] %}
+                {% set v_clean = v_clean[3:]|trim %}
+            {% endif %}
+            {% set is_vowel = v_clean[0]|lower in ['a','e','i','o','u','y','é','è','ê','ë','à','â','î','ï','ô','û','ù'] %}
+            {% if loop.first %}
+                {% set art = "L'" if is_vowel else "Le " %}
+            {% else %}
+                {% set art = "l'" if is_vowel else "le " %}
+            {% endif %}
+            {% set _ = nrl_with_articles.append(art ~ v_clean) %}
+        {% endfor %}
+        <!-- Bloc 1 : Utilisation sur route fermée uniquement -->
+        <div class="bvrs-road-legal-card">
+            <div class="bvrs-road-legal-header">
+                <div class="bvrs-road-legal-title-cell">
+                    <span class="bvrs-road-legal-title">UTILISATION SUR ROUTE FERMÉE UNIQUEMENT</span>
+                    <span class="bvrs-road-legal-badge">IMPÉRATIF SÉCURITÉ</span>
+                </div>
+            </div>
+            <p class="bvrs-road-legal-desc">
+                {% if nrl_with_articles|length == 1 %}
+                    {{ nrl_with_articles[0]|safe }} roule uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifié pour la prise de vue, il n'est pas homologué pour circuler sur une voie ouverte au public. Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est strictement interdite. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque. Tout manquement à cette règle engage la seule responsabilité de la production.
+                {% else %}
+                    {{ (nrl_with_articles[:-1]|join(', ') ~ ' et ' ~ nrl_with_articles[-1])|safe }} roulent uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifiés pour la prise de vue, ils ne sont pas homologués pour circuler sur une voie ouverte au public. Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est strictement interdite. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque. Tout manquement à cette règle engage la seule responsabilité de la production.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Bloc 2 : Règles de Sécurité Plateau -->
+    <div class="bvrs-callout-card bvrs-callout-card--red">
+        <p>Les règles de sécurité à appliquer sur le plateau figurent dans le document <strong>Règles de sécurité</strong>, à signer par la production et le pilote.</p>
+    </div>
+
+    <!-- Bloc 3 : Manuel officiel et QR Code -->
+    <div class="bvrs-callout-card bvrs-callout-card--blue">
+        <p><strong>Information :</strong> le manuel officiel du véhicule est disponible à bord. Le manuel, l’analyse des risques et les règles de sécurité sont aussi accessibles sur téléphone via le QR code collé sur le véhicule.</p>
+    </div>
 
     {% set cat_list = [] %}
     {% for r in general_risks %}
@@ -108,7 +171,7 @@ company_name=company_name
     {% endfor %}
 
     {% for cat in cat_list %}
-        <div class="bvrs-category-title">{{ cat }}</div>
+        <div class="bvrs-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_fr or r.category) == cat %}
         <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
             <div class="bvrs-risk-header">
@@ -151,10 +214,10 @@ company_name=company_name
         {% endfor %}
     {% endfor %}
 
-    <!-- Partie 2 : Risques Spécifiques par Véhicule (FR) -->
+    <!-- Risques Spécifiques par Véhicule (FR) -->
     {% if vehicle_sections %}
         {% for vsec in vehicle_sections %}
-        <div class="bvrs-category-banner">PARTIE 2 : RISQUES SPÉCIFIQUES — {{ vsec.label|upper }}</div>
+        <div class="bvrs-category-title">RISQUES SPÉCIFIQUES — {{ vsec.label|upper }}</div>
         {% set vcat_list = [] %}
         {% for r in vsec.risks %}
             {% set c_name = r.category_fr or r.category %}
@@ -164,7 +227,7 @@ company_name=company_name
         {% endfor %}
 
         {% for cat in vcat_list %}
-            <div class="bvrs-category-title">{{ cat }}</div>
+            <div class="bvrs-category-banner">{{ cat }}</div>
             {% for r in vsec.risks if (r.category_fr or r.category) == cat %}
             <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
                 <div class="bvrs-risk-header">
@@ -215,10 +278,39 @@ company_name=company_name
 
 <!-- ═══════════ SECTION ANGLAISE : RISK ASSESSMENT ═══════════ -->
 <section class="pdf-section">
-    <h2 class="pdf-section-title dot-before">Risk Assessment</h2>
 
-    <!-- Part 1: General Risks Tracking Vehicles -->
-    <div class="bvrs-category-banner">PART 1: GENERAL RISKS — TRACKING VEHICLES</div>
+    <!-- General Risks Tracking Vehicles -->
+    <div class="bvrs-category-title">PART 1: GENERAL RISKS — TRACKING VEHICLES</div>
+
+    <!-- ── WARNING & ROAD SAFETY CALLOUTS (EN) ── -->
+    {% if nrl_vehicles and nrl_vehicles|length > 0 %}
+        <!-- Block 1 : Use on Closed Roads Only -->
+        <div class="bvrs-road-legal-card">
+            <div class="bvrs-road-legal-header">
+                <div class="bvrs-road-legal-title-cell">
+                    <span class="bvrs-road-legal-title">USE ON CLOSED ROADS ONLY</span>
+                    <span class="bvrs-road-legal-badge">SAFETY MANDATE</span>
+                </div>
+            </div>
+            <p class="bvrs-road-legal-desc">
+                {% if nrl_names|length == 1 %}
+                    The {{ nrl_names[0] }} operates exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, it is not certified or homologated for operation on open public roads. Any driving on open public roads, including transit between two locations, is strictly prohibited. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport. Any failure to comply with this requirement engages the sole responsibility of the production.
+                {% else %}
+                    The {{ nrl_names[:-1]|join(', ') ~ ' and ' ~ nrl_names[-1] if nrl_names|length > 2 else nrl_names|join(' and ') }} operate exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, they are not certified or homologated for operation on open public roads. Any driving on open public roads, including transit between two locations, is strictly prohibited. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport. Any failure to comply with this requirement engages the sole responsibility of the production.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Block 2 : On-Set Safety Rules -->
+    <div class="bvrs-callout-card bvrs-callout-card--red">
+        <p>On-set safety guidelines are set out in the document <strong>Safety Rules</strong>, to be signed by the production and the driver/pilot.</p>
+    </div>
+
+    <!-- Block 3 : Vehicle Manual and QR Code -->
+    <div class="bvrs-callout-card bvrs-callout-card--blue">
+        <p><strong>Notice:</strong> the official vehicle manual is available on board. The manual, risk assessment, and safety rules are also accessible on smartphone via the QR code sticker affixed to the vehicle.</p>
+    </div>
 
     {% set cat_en_list = [] %}
     {% for r in general_risks %}
@@ -229,13 +321,13 @@ company_name=company_name
     {% endfor %}
 
     {% for cat in cat_en_list %}
-        <div class="bvrs-category-title">{{ cat }}</div>
+        <div class="bvrs-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_en or r.category_fr or r.category) == cat %}
         <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
             <div class="bvrs-risk-header">
                 <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
                     {% if r.level == 'major' %}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
                     {% else %}
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                     {% endif %}
@@ -272,10 +364,10 @@ company_name=company_name
         {% endfor %}
     {% endfor %}
 
-    <!-- Part 2: Specific Risks per Vehicle (EN) -->
+    <!-- Specific Risks per Vehicle (EN) -->
     {% if vehicle_sections %}
         {% for vsec in vehicle_sections %}
-        <div class="bvrs-category-banner">PART 2: SPECIFIC RISKS — {{ (vsec.label_en or vsec.label)|upper }}</div>
+        <div class="bvrs-category-title">SPECIFIC RISKS — {{ (vsec.label_en or vsec.label)|upper }}</div>
         {% set vcat_en_list = [] %}
         {% for r in vsec.risks %}
             {% set c_name = r.category_en or r.category_fr or r.category %}
@@ -285,13 +377,13 @@ company_name=company_name
         {% endfor %}
 
         {% for cat in vcat_en_list %}
-            <div class="bvrs-category-title">{{ cat }}</div>
+            <div class="bvrs-category-banner">{{ cat }}</div>
             {% for r in vsec.risks if (r.category_en or r.category_fr or r.category) == cat %}
             <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
                 <div class="bvrs-risk-header">
                     <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
                         {% if r.level == 'major' %}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
                         {% else %}
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                         {% endif %}

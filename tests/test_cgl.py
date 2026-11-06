@@ -4,7 +4,7 @@ import unittest
 from datetime import date
 from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tests.base import BaseTestCase
 from models import (
@@ -36,7 +36,7 @@ class CglComprehensiveTest(BaseTestCase):
             firstname="Admin",
             lastname="BV",
             mail="admin@bellevitesse.com",
-            role="administrator"
+            role="administrator",
         )
         db.session.add(user)
 
@@ -50,7 +50,7 @@ class CglComprehensiveTest(BaseTestCase):
             mail="jean.dupont@cinema.fr",
             phone="0612345678",
             job_title="Directeur de Production",
-            production_id=prod.id
+            production_id=prod.id,
         )
         db.session.add(contact)
         db.session.flush()
@@ -64,7 +64,9 @@ class CglComprehensiveTest(BaseTestCase):
             shoot_end_date=date(2026, 7, 15),
             return_date=date(2026, 7, 16),
             vehicles_to_check="1, 2",
-            shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
+            shooting_locations=[
+                {"name": "Circuit Paul Ricard", "address": "Le Castellet"}
+            ],
         )
         db.session.add(proj)
         db.session.commit()
@@ -106,7 +108,9 @@ class CglComprehensiveTest(BaseTestCase):
 
             success1, _ = create_cgl(proj_id)
             self.assertTrue(success1)
-            cgl1 = CglWaiver.query.filter_by(project_id=proj_id, deleted_at=None).first()
+            cgl1 = CglWaiver.query.filter_by(
+                project_id=proj_id, deleted_at=None
+            ).first()
             delete_cgl(cgl1.waiver_id)
 
             # Recréation via create_cgl (quick create)
@@ -145,7 +149,9 @@ class CglComprehensiveTest(BaseTestCase):
             create_cgl(proj.id)
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
 
-            success, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            success, sign_url = get_or_create_waiver_signing_url(
+                cgl.waiver_id, waiver_type="cgl"
+            )
             self.assertTrue(success)
             self.assertIn("/sign/cgl/", sign_url)
 
@@ -155,14 +161,19 @@ class CglComprehensiveTest(BaseTestCase):
             self.assertIsNotNone(token_rec)
             self.assertEqual(token_rec.waiver_id, cgl.waiver_id)
 
-    @patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock cgl content")
+    @patch(
+        "services.common.pdf_tasks.render_pdf_from_template",
+        return_value=b"%PDF-1.4 mock cgl content",
+    )
     def test_05_public_signing_flow(self, mock_render_pdf):
         """Vérifie le cycle complet de signature publique par le locataire et le scellement HMAC."""
         with self.app.app_context():
             proj, prod, _ = self._create_mock_project()
             create_cgl(proj.id)
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
-            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            _, sign_url = get_or_create_waiver_signing_url(
+                cgl.waiver_id, waiver_type="cgl"
+            )
             self.assertEqual(cgl.display_order_ref, "")
             token_val = sign_url.split("/sign/cgl/")[-1]
             proj_id = proj.id
@@ -175,16 +186,16 @@ class CglComprehensiveTest(BaseTestCase):
         self.assertIn("Conditions Générales de Location", html_sign)
         self.assertIn('id="cgl_legal_country"', html_sign)
         self.assertIn('<option value="FR"', html_sign)
-        self.assertIn('France</option>', html_sign)
+        self.assertIn("France</option>", html_sign)
         self.assertIn('<option value="ES"', html_sign)
-        self.assertIn('Espagne</option>', html_sign)
+        self.assertIn("Espagne</option>", html_sign)
 
         # 2. Rejet si accepted_terms ou has_signing_authority absent
         payload_invalid = {
             "production_name": "Société Production Réelle SAS",
             "representative": "Alice Martin",
             "representative_role": "Gérante",
-            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         }
         resp_invalid = self.client.post(f"/sign/cgl/{token_val}", data=payload_invalid)
         self.assertEqual(resp_invalid.status_code, 400)
@@ -205,7 +216,7 @@ class CglComprehensiveTest(BaseTestCase):
             "location_of_use": "Studio Bry-sur-Marne",
             "accepted_terms": "1",
             "has_signing_authority": "1",
-            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         }
         resp_post = self.client.post(f"/sign/cgl/{token_val}", data=payload)
         self.assertEqual(resp_post.status_code, 200)
@@ -215,7 +226,9 @@ class CglComprehensiveTest(BaseTestCase):
         with self.app.app_context():
             cgl_signed = CglWaiver.query.filter_by(project_id=proj_id).first()
             self.assertEqual(cgl_signed.status, "signed")
-            self.assertEqual(cgl_signed.production_name, "Société Production Réelle SAS")
+            self.assertEqual(
+                cgl_signed.production_name, "Société Production Réelle SAS"
+            )
             self.assertEqual(cgl_signed.production_representative, "Alice Martin")
             self.assertEqual(cgl_signed.display_order_ref, "BVPR-TEST-1234")
             self.assertEqual(cgl_signed.display_legal_form_only, "SAS")
@@ -225,21 +238,32 @@ class CglComprehensiveTest(BaseTestCase):
             self.assertIsNotNone(cgl_signed.signed_at)
 
             # Vérifie l'archive signée WaiverSignedDocument avec Sceau Canonique v2
-            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
+            signed_doc = WaiverSignedDocument.query.filter_by(
+                waiver_id=waiver_id
+            ).first()
             self.assertIsNotNone(signed_doc)
             self.assertIsNotNone(signed_doc.hash)
             self.assertEqual(signed_doc.data_snapshot.get("version"), "2.0")
             self.assertIn("127.0.0.1", signed_doc.data_snapshot.get("signer_ip", ""))
-            self.assertTrue(signed_doc.data_snapshot.get("snapshot", {}).get("has_signing_authority"))
+            self.assertTrue(
+                signed_doc.data_snapshot.get("snapshot", {}).get(
+                    "has_signing_authority"
+                )
+            )
 
-    @patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock cgl content")
+    @patch(
+        "services.common.pdf_tasks.render_pdf_from_template",
+        return_value=b"%PDF-1.4 mock cgl content",
+    )
     def test_06_verification_flow(self, mock_render_pdf):
         """Vérifie la page de vérification publique et la validation du sceau cryptographique."""
         with self.app.app_context():
             proj, _, _ = self._create_mock_project()
             create_cgl(proj.id)
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
-            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            _, sign_url = get_or_create_waiver_signing_url(
+                cgl.waiver_id, waiver_type="cgl"
+            )
             token_val = sign_url.split("/sign/cgl/")[-1]
 
             payload = {
@@ -251,7 +275,7 @@ class CglComprehensiveTest(BaseTestCase):
                 "legal_country": "ES",
                 "accepted_terms": "1",
                 "has_signing_authority": "1",
-                "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             }
             resp_sign = self.client.post(f"/sign/cgl/{token_val}", data=payload)
             self.assertEqual(resp_sign.status_code, 200)
@@ -259,9 +283,14 @@ class CglComprehensiveTest(BaseTestCase):
             self.assertEqual(cgl.production_siret, "B66123456")
             self.assertEqual(cgl.display_legal_identifier_label, "N° d’immatriculation")
             waiver_id = cgl.waiver_id
-            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
+            signed_doc = WaiverSignedDocument.query.filter_by(
+                waiver_id=waiver_id
+            ).first()
             from utils.document_utils import generate_document_verification_token
-            verify_token = generate_document_verification_token("cgl", waiver_id, 1, signed_doc.hash)
+
+            verify_token = generate_document_verification_token(
+                "cgl", waiver_id, 1, signed_doc.hash
+            )
             verify_url = f"/cgl/verify/{waiver_id}?version=1&t={verify_token}"
 
         # Vérification du HTML du PDF : le QR code doit être cliquable vers la page de vérification
@@ -282,26 +311,33 @@ class CglComprehensiveTest(BaseTestCase):
             create_cgl(proj.id)
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
             generate_cgl(cgl.waiver_id)
-            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            _, sign_url = get_or_create_waiver_signing_url(
+                cgl.waiver_id, waiver_type="cgl"
+            )
             token_val = sign_url.split("/sign/cgl/")[-1]
 
-        response = self.client.post(f"/sign/cgl/{token_val}", data={
-            "production_name": "Production étrangère GmbH",
-            "representative": "Alice Martin",
-            "representative_role": "Directrice",
-            "legal_form": "GmbH",
-            "legal_country": "DE",
-            "siret": "",
-            "accepted_terms": "1",
-            "has_signing_authority": "1",
-            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-        })
+        response = self.client.post(
+            f"/sign/cgl/{token_val}",
+            data={
+                "production_name": "Production étrangère GmbH",
+                "representative": "Alice Martin",
+                "representative_role": "Directrice",
+                "legal_form": "GmbH",
+                "legal_country": "DE",
+                "siret": "",
+                "accepted_terms": "1",
+                "has_signing_authority": "1",
+                "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            },
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json().get("success"))
         with self.app.app_context():
             signed = CglWaiver.query.filter_by(project_id=project_id).first()
             self.assertEqual(signed.production_siret, "")
-            self.assertEqual(signed.display_legal_identifier_label, "N° d’immatriculation")
+            self.assertEqual(
+                signed.display_legal_identifier_label, "N° d’immatriculation"
+            )
 
     def test_07_list_and_delete_cgl(self):
         """Vérifie le listing et la suppression d'un contrat CGL."""
@@ -334,7 +370,10 @@ class CglComprehensiveTest(BaseTestCase):
             db.session.refresh(cgl)
             self.assertIsNotNone(cgl.deleted_at)
 
-    @patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock cgl content")
+    @patch(
+        "services.common.pdf_tasks.render_pdf_from_template",
+        return_value=b"%PDF-1.4 mock cgl content",
+    )
     def test_09_cgl_additional_fields_signing_and_properties(self, mock_render_pdf):
         """Vérifie l'enregistrement et les propriétés des champs complémentaires CGL (forme juridique, rôle, assurance, ville)."""
         with self.app.app_context():
@@ -348,7 +387,9 @@ class CglComprehensiveTest(BaseTestCase):
             self.assertEqual(cgl.signer_email, "jean.dupont@cinema.fr")
             self.assertEqual(cgl.signer_role_custom, "Directeur de Production")
 
-            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            _, sign_url = get_or_create_waiver_signing_url(
+                cgl.waiver_id, waiver_type="cgl"
+            )
             token_val = sign_url.split("/sign/cgl/")[-1]
             proj_id = proj.id
 
@@ -369,7 +410,7 @@ class CglComprehensiveTest(BaseTestCase):
             "location_of_use": "Studios de Bry-sur-Marne",
             "accepted_terms": "1",
             "has_signing_authority": "1",
-            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
         }
 
         resp_post = self.client.post(f"/sign/cgl/{token_val}", data=payload)
@@ -379,15 +420,25 @@ class CglComprehensiveTest(BaseTestCase):
         with self.app.app_context():
             signed_cgl = CglWaiver.query.filter_by(project_id=proj_id).first()
             self.assertEqual(signed_cgl.status, "signed")
-            self.assertEqual(signed_cgl.display_legal_form_only, "SAS au capital de 50 000 €")
+            self.assertEqual(
+                signed_cgl.display_legal_form_only, "SAS au capital de 50 000 €"
+            )
             self.assertEqual(signed_cgl.display_legal_country, "France")
-            self.assertEqual(signed_cgl.display_legal_form, "SAS au capital de 50 000 € (France)")
-            self.assertEqual(signed_cgl.display_representative_role, "Directrice Générale")
+            self.assertEqual(
+                signed_cgl.display_legal_form, "SAS au capital de 50 000 € (France)"
+            )
+            self.assertEqual(
+                signed_cgl.display_representative_role, "Directrice Générale"
+            )
             self.assertEqual(signed_cgl.display_signature_city, "Paris")
             self.assertEqual(signed_cgl.signer_phone, "0789101112")
             self.assertEqual(signed_cgl.signer_email, "claire.delon@studiolumiere.fr")
-            self.assertEqual(signed_cgl.production_insurance_company, "Allianz Cinéma & Audiovisuel")
-            self.assertEqual(signed_cgl.production_insurance_policy, "POL-ALLIANZ-88291")
+            self.assertEqual(
+                signed_cgl.production_insurance_company, "Allianz Cinéma & Audiovisuel"
+            )
+            self.assertEqual(
+                signed_cgl.production_insurance_policy, "POL-ALLIANZ-88291"
+            )
             self.assertEqual(signed_cgl.location_of_use, "Studios de Bry-sur-Marne")
 
     def test_10_pdf_preview_endpoints(self):
@@ -438,7 +489,7 @@ class CglComprehensiveTest(BaseTestCase):
         risk_html = resp_risk_admin.get_data(as_text=True)
         self.assertIn("Analyse des Risques", risk_html)
         self.assertIn("pdf-preview-toolbar", risk_html)
-        self.assertIn("PARTIE 1 : RISQUES GÉNÉRAUX", risk_html)
+        self.assertIn("RISQUES GÉNÉRAUX", risk_html)
         self.assertIn("RISQUE MAJEUR", risk_html)
 
         resp_risk_direct = self.client.get("/preview/pdf/risk-assessment")
@@ -453,10 +504,18 @@ class CglComprehensiveTest(BaseTestCase):
 
             self.assertEqual(self.client.get("/admin/cgl/preview").status_code, 404)
             self.assertEqual(self.client.get("/preview/pdf/cgl").status_code, 404)
-            self.assertEqual(self.client.get("/admin/safety-rules/preview").status_code, 404)
-            self.assertEqual(self.client.get("/preview/pdf/safety-rules").status_code, 404)
-            self.assertEqual(self.client.get("/admin/pilot-waivers/preview").status_code, 404)
-            self.assertEqual(self.client.get("/preview/pdf/pilot-waiver").status_code, 404)
+            self.assertEqual(
+                self.client.get("/admin/safety-rules/preview").status_code, 404
+            )
+            self.assertEqual(
+                self.client.get("/preview/pdf/safety-rules").status_code, 404
+            )
+            self.assertEqual(
+                self.client.get("/admin/pilot-waivers/preview").status_code, 404
+            )
+            self.assertEqual(
+                self.client.get("/preview/pdf/pilot-waiver").status_code, 404
+            )
         finally:
             if prev_env is not None:
                 os.environ["FLASK_ENV"] = prev_env
@@ -467,4 +526,3 @@ class CglComprehensiveTest(BaseTestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

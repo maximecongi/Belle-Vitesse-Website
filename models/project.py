@@ -107,6 +107,8 @@ class Project(db.Model):
     vehicles_to_check = db.Column(db.String(500))
     # Liste des identifiants de têtes séparés par virgules ex: "recXX,recYY"
     heads_to_check = db.Column(db.String(500))
+    # Statuts d'homologation route des véhicules pour ce projet ex: {"rec_erover": false, "rec_ecar": true}
+    vehicle_road_legal_statuses = db.Column(db.JSON, nullable=True)
     notes = db.Column(db.Text)  # Demandes spécifiques
 
     # Soft-delete support
@@ -203,6 +205,95 @@ class Project(db.Model):
         if not self.heads_to_check:
             return []
         return [h.strip() for h in self.heads_to_check.split(",") if h.strip()]
+
+    def is_vehicle_road_legal(self, vehicle_id: str = "", vehicle_slug: str = "", vehicle_name: str = "") -> bool:
+        """
+        Détermine si un véhicule est homologué route pour ce tournage.
+        1. Statut explicite dans vehicle_road_legal_statuses s'il existe (par ID, par slug ou par nom).
+        2. Sinon détection automatique par défaut : eRover, eRider, Stark Varg sont non-homologués route (route fermée).
+        """
+        statuses = self.vehicle_road_legal_statuses or {}
+        vid_str = str(vehicle_id).strip() if vehicle_id else ""
+        slug_lower = (vehicle_slug or "").lower().strip()
+        name_lower = (vehicle_name or "").lower().strip()
+
+        # 1. Vérification directe dans statuses (par ID, par slug ou par nom)
+        for key in [vid_str, slug_lower, name_lower]:
+            if key and key in statuses:
+                return bool(statuses[key])
+
+        # 2. Si non trouvé par clé directe mais qu'on a un vid_str, chercher dans la BDD catalog pour résoudre le slug/nom
+        if vid_str and not slug_lower and not name_lower:
+            try:
+                from models.catalog import Vehicle
+                db_v = db.session.get(Vehicle, vid_str) if hasattr(db.session, "get") else Vehicle.query.get(vid_str)
+                if db_v and db_v.fields:
+                    f = db_v.fields
+                    slug_lower = (f.get("slug") or "").lower().strip()
+                    name_lower = (f.get("name") or f.get("Nom") or "").lower().strip()
+                    for key in [slug_lower, name_lower]:
+                        if key and key in statuses:
+                            return bool(statuses[key])
+            except Exception:
+                pass
+
+        # 3. Valeur par défaut
+        non_road_keywords = ["erover", "erider", "stark", "polar"]
+        if any(k in vid_str.lower() or k in slug_lower or k in name_lower for k in non_road_keywords):
+            return False
+
+        return True
+
+    def set_vehicle_road_legal(self, vehicle_id: str, is_road_legal: bool):
+        """Met à jour le statut d'homologation route d'un véhicule pour ce projet."""
+        from sqlalchemy.orm.attributes import flag_modified
+
+        statuses = dict(self.vehicle_road_legal_statuses or {})
+        vid_str = str(vehicle_id).strip()
+        statuses[vid_str] = bool(is_road_legal)
+
+        # Récupération du slug et du nom pour synchroniser toutes les clés (Airtable ID, slug, nom)
+        try:
+            from models.catalog import Vehicle
+            db_v = db.session.get(Vehicle, vid_str) if hasattr(db.session, "get") else Vehicle.query.get(vid_str)
+            if not db_v:
+                db_v = Vehicle.query.filter(
+                    (Vehicle.fields["slug"].astext == vid_str)
+                    | (Vehicle.fields["name"].astext == vid_str)
+                ).first()
+            if db_v and db_v.fields:
+                f = db_v.fields
+                v_s = (f.get("slug") or "").lower().strip()
+                v_n = (f.get("name") or f.get("Nom") or "").lower().strip()
+                if v_s:
+                    statuses[v_s] = bool(is_road_legal)
+                if v_n:
+                    statuses[v_n] = bool(is_road_legal)
+                if db_v.id:
+                    statuses[str(db_v.id)] = bool(is_road_legal)
+        except Exception:
+            pass
+
+        try:
+            from utils.database import get_vehicles
+            for v in (get_vehicles() or []):
+                v_id = str(v.get("id") or "")
+                f = v.get("fields") or {}
+                v_s = (f.get("slug") or "").lower().strip()
+                v_n = (f.get("name") or f.get("Nom") or "").lower().strip()
+                if vid_str.lower() in [v_id.lower(), v_s, v_n]:
+                    if v_id:
+                        statuses[v_id] = bool(is_road_legal)
+                    if v_s:
+                        statuses[v_s] = bool(is_road_legal)
+                    if v_n:
+                        statuses[v_n] = bool(is_road_legal)
+                    break
+        except Exception:
+            pass
+
+        self.vehicle_road_legal_statuses = statuses
+        flag_modified(self, "vehicle_road_legal_statuses")
 
 
     @property
