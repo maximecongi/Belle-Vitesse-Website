@@ -213,6 +213,7 @@ function initMeetingReport() {
         const lines = mdText.split('\n');
         let html = [];
         let listStack = [];
+        let sectionCounter = 0;
 
         function closeAllLists() {
             while (listStack.length > 0) {
@@ -258,11 +259,14 @@ function initMeetingReport() {
                 continue;
             }
 
-            // H2 -> Titre officiel Belle Vitesse avec carré or .dot-before
+            // H2 -> Titre officiel Belle Vitesse numéroté 1., 2., 3. avec carré or .dot-before
             if (trimmed.startsWith('## ')) {
                 closeAllLists();
-                const text = trimmed.substring(3).trim();
-                html.push('<h2 class="cgl-section-title pdf-section-title dot-before">' + formatInline(text) + '</h2>');
+                sectionCounter++;
+                let text = trimmed.substring(3).trim();
+                // Nettoyer toute numérotation manuelle pré-existante (ex: "1. ", "1 - ")
+                text = text.replace(new RegExp('^\\d+[.\\-\\)]\\s*'), '');
+                html.push('<h2 class="cgl-section-title pdf-section-title dot-before"><span class="section-num">' + sectionCounter + '. </span>' + formatInline(text) + '</h2>');
                 continue;
             }
 

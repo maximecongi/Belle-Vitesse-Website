@@ -70,10 +70,10 @@ Thu, 05 Nov 26
 
         html = result["html_content"]
 
-        # Titres de sections H2 avec dot-before (carré or)
+        # Titres de sections H2 avec dot-before (carré or) et numérotation automatique 1., 2.
         self.assertIn("cgl-section-title pdf-section-title dot-before", html)
-        self.assertIn("Risk Assessment et Documents Légaux", html)
-        self.assertIn("Convoyage sur Route Ouverte", html)
+        self.assertIn('<span class="section-num">1. </span>Risk Assessment et Documents Légaux', html)
+        self.assertIn('<span class="section-num">2. </span>Convoyage sur Route Ouverte', html)
 
         # Listes imbriquées conformes
         self.assertIn('<ul class="pdf-bullets-list">', html)

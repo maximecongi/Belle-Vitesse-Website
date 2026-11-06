@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
 import markdown
+from bs4 import BeautifulSoup
 from flask import current_app, render_template
 
 from utils.document_utils import render_pdf_from_template
@@ -175,32 +176,35 @@ def parse_meeting_report(
         extensions=["extra", "sane_lists"],
     )
 
-    # Post-traitement pour injecter les classes sémantiques Belle Vitesse
-    # H2 -> Titre de section officiel avec carré or .dot-before
-    processed_html = re.sub(
-        r"<h2>(.*?)</h2>",
-        r'<h2 class="cgl-section-title pdf-section-title dot-before">\1</h2>',
-        raw_html,
-    )
-    # H3 -> Sous-titre hiérarchique
-    processed_html = re.sub(
-        r"<h3>(.*?)</h3>",
-        r'<h3 class="cgl-subtitle pdf-subtitle">\1</h3>',
-        processed_html,
-    )
-    # Citations/Notes blockquote -> boîte de contexte sobre Belle Vitesse
-    processed_html = re.sub(
-        r"<blockquote>\s*(.*?)\s*</blockquote>",
-        r'<div class="pdf-context-box">\1</div>',
-        processed_html,
-        flags=re.DOTALL,
-    )
-    # Listes à puces -> classe stylée pdf-bullets-list
-    processed_html = re.sub(
-        r"<ul>",
-        r'<ul class="pdf-bullets-list">',
-        processed_html,
-    )
+    # Post-traitement propre avec BeautifulSoup pour injecter les classes sémantiques Belle Vitesse
+    soup = BeautifulSoup(raw_html, "html.parser")
+
+    # 1. H2 -> Titre de section officiel numéroté 1., 2., 3. avec carré or .dot-before
+    for idx, h2 in enumerate(soup.find_all("h2"), 1):
+        raw_title = h2.get_text().strip()
+        cleaned_title = re.sub(r"^\d+[\.\-\)]\s*", "", raw_title)
+        h2["class"] = ["cgl-section-title", "pdf-section-title", "dot-before"]
+        h2.clear()
+        num_span = soup.new_tag("span", **{"class": "section-num"})
+        num_span.string = f"{idx}. "
+        h2.append(num_span)
+        h2.append(cleaned_title)
+
+    # 2. H3 -> Sous-titre hiérarchique
+    for h3 in soup.find_all("h3"):
+        h3["class"] = ["cgl-subtitle", "pdf-subtitle"]
+
+    # 3. Citations/Notes blockquote -> boîte de contexte sobre Belle Vitesse
+    for bq in soup.find_all("blockquote"):
+        bq.name = "div"
+        bq["class"] = ["pdf-context-box"]
+
+    # 4. Listes à puces -> classe stylée pdf-bullets-list UNIQUEMENT sur les listes racines (niveau 1)
+    for ul in soup.find_all("ul"):
+        if not ul.find_parent("li"):
+            ul["class"] = ["pdf-bullets-list"]
+
+    processed_html = str(soup)
 
     return {
         "title": final_title,
