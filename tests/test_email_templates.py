@@ -1,21 +1,11 @@
-from flask import render_template
-from app import create_app
 import os
 import unittest
 
-# Isolation stricte de l'environnement de test
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
+from flask import render_template
+from tests.base import BaseTestCase
 
 
-class EmailTemplatesTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.app = create_app()
-
+class EmailTemplatesTest(BaseTestCase):
     def test_magic_link_rendering(self):
         with self.app.app_context():
             html = render_template(
@@ -26,8 +16,7 @@ class EmailTemplatesTest(unittest.TestCase):
             )
             self.assertIn("Connexion Admin.", html)
             self.assertIn("Bonjour Maxime,", html)
-            self.assertIn(
-                "https://bellevitesse.com/admin/login?token=xyz123", html)
+            self.assertIn("https://bellevitesse.com/admin/login?token=xyz123", html)
             self.assertIn("© Belle Vitesse", html)
             self.assertIn("2026", html)
 
@@ -43,8 +32,7 @@ class EmailTemplatesTest(unittest.TestCase):
                 is_reminder=False,
                 now_year=2026,
             )
-            self.assertIn(
-                "Signature Conditions Générales de Location (CGL)", html)
+            self.assertIn("Signature Conditions Générales de Location (CGL)", html)
             self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("Studio Test Prod", html)
@@ -53,8 +41,7 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("Conditions Générales de Location (CGL)", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertNotIn("project-pill", html)
-            self.assertIn(
-                "https://bellevitesse.com/cgl/sign/token123", html)
+            self.assertIn("https://bellevitesse.com/cgl/sign/token123", html)
             self.assertNotIn("Signature en attente", html)
 
     def test_waiver_invitation_rendering_reminder(self):
@@ -70,7 +57,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn(
-                "Rappel : Signature Conditions Générales de Location (CGL)", html)
+                "Rappel : Signature Conditions Générales de Location (CGL)", html
+            )
             self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Jean Prod", html)
             self.assertIn("alert-box alert-box-warning", html)
@@ -113,8 +101,7 @@ class EmailTemplatesTest(unittest.TestCase):
                 waiver_type="cgl",
                 now_year=2026,
             )
-            self.assertIn(
-                "Conditions Générales de Location (CGL) Signé.", html)
+            self.assertIn("Conditions Générales de Location (CGL) Signé.", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertIn("Spot Commercial", html)
             self.assertIn("Studio Test Prod", html)
@@ -200,9 +187,12 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("qr-code-box", html)
             self.assertIn("instructions-card", html)
             self.assertIn(
-                "webcal://bellevitesse.com/calendar/feed.ics?token=cal123", html)
+                "webcal://bellevitesse.com/calendar/feed.ics?token=cal123", html
+            )
             self.assertIn(
-                '<a href="https://bellevitesse.com/calendar/feed.ics?token=cal123"', html)
+                '<a href="https://bellevitesse.com/calendar/feed.ics?token=cal123"',
+                html,
+            )
             self.assertIn("blanc-fond-transparent.png", html)
 
     def test_newsletter_welcome_rendering(self):
@@ -213,8 +203,7 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn("Bienvenue chez Belle Vitesse.", html)
-            self.assertIn(
-                "https://bellevitesse.com/unsubscribe/token_abc", html)
+            self.assertIn("https://bellevitesse.com/unsubscribe/token_abc", html)
             self.assertIn("© Belle Vitesse", html)
             self.assertIn("2026", html)
 
@@ -222,9 +211,11 @@ class EmailTemplatesTest(unittest.TestCase):
         """Vérifie que les coordonnées société définies dans app_settings sont bien injectées dans le footer des emails."""
         with self.app.app_context():
             from models import db, AppSetting
+
             try:
-                AppSetting.set("company_address",
-                               "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine")
+                AppSetting.set(
+                    "company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine"
+                )
                 AppSetting.set("company_email", "contact@bellevitesse.com")
                 html = render_template(
                     "emails/magic_link.html",
@@ -236,8 +227,9 @@ class EmailTemplatesTest(unittest.TestCase):
                 self.assertIn("94200 Ivry-sur-Seine", html)
                 self.assertIn("contact@bellevitesse.com", html)
             finally:
-                AppSetting.query.filter(AppSetting.key.in_(
-                    ["company_address", "company_email"])).delete()
+                AppSetting.query.filter(
+                    AppSetting.key.in_(["company_address", "company_email"])
+                ).delete()
                 db.session.commit()
 
     def test_newsletter_campaign_rendering(self):
@@ -251,8 +243,7 @@ class EmailTemplatesTest(unittest.TestCase):
             )
             self.assertIn("Nouvelle Grue Télescopique en Flotte", html)
             self.assertIn("Nous avons le plaisir d'accueillir", html)
-            self.assertIn(
-                "https://bellevitesse.com/unsubscribe/token_xyz", html)
+            self.assertIn("https://bellevitesse.com/unsubscribe/token_xyz", html)
             self.assertIn("content-left", html)
 
     def test_sql_alert_rendering(self):

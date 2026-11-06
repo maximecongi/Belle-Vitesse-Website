@@ -10,11 +10,11 @@ import os
 import unittest
 from flask import Blueprint, url_for
 
-os.environ.setdefault("FLASK_ENV", "testing")
-os.environ.setdefault("TESTING", "True")
-os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
-os.environ.setdefault("USE_SSH_TUNNEL", "false")
-os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+os.environ["FLASK_ENV"] = "testing"
+os.environ["TESTING"] = "True"
+os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+os.environ["USE_SSH_TUNNEL"] = "false"
+os.environ["WTF_CSRF_ENABLED"] = "False"
 
 from app import create_app
 from routes.public.incidents import init_incident_public_routes, public_incidents_bp
@@ -28,7 +28,7 @@ from routes.public.web import init_web_routes, public_web_bp
 class PublicBlueprintsTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.app = create_app()
+        cls.app = create_app("testing")
         cls.app.config["TESTING"] = True
         cls.client = cls.app.test_client()
 
@@ -41,8 +41,14 @@ class PublicBlueprintsTestCase(unittest.TestCase):
             public_incidents_bp,
         ]
         for bp in expected_bps:
-            self.assertIsInstance(bp, Blueprint, f"{bp} doit être une instance de Blueprint Flask")
-            self.assertIn(bp.name, self.app.blueprints, f"Blueprint {bp.name} non enregistré sur app")
+            self.assertIsInstance(
+                bp, Blueprint, f"{bp} doit être une instance de Blueprint Flask"
+            )
+            self.assertIn(
+                bp.name,
+                self.app.blueprints,
+                f"Blueprint {bp.name} non enregistré sur app",
+            )
 
     def test_public_url_for_aliasing(self):
         """Vérifie que url_for fonctionne de manière transparente avec ou sans préfixe de Blueprint."""
@@ -91,4 +97,3 @@ class PublicBlueprintsTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

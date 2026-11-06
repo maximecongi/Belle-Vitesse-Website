@@ -43,7 +43,13 @@ class BaseTestCase(unittest.TestCase):
 
     def setUp(self):
         """Initialise une application Flask et un schéma SQLite en mémoire isolé."""
-        self.app = create_app()
+        os.environ["FLASK_ENV"] = "testing"
+        os.environ["TESTING"] = "True"
+        os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        os.environ["USE_SSH_TUNNEL"] = "false"
+        os.environ["WTF_CSRF_ENABLED"] = "False"
+
+        self.app = create_app("testing")
         self.app.config["TESTING"] = True
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
@@ -51,6 +57,14 @@ class BaseTestCase(unittest.TestCase):
 
         self.app_context = self.app.app_context()
         self.app_context.push()
+
+        # Sécurité absolue : interdiction formelle d'exécuter les tests sur une base réelle
+        engine_url = str(db.engine.url)
+        if "sqlite" not in engine_url:
+            raise RuntimeError(
+                f"🚨 SÉCURITÉ BASE DE DONNÉES : Les tests unitaires ne doivent JAMAIS pointer vers une base réelle ! (url={engine_url})"
+            )
+
         db.create_all()
 
     def tearDown(self):
@@ -66,7 +80,13 @@ class BaseTestCase(unittest.TestCase):
 
     # ── Helpers Factory Prêts à l'Emploi ──────────────────────────
 
-    def create_user(self, firstname="Jean", lastname="Dupont", mail="jean.dupont@bellevitesse.com", role="technicien"):
+    def create_user(
+        self,
+        firstname="Jean",
+        lastname="Dupont",
+        mail="jean.dupont@bellevitesse.com",
+        role="technicien",
+    ):
         """Crée et persiste un utilisateur de test."""
         user = User(
             firstname=firstname,
@@ -85,20 +105,35 @@ class BaseTestCase(unittest.TestCase):
         db.session.commit()
         return prod
 
-    def create_contact(self, production_id=None, first_name="Contact", last_name="Test", mail="contact@test.com", phone="0612345678"):
+    def create_contact(
+        self,
+        production_id=None,
+        first_name="Contact",
+        last_name="Test",
+        mail="contact@test.com",
+        phone="0612345678",
+    ):
         """Crée et persiste un contact de production."""
         contact = Contact(
             first_name=first_name,
             last_name=last_name,
             mail=mail,
             phone=phone,
-            production_id=production_id
+            production_id=production_id,
         )
         db.session.add(contact)
         db.session.commit()
         return contact
 
-    def create_project(self, name="Tournage Test", production_id=None, contact_id=None, departure_date=None, return_date=None, vehicles="1"):
+    def create_project(
+        self,
+        name="Tournage Test",
+        production_id=None,
+        contact_id=None,
+        departure_date=None,
+        return_date=None,
+        vehicles="1",
+    ):
         """Crée et persiste un projet de tournage avec dates et véhicules."""
         today = date.today()
         if production_id is None:
@@ -130,4 +165,3 @@ class BaseTestCase(unittest.TestCase):
             sess["admin_user_lastname"] = user.lastname
             sess["admin_user_email"] = user.mail
         return user
-

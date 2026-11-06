@@ -15,7 +15,7 @@ from utils.mailer import EmailService
 
 class MailerRQTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app()
+        self.app = create_app("testing")
         self.app.config["TESTING"] = True
         self.app_context = self.app.app_context()
         self.app_context.push()
@@ -37,7 +37,10 @@ class MailerRQTestCase(unittest.TestCase):
                 to_email="test.client@example.com",
                 subject="Test Synchrone",
                 template_name="emails/magic_link.html",
-                context={"firstname": "Jean", "magic_link": "https://example.com/magic"},
+                context={
+                    "firstname": "Jean",
+                    "magic_link": "https://example.com/magic",
+                },
                 text_content="Texte alternatif brut",
                 sender_type="admin",
                 cc=["copy@example.com"],
@@ -180,6 +183,7 @@ class MailerRQTestCase(unittest.TestCase):
     def test_smtp_send_from_and_reply_to_defaults(self, mock_smtp):
         """Vérifie que les en-têtes From et Reply-To sont configurés par défaut sur noreply@ et contact@."""
         from email.message import EmailMessage
+
         mock_server = MagicMock()
         mock_smtp.return_value.__enter__.return_value = mock_server
 
@@ -202,7 +206,9 @@ class MailerRQTestCase(unittest.TestCase):
         ):
             # Enlever TESTING de app.config
             self.app.config["TESTING"] = False
-            EmailService._send_smtp_message(msg, ["client@example.com"], sender_type="contact")
+            EmailService._send_smtp_message(
+                msg, ["client@example.com"], sender_type="contact"
+            )
 
             self.assertEqual(msg["From"], "Belle Vitesse <noreply@bellevitesse.com>")
             self.assertEqual(msg["Reply-To"], "contact@bellevitesse.com")

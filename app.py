@@ -38,9 +38,14 @@ from utils.context_processors import init_context_processors
 # Configuration
 
 
-def create_app():
+def create_app(config_name=None):
     """Usine de création de l'application Flask (Application Factory)."""
-    env = os.getenv("FLASK_ENV", "development")
+    env = config_name or os.getenv("FLASK_ENV")
+    if not env:
+        if os.getenv("TESTING") == "True":
+            env = "testing"
+        else:
+            env = "development"
     app_config = config.get(env, config["default"])
 
     app = Flask(
@@ -78,7 +83,11 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Tunnel SSH (uniquement en développement pour accéder à la DB distante)
-    if env == "development":
+    if (
+        env == "development"
+        and os.getenv("USE_SSH_TUNNEL", "true").lower() in ("true", "1", "yes")
+        and os.getenv("TESTING") != "True"
+    ):
         from utils.ssh_helper import get_ssh_tunnel
 
         tunnel, local_port = get_ssh_tunnel()
@@ -261,7 +270,7 @@ def create_app():
                 )
         except Exception as e:
             app.logger.error(f"❌ Failed to run database migrations: {e}")
-    elif os.getenv("FLASK_ENV") != "production":
+    elif env == "development":
         try:
             with app.app_context():
                 db.create_all()

@@ -35,22 +35,23 @@ class DualStream:
         self.console_stream.flush()
 
 
-# 3. Découverte et exécution de l'intégralité des tests
-suite = unittest.defaultTestLoader.discover('tests')
-with open('test_results.txt', 'w') as f:
-    dual_stream = DualStream(f, sys.stdout)
-    runner = unittest.TextTestRunner(stream=dual_stream, verbosity=2)
-    result = runner.run(suite)
+if __name__ == '__main__':
+    # 3. Découverte et exécution de l'intégralité des tests
+    suite = unittest.defaultTestLoader.discover('tests')
+    with open('test_results.txt', 'w') as f:
+        dual_stream = DualStream(f, sys.stdout)
+        runner = unittest.TextTestRunner(stream=dual_stream, verbosity=2)
+        result = runner.run(suite)
 
-    if result.errors:
-        f.write("\n=== DETAILED ERRORS ===\n")
-        for err in result.errors:
-            f.write(f"\nERROR in {err[0]}:\n{err[1]}\n")
+        if result.errors:
+            f.write("\n=== DETAILED ERRORS ===\n")
+            for err in result.errors:
+                f.write(f"\nERROR in {err[0]}:\n{err[1]}\n")
 
-    if result.failures:
-        f.write("\n=== DETAILED FAILURES ===\n")
-        for fail in result.failures:
-            f.write(f"\nFAIL in {fail[0]}:\n{fail[1]}\n")
+        if result.failures:
+            f.write("\n=== DETAILED FAILURES ===\n")
+            for fail in result.failures:
+                f.write(f"\nFAIL in {fail[0]}:\n{fail[1]}\n")
 
-# 4. Code de retour conforme pour l'intégration continue (CI)
-sys.exit(0 if result.wasSuccessful() else 1)
+    # 4. Code de retour conforme pour l'intégration continue (CI)
+    sys.exit(0 if result.wasSuccessful() else 1)

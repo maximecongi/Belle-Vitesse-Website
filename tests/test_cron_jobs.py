@@ -58,7 +58,7 @@ class CronJobsVerificationTest(unittest.TestCase):
         self.assertEqual(backup_job["last_run_display"], "16/09/2026 à 04:00:01")
 
     def test_cron_report_template_rendering(self):
-        app = create_app()
+        app = create_app("testing")
         with app.app_context():
             from flask import render_template
 
@@ -87,7 +87,8 @@ class CronJobsVerificationTest(unittest.TestCase):
     @patch("smtplib.SMTP")
     def test_send_report_email_recipient_monitoring(self, mock_smtp):
         from scripts.verify_cron_jobs import send_report_email
-        app = create_app()
+
+        app = create_app("testing")
         mock_server = MagicMock()
         mock_smtp.return_value.__enter__.return_value = mock_server
 
@@ -107,12 +108,15 @@ class CronJobsVerificationTest(unittest.TestCase):
             self.assertTrue(mock_server.send_message.called)
             sent_msg = mock_server.send_message.call_args[0][0]
             self.assertEqual(sent_msg["To"], "monitoring@bellevitesse.com")
-            self.assertEqual(sent_msg["From"], "Belle Vitesse <noreply@bellevitesse.com>")
+            self.assertEqual(
+                sent_msg["From"], "Belle Vitesse <noreply@bellevitesse.com>"
+            )
 
     @patch("smtplib.SMTP")
     def test_send_report_email_fallback_super_admin(self, mock_smtp):
         from scripts.verify_cron_jobs import send_report_email
-        app = create_app()
+
+        app = create_app("testing")
         mock_server = MagicMock()
         mock_smtp.return_value.__enter__.return_value = mock_server
 

@@ -10,7 +10,7 @@ from utils.document_utils import render_pdf_from_template
 class PDFCompressionTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.app = create_app()
+        cls.app = create_app("testing")
         cls.app.config["TESTING"] = True
 
     def setUp(self):
@@ -78,16 +78,21 @@ class PDFCompressionTestCase(unittest.TestCase):
         mock_weasy.HTML.return_value = mock_html_instance
 
         with patch.dict("sys.modules", {"weasyprint": mock_weasy}):
-            with patch("utils.pdf_compressor.compress_pdf", return_value=b"%PDF-final-compressed") as mock_comp:
+            with patch(
+                "utils.pdf_compressor.compress_pdf",
+                return_value=b"%PDF-final-compressed",
+            ) as mock_comp:
                 pdf_out = render_pdf_from_template(
                     "<html><body>Contrat</body></html>",
                     base_url="/",
                     compress=True,
-                    filename="contrat_client.pdf"
+                    filename="contrat_client.pdf",
                 )
 
                 self.assertEqual(pdf_out, b"%PDF-final-compressed")
-                mock_comp.assert_called_once_with(self.sample_pdf, filename="contrat_client.pdf")
+                mock_comp.assert_called_once_with(
+                    self.sample_pdf, filename="contrat_client.pdf"
+                )
 
 
 if __name__ == "__main__":
