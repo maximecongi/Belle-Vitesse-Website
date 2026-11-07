@@ -532,12 +532,7 @@ def admin_safety_rules_preview(waiver_id=None):
     Si waiver_id est absent ou introuvable, injecte un mock représentatif complet avec règles bilingues.
     Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
     """
-    from models import SafetyRulesWaiver as SRW, AppSetting
-    from services.admin.safety_rules_config import (
-        get_safety_rules_for_vehicles,
-        get_merged_general_safety_rules,
-        DEFAULT_HELMETS_INVENTORY,
-    )
+    from models import SafetyRulesWaiver as SRW
 
     waiver = None
     target_id = waiver_id or request.args.get("waiver_id")
@@ -556,25 +551,37 @@ def admin_safety_rules_preview(waiver_id=None):
         or getattr(waiver, "safety_technicians", "")
         or None
     )
-    general_rules = get_merged_general_safety_rules(safety_techs)
-    vehicle_rules = get_safety_rules_for_vehicles(
-        getattr(waiver, "vehicles_details", [])
-    )
-    from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
-
-    safety_equipment = get_safety_equipment_for_vehicles(
-        getattr(waiver, "vehicles_details", [])
-    )
-    helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
-
     is_pdf_format = request.args.get("format") == "pdf"
-    html_content = render_template(
+    html_content = render_safety_rules_document(
+        waiver, safety_techs, is_preview=not is_pdf_format
+    )
+
+    if is_pdf_format:
+        return safety_rules_pdf_response(
+            html_content, f"safety_rules_preview_{waiver.waiver_id}.pdf"
+        )
+
+    return html_content
+
+
+def render_safety_rules_document(waiver, safety_techs=None, is_preview=False):
+    """Rend le HTML du protocole BVSR (règles générales + référents + véhicules + équipements)."""
+    from models import AppSetting
+    from services.admin.safety_rules_config import (
+        DEFAULT_HELMETS_INVENTORY,
+        get_merged_general_safety_rules,
+        get_safety_equipment_for_vehicles,
+        get_safety_rules_for_vehicles,
+    )
+
+    vehicles_details = getattr(waiver, "vehicles_details", [])
+    return render_template(
         "pdf/safety_rules.html",
         waiver=waiver,
-        general_rules=general_rules,
-        vehicle_rules=vehicle_rules,
-        safety_equipment=safety_equipment,
-        helmets=helmets,
+        general_rules=get_merged_general_safety_rules(safety_techs),
+        vehicle_rules=get_safety_rules_for_vehicles(vehicles_details),
+        safety_equipment=get_safety_equipment_for_vehicles(vehicles_details),
+        helmets=getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY,
         safety_technicians=safety_techs,
         bv_signature=getattr(waiver, "bv_signature_data_uri", None),
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
@@ -585,26 +592,24 @@ def admin_safety_rules_preview(waiver_id=None):
             "hash",
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         ),
-        is_preview=(not is_pdf_format),
+        is_preview=is_preview,
     )
 
-    if is_pdf_format:
-        from utils.document_utils import render_pdf_from_template
 
-        pdf_bytes = render_pdf_from_template(
-            html_content=html_content,
-            base_url=current_app.root_path,
-            stylesheets=["css/styles.css", "css/admin/safety-rules-pdf.css"],
-        )
-        return Response(
-            pdf_bytes,
-            mimetype="application/pdf",
-            headers={
-                "Content-Disposition": f"inline; filename=safety_rules_preview_{waiver.waiver_id}.pdf"
-            },
-        )
+def safety_rules_pdf_response(html_content, filename):
+    """Compile le HTML BVSR en PDF (WeasyPrint) et le sert en ligne."""
+    from utils.document_utils import render_pdf_from_template
 
-    return html_content
+    pdf_bytes = render_pdf_from_template(
+        html_content=html_content,
+        base_url=current_app.root_path,
+        stylesheets=["css/styles.css", "css/admin/safety-rules-pdf.css"],
+    )
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={filename}"},
+    )
 
 
 # ── ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL - BVPA) ───────────────────

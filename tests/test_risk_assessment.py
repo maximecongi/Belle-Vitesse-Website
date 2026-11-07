@@ -289,9 +289,8 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b"Catalogue Analyse des Risques (BVRS)", res.data)
         self.assertIn(b"Risques G", res.data)
-        self.assertIn(b"btn-edit-general-risks", res.data)
-        self.assertIn(b"btn-edit-vehicle-risks", res.data)
-        self.assertIn(b"riskModal", res.data)
+        self.assertIn(b"/admin/fleet/risk-assessment/edit/general", res.data)
+        self.assertIn(b"/admin/fleet/risk-assessment/edit/vehicle/", res.data)
 
         # Vérifier que le bouton Matrice Flotte a bien été retiré de fleet_list
         res_fleet = self.client.get("/admin/fleet")
@@ -557,6 +556,173 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         html_proj = res_proj.data.decode("utf-8")
         self.assertNotIn("Utilisation sur route fermée uniquement", html_proj)
 
+    def test_catalog_overview_and_edit_routes(self):
+        """Vérifie l'affichage de la vue d'ensemble du catalogue et des pages d'édition dédiées."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 1
+            sess["admin_user_role"] = "administrator"
+
+        # 1. Vue d'ensemble du catalogue
+        res_cat = self.client.get("/admin/fleet/risk-assessment")
+        self.assertEqual(res_cat.status_code, 200)
+        html_cat = res_cat.data.decode("utf-8")
+        self.assertIn("Catalogue Analyse des Risques (BVRS)", html_cat)
+        self.assertIn("Risques Généraux", html_cat)
+        self.assertIn("Risques Spécifiques par Véhicules", html_cat)
+        self.assertIn("Rechercher un risque...", html_cat)
+        self.assertIn("Tout déplier", html_cat)
+
+        # 2. Page d'édition des risques généraux
+        res_edit_gen = self.client.get("/admin/fleet/risk-assessment/edit/general")
+        self.assertEqual(res_edit_gen.status_code, 200)
+        html_edit_gen = res_edit_gen.data.decode("utf-8")
+        self.assertIn("Modifier les Risques Généraux", html_edit_gen)
+        self.assertIn("Retour au catalogue", html_edit_gen)
+        self.assertIn("Niveau de risque", html_edit_gen)
+        self.assertIn("Catégorie", html_edit_gen)
+        self.assertIn("Aperçu PDF", html_edit_gen)
+
+        # 3. Page d'édition des risques spécifiques d'un véhicule (eRover)
+        res_edit_v = self.client.get("/admin/fleet/risk-assessment/edit/vehicle/erover")
+        self.assertEqual(res_edit_v.status_code, 200)
+        html_edit_v = res_edit_v.data.decode("utf-8")
+        self.assertIn("Modifier les Risques Spécifiques", html_edit_v)
+        self.assertIn("eRover", html_edit_v)
+
+    def test_ajax_api_endpoints_risk_assessment(self):
+        """Vérifie les endpoints AJAX save-risk, delete-risk et reorder-risks."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 1
+            sess["admin_user_role"] = "administrator"
+
+        test_risk_id = "test_risk_ajax_123"
+        new_risk_payload = {
+            "scope": "general",
+            "risk": {
+                "id": test_risk_id,
+                "category_fr": "ZONE DE TOURNAGE",
+                "category_en": "SHOOTING AREA",
+                "level": "major",
+                "title_fr": "Risque Test Unitaire AJAX",
+                "title_en": "Unit Test AJAX Risk",
+                "description_fr": "Description test en français.",
+                "description_en": "Test description in English.",
+                "recommendations_fr": ["Consigne test 1"],
+                "recommendations_en": ["Test instruction 1"],
+            },
+        }
+
+        # 1. Sauvegarde d'un risque
+        res_save = self.client.post(
+            "/admin/fleet/risk-assessment/api/save-risk",
+            data=json.dumps(new_risk_payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res_save.status_code, 200)
+        data_save = json.loads(res_save.data.decode("utf-8"))
+        self.assertEqual(data_save.get("status"), "success")
+        self.assertEqual(data_save["risk"]["title_fr"], "Risque Test Unitaire AJAX")
+
+        # 2. Réorganisation
+        res_reorder = self.client.post(
+            "/admin/fleet/risk-assessment/api/reorder-risks",
+            data=json.dumps({"scope": "general", "risk_ids": [test_risk_id]}),
+            content_type="application/json",
+        )
+        self.assertEqual(res_reorder.status_code, 200)
+        data_reorder = json.loads(res_reorder.data.decode("utf-8"))
+        self.assertEqual(data_reorder.get("status"), "success")
+
+        # 3. Suppression du risque créé
+        res_delete = self.client.post(
+            "/admin/fleet/risk-assessment/api/delete-risk",
+            data=json.dumps({"scope": "general", "risk_id": test_risk_id}),
+            content_type="application/json",
+        )
+        self.assertEqual(res_delete.status_code, 200)
+        data_delete = json.loads(res_delete.data.decode("utf-8"))
+        self.assertEqual(data_delete.get("status"), "success")
+
+    def test_save_single_risk_requires_title_and_aligns_translations(self):
+        """Titre FR obligatoire ; recommandations EN alignées sur FR, lignes vides ignorées."""
+        from services.admin.risk_assessment_config import save_single_risk
+
+        ok, msg, _, _ = save_single_risk("general", {"id": "x", "title_fr": "  "})
+        self.assertFalse(ok)
+        self.assertIn("obligatoire", msg)
+
+        ok, _, saved, _ = save_single_risk("general", {
+            "id": "align_test",
+            "title_fr": "Alignement",
+            "level": "bogus",
+            "recommendations_fr": ["A", "", "C"],
+            "recommendations_en": ["A en"],
+            "_translation_status": {"is_complete": False},
+        })
+        self.assertTrue(ok)
+        self.assertEqual(saved["level"], "standard")
+        self.assertEqual(saved["recommendations_fr"], ["A", "C"])
+        self.assertEqual(saved["recommendations_en"], ["A en", ""])
+        stored = next(r for r in get_general_risk_assessment() if r["id"] == "align_test")
+        self.assertNotIn("_translation_status", stored)
+
+    def test_edit_pages_do_not_mutate_default_constants(self):
+        """Les vues ne doivent pas injecter _translation_status dans les constantes par défaut."""
+        self.login_as_admin()
+        self.client.get("/admin/fleet/risk-assessment")
+        self.client.get("/admin/fleet/risk-assessment/edit/general")
+        for r in DEFAULT_GENERAL_RISK_ASSESSMENT:
+            self.assertNotIn("_translation_status", r)
+
+    def test_deleting_last_vehicle_risk_keeps_empty_list(self):
+        """Supprimer tous les risques d'un véhicule ne doit pas restaurer la dotation par défaut."""
+        from services.admin.risk_assessment_config import delete_single_risk
+
+        key = next(iter(DEFAULT_VEHICLE_RISK_ASSESSMENT))
+        risk_ids = [r["id"] for r in get_all_vehicle_risk_assessment_catalog()[key]["risks"]]
+        self.assertTrue(risk_ids)
+        for rid in risk_ids:
+            ok, _, _ = delete_single_risk("vehicle", rid, vehicle_key=key)
+            self.assertTrue(ok)
+        self.assertEqual(get_all_vehicle_risk_assessment_catalog()[key]["risks"], [])
+
+    def test_delete_unknown_risk_returns_error(self):
+        """La suppression d'un identifiant inexistant est signalée."""
+        from services.admin.risk_assessment_config import delete_single_risk
+
+        ok, msg, _ = delete_single_risk("general", "does_not_exist")
+        self.assertFalse(ok)
+        self.assertIn("introuvable", msg)
+
+
+    def test_shared_categories_span_general_and_vehicles(self):
+        """Les catégories sont communes : une catégorie créée sur un véhicule est proposée partout."""
+        from services.admin.risk_assessment_config import (
+            get_shared_risk_categories,
+            save_single_risk,
+        )
+
+        key = next(iter(DEFAULT_VEHICLE_RISK_ASSESSMENT))
+        ok, _, _, _ = save_single_risk("vehicle", {
+            "id": "shared_cat_test",
+            "title_fr": "Risque catégorie partagée",
+            "category_fr": "CATÉGORIE PARTAGÉE",
+            "category_en": "SHARED CATEGORY",
+        }, vehicle_key=key)
+        self.assertTrue(ok)
+
+        cats = get_shared_risk_categories()
+        by_fr = {c["fr"]: c["en"] for c in cats}
+        self.assertEqual(by_fr.get("CATÉGORIE PARTAGÉE"), "SHARED CATEGORY")
+        self.assertEqual(by_fr.get("ZONE DE TOURNAGE"), "SHOOTING AREA")
+        self.assertEqual(len(by_fr), len(cats))  # pas de doublon
+
+        self.login_as_admin()
+        html = self.client.get("/admin/fleet/risk-assessment/edit/general").data.decode("utf-8")
+        self.assertIn('id="bvrs-categories-data"', html)
+        self.assertIn("SHARED CATEGORY", html)
 
 if __name__ == "__main__":
     unittest.main()

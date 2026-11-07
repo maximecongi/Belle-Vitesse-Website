@@ -1409,6 +1409,27 @@ def get_general_risk_assessment():
     return list(DEFAULT_GENERAL_RISK_ASSESSMENT)
 
 
+def _strip_internal_keys(risks):
+    """Retire les clés calculées pour l'affichage (préfixe '_', ex. _translation_status)."""
+    return [
+        {k: v for k, v in r.items() if not str(k).startswith('_')} if isinstance(r, dict) else r
+        for r in (risks or [])
+    ]
+
+
+def annotate_translation_status(risks):
+    """
+    Retourne des COPIES des risques enrichies de '_translation_status'.
+    Ne jamais muter les dicts sources : ils peuvent être les constantes DEFAULT_*.
+    """
+    annotated = []
+    for r in risks or []:
+        copy = dict(r)
+        copy['_translation_status'] = check_risk_translation_status(copy)
+        annotated.append(copy)
+    return annotated
+
+
 def save_general_risk_assessment(risks):
     """
     Enregistre les risques généraux (Travelling) dans AppSetting.
@@ -1416,7 +1437,7 @@ def save_general_risk_assessment(risks):
     try:
         if not isinstance(risks, list):
             return False, "Format de risques invalide (liste requise)."
-        AppSetting.set('general_risk_assessment', json.dumps(risks, ensure_ascii=False))
+        AppSetting.set('general_risk_assessment', json.dumps(_strip_internal_keys(risks), ensure_ascii=False))
         return True, "Risques généraux enregistrés avec succès."
     except Exception as e:
         logger.error(f"Erreur sauvegarde general_risk_assessment : {e}")
@@ -1498,7 +1519,12 @@ def get_all_vehicle_risk_assessment_catalog():
                         break
 
             label = (custom_entry.get("label") if custom_entry else None) or def_label
-            risks = (custom_entry.get("risks") if custom_entry and custom_entry.get("risks") is not None else None) or def_risks
+            # Une liste personnalisée vide est volontaire (tous les risques supprimés) :
+            # ne pas retomber sur la dotation par défaut.
+            if custom_entry and custom_entry.get("risks") is not None:
+                risks = custom_entry.get("risks")
+            else:
+                risks = def_risks
 
             entry_dict = {
                 "id": vid,
@@ -1559,6 +1585,9 @@ def save_vehicle_risk_assessment(vehicle_key, data):
             if not isinstance(custom_dict, dict):
                 custom_dict = {}
 
+        if isinstance(data, dict) and isinstance(data.get('risks'), list):
+            data = dict(data, risks=_strip_internal_keys(data['risks']))
+
         if vehicle_key in custom_dict:
             custom_dict[vehicle_key].update(data)
         else:
@@ -1569,8 +1598,247 @@ def save_vehicle_risk_assessment(vehicle_key, data):
     except Exception as e:
         logger.error(f"Erreur sauvegarde vehicle_risk_assessment : {e}")
         return False, f"Erreur lors de la sauvegarde : {e}"
-        logger.error(f"Erreur sauvegarde vehicle_risk_assessment : {e}")
-        return False, f"Erreur lors de la sauvegarde : {e}"
+
+
+def check_risk_translation_status(risk):
+    """
+    Vérifie la complétude des traductions anglaises pour un risque.
+    Retourne { 'is_complete': bool, 'missing_count': int, 'missing_fields': list }.
+    """
+    missing_count = 0
+    missing_fields = []
+
+    # 1. Titre EN
+    title_en = (risk.get('title_en') or '').strip()
+    if not title_en or title_en.lower() in ('traduction manquante', 'traduction anglaise manquante'):
+        missing_count += 1
+        missing_fields.append('title_en')
+
+    # 2. Description EN
+    desc_en = (risk.get('description_en') or '').strip()
+    if not desc_en or desc_en.lower() in ('traduction manquante', 'traduction anglaise manquante'):
+        missing_count += 1
+        missing_fields.append('description_en')
+
+    # 3. Recommandations EN
+    recs_fr = risk.get('recommendations_fr') or risk.get('recommendations') or []
+    recs_en = risk.get('recommendations_en') or []
+    for idx in range(len(recs_fr)):
+        rec_en_val = (recs_en[idx] if idx < len(recs_en) else '').strip()
+        if not rec_en_val or rec_en_val.lower() in ('traduction manquante', 'traduction anglaise manquante'):
+            missing_count += 1
+            missing_fields.append(f'rec_en_{idx}')
+
+    return {
+        'is_complete': (missing_count == 0),
+        'missing_count': missing_count,
+        'missing_fields': missing_fields
+    }
+
+
+def get_risks_stats(risks):
+    """Calcule les statistiques globales d'une liste de risques."""
+    if not risks:
+        return {'total': 0, 'major': 0, 'standard': 0, 'incomplete_en': 0}
+    total = len(risks)
+    major = sum(1 for r in risks if r.get('level') == 'major')
+    standard = total - major
+    incomplete = sum(1 for r in risks if not check_risk_translation_status(r)['is_complete'])
+    return {
+        'total': total,
+        'major': major,
+        'standard': standard,
+        'incomplete_en': incomplete
+    }
+
+
+_RISK_TEXT_FIELDS = ('category_fr', 'category_en', 'title_fr', 'title_en', 'description_fr', 'description_en')
+
+
+def _normalize_risk_payload(risk_data):
+    """Valide et normalise un risque reçu du client (liste blanche des champs)."""
+    import re
+    import time
+
+    def clean_list(values):
+        if not isinstance(values, list):
+            return []
+        return [str(v or '').strip() for v in values]
+
+    risk = {k: str(risk_data.get(k) or '').strip() for k in _RISK_TEXT_FIELDS}
+    risk['title_fr'] = risk['title_fr'] or str(risk_data.get('title') or '').strip()
+    risk['level'] = 'major' if risk_data.get('level') == 'major' else 'standard'
+    risk['category_fr'] = risk['category_fr'] or 'GÉNÉRAL'
+    risk['category_en'] = risk['category_en'] or risk['category_fr']
+
+    recs_fr = clean_list(risk_data.get('recommendations_fr'))
+    recs_en = clean_list(risk_data.get('recommendations_en'))
+    # Aligner EN sur FR (une entrée EN par recommandation FR) et ignorer les lignes vides
+    pairs = [(fr, recs_en[i] if i < len(recs_en) else '') for i, fr in enumerate(recs_fr)]
+    pairs = [(fr, en) for fr, en in pairs if fr or en]
+    risk['recommendations_fr'] = [fr for fr, _ in pairs]
+    risk['recommendations_en'] = [en for _, en in pairs]
+
+    risk_id = str(risk_data.get('id') or '').strip()
+    if not risk_id:
+        slug = re.sub(r'[^a-zA-Z0-9]+', '_', risk['title_fr'].lower()).strip('_')
+        risk_id = slug or f"risk_{int(time.time())}"
+    risk['id'] = risk_id
+    return risk
+
+
+def _load_scope_risks(scope, vehicle_key):
+    """Retourne (risks, erreur) pour le scope demandé."""
+    if scope == 'general':
+        return list(get_general_risk_assessment()), None
+    if scope == 'vehicle':
+        if not vehicle_key:
+            return None, "Identifiant de véhicule manquant."
+        v_entry = get_all_vehicle_risk_assessment_catalog().get(vehicle_key)
+        if not v_entry:
+            return None, "Véhicule introuvable."
+        return list(v_entry.get('risks', [])), None
+    return None, "Scope inconnu."
+
+
+def _save_scope_risks(scope, vehicle_key, risks):
+    """Persiste la liste de risques du scope (seule la clé 'risks' est écrite pour un véhicule)."""
+    if scope == 'general':
+        return save_general_risk_assessment(risks)
+    return save_vehicle_risk_assessment(vehicle_key, {'risks': risks})
+
+
+def save_single_risk(scope, risk_data, vehicle_key=None):
+    """
+    Ajoute ou met à jour un risque individuel dans le scope 'general' ou 'vehicle'.
+    Retourne (success: bool, message: str, saved_risk: dict, stats: dict).
+    """
+    if not risk_data or not isinstance(risk_data, dict):
+        return False, "Données de risque invalides.", None, None
+
+    risk = _normalize_risk_payload(risk_data)
+    if not risk['title_fr']:
+        return False, "Le titre du risque en français est obligatoire.", None, None
+
+    risks, err = _load_scope_risks(scope, vehicle_key)
+    if err:
+        return False, err, None, None
+
+    found_idx = next((i for i, r in enumerate(risks) if str(r.get('id')) == risk['id']), -1)
+    if found_idx >= 0:
+        # Conserver d'éventuels champs non gérés par l'éditeur
+        merged = {k: v for k, v in risks[found_idx].items()
+                  if k not in ('title', 'description', 'recommendations', 'category')}
+        merged.update(risk)
+        risks[found_idx] = merged
+        risk = merged
+    else:
+        risks.append(risk)
+
+    ok, msg = _save_scope_risks(scope, vehicle_key, risks)
+    return ok, msg, dict(risk), get_risks_stats(risks)
+
+
+def delete_single_risk(scope, risk_id, vehicle_key=None):
+    """Supprime un risque par son identifiant."""
+    if not risk_id:
+        return False, "Identifiant de risque manquant.", None
+
+    risks, err = _load_scope_risks(scope, vehicle_key)
+    if err:
+        return False, err, None
+
+    remaining = [r for r in risks if str(r.get('id')) != str(risk_id)]
+    if len(remaining) == len(risks):
+        return False, "Risque introuvable.", None
+
+    ok, msg = _save_scope_risks(scope, vehicle_key, remaining)
+    return ok, msg, get_risks_stats(remaining)
+
+
+def reorder_risks_list(scope, risk_ids, vehicle_key=None):
+    """Réordonne la liste des risques selon les IDs fournis (IDs inconnus ignorés)."""
+    if not risk_ids or not isinstance(risk_ids, list):
+        return False, "Liste d'IDs invalide."
+
+    risks, err = _load_scope_risks(scope, vehicle_key)
+    if err:
+        return False, err
+
+    wanted = [str(rid) for rid in risk_ids]
+    risk_map = {str(r.get('id')): r for r in risks}
+    reordered = [risk_map[rid] for rid in wanted if rid in risk_map]
+    reordered += [r for r in risks if str(r.get('id')) not in wanted]
+    return _save_scope_risks(scope, vehicle_key, reordered)
+
+
+def get_shared_risk_categories(catalog=None):
+    """
+    Catégories communes à toute l'Analyse des Risques (risques généraux + tous les véhicules),
+    pour pouvoir les réutiliser d'un écran d'édition à l'autre.
+    Retourne [{"fr": "ZONE DE TOURNAGE", "en": "SHOOTING AREA"}, ...] sans doublon (clé FR
+    insensible à la casse), dans l'ordre d'apparition (généraux d'abord).
+    """
+    if catalog is None:
+        catalog = get_all_vehicle_risk_assessment_catalog()
+
+    all_risks = list(get_general_risk_assessment())
+    for v_data in catalog.values():
+        all_risks.extend(v_data.get('risks') or [])
+
+    categories = {}
+    for r in all_risks:
+        fr = (r.get('category_fr') or r.get('category') or '').strip()
+        if not fr:
+            continue
+        key = fr.upper()
+        en = (r.get('category_en') or '').strip()
+        if key not in categories:
+            categories[key] = {'fr': key, 'en': en}
+        elif not categories[key]['en'] and en:
+            categories[key]['en'] = en
+    return list(categories.values())
+
+
+def group_risks_by_category(risks):
+    """
+    Regroupe une liste de risques par catégorie (en préservant l'ordre d'apparition).
+    Retourne une liste de dicts :
+    [
+        {
+            "name": "ZONE DE TOURNAGE",
+            "display_name": "Zone de tournage",
+            "risks": [...],
+            "count": 6,
+            "major_count": 1,
+            "standard_count": 5,
+        },
+        ...
+    ]
+    """
+    groups = []
+    groups_map = {}
+    for r in risks:
+        cat = (r.get("category_fr") or r.get("category") or "GÉNÉRAL").strip()
+        cat_key = cat.upper()
+        if cat_key not in groups_map:
+            group = {
+                "name": cat_key,
+                "display_name": cat,
+                "risks": [],
+                "count": 0,
+                "major_count": 0,
+                "standard_count": 0,
+            }
+            groups.append(group)
+            groups_map[cat_key] = group
+        groups_map[cat_key]["risks"].append(r)
+        groups_map[cat_key]["count"] += 1
+        if r.get("level") == "major":
+            groups_map[cat_key]["major_count"] += 1
+        else:
+            groups_map[cat_key]["standard_count"] += 1
+    return groups
 
 
 def get_risk_assessment_for_vehicles(vehicles_details, catalog=None):

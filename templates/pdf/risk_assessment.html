@@ -95,8 +95,8 @@ company_name=company_name
 <!-- ═══════════ SECTION FRANÇAISE : ANALYSE DES RISQUES ═══════════ -->
 <div class="bvrs-page-break"></div>
 <section class="pdf-section">
-    <!-- Risques Généraux Travelling -->
-    <div class="bvrs-category-title">RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
+    <!-- Consignes Générales-->
+    <div class="bvrs-category-title">CONSIGNES GÉNÉRALES</div>
 
     <!-- ── BLOCS D'AVERTISSEMENT & SÉCURITÉ ROUTIÈRE (FR) ── -->
     {% set nrl_vehicles = waiver.non_road_legal_vehicles if (waiver and waiver.non_road_legal_vehicles is defined) else [] %}
@@ -186,7 +186,8 @@ company_name=company_name
             {% set _ = cat_list.append(c_name) %}
         {% endif %}
     {% endfor %}
-
+    <!-- Risques Généraux Travelling -->
+    <div class="bvrs-category-title">RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
     {% for cat in cat_list %}
         <div class="bvrs-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_fr or r.category) == cat %}
@@ -295,10 +296,8 @@ company_name=company_name
 
 <!-- ═══════════ SECTION ANGLAISE : RISK ASSESSMENT ═══════════ -->
 <section class="pdf-section">
-
-    <!-- General Risks Tracking Vehicles -->
-    <div class="bvrs-category-title">GENERAL RISKS — TRACKING VEHICLES</div>
-
+    <!-- General Instructions -->
+    <div class="bvrs-category-title">GENERAL INSTRUCTIONS</div>
     <!-- ── WARNING & ROAD SAFETY CALLOUTS (EN) ── -->
     {% if nrl_vehicles and nrl_vehicles|length > 0 %}
         <!-- Block 1 : Use on Closed Roads Only -->
@@ -353,7 +352,8 @@ company_name=company_name
             {% set _ = cat_en_list.append(c_name) %}
         {% endif %}
     {% endfor %}
-
+    <!-- General Risks Tracking Vehicles -->
+    <div class="bvrs-category-title">GENERAL RISKS — TRACKING VEHICLES</div>
     {% for cat in cat_en_list %}
         <div class="bvrs-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_en or r.category_fr or r.category) == cat %}
@@ -378,7 +378,7 @@ company_name=company_name
 
             <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
 
-            {% set recs = r.recommendations_en or r.recommendations_fr or r.recommendations %}
+            {% set recs = r.recommendations_fr or r.recommendations or r.recommendations_en %}{% set recs_en = r.recommendations_en or [] %}
             {% if recs and recs|length > 0 %}
             <div class="bvrs-recs-box">
                 <div class="bvrs-recs-title">Recommendations</div>
@@ -387,7 +387,7 @@ company_name=company_name
                         {% for rec in recs %}
                         <tr class="bvrs-rec-row">
                             <td class="bvrs-rec-check">✓</td>
-                            <td class="bvrs-rec-text">{{ rec }}</td>
+                            <td class="bvrs-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -434,7 +434,7 @@ company_name=company_name
 
                 <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
 
-                {% set recs = r.recommendations_en or r.recommendations_fr or r.recommendations %}
+                {% set recs = r.recommendations_fr or r.recommendations or r.recommendations_en %}{% set recs_en = r.recommendations_en or [] %}
                 {% if recs and recs|length > 0 %}
                 <div class="bvrs-recs-box">
                     <div class="bvrs-recs-title">Recommendations</div>
@@ -443,7 +443,7 @@ company_name=company_name
                             {% for rec in recs %}
                             <tr class="bvrs-rec-row">
                                 <td class="bvrs-rec-check">✓</td>
-                                <td class="bvrs-rec-text">{{ rec }}</td>
+                                <td class="bvrs-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>

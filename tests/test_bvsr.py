@@ -26,8 +26,11 @@ from services.admin.safety_rules_config import (
     get_safety_equipment_catalog,
     get_safety_equipment_for_vehicles,
     get_safety_rules_for_vehicles,
+    save_bv_referents_safety_rules,
+    save_general_safety_rules,
     save_safety_equipment_catalog,
     save_vehicle_safety_rules,
+    _match_legacy_custom_key,
 )
 from services.admin.waivers import (
     countersign_safety_rules,
@@ -609,9 +612,9 @@ class BvsrComprehensiveTest(BaseTestCase):
 
             # Enregistrement de règles spécifiques référents personnalisées
             custom_bv_fr = [
-                "Consigne BV avec {technicians}", "Arrêt d'urgence validé par {technicians_or}"]
+                "Consigne BV avec {technicians_and}", "Arrêt d'urgence validé par {technicians_or}"]
             custom_bv_en = [
-                "BV rule with {technicians}", "Emergency stop approved by {technicians_or}"]
+                "BV rule with {technicians_and}", "Emergency stop approved by {technicians_or}"]
             res_post = self.client.post("/admin/fleet/safety-rules", data={
                 "rule_scope": "bv_referents",
                 "rules_fr": custom_bv_fr,
@@ -707,6 +710,123 @@ class BvsrComprehensiveTest(BaseTestCase):
             self.assertIn("Casques jet 6 unités", html)
             self.assertIn("Jet helmets 6 units", html)
             self.assertIn("Élingues de sécurité", html)
+
+
+class SafetyRulesConfigRegressionTest(BaseTestCase):
+    """Régressions : appariement FR/EN, correspondance véhicule, catalogue d'équipements vide."""
+
+    def _login_admin(self):
+        user = User(firstname="Admin", lastname="BV", mail="admin-reg@bellevitesse.com", role="administrator")
+        db.session.add(user)
+        db.session.commit()
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user.id
+            sess["admin_user_role"] = "administrator"
+
+    def test_missing_en_translation_does_not_shift_pairs(self):
+        with self.app.app_context():
+            self._login_admin()
+            res = self.client.post("/admin/fleet/safety-rules", data={
+                "vehicle_id": "test_pairs",
+                "label": "Test Paires",
+                "rules_fr[]": ["Règle A", "Règle B", "Règle C", ""],
+                "rules_en[]": ["Rule A", "", "Rule C", ""],
+            })
+            self.assertEqual(res.status_code, 302)
+            entry = get_all_vehicle_safety_rules_catalog()["test_pairs"]
+            self.assertEqual(entry["rules_fr"], ["Règle A", "Règle B", "Règle C"])
+            self.assertEqual(entry["rules_en"], ["Rule A", "", "Rule C"])
+
+    def test_general_rules_keep_pairs_aligned(self):
+        with self.app.app_context():
+            self.assertTrue(save_general_safety_rules(
+                rules_fr=["G1", "G2", "", "G4"], rules_en=["E1", "", "", "E4"]))
+            rules = get_general_safety_rules()
+            self.assertEqual(rules["rules_fr"], ["G1", "G2", "G4"])
+            self.assertEqual(rules["rules_en"], ["E1", "", "E4"])
+
+    def test_numeric_vehicle_id_never_matches_by_substring(self):
+        custom = {"3": {"rules_fr": ["x"]}, "etrike": {"rules_fr": ["y"]}}
+        fleet_ids = {"3", "7"}
+        # "3" est l'id d'un véhicule réel : il ne doit pas être rattaché à « eTrike 360 »
+        self.assertEqual(_match_legacy_custom_key("eTrike 360", custom, fleet_ids), "etrike")
+        self.assertIsNone(_match_legacy_custom_key("eRover", custom, fleet_ids))
+        # Pas de correspondance partielle à l'intérieur d'un mot
+        self.assertIsNone(_match_legacy_custom_key("eTrikeXL", {"etrike": {}}, set()))
+        # La clé la plus spécifique l'emporte
+        self.assertEqual(
+            _match_legacy_custom_key("eTrike 360", {"etrike": {}, "etrike 360": {}}, set()),
+            "etrike 360")
+
+    def test_empty_equipment_catalog_is_respected(self):
+        with self.app.app_context():
+            self.assertTrue(save_safety_equipment_catalog([]))
+            self.assertEqual(get_safety_equipment_catalog(), [])
+
+    def test_save_redirects_back_to_edited_section(self):
+        with self.app.app_context():
+            self._login_admin()
+            cases = [
+                ({"vehicle_id": "test_anchor", "label": "Ancre", "rules_fr[]": ["R"], "rules_en[]": ["R"]},
+                 "#bvsr-vehicle-test_anchor"),
+                ({"rule_scope": "general", "rules_fr[]": ["G"], "rules_en[]": ["G"]}, "#bvsr-section-general"),
+                ({"rule_scope": "bv_referents", "rules_fr[]": ["B"], "rules_en[]": ["B"]}, "#bvsr-section-referents"),
+                ({"rule_scope": "equipment_catalog", "equipment_id[]": ["eq_a"], "equipment_fr[]": ["Casque"],
+                  "equipment_en[]": ["Helmet"]}, "#bvsr-section-equipment"),
+            ]
+            for data, expected in cases:
+                res = self.client.post("/admin/fleet/safety-rules", data=data)
+                self.assertEqual(res.status_code, 302)
+                self.assertTrue(res.headers["Location"].endswith(expected), res.headers["Location"])
+
+    def test_catalog_flags_missing_translations(self):
+        with self.app.app_context():
+            self._login_admin()
+            save_vehicle_safety_rules(vehicle_id="test_missing", label="Manque EN",
+                                      rules_fr=["Règle A", "Règle B"], rules_en=["Rule A", ""])
+            html = self.client.get("/admin/fleet/safety-rules").get_data(as_text=True)
+            self.assertIn('id="bvsr-vehicle-test_missing"', html)
+            self.assertIn("Traduction anglaise manquante", html)
+            self.assertIn("1 traduction manquante", html)
+            self.assertIn("{technicians_and}", html)
+            self.assertIn("protocolPreviewModal", html)
+
+    def test_protocol_preview_renders_selected_vehicles_and_referents(self):
+        with self.app.app_context():
+            self._login_admin()
+            save_vehicle_safety_rules(vehicle_id="test_prev", label="Véhicule Aperçu",
+                                      rules_fr=["Consigne aperçu unique"], rules_en=["Unique preview rule"])
+            save_bv_referents_safety_rules(rules_fr=["Référents : {technicians_and}."],
+                                           rules_en=["Referents: {technicians_and}."])
+            res = self.client.get(
+                "/admin/fleet/safety-rules/preview?vehicle=test_prev&technicians=Alice%20Martin,%20Bob%20Durand")
+            self.assertEqual(res.status_code, 200)
+            html = res.get_data(as_text=True)
+            self.assertIn("Consigne aperçu unique", html)
+            self.assertIn("Référents : Alice Martin et Bob Durand.", html)
+
+            # Sans référent : la section référents n'est pas injectée
+            html_no_ref = self.client.get("/admin/fleet/safety-rules/preview?vehicle=test_prev").get_data(as_text=True)
+            self.assertNotIn("Référents :", html_no_ref)
+
+    def test_legacy_technicians_placeholder_still_supported(self):
+        with self.app.app_context():
+            save_bv_referents_safety_rules(
+                rules_fr=["Validé par {technicians} ou {technicians_or}."],
+                rules_en=["Approved by {technicians}."])
+            # L'éditeur présente le nouveau nom
+            stored = get_bv_referents_safety_rules()
+            self.assertEqual(stored["rules_fr"], ["Validé par {technicians_and} ou {technicians_or}."])
+            self.assertEqual(stored["rules_en"], ["Approved by {technicians_and}."])
+            # Ancien et nouveau nom sont remplacés à la génération
+            legacy = format_bv_referents_rules("A, B", {"rules_fr": ["{technicians} / {technicians_and}"], "rules_en": []})
+            self.assertEqual(legacy["rules_fr"], ["A et B / A et B"])
+
+    def test_protocol_preview_requires_admin(self):
+        with self.app.app_context():
+            res = self.client.get("/admin/fleet/safety-rules/preview")
+            self.assertIn(res.status_code, (302, 401, 403))
 
 
 if __name__ == '__main__':

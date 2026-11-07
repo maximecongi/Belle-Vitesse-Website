@@ -1,49 +1,27 @@
 /**
  * risk-assessment-catalog.js — Contrôleur d'interface d'administration pour l'Analyse des Risques (BVRS).
- * 
- * Version 2.0 (Design System Belle Vitesse) :
- * - Navigation par onglets de catégories horizontaux (Pill Tabs) avec compteur dynamique
- * - Vue « Tous les risques » et filtres par catégorie dédiée
- * - Cartes accordéons compactes (dépliables/repliables) avec prévisualisation bilingue
- * - Switch de sévérité ergonomique (Majeur / Standard)
- * - Création dynamique de nouvelles catégories à la volée
- * - Réorganisation et suppression contextuelles
- * - Sérialisation JSON robuste avant soumission
+ *
+ * 1. Vue d'ensemble du Catalogue (/admin/fleet/risk-assessment) :
+ *    - Recherche textuelle instantanée (titres, catégories, descriptions, consignes)
+ *    - Filtres par pilules (Tous, Majeurs, EN incomplet)
+ *    - Accordéons par catégories, bouton global « Tout déplier »
+ *    - Dépliage des risques spécifiques par véhicule
+ *
+ * 2. Écran d'édition Master-Detail (/admin/fleet/risk-assessment/edit/...) :
+ *    - Sidebar : liste réordonnable (glisser-déposer au sein d'une catégorie), filtres et recherche
+ *    - Onglet Édition : niveau, catégorie (création inline), champs bilingues, recommandations
+ *    - Onglet Aperçu PDF : même balisage et même feuille de style que le PDF WeasyPrint
+ *    - Barre inférieure : état modifié, Annuler / Enregistrer (AJAX)
+ *    - Modale anti-perte de données avant tout changement de risque
+ *
+ * Les modifications ne touchent la liste en mémoire (risksList) qu'après un enregistrement
+ * réussi : Annuler / Ignorer restaurent toujours l'état serveur.
  */
 
-function initRiskAssessmentCatalog() {
-    const modal = document.getElementById('riskModal');
-    if (!modal) return;
+(function () {
+    'use strict';
 
-    const modalTitle = document.getElementById('riskModalTitle');
-    const modalSubtitle = document.getElementById('riskModalSubtitle');
-    const inputAction = document.getElementById('modal_risk_action');
-    const inputVehicleKey = document.getElementById('modal_risk_vehicle_key');
-    const inputLabel = document.getElementById('modal_risk_label');
-    const wrapVehicleLabel = document.getElementById('modal_vehicle_label_wrap');
-    const risksContainer = document.getElementById('bvrs-risks-container');
-    const emptyState = document.getElementById('bvrs-risks-empty-state');
-    const btnAddRisk = document.getElementById('btn-add-risk-item');
-    const btnToggleAllCards = document.getElementById('btn-toggle-all-cards');
-    const toggleAllLabel = document.getElementById('toggle-all-label');
-    const countBadge = document.getElementById('bvrs-risks-count-badge');
-    const activeCatName = document.getElementById('bvrs-active-cat-name');
-    const activeCatDisplay = document.getElementById('bvrs-active-cat-display');
-    const btnRenameCategory = document.getElementById('btn-rename-category');
-    const renameCatWrap = document.getElementById('bvrs-rename-cat-wrap');
-    const renameCatInput = document.getElementById('bvrs-rename-cat-input');
-    const btnConfirmRename = document.getElementById('btn-confirm-rename-cat');
-    const btnCancelRename = document.getElementById('btn-cancel-rename-cat');
-    const tabsContainer = document.getElementById('bvrs-category-tabs');
-    const form = document.getElementById('riskForm');
-    const modalIconWrap = document.getElementById('modalRiskIconWrap');
-
-    // Badges KPI d'en-tête de modale
-    const headerMajorCount = document.getElementById('modalRiskMajorCount');
-    const headerStdCount = document.getElementById('modalRiskStdCount');
-    const headerTotalCount = document.getElementById('modalRiskTotalCount');
-
-    let currentActiveCategory = 'all';
+    const MISSING_SENTINELS = ['traduction manquante', 'traduction anglaise manquante'];
 
     function escapeHtml(text) {
         if (!text) return '';
@@ -52,954 +30,1144 @@ function initRiskAssessmentCatalog() {
         return div.innerHTML;
     }
 
-    function openModal() {
-        modal.classList.remove('u-d-none');
-        modal.classList.add('is-active');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('u-overflow-hidden');
-        if (window.lucide) window.lucide.createIcons();
+    /** Une valeur EN est manquante si vide ou égale à un ancien texte de remplissage. */
+    function isMissingTranslation(value) {
+        const v = (value || '').trim();
+        return !v || MISSING_SENTINELS.includes(v.toLowerCase());
     }
 
-    function closeModal() {
-        modal.classList.add('u-d-none');
-        modal.classList.remove('is-active');
-        modal.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('u-overflow-hidden');
+    /** Nettoie une valeur EN héritée (ancien texte de remplissage → chaîne vide). */
+    function cleanEn(value) {
+        return isMissingTranslation(value) ? '' : String(value).trim();
     }
 
-    // Gestion de la fermeture modale
-    document.querySelectorAll('.btn-close-risk-modal').forEach(function (btn) {
-        btn.addEventListener('click', closeModal);
-    });
-
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && (modal.classList.contains('is-active') || !modal.classList.contains('u-d-none'))) {
-            closeModal();
-        }
-    });
-
-    // ── Extraction des catégories uniques ──
-    function getCategoriesList() {
-        const categories = [];
-        const cards = risksContainer.querySelectorAll('.bvrs-risk-accordion');
-        cards.forEach(function (card) {
-            const cat = (card.dataset.category || '').trim().toUpperCase();
-            if (cat && !categories.includes(cat)) {
-                categories.push(cat);
-            }
-        });
-        if (categories.length === 0) {
-            categories.push('ZONE DE TOURNAGE');
-        }
-        return categories;
-    }
-
-    // ── Mise à jour des onglets et compteurs ──
-    function refreshTabsAndCounters() {
-        if (!tabsContainer || !risksContainer) return;
-
-        const cards = risksContainer.querySelectorAll('.bvrs-risk-accordion');
-        let totalCount = cards.length;
-        let majorCount = 0;
-        let stdCount = 0;
-
-        const catCounts = {};
-        cards.forEach(function (card) {
-            const isMajor = card.classList.contains('bvrs-risk-accordion--major');
-            if (isMajor) majorCount++; else stdCount++;
-
-            const cat = (card.dataset.category || '').trim().toUpperCase() || 'ZONE DE TOURNAGE';
-            catCounts[cat] = (catCounts[cat] || 0) + 1;
-        });
-
-        // 1. Mise à jour des badges d'en-tête
-        if (headerMajorCount) {
-            headerMajorCount.textContent = `${majorCount} majeur${majorCount > 1 ? 's' : ''}`;
-        }
-        if (headerStdCount) {
-            headerStdCount.textContent = `${stdCount} standard${stdCount > 1 ? 's' : ''}`;
-        }
-        if (headerTotalCount) {
-            headerTotalCount.textContent = `${totalCount} risque${totalCount > 1 ? 's' : ''}`;
-        }
-
-        // 2. Construction des onglets de catégories
-        tabsContainer.innerHTML = '';
-
-        // Onglet « Tous les risques »
-        const allTab = document.createElement('button');
-        allTab.type = 'button';
-        allTab.className = `bvrs-category-tab ${currentActiveCategory === 'all' ? 'is-active' : ''}`;
-        allTab.innerHTML = `<span>Tous les risques</span><span class="bvrs-tab-badge">${totalCount}</span>`;
-        allTab.addEventListener('click', function () {
-            setActiveCategory('all');
-        });
-        tabsContainer.appendChild(allTab);
-
-        // Onglets par catégorie
-        const categories = getCategoriesList();
-        categories.forEach(function (cat) {
-            const count = catCounts[cat] || 0;
-            const tab = document.createElement('button');
-            tab.type = 'button';
-            tab.className = `bvrs-category-tab ${currentActiveCategory === cat ? 'is-active' : ''}`;
-            tab.innerHTML = `<span>${escapeHtml(cat)}</span><span class="bvrs-tab-badge">${count}</span>`;
-            tab.title = 'Cliquer pour filtrer • Double-cliquer pour renommer';
-            tab.addEventListener('click', function () {
-                setActiveCategory(cat);
-            });
-            // Double-clic sur l'onglet pour renommer directement
-            tab.addEventListener('dblclick', function (e) {
-                e.preventDefault();
-                setActiveCategory(cat);
-                openRenameCategory();
-            });
-            tabsContainer.appendChild(tab);
-        });
-
-        // Pilule '+ Catégorie' intégrée en dernière position du ruban d'onglets (mêmes proportions exactes)
-        const addCatPill = document.createElement('button');
-        addCatPill.type = 'button';
-        addCatPill.className = 'bvrs-category-tab bvrs-category-tab--add';
-        addCatPill.title = 'Créer une nouvelle catégorie';
-        addCatPill.innerHTML = `<span>Catégorie</span><span class="bvrs-tab-badge bvrs-tab-badge--add"><i data-lucide="plus" class="u-w-12 u-h-12"></i></span>`;
-        addCatPill.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showInlineCategoryInput(addCatPill);
-        });
-        tabsContainer.appendChild(addCatPill);
-
-        // Vérifier si la catégorie active existe toujours
-        if (currentActiveCategory !== 'all' && !categories.includes(currentActiveCategory)) {
-            currentActiveCategory = 'all';
-        }
-
-        filterRisks();
-        if (window.lucide) window.lucide.createIcons();
-    }
-
-    // ── Saisie inline d'une nouvelle catégorie dans le ruban ──
-    function showInlineCategoryInput(targetPill) {
-        const wrap = document.createElement('div');
-        wrap.className = 'bvrs-category-tab-inline-wrap';
-        wrap.innerHTML = `
-            <input type="text" class="bvrs-category-inline-input" placeholder="NOM CATÉGORIE..." maxlength="40">
-            <button type="button" class="bvrs-category-inline-btn bvrs-category-inline-btn--confirm" title="Valider (Entrée ↵)">
-                <i data-lucide="check" class="u-w-14 u-h-14"></i>
-            </button>
-            <button type="button" class="bvrs-category-inline-btn bvrs-category-inline-btn--cancel" title="Annuler (Échap)">
-                <i data-lucide="x" class="u-w-14 u-h-14"></i>
-            </button>
-        `;
-
-        targetPill.replaceWith(wrap);
-        if (window.lucide) window.lucide.createIcons();
-
-        const input = wrap.querySelector('.bvrs-category-inline-input');
-        const btnConfirm = wrap.querySelector('.bvrs-category-inline-btn--confirm');
-        const btnCancel = wrap.querySelector('.bvrs-category-inline-btn--cancel');
-
-        function cancel() {
-            wrap.replaceWith(targetPill);
-            if (window.lucide) window.lucide.createIcons();
-        }
-
-        function confirmCategory() {
-            const val = input.value.trim().toUpperCase();
-            if (!val) {
-                cancel();
-                return;
-            }
-
-            const newRisk = {
-                level: 'standard',
-                category_fr: val,
-                category_en: val,
-                title_fr: '',
-                title_en: '',
-                description_fr: '',
-                description_en: '',
-                recommendations_fr: [''],
-                recommendations_en: ['']
-            };
-
-            const card = renderRiskAccordion(newRisk);
-            risksContainer.appendChild(card);
-            currentActiveCategory = val;
-            refreshTabsAndCounters();
-
-            // Déplier et focaliser immédiatement la nouvelle carte
-            card.classList.add('is-expanded');
-            const body = card.querySelector('.bvrs-risk-accordion-body');
-            if (body) body.classList.remove('u-d-none');
-            if (window.lucide) window.lucide.createIcons();
-
-            const inputTitle = card.querySelector('.bvrs-risk-title-fr');
-            if (inputTitle) {
-                inputTitle.focus();
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        btnConfirm.addEventListener('click', confirmCategory);
-        btnCancel.addEventListener('click', cancel);
-
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                confirmCategory();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                cancel();
-            }
-        });
-
-        input.focus();
-    }
-
-    function setActiveCategory(cat) {
-        currentActiveCategory = cat;
-        refreshTabsAndCounters();
-    }
-
-    function filterRisks() {
-        const cards = risksContainer.querySelectorAll('.bvrs-risk-accordion');
-        let visibleCount = 0;
-
-        cards.forEach(function (card) {
-            const cardCat = (card.dataset.category || '').trim().toUpperCase() || 'ZONE DE TOURNAGE';
-            const matches = (currentActiveCategory === 'all' || cardCat === currentActiveCategory);
-
-            if (matches) {
-                card.classList.remove('u-d-none');
-                visibleCount++;
-            } else {
-                card.classList.add('u-d-none');
-            }
-        });
-
-        // Mise à jour du sous-titre de contexte et du bouton renommer
-        if (activeCatDisplay && renameCatWrap) {
-            activeCatDisplay.classList.remove('u-d-none');
-            renameCatWrap.classList.add('u-d-none');
-        }
-
-        if (activeCatName) {
-            activeCatName.textContent = (currentActiveCategory === 'all' ? 'Tous les risques' : currentActiveCategory);
-        }
-        if (countBadge) {
-            countBadge.textContent = `${visibleCount} risque${visibleCount > 1 ? 's' : ''}`;
-        }
-
-        if (btnRenameCategory) {
-            if (currentActiveCategory === 'all') {
-                btnRenameCategory.classList.add('u-d-none');
-            } else {
-                btnRenameCategory.classList.remove('u-d-none');
-            }
-        }
-
-        // État vide
-        if (emptyState) {
-            if (visibleCount === 0) {
-                emptyState.classList.remove('u-d-none');
-            } else {
-                emptyState.classList.add('u-d-none');
-            }
-        }
-
-        // Mise à jour de l'état du bouton Tout déplier / replier
-        updateToggleAllButton();
-    }
-
-    function updateToggleAllButton() {
-        if (!btnToggleAllCards || !toggleAllLabel) return;
-        const visibleCards = risksContainer.querySelectorAll('.bvrs-risk-accordion:not(.u-d-none)');
-        if (visibleCards.length === 0) return;
-
-        let hasCollapsed = false;
-        visibleCards.forEach(function (card) {
-            if (!card.classList.contains('is-expanded')) {
-                hasCollapsed = true;
-            }
-        });
-
-        if (hasCollapsed) {
-            toggleAllLabel.textContent = 'Tout déplier';
-        } else {
-            toggleAllLabel.textContent = 'Tout replier';
-        }
-    }
-
-    // ── Logique de renommage de catégorie ──
-    function openRenameCategory() {
-        if (currentActiveCategory === 'all') return;
-        if (activeCatDisplay && renameCatWrap && renameCatInput) {
-            activeCatDisplay.classList.add('u-d-none');
-            renameCatWrap.classList.remove('u-d-none');
-            renameCatInput.value = currentActiveCategory;
-            if (window.lucide) window.lucide.createIcons();
-            renameCatInput.focus();
-            renameCatInput.select();
-        }
-    }
-
-    function cancelRenameCategory() {
-        if (activeCatDisplay && renameCatWrap) {
-            renameCatWrap.classList.add('u-d-none');
-            activeCatDisplay.classList.remove('u-d-none');
-        }
-    }
-
-    function confirmRenameCategory() {
-        if (!renameCatInput) return;
-        const oldCat = currentActiveCategory;
-        const newCat = renameCatInput.value.trim().toUpperCase();
-
-        if (!newCat || newCat === oldCat) {
-            cancelRenameCategory();
-            return;
-        }
-
-        // Mettre à jour toutes les cartes associées à l'ancienne catégorie
-        const cards = risksContainer.querySelectorAll('.bvrs-risk-accordion');
-        cards.forEach(function (card) {
-            if ((card.dataset.category || '').trim().toUpperCase() === oldCat) {
-                card.dataset.category = newCat;
-                const tag = card.querySelector('.bvrs-risk-cat-tag');
-                if (tag) tag.textContent = newCat;
-            }
-        });
-
-        // Synchroniser tous les selects de catégories dans les cartes
-        synchronizeAllCategorySelects();
-
-        currentActiveCategory = newCat;
-        cancelRenameCategory();
-        refreshTabsAndCounters();
-    }
-
-    function synchronizeAllCategorySelects() {
-        const allCats = getCategoriesList();
-        document.querySelectorAll('.bvrs-risk-accordion').forEach(function (c) {
-            const select = c.querySelector('.bvrs-risk-category-select');
-            if (select) {
-                const currentVal = c.dataset.category;
-                select.innerHTML = '';
-                allCats.forEach(function (catName) {
-                    const opt = document.createElement('option');
-                    opt.value = catName;
-                    opt.textContent = catName;
-                    if (catName === currentVal) opt.selected = true;
-                    select.appendChild(opt);
-                });
-                const optNew = document.createElement('option');
-                optNew.value = '__new__';
-                optNew.textContent = '+ Nouvelle catégorie...';
-                select.appendChild(optNew);
-            }
-        });
-    }
-
-    if (btnRenameCategory) {
-        btnRenameCategory.addEventListener('click', openRenameCategory);
-    }
-    if (btnConfirmRename) {
-        btnConfirmRename.addEventListener('click', confirmRenameCategory);
-    }
-    if (btnCancelRename) {
-        btnCancelRename.addEventListener('click', cancelRenameCategory);
-    }
-    if (renameCatInput) {
-        renameCatInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                confirmRenameCategory();
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                cancelRenameCategory();
-            }
-        });
-    }
-
-    // ── Création d'une recommandation individuelle ──
-    function createRecElement(recFr, recEn, onRecChange) {
-        const wrap = document.createElement('div');
-        wrap.className = 'u-flex u-align-center u-gap-2 bvrs-rec-item u-mb-1';
-        wrap.innerHTML = `
-            <span class="u-text-success u-font-bold">✓</span>
-            <input type="text" class="form-input form-input-sm u-flex-1 bvrs-rec-fr" placeholder="Recommandation FR..." value="${escapeHtml(recFr || '')}">
-            <input type="text" class="form-input form-input-sm u-flex-1 bvrs-rec-en" placeholder="Recommendation EN (optionnel)..." value="${escapeHtml(recEn || '')}">
-            <button type="button" class="admin-btn admin-btn-xs admin-btn-danger btn-del-rec" title="Supprimer la recommandation">
-                <i data-lucide="x"></i>
-            </button>
-        `;
-        wrap.querySelector('.btn-del-rec').addEventListener('click', function () {
-            wrap.remove();
-            if (onRecChange) onRecChange();
-        });
-        return wrap;
-    }
-
-    // ── Création d'une carte accordéon de risque ──
-    function renderRiskAccordion(risk) {
-        const card = document.createElement('div');
-        const level = risk.level || 'standard';
-        const isMajor = (level === 'major');
-        const category = (risk.category_fr || risk.category || 'ZONE DE TOURNAGE').trim().toUpperCase();
-        const titleFr = risk.title_fr || risk.title || '';
-        const titleEn = risk.title_en || '';
-        const descFr = risk.description_fr || risk.description || '';
-        const descEn = risk.description_en || '';
+    /** Miroir de services.admin.risk_assessment_config.check_risk_translation_status. */
+    function computeTranslationStatus(risk) {
+        let missing = 0;
+        if (isMissingTranslation(risk.title_en)) missing++;
+        if (isMissingTranslation(risk.description_en)) missing++;
         const recsFr = risk.recommendations_fr || risk.recommendations || [];
         const recsEn = risk.recommendations_en || [];
-        const maxRecs = Math.max(recsFr.length, recsEn.length);
+        recsFr.forEach(function (_, idx) {
+            if (isMissingTranslation(recsEn[idx])) missing++;
+        });
+        return { is_complete: missing === 0, missing_count: missing };
+    }
 
-        card.className = `admin-card bvrs-risk-accordion ${isMajor ? 'bvrs-risk-accordion--major' : 'bvrs-risk-accordion--standard'}`;
-        card.dataset.category = category;
+    function refreshIcons() {
+        if (window.lucide) window.lucide.createIcons();
+    }
 
-        card.innerHTML = `
-            <!-- En-tête synthétique cliquable (Toujours visible) -->
-            <div class="bvrs-risk-accordion-header">
-                <div class="bvrs-risk-header-left">
-                    <button type="button" class="bvrs-level-pill ${isMajor ? 'bvrs-level-pill--major' : 'bvrs-level-pill--standard'}" title="Cliquer pour basculer Majeur / Standard">
-                        ${isMajor ? 'MAJEUR' : 'STANDARD'}
-                    </button>
-                    <span class="bvrs-risk-cat-tag">${escapeHtml(category)}</span>
-                    <div class="bvrs-risk-title-preview">
-                        <strong class="bvrs-risk-title-fr-text">${escapeHtml(titleFr || 'Nouveau risque sans titre')}</strong>
-                        <span class="bvrs-risk-title-en-text ${titleEn ? '' : 'u-d-none'}">${titleEn ? ' / ' + escapeHtml(titleEn) : ''}</span>
-                    </div>
-                </div>
-                <div class="bvrs-risk-header-right">
-                    <span class="badge-pill u-bg-neutral-light u-text-muted u-text-2xs bvrs-rec-count-pill">${maxRecs} consigne${maxRecs > 1 ? 's' : ''}</span>
-                    <div class="bvrs-risk-header-actions" onclick="event.stopPropagation();">
-                        <button type="button" class="bvsr-action-btn btn-move-risk-up" title="Monter dans la catégorie">
-                            <i data-lucide="chevron-up"></i>
-                        </button>
-                        <button type="button" class="bvsr-action-btn btn-move-risk-down" title="Descendre dans la catégorie">
-                            <i data-lucide="chevron-down"></i>
-                        </button>
-                        <button type="button" class="bvsr-action-btn bvsr-action-btn--delete btn-delete-risk" title="Supprimer ce risque">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </div>
-                    <button type="button" class="bvrs-accordion-chevron" aria-label="Déplier / Replier">
-                        <i data-lucide="chevron-down"></i>
-                    </button>
-                </div>
-            </div>
+    /** Pilules de filtre ERP : actif = admin-btn-primary, inactif = admin-btn-quaternary. */
+    function setActivePill(pills, activeBtn) {
+        pills.forEach(function (b) {
+            const on = b === activeBtn;
+            b.classList.toggle('active', on);
+            b.classList.toggle('admin-btn-primary', on);
+            b.classList.toggle('admin-btn-quaternary', !on);
+            b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+    }
 
-            <!-- Corps détaillé d'édition (Dépliable) -->
-            <div class="bvrs-risk-accordion-body u-d-none">
-                <!-- Ligne de configuration : Sévérité & Catégorie -->
-                <div class="u-flex u-align-center u-justify-between u-gap-3 u-mb-3 u-flex-wrap">
-                    <div class="u-flex u-align-center u-gap-2">
-                        <label class="form-label u-text-xs u-font-bold u-m-0">Niveau de risque :</label>
-                        <div class="bvrs-level-toggle">
-                            <button type="button" class="bvrs-level-btn bvrs-level-btn--major ${isMajor ? 'is-active' : ''}" data-level="major">
-                                MAJEUR
-                            </button>
-                            <button type="button" class="bvrs-level-btn bvrs-level-btn--standard ${!isMajor ? 'is-active' : ''}" data-level="standard">
-                                STANDARD
-                            </button>
-                        </div>
-                        <input type="hidden" class="bvrs-risk-level-input" value="${level}">
-                    </div>
+    /** Badge de niveau (.badge-pill) : MAJEUR = danger, STANDARD = warning. */
+    function levelBadgeHtml(level) {
+        return level === 'major'
+            ? '<span class="badge-pill badge-pill-xs" data-val="danger">Majeur</span>'
+            : '<span class="badge-pill badge-pill-xs" data-val="warning">Standard</span>';
+    }
 
-                    <div class="u-flex u-align-center u-gap-2 u-flex-1 u-justify-end">
-                        <label class="form-label u-text-xs u-font-bold u-m-0">Catégorie :</label>
-                        <select class="form-input form-input-sm bvrs-risk-category-select u-w-auto">
-                            <!-- Rempli dynamiquement -->
-                        </select>
-                        <input type="text" class="form-input form-input-sm bvrs-risk-category-custom u-w-180 u-d-none" placeholder="Nom de la nouvelle catégorie...">
-                    </div>
-                </div>
+    function flash(message, category) {
+        if (typeof window.showFlash === 'function') {
+            window.showFlash(message, category || 'info');
+        } else if (category === 'error') {
+            window.alert(message);
+        }
+    }
 
-                <!-- Grille bilingue Titres -->
-                <div class="u-grid u-gap-2 u-grid-cols-2 u-mb-3">
-                    <div>
-                        <label class="form-label u-text-xs u-font-bold u-mb-1">Titre du Risque (FR) <span class="u-text-danger">*</span></label>
-                        <input type="text" class="form-input form-input-sm bvrs-risk-title-fr" placeholder="ex: Intrusion dans la zone de roulage" value="${escapeHtml(titleFr)}" required>
-                    </div>
-                    <div>
-                        <label class="form-label u-text-xs u-font-bold u-mb-1">Titre du Risque (EN)</label>
-                        <input type="text" class="form-input form-input-sm bvrs-risk-title-en" placeholder="ex: Intrusion into the Driving Area" value="${escapeHtml(titleEn)}">
-                    </div>
-                </div>
+    // ══════════════════════════════════════════════════════════════════════════
+    // 1. VUE D'ENSEMBLE DU CATALOGUE
+    // ══════════════════════════════════════════════════════════════════════════
+    function initCatalogOverview() {
+        const page = document.querySelector('.bvrs-page');
+        if (!page) return;
 
-                <!-- Grille bilingue Descriptions -->
-                <div class="u-grid u-gap-2 u-grid-cols-2 u-mb-3">
-                    <div>
-                        <label class="form-label u-text-xs u-font-bold u-mb-1">Description détaillée du danger (FR)</label>
-                        <textarea class="form-input form-input-sm bvrs-risk-desc-fr u-h-60" placeholder="Explication du risque et scénarios potentiels...">${escapeHtml(descFr)}</textarea>
-                    </div>
-                    <div>
-                        <label class="form-label u-text-xs u-font-bold u-mb-1">Description détaillée du danger (EN)</label>
-                        <textarea class="form-input form-input-sm bvrs-risk-desc-en u-h-60" placeholder="Detailed description in English...">${escapeHtml(descEn)}</textarea>
-                    </div>
-                </div>
+        // Champ de recherche standard de l'ERP (macro list_header_actions → #searchInput)
+        const searchInput = document.getElementById('searchInput');
+        const searchForm = searchInput ? searchInput.closest('form') : null;
+        const btnToggleAll = document.getElementById('btn-toggle-all-accordions');
+        const riskRows = page.querySelectorAll('.bvrs-row');
+        const groupWrappers = page.querySelectorAll('.bvrs-group-wrapper');
+        const groupButtons = page.querySelectorAll('.bvrs-group');
+        const vehicleCards = page.querySelectorAll('.bvrs-vehicle-card');
+        const moreButtons = page.querySelectorAll('.bvrs-more');
 
-                <!-- Recommandations & Mesures de prévention -->
-                <div class="u-border-top u-pt-2">
-                    <div class="u-flex u-justify-between u-align-center u-mb-2">
-                        <span class="u-text-2xs u-uppercase u-font-bold u-text-muted">Recommandations</span>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary btn-add-rec">
-                            <i data-lucide="plus"></i> Ajouter une recommandation
-                        </button>
-                    </div>
-                    <div class="bvrs-recs-container u-flex u-flex-column u-gap-1"></div>
-                </div>
-            </div>
-        `;
-
-        const header = card.querySelector('.bvrs-risk-accordion-header');
-        const body = card.querySelector('.bvrs-risk-accordion-body');
-        const titleFrInput = card.querySelector('.bvrs-risk-title-fr');
-        const titleEnInput = card.querySelector('.bvrs-risk-title-en');
-        const titleFrPreview = card.querySelector('.bvrs-risk-title-fr-text');
-        const titleEnPreview = card.querySelector('.bvrs-risk-title-en-text');
-        const levelPill = card.querySelector('.bvrs-level-pill');
-        const levelHiddenInput = card.querySelector('.bvrs-risk-level-input');
-        const levelButtons = card.querySelectorAll('.bvrs-level-btn');
-        const catTag = card.querySelector('.bvrs-risk-cat-tag');
-        const catSelect = card.querySelector('.bvrs-risk-category-select');
-        const catCustomInput = card.querySelector('.bvrs-risk-category-custom');
-        const recCountPill = card.querySelector('.bvrs-rec-count-pill');
-        const recsContainer = card.querySelector('.bvrs-recs-container');
-        const btnAddRec = card.querySelector('.btn-add-rec');
-
-        // 1. Dépliage / Repliage accordéon
-        function toggleExpand() {
-            const isExpanded = card.classList.contains('is-expanded');
-            if (isExpanded) {
-                card.classList.remove('is-expanded');
-                body.classList.add('u-d-none');
-            } else {
-                card.classList.add('is-expanded');
-                body.classList.remove('u-d-none');
-                if (window.lucide) window.lucide.createIcons();
-            }
-            updateToggleAllButton();
+        function setGroupExpanded(btn, expanded) {
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            const wrapper = btn.closest('.bvrs-group-wrapper');
+            const content = wrapper ? wrapper.querySelector('.bvrs-group__content') : null;
+            if (content) content.classList.toggle('u-d-none', !expanded);
         }
 
-        header.addEventListener('click', function (e) {
-            // Ignorer si clic dans actions ou sur le badge de niveau direct
-            if (e.target.closest('.bvrs-risk-header-actions') || e.target.closest('.bvrs-level-pill')) {
-                return;
+        /**
+         * Bandeau « Voir les X risques » (data-action="vehicle") ou
+         * « Afficher les X autres risques » (data-action="extra").
+         */
+        function setMoreExpanded(btn, expanded) {
+            const card = btn.closest('.bvrs-vehicle-card');
+            if (card) {
+                const targets = btn.dataset.action === 'extra'
+                    ? card.querySelectorAll('.bvrs-extra-cat')
+                    : card.querySelectorAll('.bvrs-vehicle-collapsible-content');
+                targets.forEach(function (el) { el.classList.toggle('u-d-none', !expanded); });
             }
-            toggleExpand();
-        });
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            btn.textContent = expanded ? btn.dataset.labelHide : btn.dataset.labelShow;
+        }
 
-        // 2. Mise à jour synchrone du titre en temps réel
-        titleFrInput.addEventListener('input', function () {
-            const val = this.value.trim();
-            titleFrPreview.textContent = val || 'Nouveau risque sans titre';
-        });
+        // Le filtrage utilise une classe dédiée (bvrs-filtered-out) pour ne jamais
+        // interférer avec l'état replié/déplié (u-d-none) des groupes et véhicules.
+        function applySearch() {
+            const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
 
-        titleEnInput.addEventListener('input', function () {
-            const val = this.value.trim();
-            if (val) {
-                titleEnPreview.textContent = ' / ' + val;
-                titleEnPreview.classList.remove('u-d-none');
-            } else {
-                titleEnPreview.textContent = '';
-                titleEnPreview.classList.add('u-d-none');
-            }
-        });
+            riskRows.forEach(function (row) {
+                row.classList.toggle('bvrs-filtered-out', !!q && !(row.dataset.searchText || '').includes(q));
+            });
 
-        // 3. Bascule du niveau (Majeur / Standard)
-        function setLevel(newLevel) {
-            levelHiddenInput.value = newLevel;
-            const isNowMajor = (newLevel === 'major');
-
-            if (isNowMajor) {
-                card.classList.remove('bvrs-risk-accordion--standard');
-                card.classList.add('bvrs-risk-accordion--major');
-                levelPill.className = 'bvrs-level-pill bvrs-level-pill--major';
-                levelPill.textContent = 'MAJEUR';
-            } else {
-                card.classList.remove('bvrs-risk-accordion--major');
-                card.classList.add('bvrs-risk-accordion--standard');
-                levelPill.className = 'bvrs-level-pill bvrs-level-pill--standard';
-                levelPill.textContent = 'STANDARD';
-            }
-
-            levelButtons.forEach(function (btn) {
-                if (btn.dataset.level === newLevel) {
-                    btn.classList.add('is-active');
-                } else {
-                    btn.classList.remove('is-active');
+            groupWrappers.forEach(function (wrapper) {
+                const hasVisible = !!wrapper.querySelector('.bvrs-row:not(.bvrs-filtered-out)');
+                wrapper.classList.toggle('bvrs-filtered-out', !hasVisible);
+                // Recherche active : déplier les groupes contenant des résultats
+                if (q && hasVisible) {
+                    const btn = wrapper.querySelector('.bvrs-group');
+                    if (btn) setGroupExpanded(btn, true);
                 }
             });
 
-            refreshTabsAndCounters();
+            vehicleCards.forEach(function (card) {
+                const hasVisible = !!card.querySelector('.bvrs-row:not(.bvrs-filtered-out)');
+                const vName = (card.querySelector('.bvrs-vehicle__name')?.textContent || '').toLowerCase();
+                card.classList.toggle('bvrs-filtered-out', !!q && !hasVisible && !vName.includes(q));
+
+                if (q && hasVisible) {
+                    card.querySelectorAll('.bvrs-more').forEach(function (btn) { setMoreExpanded(btn, true); });
+                }
+            });
         }
 
-        // Clic sur badge pill rapide dans l'en-tête
-        levelPill.addEventListener('click', function (e) {
-            e.stopPropagation();
-            const current = levelHiddenInput.value;
-            setLevel(current === 'major' ? 'standard' : 'major');
-        });
+        if (searchInput) {
+            // Filtrage instantané côté client : pas de rechargement à la validation
+            if (searchForm) searchForm.addEventListener('submit', function (e) { e.preventDefault(); });
+            searchInput.addEventListener('input', applySearch);
+            if (searchInput.value) applySearch();  // ?q= pré-rempli par la macro
+        }
 
-        // Clic sur boutons segmentés dans le corps
-        levelButtons.forEach(function (btn) {
+        groupButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
-                setLevel(this.dataset.level);
+                setGroupExpanded(this, this.getAttribute('aria-expanded') !== 'true');
             });
         });
 
-        // 4. Catégorie & Sélecteur dynamique
-        function updateCategoryOptions() {
-            const allCats = getCategoriesList();
-            const currentCat = card.dataset.category || 'ZONE DE TOURNAGE';
-
-            catSelect.innerHTML = '';
-            allCats.forEach(function (c) {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.textContent = c;
-                if (c === currentCat) opt.selected = true;
-                catSelect.appendChild(opt);
+        moreButtons.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setMoreExpanded(this, this.getAttribute('aria-expanded') !== 'true');
             });
+        });
+
+        if (btnToggleAll) {
+            const label = btnToggleAll.querySelector('.js-toggle-all-label');
+            btnToggleAll.addEventListener('click', function () {
+                const expand = btnToggleAll.getAttribute('aria-expanded') !== 'true';
+                groupButtons.forEach(function (btn) { setGroupExpanded(btn, expand); });
+                moreButtons.forEach(function (btn) { setMoreExpanded(btn, expand); });
+                btnToggleAll.setAttribute('aria-expanded', expand ? 'true' : 'false');
+                if (label) label.textContent = expand ? 'Tout replier' : 'Tout déplier';
+
+                // Lucide remplace <i> par <svg> : on réinjecte l'icône voulue
+                const icon = btnToggleAll.querySelector('[data-lucide], svg.lucide');
+                if (icon) {
+                    const next = document.createElement('i');
+                    next.className = 'admin-header__icon';
+                    next.setAttribute('data-lucide', expand ? 'chevrons-down-up' : 'chevrons-up-down');
+                    icon.replaceWith(next);
+                    refreshIcons();
+                }
+            });
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // 2. ÉDITEUR MASTER-DETAIL (GÉNÉRAL & VÉHICULE)
+    // ══════════════════════════════════════════════════════════════════════════
+    function initMasterDetailEditor() {
+        const page = document.querySelector('.bvrs-edit-page');
+        if (!page) return;
+
+        function readJson(id, fallback) {
+            const el = document.getElementById(id);
+            if (!el) return fallback;
+            try { return JSON.parse(el.textContent || ''); } catch (e) { return fallback; }
+        }
+
+        const scope = readJson('bvrs-scope-data', 'general');
+        const vehicleKey = readJson('bvrs-vehicle-key-data', '');
+        const csrfToken = readJson('bvrs-csrf-token', '');
+        const urls = {
+            save: page.dataset.urlSave,
+            del: page.dataset.urlDelete,
+            reorder: page.dataset.urlReorder
+        };
+
+        // Liste « serveur » : ne change qu'après un enregistrement / suppression réussi.
+        let risksList = readJson('bvrs-risks-data', []).map(normalizeRisk);
+        // Catégories communes (risques généraux + tous les véhicules) : [{fr, en}]
+        const sharedCategories = readJson('bvrs-categories-data', [])
+            .filter(function (c) { return c && c.fr; })
+            .map(function (c) { return { fr: String(c.fr).trim().toUpperCase(), en: String(c.en || '').trim() }; });
+
+        const $ = function (id) { return document.getElementById(id); };
+
+        // Sidebar
+        const sidebarList = $('sidebar-risks-list');
+        const sidebarCount = $('sidebar-risks-count');
+        const sidebarSearchInput = $('sidebar-search-input');
+        const sidebarFilterBtns = page.querySelectorAll('.bvrs-filter-pills .filter-pill');
+        const btnAddRisk = $('btn-add-risk');
+
+        // En-tête & onglets
+        const detailTitle = $('detail-risk-title');
+        const detailLevelBadge = $('detail-risk-level-badge');
+        const detailTransBadge = $('detail-risk-trans-badge');
+        const tabBtnEdit = $('tab-btn-edit');
+        const tabBtnPdf = $('tab-btn-pdf');
+        const tabPaneEdit = $('tab-pane-edit');
+        const tabPanePdf = $('tab-pane-pdf');
+
+        // Formulaire
+        const form = $('form-edit-risk');
+        const btnLevelMajor = $('btn-level-major');
+        const btnLevelStandard = $('btn-level-standard');
+        const fieldCategorySelect = $('field-category-select');
+        const wrapNewCat = $('wrap-new-cat');
+        const inputNewCat = $('input-new-cat');
+        const inputNewCatEn = $('input-new-cat-en');
+        const btnConfirmNewCat = $('btn-confirm-new-cat');
+        const btnCancelNewCat = $('btn-cancel-new-cat');
+        const fieldTitleFr = $('field-title-fr');
+        const fieldTitleEn = $('field-title-en');
+        const fieldDescFr = $('field-desc-fr');
+        const fieldDescEn = $('field-desc-en');
+        const badgeTitleEnStatus = $('badge-title-en-status');
+        const badgeDescEnStatus = $('badge-desc-en-status');
+        const recsCountElem = $('recs-count');
+        const btnAddRec = $('btn-add-rec');
+        const recsList = $('recs-list');
+        const btnDeleteRisk = $('btn-delete-risk');
+
+        // Aperçu PDF
+        const btnLangFr = $('btn-lang-fr');
+        const btnLangEn = $('btn-lang-en');
+        const pdfPreviewSheet = $('pdf-preview-sheet');
+
+        // Barre inférieure & modale
+        const bottomBar = $('bvrs-bottom-bar');
+        const btnCancelRisk = $('btn-cancel-risk');
+        const btnSaveRisk = $('btn-save-risk');
+        const btnSaveRiskLabel = $('btn-save-risk-label');
+        const unsavedModal = $('bvrs-unsaved-modal');
+        const btnModalDiscard = $('btn-modal-discard');
+        const btnModalSave = $('btn-modal-save');
+
+        // État
+        let activeRiskId = null;
+        let draftNewRisk = null;      // risque créé via « Ajouter », pas encore enregistré
+        let isDirty = false;
+        let isSaving = false;
+        let pendingAction = null;     // action différée par la modale anti-perte
+        let activeFilter = 'all';
+        let sidebarSearchQuery = '';
+        let currentTab = 'edit';
+        let previewLang = 'fr';
+        let currentLevel = 'standard';
+
+        function normalizeRisk(r) {
+            const recsFr = (r.recommendations_fr || r.recommendations || []).slice();
+            const recsEn = (r.recommendations_en || []).slice();
+            return Object.assign({}, r, {
+                id: String(r.id),
+                level: r.level === 'major' ? 'major' : 'standard',
+                title_fr: r.title_fr || r.title || '',
+                title_en: cleanEn(r.title_en),
+                description_fr: r.description_fr || r.description || '',
+                description_en: cleanEn(r.description_en),
+                category_fr: (r.category_fr || r.category || '').trim(),
+                category_en: (r.category_en || '').trim(),
+                recommendations_fr: recsFr,
+                recommendations_en: recsFr.map(function (_, i) { return cleanEn(recsEn[i]); })
+            });
+        }
+
+        function allRisks() {
+            return draftNewRisk ? [draftNewRisk].concat(risksList) : risksList;
+        }
+
+        function findRisk(id) {
+            return allRisks().find(function (r) { return r.id === String(id); }) || null;
+        }
+
+        function catKey(r) {
+            return (r.category_fr || 'GÉNÉRAL').trim().toUpperCase();
+        }
+
+        // ── Requêtes JSON ──
+        function postJson(url, payload) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(Object.assign({ scope: scope, vehicle_key: vehicleKey }, payload))
+            }).then(function (res) {
+                return res.json().catch(function () { return {}; }).then(function (data) {
+                    if (!res.ok || data.status !== 'success') {
+                        throw new Error(data.message || ('Erreur HTTP ' + res.status));
+                    }
+                    return data;
+                });
+            });
+        }
+
+        // ── Sidebar ──
+        function renderSidebar() {
+            if (!sidebarList) return;
+            sidebarList.innerHTML = '';
+            const q = sidebarSearchQuery.trim().toLowerCase();
+
+            const groups = new Map();
+            allRisks().forEach(function (r) {
+                const key = catKey(r);
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(r);
+            });
+
+            let visibleTotal = 0;
+            groups.forEach(function (risks, name) {
+                const visible = risks.filter(function (r) {
+                    if (activeFilter === 'major' && r.level !== 'major') return false;
+                    if (activeFilter === 'en-incomplete' && computeTranslationStatus(r).is_complete) return false;
+                    if (q) {
+                        const hay = (r.title_fr + ' ' + r.title_en + ' ' + name).toLowerCase();
+                        if (!hay.includes(q)) return false;
+                    }
+                    return true;
+                });
+                if (!visible.length) return;
+                visibleTotal += visible.length;
+
+                const groupEl = document.createElement('div');
+                groupEl.className = 'bvrs-side-grp';
+                groupEl.innerHTML = '<span>' + escapeHtml(name) + '</span><span>' + visible.length + '</span>';
+                sidebarList.appendChild(groupEl);
+
+                visible.forEach(function (risk) {
+                    sidebarList.appendChild(buildSidebarItem(risk));
+                });
+            });
+
+            if (!visibleTotal) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.innerHTML = '<div class="empty-state-desc">' +
+                    (allRisks().length ? 'Aucun risque ne correspond.' : 'Aucun risque configuré.') + '</div>';
+                sidebarList.appendChild(empty);
+            }
+
+            if (sidebarCount) sidebarCount.textContent = risksList.length;
+            // Reflète le brouillon en cours sur l'élément actif
+            if (isDirty) updateActiveSidebarItem(collectCurrentFormData());
+        }
+
+        function buildSidebarItem(risk) {
+            const isMajor = risk.level === 'major';
+            const status = computeTranslationStatus(risk);
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'bvrs-side-it' + (isMajor ? ' bvrs-side-it--major' : '') + (risk.id === activeRiskId ? ' is-selected' : '');
+            item.dataset.riskId = risk.id;
+            item.dataset.category = catKey(risk);
+            item.draggable = !(draftNewRisk && risk.id === draftNewRisk.id);
+            item.innerHTML =
+                '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
+                '<span class="bvrs-side-it__title">' + escapeHtml(risk.title_fr || 'Sans titre') + '</span>' +
+                (status.is_complete ? '' : '<span class="badge-pill badge-pill-xs bvrs-en-tag" data-val="neutral" title="Traduction EN incomplète">EN</span>') +
+                levelBadgeHtml(risk.level).replace('class="badge-pill badge-pill-xs"', 'class="badge-pill badge-pill-xs bvrs-level-tag"');
+            if (risk.id === activeRiskId) item.setAttribute('aria-current', 'true');
+
+            item.addEventListener('click', function () {
+                if (risk.id === activeRiskId) return;
+                guard(function () { selectRisk(risk.id); });
+            });
+            attachRiskDragAndDrop(item);
+            return item;
+        }
+
+        function updateActiveSidebarItem(data) {
+            if (!sidebarList) return;
+            const item = sidebarList.querySelector('.bvrs-side-it[data-risk-id="' + CSS.escape(String(activeRiskId)) + '"]');
+            if (!item) return;
+            const isMajor = data.level === 'major';
+            item.classList.toggle('bvrs-side-it--major', isMajor);
+            const titleEl = item.querySelector('.bvrs-side-it__title');
+            if (titleEl) titleEl.textContent = data.title_fr || 'Sans titre';
+            const badge = item.querySelector('.bvrs-level-tag');
+            if (badge) {
+                badge.textContent = isMajor ? 'Majeur' : 'Standard';
+                badge.dataset.val = isMajor ? 'danger' : 'warning';
+            }
+            const complete = computeTranslationStatus(data).is_complete;
+            let enTag = item.querySelector('.bvrs-en-tag');
+            if (!complete && !enTag) {
+                enTag = document.createElement('span');
+                enTag.className = 'badge-pill badge-pill-xs bvrs-en-tag';
+                enTag.dataset.val = 'neutral';
+                enTag.title = 'Traduction EN incomplète';
+                enTag.textContent = 'EN';
+                item.insertBefore(enTag, badge);
+            } else if (complete && enTag) {
+                enTag.remove();
+            }
+        }
+
+        // ── Glisser-déposer des risques (au sein d'une même catégorie) ──
+        let draggedRiskId = null;
+        function attachRiskDragAndDrop(el) {
+            el.addEventListener('dragstart', function (e) {
+                draggedRiskId = el.dataset.riskId;
+                e.dataTransfer.effectAllowed = 'move';
+                el.classList.add('is-dragging');
+            });
+            el.addEventListener('dragend', function () {
+                draggedRiskId = null;
+                el.classList.remove('is-dragging');
+                sidebarList.querySelectorAll('.bvrs-drag-over').forEach(function (i) { i.classList.remove('bvrs-drag-over'); });
+            });
+            el.addEventListener('dragover', function (e) {
+                const dragged = draggedRiskId ? findRisk(draggedRiskId) : null;
+                if (!dragged || catKey(dragged) !== el.dataset.category) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                el.classList.add('bvrs-drag-over');
+            });
+            el.addEventListener('dragleave', function () {
+                el.classList.remove('bvrs-drag-over');
+            });
+            el.addEventListener('drop', function (e) {
+                e.preventDefault();
+                el.classList.remove('bvrs-drag-over');
+                const targetId = el.dataset.riskId;
+                if (!draggedRiskId || draggedRiskId === targetId) return;
+                const fromIdx = risksList.findIndex(function (r) { return r.id === draggedRiskId; });
+                const toIdx = risksList.findIndex(function (r) { return r.id === targetId; });
+                if (fromIdx < 0 || toIdx < 0) return;
+
+                const previousOrder = risksList.slice();
+                const moved = risksList.splice(fromIdx, 1)[0];
+                risksList.splice(toIdx, 0, moved);
+                renderSidebar();
+
+                postJson(urls.reorder, { risk_ids: risksList.map(function (r) { return r.id; }) })
+                    .catch(function (err) {
+                        risksList = previousOrder;
+                        renderSidebar();
+                        flash("Impossible d'enregistrer le nouvel ordre : " + err.message, 'error');
+                    });
+            });
+        }
+
+        // ── Garde anti-perte : exécute l'action ou ouvre la modale ──
+        function guard(action) {
+            if (!isDirty) {
+                action();
+                return;
+            }
+            pendingAction = action;
+            openModal();
+        }
+
+        function openModal() {
+            if (!unsavedModal) return;
+            unsavedModal.classList.add('is-active');
+            unsavedModal.setAttribute('aria-hidden', 'false');
+            if (btnModalSave) btnModalSave.focus();
+        }
+
+        function closeModal() {
+            if (!unsavedModal) return;
+            unsavedModal.classList.remove('is-active');
+            unsavedModal.setAttribute('aria-hidden', 'true');
+        }
+
+        /** Abandonne le brouillon : restaure l'état serveur du risque actif. */
+        function discardChanges() {
+            isDirty = false;
+            updateBottomBar();
+            if (draftNewRisk && draftNewRisk.id === activeRiskId) {
+                draftNewRisk = null;
+                activeRiskId = risksList.length ? risksList[0].id : null;
+            }
+            if (activeRiskId) {
+                selectRisk(activeRiskId);
+            } else {
+                showEmptyState();
+            }
+        }
+
+        function selectRisk(riskId) {
+            const risk = findRisk(riskId);
+            if (!risk) return;
+            // Quitter un brouillon de création non enregistré le supprime
+            if (draftNewRisk && draftNewRisk.id !== risk.id) draftNewRisk = null;
+
+            activeRiskId = risk.id;
+            isDirty = false;
+            updateBottomBar();
+            populateForm(risk);
+            renderSidebar();
+            setFormDisabled(false);
+
+            if (history.replaceState) {
+                history.replaceState(null, '', '#risk-' + encodeURIComponent(risk.id));
+            }
+            if (currentTab === 'pdf') renderPdfPreview();
+        }
+
+        function showEmptyState() {
+            activeRiskId = null;
+            renderSidebar();
+            if (detailTitle) detailTitle.textContent = 'Aucun risque configuré';
+            if (detailLevelBadge) detailLevelBadge.classList.add('u-d-none');
+            if (detailTransBadge) detailTransBadge.classList.add('u-d-none');
+            if (form) form.reset();
+            if (recsList) recsList.innerHTML = '';
+            if (recsCountElem) recsCountElem.textContent = '0';
+            if (pdfPreviewSheet) pdfPreviewSheet.innerHTML = '';
+            setFormDisabled(true);
+        }
+
+        function setFormDisabled(disabled) {
+            if (!form) return;
+            form.querySelectorAll('input, textarea, select, button').forEach(function (el) {
+                el.disabled = disabled;
+            });
+            if (tabBtnPdf) tabBtnPdf.disabled = disabled;
+        }
+
+        // ── Formulaire ──
+        function populateForm(risk) {
+            currentLevel = risk.level;
+            updateLevelSegmentedUI(currentLevel);
+
+            if (fieldTitleFr) fieldTitleFr.value = risk.title_fr;
+            if (fieldTitleEn) fieldTitleEn.value = risk.title_en;
+            if (fieldDescFr) fieldDescFr.value = risk.description_fr;
+            if (fieldDescEn) fieldDescEn.value = risk.description_en;
+            if (wrapNewCat) wrapNewCat.classList.add('u-d-none');
+
+            populateCategorySelect(risk.category_fr);
+            populateRecommendations(risk);
+            updateHeader(risk);
+            updateEnFieldStates();
+        }
+
+        function updateLevelSegmentedUI(level) {
+            if (btnLevelMajor) btnLevelMajor.setAttribute('aria-pressed', level === 'major' ? 'true' : 'false');
+            if (btnLevelStandard) btnLevelStandard.setAttribute('aria-pressed', level === 'major' ? 'false' : 'true');
+        }
+
+        function updateHeader(risk) {
+            if (detailTitle) detailTitle.textContent = risk.title_fr || 'Sans titre';
+            if (detailLevelBadge) {
+                const isMajor = risk.level === 'major';
+                detailLevelBadge.textContent = isMajor ? 'Majeur' : 'Standard';
+                detailLevelBadge.dataset.val = isMajor ? 'danger' : 'warning';
+                detailLevelBadge.classList.remove('u-d-none');
+            }
+            if (detailTransBadge) {
+                const status = computeTranslationStatus(risk);
+                detailTransBadge.textContent = 'EN INCOMPLET · ' + status.missing_count +
+                    ' CHAMP' + (status.missing_count > 1 ? 'S' : '');
+                detailTransBadge.classList.toggle('u-d-none', status.is_complete);
+            }
+        }
+
+        function toggleMissing(field, badge) {
+            if (!field) return;
+            const missing = isMissingTranslation(field.value);
+            field.classList.toggle('is-missing', missing);
+            if (badge) badge.classList.toggle('u-d-none', !missing);
+        }
+
+        function updateEnFieldStates() {
+            toggleMissing(fieldTitleEn, badgeTitleEnStatus);
+            toggleMissing(fieldDescEn, badgeDescEnStatus);
+            if (recsList) {
+                recsList.querySelectorAll('.bvrs-rec-input-en').forEach(function (ta) { toggleMissing(ta); });
+            }
+        }
+
+        function findSharedCategory(fr) {
+            const key = (fr || '').trim().toUpperCase();
+            return sharedCategories.find(function (c) { return c.fr === key; }) || null;
+        }
+
+        /** Ajoute (ou complète la traduction d') une catégorie dans la liste commune. */
+        function registerSharedCategory(fr, en) {
+            const key = (fr || '').trim().toUpperCase();
+            if (!key) return;
+            const existing = findSharedCategory(key);
+            if (!existing) {
+                sharedCategories.push({ fr: key, en: (en || '').trim() });
+            } else if (!existing.en && en) {
+                existing.en = en.trim();
+            }
+        }
+
+        function appendCategoryOption(parent, cat, selected) {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            opt.selected = cat === selected;
+            parent.appendChild(opt);
+        }
+
+        /**
+         * Menu des catégories : celles déjà utilisées sur cet écran, puis toutes les autres
+         * catégories communes (généraux + véhicules) pour pouvoir les réutiliser.
+         */
+        function populateCategorySelect(selectedCategory) {
+            if (!fieldCategorySelect) return;
+            fieldCategorySelect.innerHTML = '';
+
+            const sel = (selectedCategory || '').trim().toUpperCase();
+            const local = [];
+            allRisks().forEach(function (r) {
+                const c = catKey(r);
+                if (c && !local.includes(c)) local.push(c);
+            });
+            if (sel && !local.includes(sel) && !findSharedCategory(sel)) local.push(sel);
+            const others = sharedCategories
+                .map(function (c) { return c.fr; })
+                .filter(function (c) { return !local.includes(c); });
+            if (!local.length && !others.length) local.push('GÉNÉRAL');
+
+            if (others.length && local.length) {
+                const groupLocal = document.createElement('optgroup');
+                groupLocal.label = 'Utilisées ici';
+                local.forEach(function (c) { appendCategoryOption(groupLocal, c, sel); });
+                fieldCategorySelect.appendChild(groupLocal);
+
+                const groupOthers = document.createElement('optgroup');
+                groupOthers.label = 'Autres catégories';
+                others.forEach(function (c) { appendCategoryOption(groupOthers, c, sel); });
+                fieldCategorySelect.appendChild(groupOthers);
+            } else {
+                local.concat(others).forEach(function (c) { appendCategoryOption(fieldCategorySelect, c, sel); });
+            }
 
             const newOpt = document.createElement('option');
             newOpt.value = '__new__';
-            newOpt.textContent = '+ Nouvelle catégorie...';
-            catSelect.appendChild(newOpt);
+            newOpt.textContent = '+ Nouvelle catégorie…';
+            fieldCategorySelect.appendChild(newOpt);
         }
 
-        updateCategoryOptions();
+        /** Catégorie EN : celle du risque si inchangée, sinon celle de la liste commune. */
+        function resolveCategoryEn(categoryFr) {
+            const key = categoryFr.toUpperCase();
+            const active = findRisk(activeRiskId);
+            if (active && catKey(active) === key && active.category_en) return active.category_en;
+            const shared = findSharedCategory(key);
+            if (shared && shared.en) return shared.en;
+            const sibling = risksList.find(function (r) { return catKey(r) === key && r.category_en; });
+            return sibling ? sibling.category_en : categoryFr;
+        }
 
-        catSelect.addEventListener('change', function () {
-            if (this.value === '__new__') {
-                catCustomInput.classList.remove('u-d-none');
-                catCustomInput.value = '';
-                catCustomInput.focus();
-            } else {
-                catCustomInput.classList.add('u-d-none');
-                applyCategory(this.value);
-            }
-        });
+        function populateRecommendations(risk) {
+            if (!recsList) return;
+            recsList.innerHTML = '';
+            risk.recommendations_fr.forEach(function (fr, i) {
+                addRecommendationRow(fr, risk.recommendations_en[i] || '');
+            });
+            updateRecsCount();
+            refreshIcons();
+        }
 
-        catCustomInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
+        let draggedRecRow = null;
+        function addRecommendationRow(frVal, enVal) {
+            if (!recsList) return null;
+            const row = document.createElement('div');
+            row.className = 'bvrs-recrow';
+            row.innerHTML =
+                '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
+                '<textarea class="form-input bvrs-rec-input-fr" rows="3" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
+                '<textarea class="form-input bvrs-rec-input-en" rows="3" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
+                '<button type="button" class="admin-btn admin-btn-secondary admin-btn-sm bvrs-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
+                '<i data-lucide="x" aria-hidden="true"></i></button>';
+
+            const frArea = row.querySelector('.bvrs-rec-input-fr');
+            const enArea = row.querySelector('.bvrs-rec-input-en');
+            frArea.value = frVal || '';
+            enArea.value = enVal || '';
+            toggleMissing(enArea);
+
+            row.querySelector('.bvrs-rec-btn-remove').addEventListener('click', function () {
+                row.remove();
+                updateRecsCount();
+                onFormChange();
+            });
+
+            // Glisser uniquement depuis la poignée (sinon la sélection de texte devient impossible)
+            const handle = row.querySelector('.bvrs-hd');
+            handle.addEventListener('mousedown', function () { row.draggable = true; });
+            row.addEventListener('dragstart', function (e) {
+                draggedRecRow = row;
+                e.dataTransfer.effectAllowed = 'move';
+                row.classList.add('is-dragging');
+            });
+            row.addEventListener('dragend', function () {
+                row.draggable = false;
+                draggedRecRow = null;
+                row.classList.remove('is-dragging');
+                recsList.querySelectorAll('.bvrs-drag-over').forEach(function (r) { r.classList.remove('bvrs-drag-over'); });
+            });
+            row.addEventListener('dragover', function (e) {
+                if (!draggedRecRow || draggedRecRow === row) return;
                 e.preventDefault();
-                const val = this.value.trim().toUpperCase();
-                if (val) {
-                    applyCategory(val);
-                    catCustomInput.classList.add('u-d-none');
-                }
-            }
-        });
-
-        catCustomInput.addEventListener('blur', function () {
-            const val = this.value.trim().toUpperCase();
-            if (val) {
-                applyCategory(val);
-                catCustomInput.classList.add('u-d-none');
-            } else {
-                catCustomInput.classList.add('u-d-none');
-                catSelect.value = card.dataset.category;
-            }
-        });
-
-        function applyCategory(newCat) {
-            newCat = newCat.trim().toUpperCase() || 'ZONE DE TOURNAGE';
-            card.dataset.category = newCat;
-            catTag.textContent = newCat;
-            refreshTabsAndCounters();
-            synchronizeAllCategorySelects();
-        }
-
-        // 5. Recommandations
-        function updateRecCounter() {
-            const count = recsContainer.querySelectorAll('.bvrs-rec-item').length;
-            recCountPill.textContent = `${count} consigne${count > 1 ? 's' : ''}`;
-        }
-
-        if (maxRecs > 0) {
-            for (let i = 0; i < maxRecs; i++) {
-                recsContainer.appendChild(createRecElement(recsFr[i] || '', recsEn[i] || '', updateRecCounter));
-            }
-        }
-
-        btnAddRec.addEventListener('click', function () {
-            const el = createRecElement('', '', updateRecCounter);
-            recsContainer.appendChild(el);
-            updateRecCounter();
-            if (window.lucide) window.lucide.createIcons();
-            const input = el.querySelector('.bvrs-rec-fr');
-            if (input) input.focus();
-        });
-
-        // 6. Monter / Descendre / Supprimer
-        card.querySelector('.btn-move-risk-up').addEventListener('click', function () {
-            const prev = card.previousElementSibling;
-            if (prev) {
-                risksContainer.insertBefore(card, prev);
-            }
-        });
-
-        card.querySelector('.btn-move-risk-down').addEventListener('click', function () {
-            const next = card.nextElementSibling;
-            if (next) {
-                risksContainer.insertBefore(next, card);
-            }
-        });
-
-        card.querySelector('.btn-delete-risk').addEventListener('click', function () {
-            if (confirm('Voulez-vous supprimer ce risque du protocole ?')) {
-                card.remove();
-                refreshTabsAndCounters();
-            }
-        });
-
-        return card;
-    }
-
-    // ── Remplissage initial de la liste ──
-    function populateRisks(risksList) {
-        risksContainer.innerHTML = '';
-        currentActiveCategory = 'all';
-
-        if (Array.isArray(risksList) && risksList.length > 0) {
-            risksList.forEach(function (r) {
-                risksContainer.appendChild(renderRiskAccordion(r));
+                row.classList.add('bvrs-drag-over');
             });
-        }
-
-        refreshTabsAndCounters();
-        if (window.lucide) window.lucide.createIcons();
-    }
-
-    // ── Ouverture modale pour Risques Généraux ──
-    function handleEditGeneral(btn) {
-        inputAction.value = 'save_general';
-        inputVehicleKey.value = '';
-        wrapVehicleLabel.classList.add('u-d-none');
-        if (inputLabel) inputLabel.removeAttribute('required');
-
-        modalTitle.textContent = 'Modifier les Risques Généraux : Véhicules Travelling';
-        modalSubtitle.textContent = 'Consignes transversales applicables à tous les tournages travelling Belle Vitesse';
-        modalIconWrap.className = 'badge-pill u-bg-danger-light u-text-danger';
-        modalIconWrap.innerHTML = '<i data-lucide="shield-alert" class="u-w-24 u-h-24 u-m-0"></i>';
-
-        let risksData = [];
-        const scriptTag = document.getElementById('bvrs-general-risks-json');
-        if (scriptTag && scriptTag.textContent) {
-            try {
-                risksData = JSON.parse(scriptTag.textContent);
-            } catch (e) {
-                console.error('Erreur parsing bvrs-general-risks-json :', e);
-            }
-        }
-        if (!risksData || risksData.length === 0) {
-            try {
-                risksData = JSON.parse(btn.dataset.risks || '[]');
-            } catch (err) {
-                console.error('Erreur parsing risks dataset :', err);
-            }
-        }
-        populateRisks(risksData);
-        openModal();
-    }
-
-    // ── Ouverture modale pour Risques Spécifiques Véhicule ──
-    function handleEditVehicle(btn) {
-        const vKey = btn.dataset.key || '';
-        const vId = btn.dataset.id || vKey;
-        let catData = null;
-
-        const scriptTag = document.getElementById('bvrs-vehicle-catalog-json');
-        if (scriptTag && scriptTag.textContent) {
-            try {
-                const fullCatalog = JSON.parse(scriptTag.textContent);
-                catData = fullCatalog[vKey] || fullCatalog[vId];
-            } catch (e) {
-                console.error('Erreur parsing bvrs-vehicle-catalog-json :', e);
-            }
-        }
-
-        if (!catData) {
-            try {
-                catData = JSON.parse(btn.dataset.cat || '{}');
-            } catch (err) {
-                console.error('Erreur parsing cat dataset :', err);
-                catData = {};
-            }
-        }
-
-        inputAction.value = 'save_vehicle';
-        inputVehicleKey.value = vKey;
-        wrapVehicleLabel.classList.remove('u-d-none');
-        if (inputLabel) {
-            inputLabel.setAttribute('required', 'required');
-            inputLabel.value = catData.label || catData.name || vKey;
-        }
-
-        modalTitle.textContent = 'Modifier les Risques Spécifiques';
-        modalSubtitle.textContent = `Famille : ${catData.label || catData.name || vKey}`;
-        if (catData.image) {
-            modalIconWrap.className = 'bvsr-modal-avatar';
-            modalIconWrap.innerHTML = `<img src="${escapeHtml(catData.image)}" alt="${escapeHtml(catData.name || vKey)}" class="bvsr-vehicle-img">`;
-        } else {
-            modalIconWrap.className = 'badge-pill u-bg-waiver-light u-text-waiver';
-            modalIconWrap.innerHTML = '<i data-lucide="truck" class="u-w-24 u-h-24 u-m-0"></i>';
-        }
-
-        populateRisks(catData.risks || []);
-        openModal();
-    }
-
-    // ── Délégation d'événements pour les boutons d'ouverture (100% fiable) ──
-    document.addEventListener('click', function (e) {
-        const btnVeh = e.target.closest('.btn-edit-vehicle-risks');
-        if (btnVeh) {
-            e.preventDefault();
-            handleEditVehicle(btnVeh);
-            return;
-        }
-
-        const btnGen = e.target.closest('.btn-edit-general-risks');
-        if (btnGen) {
-            e.preventDefault();
-            handleEditGeneral(btnGen);
-            return;
-        }
-    });
-
-    // ── Bouton Tout Déplier / Tout Replier ──
-    if (btnToggleAllCards) {
-        btnToggleAllCards.addEventListener('click', function () {
-            const visibleCards = risksContainer.querySelectorAll('.bvrs-risk-accordion:not(.u-d-none)');
-            if (visibleCards.length === 0) return;
-
-            let hasCollapsed = false;
-            visibleCards.forEach(function (card) {
-                if (!card.classList.contains('is-expanded')) {
-                    hasCollapsed = true;
-                }
-            });
-
-            visibleCards.forEach(function (card) {
-                const body = card.querySelector('.bvrs-risk-accordion-body');
-                if (hasCollapsed) {
-                    card.classList.add('is-expanded');
-                    if (body) body.classList.remove('u-d-none');
-                } else {
-                    card.classList.remove('is-expanded');
-                    if (body) body.classList.add('u-d-none');
-                }
-            });
-
-            if (window.lucide) window.lucide.createIcons();
-            updateToggleAllButton();
-        });
-    }
-
-
-    // ── Bouton Ajouter un Risque ──
-    if (btnAddRisk) {
-        btnAddRisk.addEventListener('click', function () {
-            const defaultCat = (currentActiveCategory === 'all')
-                ? (getCategoriesList()[0] || 'ZONE DE TOURNAGE')
-                : currentActiveCategory;
-
-            const newRisk = {
-                level: 'standard',
-                category_fr: defaultCat,
-                category_en: defaultCat,
-                title_fr: '',
-                title_en: '',
-                description_fr: '',
-                description_en: '',
-                recommendations_fr: [''],
-                recommendations_en: ['']
-            };
-
-            const card = renderRiskAccordion(newRisk);
-            risksContainer.appendChild(card);
-            refreshTabsAndCounters();
-
-            // Déplier et focaliser
-            card.classList.add('is-expanded');
-            const body = card.querySelector('.bvrs-risk-accordion-body');
-            if (body) body.classList.remove('u-d-none');
-            if (window.lucide) window.lucide.createIcons();
-
-            const inputTitle = card.querySelector('.bvrs-risk-title-fr');
-            if (inputTitle) {
-                inputTitle.focus();
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        });
-    }
-
-    // ── Soumission Formulaire & Sérialisation JSON ──
-    form.addEventListener('submit', function (e) {
-        const cards = risksContainer.querySelectorAll('.bvrs-risk-accordion');
-        const serialized = [];
-
-        for (let i = 0; i < cards.length; i++) {
-            const card = cards[i];
-            const level = card.querySelector('.bvrs-risk-level-input').value || 'standard';
-            const catFr = (card.dataset.category || 'ZONE DE TOURNAGE').trim().toUpperCase();
-            const titleFr = card.querySelector('.bvrs-risk-title-fr').value.trim();
-            const titleEn = card.querySelector('.bvrs-risk-title-en').value.trim();
-            const descFr = card.querySelector('.bvrs-risk-desc-fr').value.trim();
-            const descEn = card.querySelector('.bvrs-risk-desc-en').value.trim();
-
-            if (!titleFr) {
+            row.addEventListener('dragleave', function () { row.classList.remove('bvrs-drag-over'); });
+            row.addEventListener('drop', function (e) {
                 e.preventDefault();
-                alert(`Veuillez renseigner un titre en français pour le risque n° ${i + 1}.`);
-                // Basculer sur la catégorie du risque erroné et déplier la carte
-                setActiveCategory(catFr);
-                card.classList.add('is-expanded');
-                const body = card.querySelector('.bvrs-risk-accordion-body');
-                if (body) body.classList.remove('u-d-none');
-                card.querySelector('.bvrs-risk-title-fr').focus();
-                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                return;
+                row.classList.remove('bvrs-drag-over');
+                if (!draggedRecRow || draggedRecRow === row) return;
+                const rows = Array.from(recsList.children);
+                const before = rows.indexOf(draggedRecRow) > rows.indexOf(row);
+                recsList.insertBefore(draggedRecRow, before ? row : row.nextSibling);
+                onFormChange();
+            });
+
+            recsList.appendChild(row);
+            return row;
+        }
+
+        function updateRecsCount() {
+            if (recsCountElem && recsList) {
+                recsCountElem.textContent = recsList.querySelectorAll('.bvrs-recrow').length;
             }
+        }
+
+        function collectCurrentFormData() {
+            const base = findRisk(activeRiskId) || {};
+            const categoryFr = (fieldCategorySelect && fieldCategorySelect.value !== '__new__')
+                ? fieldCategorySelect.value
+                : (base.category_fr || 'GÉNÉRAL');
 
             const recsFr = [];
             const recsEn = [];
-            card.querySelectorAll('.bvrs-rec-item').forEach(function (recItem) {
-                const rFr = recItem.querySelector('.bvrs-rec-fr').value.trim();
-                const rEn = recItem.querySelector('.bvrs-rec-en').value.trim();
-                if (rFr || rEn) {
-                    recsFr.push(rFr || rEn);
-                    recsEn.push(rEn || rFr);
-                }
-            });
+            if (recsList) {
+                recsList.querySelectorAll('.bvrs-recrow').forEach(function (row) {
+                    const fr = row.querySelector('.bvrs-rec-input-fr').value.trim();
+                    const en = row.querySelector('.bvrs-rec-input-en').value.trim();
+                    if (fr || en) {
+                        recsFr.push(fr);
+                        recsEn.push(en);
+                    }
+                });
+            }
 
-            serialized.push({
-                id: titleFr.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''),
-                level: level,
-                category_fr: catFr,
-                category_en: catFr,
-                title_fr: titleFr,
-                title_en: titleEn || titleFr,
-                description_fr: descFr,
-                description_en: descEn || descFr,
+            // On part du risque d'origine pour préserver d'éventuels champs non édités ici.
+            const data = Object.assign({}, base, {
+                id: activeRiskId,
+                level: currentLevel,
+                category_fr: categoryFr,
+                category_en: resolveCategoryEn(categoryFr),
+                title_fr: fieldTitleFr ? fieldTitleFr.value.trim() : '',
+                title_en: fieldTitleEn ? fieldTitleEn.value.trim() : '',
+                description_fr: fieldDescFr ? fieldDescFr.value.trim() : '',
+                description_en: fieldDescEn ? fieldDescEn.value.trim() : '',
                 recommendations_fr: recsFr,
                 recommendations_en: recsEn
             });
+            delete data._translation_status;
+            delete data.title;
+            delete data.description;
+            delete data.recommendations;
+            delete data.category;
+            return data;
         }
 
-        const jsonInput = document.getElementById('modal_risks_json');
-        jsonInput.value = JSON.stringify(serialized);
-    });
-}
+        function onFormChange() {
+            if (!activeRiskId) return;
+            const data = collectCurrentFormData();
+            updateHeader(data);
+            updateEnFieldStates();
+            updateActiveSidebarItem(data);
+            isDirty = true;
+            updateBottomBar();
+            if (currentTab === 'pdf') renderPdfPreview();
+        }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRiskAssessmentCatalog);
-} else {
-    initRiskAssessmentCatalog();
-}
+        function updateBottomBar() {
+            if (bottomBar) bottomBar.classList.toggle('u-d-none', !isDirty);
+        }
+
+        // ── Enregistrement ──
+        function saveActiveRisk(onSuccess) {
+            if (isSaving || !activeRiskId) return;
+            const data = collectCurrentFormData();
+            if (!data.title_fr) {
+                flash('Le titre du risque en français est obligatoire.', 'error');
+                if (currentTab !== 'edit' && tabBtnEdit) tabBtnEdit.click();
+                if (fieldTitleFr) fieldTitleFr.focus();
+                return;
+            }
+
+            isSaving = true;
+            if (btnSaveRisk) btnSaveRisk.disabled = true;
+            if (btnModalSave) btnModalSave.disabled = true;
+            if (btnSaveRiskLabel) btnSaveRiskLabel.textContent = 'Enregistrement…';
+
+            postJson(urls.save, { risk: data })
+                .then(function (res) {
+                    const saved = normalizeRisk(res.risk);
+                    registerSharedCategory(saved.category_fr, saved.category_en);
+                    const idx = risksList.findIndex(function (r) { return r.id === saved.id; });
+                    if (idx >= 0) {
+                        risksList[idx] = saved;
+                    } else {
+                        // Nouveau risque : le serveur l'ajoute en fin de liste
+                        risksList.push(saved);
+                    }
+                    if (draftNewRisk && draftNewRisk.id === saved.id) draftNewRisk = null;
+                    isDirty = false;
+                    flash('Risque enregistré.', 'success');
+                    if (onSuccess) {
+                        onSuccess();
+                    } else {
+                        selectRisk(saved.id);
+                    }
+                })
+                .catch(function (err) {
+                    flash("Erreur lors de l'enregistrement : " + err.message, 'error');
+                })
+                .finally(function () {
+                    isSaving = false;
+                    if (btnSaveRisk) btnSaveRisk.disabled = false;
+                    if (btnModalSave) btnModalSave.disabled = false;
+                    if (btnSaveRiskLabel) btnSaveRiskLabel.textContent = 'Enregistrer ce risque';
+                });
+        }
+
+        // ── Suppression ──
+        function deleteActiveRisk() {
+            if (!activeRiskId) return;
+            if (!window.confirm('Supprimer ce risque le retire de tous les futurs protocoles. Êtes-vous sûr de vouloir continuer ?')) return;
+
+            const removeLocally = function () {
+                const idx = risksList.findIndex(function (r) { return r.id === activeRiskId; });
+                if (idx >= 0) risksList.splice(idx, 1);
+                draftNewRisk = null;
+                isDirty = false;
+                updateBottomBar();
+                if (risksList.length) {
+                    selectRisk(risksList[Math.min(Math.max(idx, 0), risksList.length - 1)].id);
+                } else {
+                    showEmptyState();
+                }
+            };
+
+            // Brouillon jamais enregistré : rien à supprimer côté serveur
+            if (draftNewRisk && draftNewRisk.id === activeRiskId) {
+                removeLocally();
+                return;
+            }
+
+            if (btnDeleteRisk) btnDeleteRisk.disabled = true;
+            postJson(urls.del, { risk_id: activeRiskId })
+                .then(function () {
+                    flash('Risque supprimé.', 'success');
+                    removeLocally();
+                })
+                .catch(function (err) {
+                    flash('Erreur lors de la suppression : ' + err.message, 'error');
+                })
+                .finally(function () {
+                    if (btnDeleteRisk) btnDeleteRisk.disabled = false;
+                });
+        }
+
+        // ── Création ──
+        function addNewRisk() {
+            const active = findRisk(activeRiskId);
+            const categoryFr = active ? active.category_fr : 'GÉNÉRAL';
+            draftNewRisk = normalizeRisk({
+                id: 'risk_' + Date.now(),
+                category_fr: categoryFr,
+                category_en: active ? active.category_en : '',
+                level: 'standard',
+                title_fr: '',
+                recommendations_fr: [''],
+                recommendations_en: ['']
+            });
+            if (sidebarSearchInput) sidebarSearchInput.value = '';
+            sidebarSearchQuery = '';
+            selectRisk(draftNewRisk.id);
+            if (currentTab !== 'edit' && tabBtnEdit) tabBtnEdit.click();
+            isDirty = true;
+            updateBottomBar();
+            if (detailTitle) detailTitle.textContent = 'Nouveau risque';
+            if (fieldTitleFr) fieldTitleFr.focus();
+        }
+
+        // ── Aperçu PDF : même balisage que templates/pdf/risk_assessment.html ──
+        const ICON_MAJOR = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>';
+        const ICON_STANDARD = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>';
+
+        function riskCardHtml(risk, isEn, extraClass) {
+            const isMajor = risk.level === 'major';
+            const title = isEn ? (risk.title_en || risk.title_fr) : risk.title_fr;
+            const desc = isEn ? (risk.description_en || risk.description_fr) : risk.description_fr;
+            const recs = isEn
+                ? risk.recommendations_fr.map(function (fr, i) { return risk.recommendations_en[i] || fr; })
+                : risk.recommendations_fr;
+            const badge = isMajor
+                ? '<span class="bvrs-badge-major">' + (isEn ? 'HIGH RISK' : 'RISQUE MAJEUR') + '</span>'
+                : '<span class="bvrs-badge-standard">' + (isEn ? 'RISK' : 'RISQUE') + '</span>';
+
+            const recsHtml = recs.length ? (
+                '<div class="bvrs-recs-box">' +
+                '<div class="bvrs-recs-title">' + (isEn ? 'Recommendations' : 'Recommandations') + '</div>' +
+                '<table class="bvrs-recs-table"><tbody>' +
+                recs.map(function (r) {
+                    return '<tr class="bvrs-rec-row"><td class="bvrs-rec-check">✓</td><td class="bvrs-rec-text">' + escapeHtml(r) + '</td></tr>';
+                }).join('') +
+                '</tbody></table></div>'
+            ) : '';
+
+            return '<div class="bvrs-risk-card ' + (isMajor ? 'bvrs-risk-card--major' : 'bvrs-risk-card--standard') + (extraClass ? ' ' + extraClass : '') + '">' +
+                '<div class="bvrs-risk-header">' +
+                '<div class="bvrs-risk-header-cell bvrs-risk-icon-cell">' + (isMajor ? ICON_MAJOR : ICON_STANDARD) + '</div>' +
+                '<div class="bvrs-risk-header-cell"><span class="bvrs-risk-title">' + escapeHtml(title || 'Sans titre') + '</span> ' + badge + '</div>' +
+                '</div>' +
+                '<div class="bvrs-risk-desc">' + escapeHtml(desc) + '</div>' +
+                recsHtml +
+                '</div>';
+        }
+
+        function renderPdfPreview() {
+            if (!pdfPreviewSheet || !activeRiskId) return;
+            const current = normalizeRisk(collectCurrentFormData());
+            const isEn = previewLang === 'en';
+            const banner = (isEn ? (current.category_en || current.category_fr) : current.category_fr) || 'GÉNÉRAL';
+
+            // Voisin : risque suivant de la même catégorie (sinon le précédent), atténué
+            const sameCat = risksList.filter(function (r) { return catKey(r) === catKey(current); });
+            const pos = sameCat.findIndex(function (r) { return r.id === current.id; });
+            const neighbour = pos >= 0 ? (sameCat[pos + 1] || sameCat[pos - 1]) : sameCat[0];
+
+            pdfPreviewSheet.innerHTML =
+                '<div class="bvrs-category-banner">' + escapeHtml(banner) + '</div>' +
+                riskCardHtml(current, isEn) +
+                (neighbour && neighbour.id !== current.id ? riskCardHtml(neighbour, isEn, 'bvrs-card-dimmed') : '');
+        }
+
+        // ── Événements ──
+        if (form) form.addEventListener('submit', function (e) { e.preventDefault(); });
+
+        if (btnAddRisk) btnAddRisk.addEventListener('click', function () { guard(addNewRisk); });
+
+        if (sidebarSearchInput) {
+            sidebarSearchInput.addEventListener('input', function () {
+                sidebarSearchQuery = this.value;
+                renderSidebar();
+            });
+        }
+
+        sidebarFilterBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setActivePill(sidebarFilterBtns, this);
+                activeFilter = this.dataset.filter || 'all';
+                renderSidebar();
+            });
+        });
+
+        function switchTab(tab) {
+            currentTab = tab;
+            const isPdf = tab === 'pdf';
+            if (tabBtnEdit) tabBtnEdit.setAttribute('aria-selected', isPdf ? 'false' : 'true');
+            if (tabBtnPdf) tabBtnPdf.setAttribute('aria-selected', isPdf ? 'true' : 'false');
+            if (tabPaneEdit) tabPaneEdit.classList.toggle('u-d-none', isPdf);
+            if (tabPanePdf) tabPanePdf.classList.toggle('u-d-none', !isPdf);
+            if (isPdf) renderPdfPreview();
+        }
+        if (tabBtnEdit) tabBtnEdit.addEventListener('click', function () { switchTab('edit'); });
+        if (tabBtnPdf) tabBtnPdf.addEventListener('click', function () { switchTab('pdf'); });
+
+        function setPreviewLang(lang) {
+            previewLang = lang;
+            if (btnLangFr) btnLangFr.setAttribute('aria-pressed', lang === 'fr' ? 'true' : 'false');
+            if (btnLangEn) btnLangEn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+            renderPdfPreview();
+        }
+        if (btnLangFr) btnLangFr.addEventListener('click', function () { setPreviewLang('fr'); });
+        if (btnLangEn) btnLangEn.addEventListener('click', function () { setPreviewLang('en'); });
+
+        function setLevel(level) {
+            if (currentLevel === level) return;
+            currentLevel = level;
+            updateLevelSegmentedUI(level);
+            onFormChange();
+        }
+        if (btnLevelMajor) btnLevelMajor.addEventListener('click', function () { setLevel('major'); });
+        if (btnLevelStandard) btnLevelStandard.addEventListener('click', function () { setLevel('standard'); });
+
+        let lastCategoryValue = '';
+        if (fieldCategorySelect) {
+            fieldCategorySelect.addEventListener('focus', function () { lastCategoryValue = this.value; });
+            fieldCategorySelect.addEventListener('change', function () {
+                if (this.value === '__new__') {
+                    if (wrapNewCat) wrapNewCat.classList.remove('u-d-none');
+                    if (inputNewCatEn) inputNewCatEn.value = '';
+                    if (inputNewCat) {
+                        inputNewCat.value = '';
+                        inputNewCat.focus();
+                    }
+                    return;
+                }
+                lastCategoryValue = this.value;
+                if (wrapNewCat) wrapNewCat.classList.add('u-d-none');
+                onFormChange();
+            });
+        }
+
+        function confirmNewCategory() {
+            const newCat = inputNewCat ? inputNewCat.value.trim().toUpperCase() : '';
+            if (!newCat) {
+                if (inputNewCat) inputNewCat.focus();
+                return;
+            }
+            const newCatEn = inputNewCatEn ? inputNewCatEn.value.trim().toUpperCase() : '';
+            // Catégorie déjà existante ailleurs : on la réutilise telle quelle
+            registerSharedCategory(newCat, newCatEn);
+            populateCategorySelect(newCat);
+            lastCategoryValue = newCat;
+            if (wrapNewCat) wrapNewCat.classList.add('u-d-none');
+            onFormChange();
+        }
+
+        function cancelNewCategory() {
+            if (wrapNewCat) wrapNewCat.classList.add('u-d-none');
+            if (fieldCategorySelect) {
+                const active = findRisk(activeRiskId);
+                fieldCategorySelect.value = lastCategoryValue || (active ? catKey(active) : '');
+            }
+        }
+
+        if (btnConfirmNewCat) btnConfirmNewCat.addEventListener('click', confirmNewCategory);
+        if (btnCancelNewCat) btnCancelNewCat.addEventListener('click', cancelNewCategory);
+        [inputNewCat, inputNewCatEn].forEach(function (input) {
+            if (!input) return;
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); confirmNewCategory(); }
+                if (e.key === 'Escape') { e.preventDefault(); cancelNewCategory(); }
+            });
+        });
+
+        [fieldTitleFr, fieldTitleEn, fieldDescFr, fieldDescEn].forEach(function (input) {
+            if (input) input.addEventListener('input', onFormChange);
+        });
+        // Délégation pour les textareas de recommandations
+        if (recsList) {
+            recsList.addEventListener('input', function (e) {
+                if (e.target.matches('textarea')) onFormChange();
+            });
+        }
+
+        if (btnAddRec) {
+            btnAddRec.addEventListener('click', function () {
+                const row = addRecommendationRow('', '');
+                updateRecsCount();
+                refreshIcons();
+                onFormChange();
+                if (row) row.querySelector('.bvrs-rec-input-fr').focus();
+            });
+        }
+
+        if (btnDeleteRisk) btnDeleteRisk.addEventListener('click', deleteActiveRisk);
+        if (btnCancelRisk) btnCancelRisk.addEventListener('click', discardChanges);
+        if (btnSaveRisk) btnSaveRisk.addEventListener('click', function () { saveActiveRisk(); });
+
+        // Modale anti-perte
+        // Fermeture (× de la macro admin_modal) = rester sur le risque courant
+        if (unsavedModal) {
+            unsavedModal.querySelectorAll('[data-modal-close]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    pendingAction = null;
+                    closeModal();
+                });
+            });
+        }
+        if (btnModalDiscard) {
+            btnModalDiscard.addEventListener('click', function () {
+                const action = pendingAction;
+                pendingAction = null;
+                closeModal();
+                discardChanges();
+                if (action) action();
+            });
+        }
+        if (btnModalSave) {
+            btnModalSave.addEventListener('click', function () {
+                const action = pendingAction;
+                saveActiveRisk(function () {
+                    pendingAction = null;
+                    closeModal();
+                    if (action) action();
+                });
+            });
+        }
+        if (unsavedModal) {
+            unsavedModal.addEventListener('click', function (e) {
+                if (e.target === unsavedModal) { pendingAction = null; closeModal(); }
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && unsavedModal.classList.contains('is-active')) {
+                    pendingAction = null;
+                    closeModal();
+                }
+            });
+        }
+
+        window.addEventListener('beforeunload', function (e) {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Initialisation (sélection via #risk-<id> si présent)
+        let initialId = risksList.length ? risksList[0].id : null;
+        const hash = decodeURIComponent((window.location.hash || '').replace(/^#risk-/, ''));
+        if (hash && findRisk(hash)) initialId = hash;
+
+        if (initialId) {
+            selectRisk(initialId);
+            const activeItem = sidebarList && sidebarList.querySelector('.bvrs-side-it.is-selected');
+            if (activeItem && activeItem.scrollIntoView) activeItem.scrollIntoView({ block: 'nearest' });
+        } else {
+            showEmptyState();
+        }
+        refreshIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initCatalogOverview();
+        initMasterDetailEditor();
+    });
+})();

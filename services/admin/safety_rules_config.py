@@ -1,10 +1,39 @@
 import json
 import logging
+import re
 
 from models import AppSetting
 from utils.image_utils import extract_vehicle_image
 
 logger = logging.getLogger(__name__)
+
+
+def _to_lines(value):
+    """Convertit une liste ou une chaîne multiligne en liste de chaînes (non filtrée)."""
+    if isinstance(value, list):
+        return [str(r) if r is not None else "" for r in value]
+    if isinstance(value, str):
+        return value.split("\n")
+    return []
+
+
+def normalize_rule_pairs(rules_fr, rules_en):
+    """Aligne les consignes FR/EN ligne à ligne.
+
+    Les deux listes retournées ont toujours la même longueur : seules les lignes
+    vides en FR *et* en EN sont retirées, une traduction manquante est conservée
+    sous forme de chaîne vide pour ne pas décaler les paires suivantes.
+    """
+    fr_list = _to_lines(rules_fr)
+    en_list = _to_lines(rules_en)
+    clean_fr, clean_en = [], []
+    for i in range(max(len(fr_list), len(en_list))):
+        fr = fr_list[i].strip() if i < len(fr_list) else ""
+        en = en_list[i].strip() if i < len(en_list) else ""
+        if fr or en:
+            clean_fr.append(fr)
+            clean_en.append(en)
+    return clean_fr, clean_en
 
 # ── Règles Générales de Sécurité Universelles par défaut (FR / EN) ──
 # Applicables à tous les tournages (y compris en location sèche sans pilote BV)
@@ -27,15 +56,26 @@ DEFAULT_GENERAL_SAFETY_RULES = {
 
 # ── Règles Spécifiques en Présence de Référents Plateau BV (FR / EN) ──
 # Prolonge automatiquement la Section 1 si des référents BV sont affectés au projet.
-# Supporte les placeholders {technicians} (conjonction 'et'/'and') et {technicians_or} (disjonction 'ou'/'or')
+# Supporte les placeholders {technicians_and} (conjonction 'et'/'and') et {technicians_or} (disjonction 'ou'/'or').
+# L'ancien nom {technicians} reste accepté comme alias de {technicians_and}.
+TECHNICIANS_AND_PLACEHOLDER = "{technicians_and}"
+TECHNICIANS_OR_PLACEHOLDER = "{technicians_or}"
+LEGACY_TECHNICIANS_PLACEHOLDER = "{technicians}"
+
+
+def _migrate_legacy_placeholders(rules):
+    """Renomme l'ancien placeholder {technicians} en {technicians_and} dans une liste de consignes."""
+    return [str(r).replace(LEGACY_TECHNICIANS_PLACEHOLDER, TECHNICIANS_AND_PLACEHOLDER) for r in (rules or [])]
+
+
 DEFAULT_BV_REFERENTS_SAFETY_RULES = {
     "rules_fr": [
-        "Le pilote ainsi que {technicians}, technicien(s) véhicule, peuvent refuser ou interrompre un mouvement s'ils estiment que la sécurité n'est pas assurée.",
+        "Le pilote ainsi que {technicians_and}, technicien(s) véhicule, peuvent refuser ou interrompre un mouvement s'ils estiment que la sécurité n'est pas assurée.",
         "Chaque nouvelle installation doit être validée au niveau sécurité par {technicians_or}.",
         "Au moins un des techniciens référents ({technicians_or}) doit avoir accès au véhicule en permanence, depuis un véhicule suiveur.",
     ],
     "rules_en": [
-        "The driver, as well as {technicians}, vehicle technician(s), may refuse or stop any move if they consider that safety is not ensured.",
+        "The driver, as well as {technicians_and}, vehicle technician(s), may refuse or stop any move if they consider that safety is not ensured.",
         "Every new setup must be safety-approved by {technicians_or}.",
         "At least one of the vehicle technicians ({technicians_or}) must have constant access to the vehicle, from a follow vehicle.",
     ],
@@ -201,11 +241,12 @@ def get_safety_equipment_catalog():
         if custom_raw is not None and str(custom_raw).strip() != "":
             if isinstance(custom_raw, str):
                 custom_list = json.loads(custom_raw)
-            elif isinstance(custom_list, list):
+            elif isinstance(custom_raw, list):
                 custom_list = custom_raw
             else:
-                custom_list = []
+                custom_list = None
 
+            # Une liste enregistrée (même vide) fait foi : pas de retour aux valeurs par défaut
             if isinstance(custom_list, list):
                 res = []
                 for item in custom_list:
@@ -215,8 +256,7 @@ def get_safety_equipment_catalog():
                             "label_fr": str(item.get("label_fr") or "").strip(),
                             "label_en": str(item.get("label_en") or "").strip(),
                         })
-                if res:
-                    return res
+                return res
     except Exception as e:
         logger.warning(f"Erreur lors de la lecture du catalogue d'équipements de sécurité : {e}")
 
@@ -300,6 +340,43 @@ def _find_default_rules(name):
     )
 
 
+def _equipment_pairs(equipment_ids, eq_catalog):
+    """Retourne les libellés FR/EN alignés des équipements rattachés (EN vide si non traduit)."""
+    eq_fr, eq_en = [], []
+    for x in equipment_ids:
+        item = eq_catalog.get(x)
+        if item and (item.get("label_fr") or item.get("label_en")):
+            eq_fr.append(item.get("label_fr") or item.get("label_en"))
+            eq_en.append(item.get("label_en") or "")
+    return eq_fr, eq_en
+
+
+def _match_legacy_custom_key(vname, custom_dict, fleet_ids):
+    """Retrouve une personnalisation enregistrée sous une ancienne clé nominative (ex: "erover").
+
+    Les clés correspondant à l'id d'un véhicule de la flotte sont ignorées : elles
+    appartiennent à ce véhicule (évite qu'un id "3" corresponde à « eTrike 360 »).
+    Correspondance exacte d'abord, puis par mot entier en privilégiant la clé la plus longue.
+    """
+    vname_lower = (vname or "").lower().strip()
+    if not vname_lower:
+        return None
+    candidates = [
+        k for k, v in custom_dict.items()
+        if isinstance(v, dict) and str(k).strip() and str(k) not in fleet_ids
+    ]
+    for k in candidates:
+        if k.lower().strip() == vname_lower:
+            return k
+    for k in sorted(candidates, key=len, reverse=True):
+        k_lower = k.lower().strip()
+        if len(k_lower) >= 3 and not k_lower.isdigit() and re.search(
+            r"(?<![a-z0-9])" + re.escape(k_lower) + r"(?![a-z0-9])", vname_lower
+        ):
+            return k
+    return None
+
+
 def get_all_vehicle_safety_rules_catalog():
     """
     Retourne le catalogue des règles de sécurité pour chaque véhicule réel de la flotte,
@@ -307,6 +384,7 @@ def get_all_vehicle_safety_rules_catalog():
     """
     catalog = {}
     custom_dict = {}
+    consumed_legacy_keys = set()
     eq_catalog = {eq["id"]: eq for eq in get_safety_equipment_catalog()}
 
     try:
@@ -354,13 +432,13 @@ def get_all_vehicle_safety_rules_catalog():
 
             def_fr, def_en, def_lbl, def_eq_ids = _find_default_rules(vname)
 
-            # Recherche d'une personnalisation (par id, ou fallback par nom)
+            # Recherche d'une personnalisation (par id, ou fallback par ancienne clé nominative)
             custom_entry = custom_dict.get(vid)
             if not custom_entry:
-                for ckey, cval in custom_dict.items():
-                    if ckey.lower() == vname.lower() or ckey.lower() in vname.lower():
-                        custom_entry = cval
-                        break
+                legacy_key = _match_legacy_custom_key(vname, custom_dict, seen_ids)
+                if legacy_key:
+                    custom_entry = custom_dict[legacy_key]
+                    consumed_legacy_keys.add(legacy_key)
 
             if custom_entry and isinstance(custom_entry, dict):
                 label = custom_entry.get("label") or def_lbl
@@ -376,16 +454,15 @@ def get_all_vehicle_safety_rules_catalog():
                 equipment_ids = def_eq_ids
 
             clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
-            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
-            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
+            eq_fr, eq_en = _equipment_pairs(clean_eq_ids, eq_catalog)
 
             catalog[vid] = {
                 "id": vid,
                 "name": vname,
                 "image": vimg,
                 "label": label,
-                "rules_fr": rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
-                "rules_en": rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                "rules_fr": normalize_rule_pairs(rules_fr, rules_en)[0],
+                "rules_en": normalize_rule_pairs(rules_fr, rules_en)[1],
                 "equipment_ids": clean_eq_ids,
                 "equipment_fr": eq_fr,
                 "equipment_en": eq_en,
@@ -402,37 +479,36 @@ def get_all_vehicle_safety_rules_catalog():
                 equipment_ids = data.get("equipment_ids", [])
 
             clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
-            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
-            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
+            eq_fr, eq_en = _equipment_pairs(clean_eq_ids, eq_catalog)
 
             catalog[key] = {
                 "id": key,
                 "name": label,
                 "image": "/static/imgs/placeholders/vehicle.svg",
                 "label": label,
-                "rules_fr": rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
-                "rules_en": rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                "rules_fr": normalize_rule_pairs(rules_fr, rules_en)[0],
+                "rules_en": normalize_rule_pairs(rules_fr, rules_en)[1],
                 "equipment_ids": clean_eq_ids,
                 "equipment_fr": eq_fr,
                 "equipment_en": eq_en,
             }
 
     # Inclure également les entrées personnalisées enregistrées dans AppSetting non encore dans catalog
+    # (hors anciennes clés nominatives déjà rattachées à un véhicule réel, pour éviter les doublons)
     for c_id, c_data in custom_dict.items():
-        if c_id not in catalog and isinstance(c_data, dict):
+        if c_id not in catalog and c_id not in consumed_legacy_keys and isinstance(c_data, dict):
             c_label = c_data.get("label") or c_id
             equipment_ids = c_data.get("equipment_ids") or []
             clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
-            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
-            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
+            eq_fr, eq_en = _equipment_pairs(clean_eq_ids, eq_catalog)
 
             catalog[c_id] = {
                 "id": c_id,
                 "name": c_label,
                 "image": "/static/imgs/placeholders/vehicle.svg",
                 "label": c_label,
-                "rules_fr": c_data.get("rules_fr") or [],
-                "rules_en": c_data.get("rules_en") or [],
+                "rules_fr": normalize_rule_pairs(c_data.get("rules_fr"), c_data.get("rules_en"))[0],
+                "rules_en": normalize_rule_pairs(c_data.get("rules_fr"), c_data.get("rules_en"))[1],
                 "equipment_ids": clean_eq_ids,
                 "equipment_fr": eq_fr,
                 "equipment_en": eq_en,
@@ -466,8 +542,7 @@ def save_vehicle_safety_rules(vehicle_id=None, rules_fr=None, rules_en=None, lab
         entry = custom_dict.get(clean_id, {})
         if label:
             entry["label"] = label.strip()
-        entry["rules_fr"] = rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr or '').split("\n") if r.strip()]
-        entry["rules_en"] = rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en or '').split("\n") if r.strip()]
+        entry["rules_fr"], entry["rules_en"] = normalize_rule_pairs(rules_fr, rules_en)
         if equipment_ids is not None:
             if isinstance(equipment_ids, list):
                 entry["equipment_ids"] = [str(x).strip() for x in equipment_ids if str(x).strip()]
@@ -533,8 +608,9 @@ def get_safety_rules_for_vehicles(vehicles_details, catalog=None):
                 c_id_lower = c_id.lower()
                 c_name_lower = c_data.get("name", "").lower()
                 c_lbl_lower = c_data.get("label", "").lower()
+                # Un id numérique ne doit jamais matcher par sous-chaîne (ex: "3" dans "etrike 360")
                 if (
-                    (c_id_lower and c_id_lower in vname_lower)
+                    (c_id_lower and not c_id_lower.isdigit() and c_id_lower in vname_lower)
                     or (vslug and vslug in c_id_lower)
                     or (c_name_lower and c_name_lower in vname_lower)
                     or (c_lbl_lower and c_lbl_lower in vname_lower)
@@ -624,12 +700,9 @@ def get_general_safety_rules():
                 custom_dict = {}
 
             if isinstance(custom_dict, dict) and ("rules_fr" in custom_dict or "rules_en" in custom_dict):
-                rules_fr = custom_dict.get("rules_fr") or []
-                rules_en = custom_dict.get("rules_en") or []
-                return {
-                    "rules_fr": [str(r).strip() for r in rules_fr if str(r).strip()] if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
-                    "rules_en": [str(r).strip() for r in rules_en if str(r).strip()] if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
-                }
+                rules_fr, rules_en = normalize_rule_pairs(
+                    custom_dict.get("rules_fr"), custom_dict.get("rules_en"))
+                return {"rules_fr": rules_fr, "rules_en": rules_en}
     except Exception as e:
         logger.warning(f"Erreur lors de la lecture des règles générales de sécurité : {e}")
 
@@ -645,19 +718,7 @@ def save_general_safety_rules(rules_fr=None, rules_en=None):
     Accepte des listes ou des chaînes multilignes.
     """
     try:
-        if isinstance(rules_fr, str):
-            clean_fr = [r.strip() for r in rules_fr.split("\n") if r.strip()]
-        elif isinstance(rules_fr, list):
-            clean_fr = [str(r).strip() for r in rules_fr if str(r).strip()]
-        else:
-            clean_fr = []
-
-        if isinstance(rules_en, str):
-            clean_en = [r.strip() for r in rules_en.split("\n") if r.strip()]
-        elif isinstance(rules_en, list):
-            clean_en = [str(r).strip() for r in rules_en if str(r).strip()]
-        else:
-            clean_en = []
+        clean_fr, clean_en = normalize_rule_pairs(rules_fr, rules_en)
 
         payload = {
             "rules_fr": clean_fr,
@@ -686,11 +747,12 @@ def get_bv_referents_safety_rules():
                 custom_dict = {}
 
             if isinstance(custom_dict, dict) and ("rules_fr" in custom_dict or "rules_en" in custom_dict):
-                rules_fr = custom_dict.get("rules_fr") or []
-                rules_en = custom_dict.get("rules_en") or []
+                rules_fr, rules_en = normalize_rule_pairs(
+                    custom_dict.get("rules_fr"), custom_dict.get("rules_en"))
+                # Les consignes enregistrées avec l'ancien nom sont présentées (et réenregistrées) avec le nouveau
                 return {
-                    "rules_fr": [str(r).strip() for r in rules_fr if str(r).strip()] if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
-                    "rules_en": [str(r).strip() for r in rules_en if str(r).strip()] if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                    "rules_fr": _migrate_legacy_placeholders(rules_fr),
+                    "rules_en": _migrate_legacy_placeholders(rules_en),
                 }
     except Exception as e:
         logger.warning(f"Erreur lors de la lecture des règles de sécurité référents BV : {e}")
@@ -706,19 +768,7 @@ def save_bv_referents_safety_rules(rules_fr=None, rules_en=None):
     Enregistre les règles de sécurité spécifiques aux référents BV (FR / EN) dans AppSetting.
     """
     try:
-        if isinstance(rules_fr, str):
-            clean_fr = [r.strip() for r in rules_fr.split("\n") if r.strip()]
-        elif isinstance(rules_fr, list):
-            clean_fr = [str(r).strip() for r in rules_fr if str(r).strip()]
-        else:
-            clean_fr = []
-
-        if isinstance(rules_en, str):
-            clean_en = [r.strip() for r in rules_en.split("\n") if r.strip()]
-        elif isinstance(rules_en, list):
-            clean_en = [str(r).strip() for r in rules_en if str(r).strip()]
-        else:
-            clean_en = []
+        clean_fr, clean_en = normalize_rule_pairs(rules_fr, rules_en)
 
         payload = {
             "rules_fr": clean_fr,
@@ -764,8 +814,9 @@ def format_bv_referents_rules(safety_technicians, rules_dict=None):
     """
     Injecte dynamiquement les noms des techniciens référents dans les règles spécifiques BV.
     Gère les remplacements :
-      - {technicians}    : conjonction "et" (FR) / "and" (EN) avec gestion des virgules > 2
-      - {technicians_or} : disjonction "ou" (FR) / "or" (EN) avec gestion des virgules > 2
+      - {technicians_and} : conjonction "et" (FR) / "and" (EN) avec gestion des virgules > 2
+      - {technicians_or}  : disjonction "ou" (FR) / "or" (EN) avec gestion des virgules > 2
+      - {technicians}     : ancien nom de {technicians_and}, toujours accepté
     """
     if not safety_technicians:
         return {"rules_fr": [], "rules_en": []}
@@ -776,19 +827,16 @@ def format_bv_referents_rules(safety_technicians, rules_dict=None):
     names_en_and = format_technicians_list(safety_technicians, conjunction="and", lang="en")
     names_en_or = format_technicians_list(safety_technicians, conjunction="or", lang="en")
 
-    formatted_fr = []
-    for r in (rules.get("rules_fr") or []):
-        r_str = str(r)
-        if "{technicians}" in r_str or "{technicians_or}" in r_str:
-            r_str = r_str.replace("{technicians}", names_fr_and).replace("{technicians_or}", names_fr_or)
-        formatted_fr.append(r_str)
+    def _fill(rule, names_and, names_or):
+        return (
+            str(rule)
+            .replace(TECHNICIANS_AND_PLACEHOLDER, names_and)
+            .replace(TECHNICIANS_OR_PLACEHOLDER, names_or)
+            .replace(LEGACY_TECHNICIANS_PLACEHOLDER, names_and)
+        )
 
-    formatted_en = []
-    for r in (rules.get("rules_en") or []):
-        r_str = str(r)
-        if "{technicians}" in r_str or "{technicians_or}" in r_str:
-            r_str = r_str.replace("{technicians}", names_en_and).replace("{technicians_or}", names_en_or)
-        formatted_en.append(r_str)
+    formatted_fr = [_fill(r, names_fr_and, names_fr_or) for r in (rules.get("rules_fr") or [])]
+    formatted_en = [_fill(r, names_en_and, names_en_or) for r in (rules.get("rules_en") or [])]
 
     return {
         "rules_fr": formatted_fr,

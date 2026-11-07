@@ -4,14 +4,75 @@
 {% block page_title %}Règles de Sécurité Flotte (BVSR){% endblock %}
 
 {% block header_actions %}
+<button type="button" class="admin-btn admin-btn-primary btn-open-protocol-preview">
+    <i class="admin-header__icon" data-lucide="file-search"></i> Aperçu du protocole
+</button>
 <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
     <i class="admin-header__icon" data-lucide="arrow-left"></i> Retour à la Flotte
 </a>
 {% endblock %}
 
+{#
+    Liste bilingue appariée : chaque consigne FR est suivie de sa traduction EN.
+    Les traductions manquantes (d'un côté ou de l'autre) sont signalées visuellement.
+#}
+{% macro rule_pairs(rules_fr, rules_en, unit='consigne', empty_text='Aucune consigne configurée.') %}
+{% set fr = rules_fr or [] %}
+{% set en = rules_en or [] %}
+{% set total = [fr|length, en|length]|max %}
+{% set ns = namespace(count=0, missing=0) %}
+{% for i in range(total) %}
+{% set f = fr[i] if i < fr|length else '' %}
+{% set e = en[i] if i < en|length else '' %}
+{% if f or e %}
+{% set ns.count = ns.count + 1 %}
+{% if not (f and e) %}{% set ns.missing = ns.missing + 1 %}{% endif %}
+{% endif %}
+{% endfor %}
+<div class="bvsr-preview-box">
+    <div class="u-flex u-justify-between u-align-center u-gap-2 u-mb-2">
+        <span class="u-text-xs u-text-muted">
+            <span class="bvsr-lang-pill bvsr-lang-pill--inline">FR</span>
+            <span class="bvsr-lang-pill bvsr-lang-pill--inline bvsr-lang-pill--en">EN</span>
+            {{ ns.count }} {{ unit }}{{ 's' if ns.count > 1 }}
+        </span>
+        {% if ns.missing %}
+        <span class="bvsr-missing-badge">
+            <i data-lucide="languages" class="u-w-14 u-h-14 u-m-0"></i>
+            {{ ns.missing }} traduction{{ 's' if ns.missing > 1 }} manquante{{ 's' if ns.missing > 1 }}
+        </span>
+        {% endif %}
+    </div>
+    {% if ns.count %}
+    <ul class="bvsr-preview-list">
+        {% for i in range(total) %}
+        {% set f = fr[i] if i < fr|length else '' %}
+        {% set e = en[i] if i < en|length else '' %}
+        {% if f or e %}
+        <li class="bvsr-preview-item">
+            {% if f %}
+            <span class="bvsr-pair-fr">{{ f }}</span>
+            {% else %}
+            <span class="bvsr-pair-fr bvsr-pair--missing">Texte français manquant</span>
+            {% endif %}
+            {% if e %}
+            <span class="bvsr-pair-en">{{ e }}</span>
+            {% else %}
+            <span class="bvsr-pair-en bvsr-pair--missing">Traduction anglaise manquante</span>
+            {% endif %}
+        </li>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="u-text-xs u-text-muted u-m-0">{{ empty_text }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
 {% block content %}
 <!-- ═══════════ RÈGLES GÉNÉRALES DE SÉCURITÉ UNIVERSELLES ═══════════ -->
-<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+<div id="bvsr-section-general" class="admin-card u-p-4 u-mb-4 u-border-left-waiver bvsr-anchor-target">
     <div class="u-flex u-justify-between u-align-start u-mb-3">
         <div class="u-flex u-align-center u-gap-3">
             <div class="badge-pill u-bg-waiver-light u-text-waiver">
@@ -31,38 +92,13 @@
         </button>
     </div>
 
-    <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
-        <!-- Règles Générales Français -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill">FR</span>
-                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_fr or [])|length }} consigne{% if
-                    (general_rules.rules_fr or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for rfr in (general_rules.rules_fr or []) %}
-                <li class="bvsr-preview-item">{{ rfr }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Règles Générales Anglais -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
-                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_en or [])|length }} rule{% if
-                    (general_rules.rules_en or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for ren in (general_rules.rules_en or []) %}
-                <li class="bvsr-preview-item">{{ ren }}</li>
-                {% endfor %}
-            </ul>
-        </div>
+    <div class="u-mt-3">
+        {{ rule_pairs(general_rules.rules_fr, general_rules.rules_en) }}
     </div>
 </div>
+
 <!-- ═══════════ RÈGLES SPÉCIFIQUES RÉFÉRENTS PLATEAU BV ═══════════ -->
-<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+<div id="bvsr-section-referents" class="admin-card u-p-4 u-mb-4 u-border-left-waiver bvsr-anchor-target">
     <div class="u-flex u-justify-between u-align-start u-mb-3">
         <div class="u-flex u-align-center u-gap-3">
             <div class="badge-pill u-bg-waiver-light u-text-waiver">
@@ -82,39 +118,25 @@
         </button>
     </div>
 
-    <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
-        <!-- Règles Référents BV Français -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill">FR</span>
-                <span class="u-text-xs u-text-muted">{{ (bv_referents_rules.rules_fr or [])|length }} consigne{% if
-                    (bv_referents_rules.rules_fr or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for rfr in (bv_referents_rules.rules_fr or []) %}
-                <li class="bvsr-preview-item">{{ rfr }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Règles Référents BV Anglais -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
-                <span class="u-text-xs u-text-muted">{{ (bv_referents_rules.rules_en or [])|length }} rule{% if
-                    (bv_referents_rules.rules_en or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for ren in (bv_referents_rules.rules_en or []) %}
-                <li class="bvsr-preview-item">{{ ren }}</li>
-                {% endfor %}
-            </ul>
+    <div class="u-mt-3">
+        {{ rule_pairs(bv_referents_rules.rules_fr, bv_referents_rules.rules_en) }}
+    </div>
+    <div class="bvsr-placeholder-note">
+        <i data-lucide="info"></i>
+        <div>
+            <p class="bvsr-placeholder-note__title">Variables remplacées par les noms des référents du projet</p>
+            <dl class="bvsr-var-list">
+                <dt><code>{technicians_and}</code></dt>
+                <dd>Maxime Perrard <strong>et</strong> Ewen Gicquel</dd>
+                <dt><code>{technicians_or}</code></dt>
+                <dd>Maxime Perrard <strong>ou</strong> Ewen Gicquel</dd>
+            </dl>
         </div>
     </div>
 </div>
 
 <!-- ═══════════ CATALOGUE GLOBAL DES ÉQUIPEMENTS DE SÉCURITÉ ═══════════ -->
-<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+<div id="bvsr-section-equipment" class="admin-card u-p-4 u-mb-4 u-border-left-waiver bvsr-anchor-target">
     <div class="u-flex u-justify-between u-align-start u-mb-3">
         <div class="u-flex u-align-center u-gap-3">
             <div class="badge-pill u-bg-waiver-light u-text-waiver">
@@ -135,23 +157,12 @@
     </div>
 
     <div class="u-mt-3">
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="u-text-xs u-font-bold u-text-waiver">{{ (equipment_catalog or [])|length }} équipement{% if
-                    (equipment_catalog or [])|length > 1 %}s{% endif %} référencé{% if (equipment_catalog or [])|length
-                    > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for eq in (equipment_catalog or []) %}
-                <li class="bvsr-preview-item">
-                    <strong>{{ eq.label_fr }}</strong>
-                    {% if eq.label_en %}
-                    <br><em class="u-text-muted">({{ eq.label_en }})</em>
-                    {% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
+        {{ rule_pairs(
+            (equipment_catalog or [])|map(attribute='label_fr')|list,
+            (equipment_catalog or [])|map(attribute='label_en')|list,
+            unit='équipement',
+            empty_text='Aucun équipement dans le catalogue.'
+        ) }}
     </div>
 </div>
 
@@ -181,7 +192,8 @@
 <!-- ═══════════ GRILLE DES VÉHICULES DE FLOTTE ═══════════ -->
 <div class="u-grid u-grid-cols-2">
     {% for key, cat in catalog.items() %}
-    <div class="admin-card bvsr-catalog-card u-p-4 u-flex u-flex-column u-justify-between">
+    <div id="bvsr-vehicle-{{ cat.id }}"
+        class="admin-card bvsr-catalog-card bvsr-anchor-target u-p-4 u-flex u-flex-column u-justify-between">
         <div>
             <div class="u-flex u-justify-between u-align-start u-mb-3">
                 <div class="u-flex u-align-center u-gap-3">
@@ -202,34 +214,8 @@
                 </button>
             </div>
 
-            <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
-                <!-- Règles Français avec puces violettes rondes -->
-                <div class="bvsr-preview-box">
-                    <div class="u-flex u-justify-between u-align-center u-mb-2">
-                        <span class="bvsr-lang-pill">FR</span>
-                        <span class="u-text-xs u-text-muted">{{ (cat.rules_fr or [])|length }} consigne{% if
-                            (cat.rules_fr or [])|length > 1 %}s{% endif %}</span>
-                    </div>
-                    <ul class="bvsr-preview-list">
-                        {% for rfr in cat.rules_fr %}
-                        <li class="bvsr-preview-item">{{ rfr }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-
-                <!-- Règles Anglais avec puces violettes rondes -->
-                <div class="bvsr-preview-box">
-                    <div class="u-flex u-justify-between u-align-center u-mb-2">
-                        <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
-                        <span class="u-text-xs u-text-muted">{{ (cat.rules_en or [])|length }} rule{% if (cat.rules_en
-                            or [])|length > 1 %}s{% endif %}</span>
-                    </div>
-                    <ul class="bvsr-preview-list">
-                        {% for ren in cat.rules_en %}
-                        <li class="bvsr-preview-item">{{ ren }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            <div class="u-mt-3 u-mb-3">
+                {{ rule_pairs(cat.rules_fr, cat.rules_en) }}
             </div>
 
             {% if cat.equipment_fr or cat.equipment_en %}
@@ -237,31 +223,10 @@
                 <div class="u-flex u-align-center u-gap-2 u-mb-2">
                     <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs u-font-bold">
                         <i data-lucide="hard-hat" class="u-w-14 u-h-14 u-m-0"></i> Équipements fournis <span
-                            class="bvsr-catalog-equipments-count">{{(cat.equipment_fr or [])|length }}</span>
+                            class="bvsr-catalog-equipments-count">{{ (cat.equipment_fr or [])|length }}</span>
                     </span>
                 </div>
-                <div class="u-grid u-gap-3 u-grid-cols-2">
-                    <div class="bvsr-preview-box">
-                        <div class="u-flex u-justify-between u-align-center u-mb-2">
-                            <span class="bvsr-lang-pill">FR</span>
-                        </div>
-                        <ul class="bvsr-preview-list">
-                            {% for eq_fr in cat.equipment_fr %}
-                            <li class="bvsr-preview-item">{{ eq_fr }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                    <div class="bvsr-preview-box">
-                        <div class="u-flex u-justify-between u-align-center u-mb-2">
-                            <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
-                        </div>
-                        <ul class="bvsr-preview-list">
-                            {% for eq_en in cat.equipment_en %}
-                            <li class="bvsr-preview-item">{{ eq_en }}</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
+                {{ rule_pairs(cat.equipment_fr, cat.equipment_en, unit='équipement') }}
             </div>
             {% endif %}
         </div>
@@ -296,21 +261,53 @@
 
         <!-- Formulaire d'édition par puces dynamiques -->
         <form id="ruleForm" method="POST" action="{{ url_for('admin_fleet.admin_safety_rules_config') }}"
-            class="u-flex u-flex-column u-h-100 u-overflow-hidden">
+            class="u-flex u-flex-column u-h-100 u-overflow-hidden" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" id="modal_rule_scope" name="rule_scope" value="vehicle">
-            <input type="hidden" id="modal_is_general" name="is_general" value="0">
-            <input type="hidden" id="modal_is_bv_referents" name="is_bv_referents" value="0">
             <input type="hidden" id="modal_vehicle_id" name="vehicle_id" value="">
 
             <div class="bvsr-modal-body">
+                <div id="bvsr-form-error" class="bvsr-form-error u-d-none" role="alert"></div>
+
                 <div id="modal_vehicle_label_group" class="form-group u-mb-4">
                     <label for="modal_label" class="form-label u-font-semibold">Nom d'affichage du véhicule dans le
                         protocole <span class="u-text-danger">*</span></label>
-                    <input type="text" id="modal_label" name="label" class="form-input" required
+                    <input type="text" id="modal_label" name="label" class="form-input"
                         placeholder="ex: eRover (Polaris Kinetic)">
                     <small class="u-text-muted u-text-xs">Titre tel qu'il apparaîtra dans le document BVSR signé par les
                         équipes.</small>
+                </div>
+
+                <!-- Aide aux variables des référents BV (visible uniquement pour cette section) -->
+                <div id="bvsr-placeholder-help" class="bvsr-placeholder-help u-d-none">
+                    <div class="u-flex u-justify-between u-align-start u-gap-3">
+                        <div>
+                            <p class="u-text-sm u-font-semibold u-m-0">Insérer les noms des référents</p>
+                            <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
+                                Placez le curseur dans une consigne puis cliquez sur une variable : elle sera remplacée
+                                par les noms des référents du projet.
+                            </p>
+                        </div>
+                        <div class="bvsr-placeholder-vars">
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary bvsr-insert-var"
+                                data-insert="{technicians_and}" title="Noms reliés par « et » / « and »">
+                                {technicians_and}
+                            </button>
+                            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary bvsr-insert-var"
+                                data-insert="{technicians_or}" title="Noms reliés par « ou » / « or »">
+                                {technicians_or}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bvsr-placeholder-preview">
+                        <label for="bvsr-example-technicians" class="u-text-xs u-text-muted">Aperçu avec les
+                            référents :</label>
+                        <input type="text" id="bvsr-example-technicians" class="form-input bvsr-example-input"
+                            value="Maxime Perrard, Ewen Gicquel" autocomplete="off">
+                        <div id="bvsr-placeholder-rendered" class="bvsr-placeholder-rendered">
+                            <span class="u-text-muted">Cliquez dans une consigne pour voir son rendu.</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Section de la liste à puces dynamique -->
@@ -320,14 +317,9 @@
                             <label class="form-label u-mb-0 u-font-bold">Consignes de Sécurité par Puces</label>
                             <span id="bvsr-rules-count-badge"
                                 class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">0 consigne</span>
+                            <span id="bvsr-missing-en-badge" class="bvsr-missing-badge u-d-none"></span>
                         </div>
-                        <div class="u-flex u-align-center u-gap-3">
-                            <span class="bvsr-kbd-hint"><kbd>Entrée ↵</kbd> pour ajouter une puce</span>
-                            <label class="u-flex u-align-center u-gap-1 u-text-xs u-text-muted u-cursor-pointer u-mb-0">
-                                <input type="checkbox" id="bvsr-toggle-en" checked class="form-checkbox">
-                                <span>Afficher EN</span>
-                            </label>
-                        </div>
+                        <span class="bvsr-kbd-hint"><kbd>Entrée ↵</kbd> pour ajouter une puce</span>
                     </div>
 
                     <!-- État vide -->
@@ -388,16 +380,30 @@
 
             <!-- Pied de page de la modale -->
             <div class="bvsr-modal-footer">
-                <div class="u-flex u-align-center u-gap-2">
-                    <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
-                    <span class="u-text-xs u-text-muted">Les consignes modifiées s'appliqueront instantanément aux
-                        futurs protocoles BVSR.</span>
+                <div class="bvsr-footer-default u-flex u-align-center u-justify-between u-w-100">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
+                        <span class="u-text-xs u-text-muted">Les consignes modifiées s'appliqueront instantanément aux
+                            futurs protocoles BVSR.</span>
+                    </div>
+                    <div class="u-flex u-align-center u-gap-2">
+                        <button type="button" class="admin-btn admin-btn-secondary btn-close-rule-modal">Annuler</button>
+                        <button type="submit" class="admin-btn admin-btn-primary">
+                            <i data-lucide="check"></i> Enregistrer les Règles
+                        </button>
+                    </div>
                 </div>
-                <div class="u-flex u-align-center u-gap-2">
-                    <button type="button" class="admin-btn admin-btn-secondary btn-close-rule-modal">Annuler</button>
-                    <button type="submit" class="admin-btn admin-btn-primary">
-                        <i data-lucide="check"></i> Enregistrer les Règles
-                    </button>
+                <div class="bvsr-discard-bar u-d-none" role="alert">
+                    <span class="u-text-sm u-font-semibold">
+                        <i data-lucide="alert-triangle" class="u-w-16 u-h-16 u-m-0"></i>
+                        Modifications non enregistrées
+                    </span>
+                    <div class="u-flex u-align-center u-gap-2">
+                        <button type="button" class="admin-btn admin-btn-secondary bvsr-discard-cancel">Continuer
+                            l'édition</button>
+                        <button type="button" class="admin-btn admin-btn-danger bvsr-discard-confirm">Fermer sans
+                            enregistrer</button>
+                    </div>
                 </div>
             </div>
         </form>
@@ -428,14 +434,18 @@
 
         <!-- Formulaire d'édition du catalogue global -->
         <form id="equipmentCatalogForm" method="POST" action="{{ url_for('admin_fleet.admin_safety_rules_config') }}"
-            class="u-flex u-flex-column u-h-100 u-overflow-hidden">
+            class="u-flex u-flex-column u-h-100 u-overflow-hidden" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="rule_scope" value="equipment_catalog">
-            <input type="hidden" name="is_equipment_catalog" value="1">
 
             <div class="bvsr-modal-body">
+                <div id="bvsr-eq-form-error" class="bvsr-form-error u-d-none" role="alert"></div>
+
                 <div class="u-flex u-justify-between u-align-center u-mb-3">
-                    <span class="form-label u-mb-0 u-font-bold">Équipements Référencés</span>
+                    <div class="u-flex u-align-center u-gap-2">
+                        <span class="form-label u-mb-0 u-font-bold">Équipements Référencés</span>
+                        <span id="bvsr-eq-missing-en-badge" class="bvsr-missing-badge u-d-none"></span>
+                    </div>
                     <span class="bvsr-kbd-hint"><kbd>Entrée ↵</kbd> pour ajouter un équipement</span>
                 </div>
 
@@ -450,19 +460,85 @@
             </div>
 
             <div class="bvsr-modal-footer">
-                <div class="u-flex u-align-center u-gap-2">
-                    <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
-                    <span class="u-text-xs u-text-muted">Les équipements modifiés se répercutent sur tous les véhicules
-                        qui y sont associés.</span>
+                <div class="bvsr-footer-default u-flex u-align-center u-justify-between u-w-100">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
+                        <span class="u-text-xs u-text-muted">Les équipements modifiés se répercutent sur tous les
+                            véhicules qui y sont associés.</span>
+                    </div>
+                    <div class="u-flex u-align-center u-gap-2">
+                        <button type="button" class="admin-btn admin-btn-secondary btn-close-eq-modal">Annuler</button>
+                        <button type="submit" class="admin-btn admin-btn-primary">
+                            <i data-lucide="check"></i> Enregistrer le Catalogue
+                        </button>
+                    </div>
                 </div>
-                <div class="u-flex u-align-center u-gap-2">
-                    <button type="button" class="admin-btn admin-btn-secondary btn-close-eq-modal">Annuler</button>
-                    <button type="submit" class="admin-btn admin-btn-primary">
-                        <i data-lucide="check"></i> Enregistrer le Catalogue
-                    </button>
+                <div class="bvsr-discard-bar u-d-none" role="alert">
+                    <span class="u-text-sm u-font-semibold">
+                        <i data-lucide="alert-triangle" class="u-w-16 u-h-16 u-m-0"></i>
+                        Modifications non enregistrées
+                    </span>
+                    <div class="u-flex u-align-center u-gap-2">
+                        <button type="button" class="admin-btn admin-btn-secondary bvsr-discard-cancel">Continuer
+                            l'édition</button>
+                        <button type="button" class="admin-btn admin-btn-danger bvsr-discard-confirm">Fermer sans
+                            enregistrer</button>
+                    </div>
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- ═══════════ MODAL APERÇU DU PROTOCOLE BVSR ═══════════ -->
+<div id="protocolPreviewModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true"
+    aria-hidden="true" aria-labelledby="previewModalTitle"
+    data-preview-url="{{ url_for('admin_fleet.admin_safety_rules_protocol_preview') }}">
+    <div class="admin-modal-container bvsr-modal-container bvsr-preview-modal">
+        <div class="bvsr-modal-header">
+            <div class="u-flex u-align-center u-gap-3">
+                <div class="badge-pill u-bg-waiver-light u-text-waiver">
+                    <i data-lucide="file-search" class="u-w-24 u-h-24 u-m-0"></i>
+                </div>
+                <div>
+                    <h3 id="previewModalTitle" class="u-text-xl u-font-bold u-m-0">Aperçu du protocole BVSR</h3>
+                    <p class="u-text-sm u-text-muted u-mt-1 u-mb-0">Document tel qu'il sera signé, avec un projet et un
+                        signataire fictifs.</p>
+                </div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-quaternary btn-close-preview-modal"
+                aria-label="Fermer la boîte de dialogue">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="bvsr-preview-layout">
+            <aside class="bvsr-preview-controls">
+                <p class="form-label u-font-bold u-mb-2">Véhicules réservés</p>
+                <div class="u-flex u-flex-column u-gap-1 u-mb-4">
+                    {% for key, cat in catalog.items() %}
+                    <label class="bvsr-preview-vehicle">
+                        <input type="checkbox" class="form-checkbox bvsr-preview-vehicle-cb" value="{{ cat.id }}">
+                        <span>{{ cat.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <label for="bvsr-preview-technicians" class="form-label u-font-bold">Référents plateau BV</label>
+                <input type="text" id="bvsr-preview-technicians" class="form-input"
+                    placeholder="ex: Maxime Perrard, Ewen Gicquel" autocomplete="off">
+                <small class="u-text-muted u-text-xs u-d-block u-mt-1">Laisser vide si le tournage n'a pas de
+                    référent : la section 2 n'apparaîtra pas.</small>
+
+                <a id="bvsr-preview-pdf-link" href="#" target="_blank" rel="noopener"
+                    class="admin-btn admin-btn-secondary u-w-100 u-mt-4">
+                    <i data-lucide="download"></i> Ouvrir en PDF
+                </a>
+            </aside>
+            <div class="bvsr-preview-frame-wrap">
+                <iframe id="bvsr-preview-frame" class="bvsr-preview-frame" title="Aperçu du protocole BVSR"></iframe>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

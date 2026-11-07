@@ -482,6 +482,18 @@ a.badge-pill:hover {
     border: 1px solid var(--entity-waiver-border);
 }
 
+.badge-pill[data-val="hi-risk"] {
+    background: var(--entity-incident);
+    color: var(--entity-waiver-text);
+    border: 1px solid var(--entity-waiver-border);
+}
+
+.badge-pill[data-val="std-risk"] {
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
+    border: 1px solid var(--entity-waiver-border);
+}
+
 /* --- Vehicle Status Badge (Options des sélecteurs riches de véhicules) --- */
 .vehicle-status-badge,
 .badge-pill.vehicle-status-badge {

@@ -1,276 +1,182 @@
 {% extends "admin/admin_base.html" %}
+{% from "admin/macros.html" import list_header_actions %}
 
-{% block title %}Analyse des Risques (BVRS) — Flotte Belle Vitesse{% endblock %}
+{% block title %}Catalogue Analyse des Risques (BVRS){% endblock %}
 {% block page_title %}Catalogue Analyse des Risques (BVRS){% endblock %}
 
 {% block header_actions %}
+{{ list_header_actions('Rechercher un risque...') }}
+<button type="button" id="btn-toggle-all-accordions" class="admin-btn admin-btn-secondary" aria-expanded="false">
+    <i data-lucide="chevrons-up-down" class="admin-header__icon"></i>
+    <span class="js-toggle-all-label">Tout déplier</span>
+</button>
 <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
-    <i class="admin-header__icon" data-lucide="arrow-left"></i> Retour à la Flotte
+    <i data-lucide="arrow-left" class="admin-header__icon"></i> Retour à la Flotte
 </a>
 {% endblock %}
 
-{% block content %}
-<!-- ═══════════ 1. RISQUES GÉNÉRAUX TRAVELLING ═══════════ -->
-<div class="admin-card u-p-4 u-mb-4">
-    <div class="u-flex u-justify-between u-align-start u-mb-3">
-        <div class="u-flex u-align-start u-gap-3">
-            <div class="badge-pill u-bg-incident-light u-text-incident">
-                <i data-lucide="book-open-check" class="u-m-0"></i>
-            </div>
-            <div>
-                <h3 class="u-text-lg u-font-bold u-m-0">Risques Généraux</h3>
-                <span class="u-text-xs u-text-muted u-d-block u-mt-1">
-                    Véhicules Travelling — Analyse des risques commune appliquée systématiquement à l'ensemble des tournages Belle Vitesse.
-                </span>
-                {% set major_count = general_risks|selectattr('level', 'equalto', 'major')|list|length %}
-                {% set standard_count = general_risks|length - major_count %}
-                <div class="u-flex u-align-center u-gap-1 u-mt-1 u-flex-wrap">
-                    {% if major_count > 0 %}
-                    <span class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">
-                        {{ major_count }} majeur{% if major_count > 1 %}s{% endif %}
-                    </span>
-                    {% endif %}
-                    <span class="badge-pill u-bg-warning-light u-text-warning u-text-2xs">
-                        {{ standard_count }} standard{% if standard_count > 1 %}s{% endif %}
-                    </span>
-                    <span class="badge-pill u-bg-neutral-light u-text-muted u-text-2xs">
-                        {{ general_risks|length }} risque{% if general_risks|length > 1 %}s{% endif %}
-                    </span>
-                </div>
-            </div>
-        </div>
-        <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-general-risks"
-            data-risks='{{ general_risks|tojson }}'>
-            <i data-lucide="edit-3"></i> Modifier
-        </button>
-    </div>
+{# ══════════════ Macros ══════════════ #}
 
-    <!-- Grille compacte des risques généraux -->
-    <div class="u-flex u-flex-column u-gap-2 u-mt-3">
-        {% for r in general_risks %}
-        <div class="admin-card u-p-2 u-bg-neutral-light {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
-            <div class="u-flex u-align-center u-justify-between u-flex-wrap u-gap-1">
-                <div class="u-flex u-align-center u-gap-2">
-                    {% if r.level == 'major' %}
-                    <span class="badge-pill u-bg-danger u-text-white u-text-2xs u-font-bold">MAJEUR</span>
-                    {% else %}
-                    <span class="badge-pill u-bg-warning u-text-neutral u-text-2xs u-font-bold">STANDARD</span>
-                    {% endif %}
-                    <span class="u-text-2xs u-text-muted u-uppercase">{{ r.category_fr or r.category }}</span>
-                    <strong class="u-text-xs">{{ r.title_fr or r.title }}</strong>
-                </div>
-                {% set recs = r.recommendations_fr or r.recommendations %}
-                <span class="u-text-2xs u-text-muted">{{ (recs or [])|length }} consigne{% if (recs or [])|length > 1 %}s{% endif %}</span>
-            </div>
-        </div>
+{# « 3 risques », « 1 risque » #}
+{% macro plural(n, singular, plural_form=None) -%}
+{{ n }} {{ singular if n <= 1 else (plural_form or singular ~ 's') }}
+{%- endmacro %}
+
+{# Badge de niveau : Majeur = danger, Standard = warning #}
+{% macro level_badge(level) -%}
+{% if level == 'major' %}<span class="badge-pill badge-pill-xs" data-val="danger">Majeur</span>
+{%- else %}<span class="badge-pill badge-pill-xs" data-val="warning">Standard</span>{% endif %}
+{%- endmacro %}
+
+{# Compteurs (véhicules si fournis) / majeurs / standards / total #}
+{% macro risk_stats(stats) %}
+<div class="bvrs-chips">
+    {% if stats.vehicles is defined %}
+    <span class="badge-pill" data-val="neutral">{{ plural(stats.vehicles, 'véhicule') }}</span>
+    {% endif %}
+    {% if stats.major > 0 %}
+    <span class="badge-pill" data-val="danger">{{ plural(stats.major, 'majeur') }}</span>
+    {% endif %}
+    {% if stats.standard > 0 %}
+    <span class="badge-pill" data-val="warning">{{ plural(stats.standard, 'standard') }}</span>
+    {% endif %}
+    <span class="badge-pill" data-val="neutral">{{ plural(stats.total, 'risque') }}</span>
+</div>
+{% endmacro %}
+
+{# En-tête de section (Risques Généraux / Risques Spécifiques) #}
+{% macro section_head(icon, title, desc, stats, edit_url=None) %}
+<div class="bvrs-card__head">
+    <span class="badge-pill bvrs-card__icon" data-val="danger" aria-hidden="true">
+        <i data-lucide="{{ icon }}"></i>
+    </span>
+    <div class="bvrs-card__body">
+        <h2 class="bvrs-card__title">{{ title }}</h2>
+        <p class="bvrs-card__desc">{{ desc }}</p>
+        {{ risk_stats(stats) }}
+    </div>
+    {% if edit_url %}
+    <a href="{{ edit_url }}" class="admin-btn admin-btn-secondary admin-btn-sm">
+        <i data-lucide="edit-3"></i> Modifier
+    </a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{# Ligne de risque (cliquable → éditeur, ancrée sur le risque) #}
+{% macro risk_row(r, edit_url, cat_name, extra_search='') %}
+{% set recs_fr = r.recommendations_fr or r.recommendations or [] %}
+<a class="bvrs-row {{ 'bvrs-row--major' if r.level == 'major' }}"
+   href="{{ edit_url }}#risk-{{ r.id }}"
+   data-search-text="{{ [r.title_fr or r.title, r.title_en, r.description_fr or r.description, recs_fr|join(' '), cat_name, extra_search]|select|join(' ')|lower }}">
+    {{ level_badge(r.level) }}
+    <span class="bvrs-row__title">{{ r.title_fr or r.title }}</span>
+    {% if not r._translation_status.is_complete %}
+    <span class="badge-pill badge-pill-xs" data-val="neutral" title="{{ r._translation_status.missing_count }} champ(s) EN manquant(s)">EN</span>
+    {% endif %}
+    <span class="bvrs-row__count">{{ plural(recs_fr|length, 'recommandation') }}</span>
+</a>
+{% endmacro %}
+
+{# Groupe de catégorie repliable #}
+{% macro risk_group(cat, edit_url, expanded, extra_class='', extra_search='') %}
+<div class="bvrs-group-wrapper {{ extra_class }}">
+    <button type="button" class="bvrs-group" aria-expanded="{{ 'true' if expanded else 'false' }}">
+        <span class="bvrs-group__label">{{ cat.display_name or cat.name }}</span>
+        <span class="bvrs-group__count">
+            {{- plural(cat.count, 'risque') }}{% if cat.major_count %} · dont {{ plural(cat.major_count, 'majeur') }}{% endif -%}
+        </span>
+    </button>
+    <div class="bvrs-group__content {{ 'u-d-none' if not expanded }}">
+        {% for r in cat.risks %}
+        {{ risk_row(r, edit_url, cat.name, extra_search) }}
         {% endfor %}
     </div>
 </div>
+{% endmacro %}
 
-<!-- ═══════════ 2. RISQUES SPÉCIFIQUES PAR FAMILLE DE VÉHICULE ═══════════ -->
-<div class="admin-card u-p-4">
-    <div class="u-flex u-align-start u-gap-3">
-        <div class="badge-pill u-bg-incident-light u-text-incident">
-            <i data-lucide="shield-check" class="u-m-0"></i>
-        </div>
-        <div class="u-flex-1">
-            <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
-                <div>
-                    <h3 class="u-text-lg u-font-bold u-m-0">2. Risques Spécifiques par Véhicules</h3>
-                    <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
-                        Analyses de risques spécifiques associées à chaque véhicule de la flotte.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block content %}
+<div class="bvrs-page">
 
-<!-- ═══════════ GRILLE DES VÉHICULES DE FLOTTE ═══════════ -->
-<div class="u-grid u-grid-cols-2">
-    {% set seen_ids = [] %}
-    {% for v_key, v_data in catalog.items() %}
-    {% set v_id = v_data.id or v_key %}
-    {% if v_id not in seen_ids %}
-    {% set _ = seen_ids.append(v_id) %}
-    {% set v_risks = v_data.get('risks', []) %}
-    <div class="admin-card u-p-4 u-flex u-flex-column u-justify-between">
-        <div>
-            <div class="u-flex u-justify-between u-align-start u-mb-3">
-                <div class="u-flex u-align-center u-gap-3">
-                    <div class="bvsr-vehicle-avatar">
-                        <img src="{{ v_data.image or v_data.thumbnail or '/static/imgs/placeholders/vehicle.svg' }}"
-                            alt="{{ v_data.name or v_data.label or v_key }}" class="bvsr-vehicle-img" loading="lazy">
-                    </div>
-                    <div>
-                        <h3 class="u-text-lg u-font-bold u-m-0">{{ v_data.name or v_data.label or v_key }}</h3>
-                        {% if v_data.label and v_data.label != (v_data.name or v_key) %}
-                        <span class="u-text-xs u-text-muted u-d-block u-mt-1">{{ v_data.label }}</span>
-                        {% endif %}
-                        <div class="u-flex u-align-center u-gap-1 u-mt-1 u-flex-wrap">
-                            {% set v_major = v_risks|selectattr('level', 'equalto', 'major')|list|length %}
-                            {% set v_std = v_risks|length - v_major %}
-                            {% if v_major > 0 %}
-                            <span class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">
-                                {{ v_major }} majeur{% if v_major > 1 %}s{% endif %}
-                            </span>
+    <!-- 1. Risques Généraux -->
+    {% set general_edit_url = url_for('admin_fleet.admin_risk_assessment_edit_general') %}
+    <section class="admin-card bvrs-card" id="section-general-risks">
+        {{ section_head('shield-alert', 'Risques Généraux',
+            "Véhicules Travelling — Analyse des risques commune appliquée systématiquement à l'ensemble des tournages Belle Vitesse.",
+            general_stats, general_edit_url) }}
+        {% for cat in general_categories %}
+        {{ risk_group(cat, general_edit_url, loop.first) }}
+        {% endfor %}
+    </section>
+
+    <!-- 2. Risques Spécifiques par Véhicules -->
+    <section class="admin-card bvrs-card" id="section-vehicle-risks">
+        {{ section_head('car-front', 'Risques Spécifiques par Véhicules',
+            'Analyse de risques spécifiques associées à chaque véhicule de la flotte.',
+            vehicles_stats) }}
+
+        <div class="bvrs-vehicle-list">
+            {% set state = namespace(first_expanded=false) %}
+            {% for v in vehicles %}
+            {% set v_data = v.data %}
+            {% set v_stats = v.stats %}
+            {% set v_cats = v.categories %}
+            {% set v_name = v_data.name or v.key %}
+            {% set v_edit_url = url_for('admin_fleet.admin_risk_assessment_edit_vehicle', vehicle_key=v.key) %}
+            {# Le premier véhicule ayant des risques est affiché déplié (3 premières catégories) #}
+            {% set show_preview = v_stats.total > 0 and not state.first_expanded %}
+            {% if show_preview %}{% set state.first_expanded = true %}{% endif %}
+
+            <article class="bvrs-vehicle-card">
+                {# En-tête identique au catalogue des règles de sécurité (safety_rules_catalog.html) #}
+                <div class="u-flex u-justify-between u-align-start u-mb-3">
+                    <div class="u-flex u-align-center u-gap-3">
+                        <div class="bvsr-vehicle-avatar">
+                            <img src="{{ v_data.image or v_data.thumbnail or '/static/imgs/placeholders/vehicle.svg' }}" alt="{{ v_name }}"
+                                class="bvsr-vehicle-img" loading="lazy">
+                        </div>
+                        <div>
+                            <h3 class="u-text-lg u-font-bold u-m-0 bvrs-vehicle__name">{{ v_name }}</h3>
+                            {% if v_data.label and v_data.label != v_name %}
+                            <span class="u-text-xs u-text-muted u-d-block u-mt-1">{{ v_data.label }}</span>
                             {% endif %}
-                            <span class="badge-pill u-bg-warning-light u-text-warning u-text-2xs">
-                                {{ v_std }} standard{% if v_std > 1 %}s{% endif %}
-                            </span>
-                            <span class="badge-pill u-bg-neutral-light u-text-muted u-text-2xs">
-                                {{ v_risks|length }} risque{% if v_risks|length > 1 %}s{% endif %}
-                            </span>
+                            {{ risk_stats(v_stats) }}
                         </div>
                     </div>
+                    <a href="{{ v_edit_url }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <i data-lucide="edit-3"></i> Modifier
+                    </a>
                 </div>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-vehicle-risks"
-                    data-key="{{ v_key }}" data-id="{{ v_data.id or v_key }}" data-cat='{{ v_data|tojson }}'>
-                    <i data-lucide="edit-3"></i> Modifier
-                </button>
-            </div>
 
-            <!-- Liste compacte des risques du véhicule -->
-            <div class="u-flex u-flex-column u-gap-2 u-mt-3">
-                {% if v_risks and v_risks|length > 0 %}
-                    {% for r in v_risks %}
-                    <div class="admin-card u-p-2 u-bg-neutral-light {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
-                        <div class="u-flex u-align-center u-justify-between u-flex-wrap u-gap-1">
-                            <div class="u-flex u-align-center u-gap-2">
-                                {% if r.level == 'major' %}
-                                <span class="badge-pill u-bg-danger u-text-white u-text-2xs u-font-bold">MAJEUR</span>
-                                {% else %}
-                                <span class="badge-pill u-bg-warning u-text-neutral u-text-2xs u-font-bold">STANDARD</span>
-                                {% endif %}
-                                <span class="u-text-2xs u-text-muted u-uppercase">{{ r.category_fr or r.category }}</span>
-                                <strong class="u-text-xs">{{ r.title_fr or r.title }}</strong>
-                            </div>
-                            {% set recs = r.recommendations_fr or r.recommendations %}
-                            <span class="u-text-2xs u-text-muted">{{ (recs or [])|length }} consigne{% if (recs or [])|length > 1 %}s{% endif %}</span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="u-p-2 u-text-center u-bg-neutral-light u-border-radius-sm">
-                        <span class="u-text-xs u-text-muted u-italic">Aucun risque spécifique configuré pour ce véhicule.</span>
-                    </div>
+                {% if v_stats.total == 0 %}
+                <div class="empty-state bvrs-empty">
+                    <div class="empty-state-desc">Aucun risque spécifique configuré pour ce véhicule.</div>
+                </div>
+
+                {% elif show_preview %}
+                {% for cat in v_cats %}
+                {{ risk_group(cat, v_edit_url, true, 'bvrs-extra-cat u-d-none' if loop.index > 3 else '', v_name) }}
+                {% endfor %}
+                {% if v_cats|length > 3 %}
+                {% set extra_count = v_stats.total - (v_cats[:3]|sum(attribute='count')) %}
+                <button type="button" class="bvrs-more" data-action="extra" aria-expanded="false"
+                    data-label-show="Afficher les {{ plural(extra_count, 'autre risque', 'autres risques') }}"
+                    data-label-hide="Masquer les autres risques">Afficher les {{ plural(extra_count, 'autre risque', 'autres risques') }}</button>
                 {% endif %}
-            </div>
+
+                {% else %}
+                <button type="button" class="bvrs-more" data-action="vehicle" aria-expanded="false"
+                    data-label-show="Voir les {{ plural(v_stats.total, 'risque') }}"
+                    data-label-hide="Masquer les {{ plural(v_stats.total, 'risque') }}">Voir les {{ plural(v_stats.total, 'risque') }}</button>
+                <div class="bvrs-vehicle-collapsible-content u-d-none">
+                    {% for cat in v_cats %}
+                    {{ risk_group(cat, v_edit_url, true, '', v_name) }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </article>
+            {% endfor %}
         </div>
-    </div>
-    {% endif %}
-    {% endfor %}
+    </section>
 </div>
-
-<!-- ═══════════ MODAL ÉDITION ANALYSE DES RISQUES (BVRS) ═══════════ -->
-<div id="riskModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-hidden="true"
-    aria-labelledby="riskModalTitle">
-    <div class="admin-modal-container bvsr-modal-container bvrs-modal-container">
-        <!-- En-tête de la modale avec identité véhicule et badges KPI -->
-        <div class="bvsr-modal-header">
-            <div class="u-flex u-align-start u-gap-3">
-                <div id="modalRiskIconWrap" class="badge-pill u-bg-danger-light u-text-danger">
-                    <i data-lucide="shield-alert" class="u-w-24 u-h-24 u-m-0"></i>
-                </div>
-                <div>
-                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                        <h3 id="riskModalTitle" class="u-text-xl u-font-bold u-m-0">Modifier l'Analyse des Risques</h3>
-                        <div id="modalRiskHeaderBadges" class="u-flex u-align-center u-gap-1">
-                            <span id="modalRiskMajorCount" class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">0 majeur</span>
-                            <span id="modalRiskStdCount" class="badge-pill u-bg-warning-light u-text-warning u-text-2xs">0 standard</span>
-                            <span id="modalRiskTotalCount" class="badge-pill u-bg-neutral-light u-text-muted u-text-2xs">0 risque</span>
-                        </div>
-                    </div>
-                    <p id="riskModalSubtitle" class="u-text-sm u-text-muted u-mt-1 u-mb-0">Risques et recommandations de sécurité</p>
-                </div>
-            </div>
-            <button type="button" class="admin-btn admin-btn-quaternary btn-close-risk-modal"
-                aria-label="Fermer la boîte de dialogue">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-
-        <!-- Formulaire d'édition -->
-        <form id="riskForm" method="POST" action="{{ url_for('admin_fleet.admin_risk_assessment_config') }}"
-            class="u-flex u-flex-column u-h-100 u-overflow-hidden">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" id="modal_risk_action" name="action" value="save_general">
-            <input type="hidden" id="modal_risk_vehicle_key" name="vehicle_key" value="">
-            <input type="hidden" id="modal_risks_json" name="risks_json" value="[]">
-
-            <div class="bvsr-modal-body">
-                <div id="modal_vehicle_label_wrap" class="form-group u-mb-3 u-d-none">
-                    <label for="modal_risk_label" class="form-label u-font-semibold">Nom d'affichage du véhicule dans le protocole <span class="u-text-danger">*</span></label>
-                    <input type="text" id="modal_risk_label" name="label" class="form-input" placeholder="ex: eRover (Polaris Kinetic)">
-                    <small class="u-text-muted u-text-xs">Titre tel qu'il apparaîtra dans le document BVRS officiel.</small>
-                </div>
-
-                <!-- Barre de navigation par onglets de catégories (Pill Tabs) -->
-                <div class="bvrs-tabs-wrapper u-mb-3">
-                    <div class="bvrs-category-tabs" id="bvrs-category-tabs"></div>
-                </div>
-
-                <!-- Barre d'action contextuelle par catégorie -->
-                <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2 bvrs-context-bar">
-                    <div class="u-flex u-align-center u-gap-2">
-                        <!-- Affichage du nom de catégorie actif avec bouton renommer -->
-                        <div id="bvrs-active-cat-display" class="u-flex u-align-center u-gap-2">
-                            <h4 id="bvrs-active-cat-name" class="u-m-0 u-text-sm u-font-bold u-uppercase">Tous les risques</h4>
-                            <button type="button" id="btn-rename-category" class="admin-btn admin-btn-xs admin-btn-secondary u-d-none" title="Renommer cette catégorie">
-                                <i data-lucide="edit-2"></i>
-                            </button>
-                        </div>
-                        <!-- Formulaire inline pour renommer la catégorie -->
-                        <div id="bvrs-rename-cat-wrap" class="u-flex u-align-center u-gap-1 u-d-none">
-                            <input type="text" id="bvrs-rename-cat-input" class="form-input form-input-2xs bvrs-category-inline-input" placeholder="NOUVEAU NOM..." maxlength="40">
-                            <button type="button" id="btn-confirm-rename-cat" class="bvrs-category-inline-btn bvrs-category-inline-btn--confirm" title="Valider (Entrée ↵)">
-                                <i data-lucide="check" class="u-w-14 u-h-14"></i>
-                            </button>
-                            <button type="button" id="btn-cancel-rename-cat" class="bvrs-category-inline-btn bvrs-category-inline-btn--cancel" title="Annuler (Échap)">
-                                <i data-lucide="x" class="u-w-14 u-h-14"></i>
-                            </button>
-                        </div>
-                        <span id="bvrs-risks-count-badge" class="badge-pill u-bg-danger-light u-text-danger u-text-xs">0 risque</span>
-                    </div>
-                    <div class="u-flex u-align-center u-gap-2">
-                        <button type="button" id="btn-toggle-all-cards" class="admin-btn admin-btn-xs admin-btn-secondary" title="Tout déplier / Tout replier">
-                            <i data-lucide="chevrons-up-down"></i> <span id="toggle-all-label">Tout déplier</span>
-                        </button>
-                        <button type="button" id="btn-add-risk-item" class="admin-btn admin-btn-sm admin-btn-primary">
-                            <i data-lucide="plus"></i> Ajouter un risque
-                        </button>
-                    </div>
-                </div>
-
-                <!-- État vide -->
-                <div id="bvrs-risks-empty-state" class="bvsr-empty-state u-d-none">
-                    <i data-lucide="shield-check" class="u-w-24 u-h-24 u-text-muted u-mb-2"></i>
-                    <p class="u-m-0 u-text-sm u-font-semibold">Aucun risque dans cette catégorie pour le moment.</p>
-                    <p class="u-text-xs u-text-muted u-mt-1">Cliquez sur « Ajouter un risque » pour enrichir cette section.</p>
-                </div>
-
-                <!-- Conteneur des cartes de risques interactives (accordéons) -->
-                <div id="bvrs-risks-container" class="u-flex u-flex-column u-gap-2"></div>
-            </div>
-
-            <!-- Pied de page de la modale -->
-            <div class="bvsr-modal-footer">
-                <div class="u-flex u-align-center u-gap-2">
-                    <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
-                    <span class="u-text-xs u-text-muted">Les modifications s'appliqueront instantanément aux futurs protocoles BVRS générés.</span>
-                </div>
-                <div class="u-flex u-align-center u-gap-2">
-                    <button type="button" class="admin-btn admin-btn-secondary btn-close-risk-modal">Annuler</button>
-                    <button type="submit" class="admin-btn admin-btn-primary">
-                        <i data-lucide="check"></i> Enregistrer les Risques
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Payloads de données JSON pour l'éditeur modal interactif -->
-<script type="application/json" id="bvrs-general-risks-json">{{ general_risks|tojson }}</script>
-<script type="application/json" id="bvrs-vehicle-catalog-json">{{ catalog|tojson }}</script>
 {% endblock %}

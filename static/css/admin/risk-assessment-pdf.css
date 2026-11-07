@@ -234,6 +234,7 @@
 }
 
 .bvrs-road-legal-title {
+    text-transform: uppercase;
     color: #18181b;
     font-size: 8.5pt;
     font-weight: 700;

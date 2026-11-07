@@ -108,7 +108,7 @@
 
                 <table class="bvsr-rules-table" data-lang="fr">
                     <tbody>
-                        {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
+                        {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) if rfr %}
                         <tr class="bvsr-rule-row">
                             <td class="bvsr-rule-check">✓</td>
                             <td class="bvsr-rule-text">{{ rfr }}</td>
@@ -119,7 +119,7 @@
 
                 <table class="bvsr-rules-table" data-lang="en">
                     <tbody>
-                        {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) %}
+                        {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) if ren %}
                         <tr class="bvsr-rule-row">
                             <td class="bvsr-rule-check">✓</td>
                             <td class="bvsr-rule-text">{{ ren }}</td>
@@ -135,7 +135,7 @@
 
                 <table class="bvsr-rules-table" data-lang="fr">
                     <tbody>
-                        {% for rfr in rules_fr %}
+                        {% for rfr in rules_fr if rfr %}
                         <tr class="bvsr-rule-row">
                             <td class="bvsr-rule-check">✓</td>
                             <td class="bvsr-rule-text">{{ rfr }}</td>
@@ -151,7 +151,7 @@
 
                 <table class="bvsr-rules-table" data-lang="en">
                     <tbody>
-                        {% for ren in rules_en %}
+                        {% for ren in rules_en if ren %}
                         <tr class="bvsr-rule-row">
                             <td class="bvsr-rule-check">✓</td>
                             <td class="bvsr-rule-text">{{ ren }}</td>
@@ -174,7 +174,7 @@
                 </div>
 
                 <ul class="bvsr-equipment-list" data-lang="fr">
-                    {% for eq_fr in equipment_fr %}
+                    {% for eq_fr in equipment_fr if eq_fr %}
                     <li class="bvsr-equipment-item">
                         <span class="bvsr-equipment-bullet">•</span>
                         <span>{{ eq_fr }}</span>
@@ -183,7 +183,7 @@
                 </ul>
 
                 <ul class="bvsr-equipment-list" data-lang="en">
-                    {% for eq_en in equipment_en %}
+                    {% for eq_en in equipment_en if eq_en %}
                     <li class="bvsr-equipment-item">
                         <span class="bvsr-equipment-bullet">•</span>
                         <span>{{ eq_en }}</span>
