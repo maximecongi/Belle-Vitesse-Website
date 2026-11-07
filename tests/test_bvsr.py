@@ -823,6 +823,24 @@ class SafetyRulesConfigRegressionTest(BaseTestCase):
             legacy = format_bv_referents_rules("A, B", {"rules_fr": ["{technicians} / {technicians_and}"], "rules_en": []})
             self.assertEqual(legacy["rules_fr"], ["A et B / A et B"])
 
+    def test_referents_section_displays_example_names_but_editor_keeps_variables(self):
+        with self.app.app_context():
+            self._login_admin()
+            save_bv_referents_safety_rules(
+                rules_fr=["Validé par {technicians_or} <b>ici</b>."],
+                rules_en=["Approved by {technicians_and}."])
+            html = self.client.get("/admin/fleet/safety-rules").get_data(as_text=True)
+            # Affichage : noms d'exemple mis en évidence, HTML saisi échappé
+            self.assertIn('Validé par <span class="bvsr-var-value">référent BV 1, référent BV 2 ou référent BV 3</span>'
+                          ' &lt;b&gt;ici&lt;/b&gt;.', html)
+            self.assertIn('Approved by <span class="bvsr-var-value">référent BV 1, référent BV 2 and référent BV 3</span>.',
+                          html)
+            # Éditeur : les variables brutes sont conservées dans les données de la modale (JSON)
+            self.assertIn("Approved by {technicians_and}.", html)
+            # Aperçu du protocole : les référents d'exemple sont transmis à l'aperçu
+            self.assertIn('data-example-technicians="référent BV 1, référent BV 2, référent BV 3"', html)
+            self.assertNotIn('id="bvsr-preview-technicians"', html)
+
     def test_protocol_preview_requires_admin(self):
         with self.app.app_context():
             res = self.client.get("/admin/fleet/safety-rules/preview")

@@ -58,6 +58,24 @@
         if (window.lucide) window.lucide.createIcons();
     }
 
+    // Hauteur des textareas ajustée au contenu : CSS field-sizing: content quand il est
+    // supporté, sinon repli JS (height = auto puis scrollHeight + bordures).
+    const SUPPORTS_FIELD_SIZING = !!(window.CSS && CSS.supports && CSS.supports('field-sizing', 'content'));
+
+    function autosizeTextarea(ta) {
+        if (SUPPORTS_FIELD_SIZING || !ta) return;
+        // scrollHeight vaut 0 tant que l'élément est masqué (onglet inactif) : on recalculera à l'affichage
+        if (!ta.offsetParent) return;
+        ta.style.height = 'auto';
+        const borders = ta.offsetHeight - ta.clientHeight;
+        ta.style.height = (ta.scrollHeight + borders) + 'px';
+    }
+
+    function autosizeAll(root) {
+        if (SUPPORTS_FIELD_SIZING || !root) return;
+        root.querySelectorAll('textarea').forEach(autosizeTextarea);
+    }
+
     /** Pilules de filtre ERP : actif = admin-btn-primary, inactif = admin-btn-quaternary. */
     function setActivePill(pills, activeBtn) {
         pills.forEach(function (b) {
@@ -574,6 +592,7 @@
             populateRecommendations(risk);
             updateHeader(risk);
             updateEnFieldStates();
+            autosizeAll(form);
         }
 
         function updateLevelSegmentedUI(level) {
@@ -705,8 +724,8 @@
             row.className = 'bvrs-recrow';
             row.innerHTML =
                 '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
-                '<textarea class="form-input bvrs-rec-input-fr" rows="3" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
-                '<textarea class="form-input bvrs-rec-input-en" rows="3" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
+                '<textarea class="form-input bvrs-rec-input-fr" rows="2" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
+                '<textarea class="form-input bvrs-rec-input-en" rows="2" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
                 '<button type="button" class="admin-btn admin-btn-secondary admin-btn-sm bvrs-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
                 '<i data-lucide="x" aria-hidden="true"></i></button>';
 
@@ -1004,7 +1023,11 @@
             if (tabBtnPdf) tabBtnPdf.setAttribute('aria-selected', isPdf ? 'true' : 'false');
             if (tabPaneEdit) tabPaneEdit.classList.toggle('u-d-none', isPdf);
             if (tabPanePdf) tabPanePdf.classList.toggle('u-d-none', !isPdf);
-            if (isPdf) renderPdfPreview();
+            if (isPdf) {
+                renderPdfPreview();
+            } else {
+                autosizeAll(form);
+            }
         }
         if (tabBtnEdit) tabBtnEdit.addEventListener('click', function () { switchTab('edit'); });
         if (tabBtnPdf) tabBtnPdf.addEventListener('click', function () { switchTab('pdf'); });
@@ -1088,6 +1111,31 @@
                 if (e.target.matches('textarea')) onFormChange();
             });
         }
+        // Hauteur automatique de tous les textareas du formulaire (description + recommandations)
+        if (form) {
+            form.addEventListener('input', function (e) {
+                if (e.target.matches('textarea')) autosizeTextarea(e.target);
+            });
+        }
+        // Le nombre de lignes dépend de la largeur des colonnes et de la police : recalcul quand
+        // la largeur du formulaire change et une fois les polices web chargées.
+        if (!SUPPORTS_FIELD_SIZING && form) {
+            let lastFormWidth = 0;
+            if (window.ResizeObserver) {
+                new ResizeObserver(function (entries) {
+                    const w = Math.round(entries[0].contentRect.width);
+                    if (w && w !== lastFormWidth) {
+                        lastFormWidth = w;
+                        autosizeAll(form);
+                    }
+                }).observe(form);
+            } else {
+                window.addEventListener('resize', function () { autosizeAll(form); });
+            }
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function () { autosizeAll(form); });
+            }
+        }
 
         if (btnAddRec) {
             btnAddRec.addEventListener('click', function () {
@@ -1095,7 +1143,10 @@
                 updateRecsCount();
                 refreshIcons();
                 onFormChange();
-                if (row) row.querySelector('.bvrs-rec-input-fr').focus();
+                if (row) {
+                    autosizeAll(row);
+                    row.querySelector('.bvrs-rec-input-fr').focus();
+                }
             });
         }
 

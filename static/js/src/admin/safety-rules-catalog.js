@@ -384,9 +384,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const andWord = lang === 'en' ? 'and' : 'et';
         const orWord = lang === 'en' ? 'or' : 'ou';
         return escapeHtml(text)
-            .split('{technicians_or}').join('<strong>' + escapeHtml(formatNames(raw, orWord)) + '</strong>')
-            .split('{technicians_and}').join('<strong>' + escapeHtml(formatNames(raw, andWord)) + '</strong>')
-            .split('{technicians}').join('<strong>' + escapeHtml(formatNames(raw, andWord)) + '</strong>');
+            .split('{technicians_or}').join('<span class="bvsr-var-value">' + escapeHtml(formatNames(raw, orWord)) + '</span>')
+            .split('{technicians_and}').join('<span class="bvsr-var-value">' + escapeHtml(formatNames(raw, andWord)) + '</span>')
+            .split('{technicians}').join('<span class="bvsr-var-value">' + escapeHtml(formatNames(raw, andWord)) + '</span>');
     }
 
     function renderPlaceholderPreview() {
@@ -619,38 +619,28 @@ document.addEventListener('DOMContentLoaded', function () {
     if (previewModal && btnOpenPreview) {
         const previewController = createModalController(previewModal, null, '.btn-close-preview-modal');
         const previewFrame = document.getElementById('bvsr-preview-frame');
-        const previewPdfLink = document.getElementById('bvsr-preview-pdf-link');
-        const previewTechnicians = document.getElementById('bvsr-preview-technicians');
         const previewVehicleCbs = previewModal.querySelectorAll('.bvsr-preview-vehicle-cb');
         const baseUrl = previewModal.getAttribute('data-preview-url');
-        let debounceTimer = null;
+        // L'aperçu inclut toujours les règles référents, avec des noms d'exemple
+        const exampleTechnicians = previewModal.getAttribute('data-example-technicians') || '';
 
-        function buildPreviewUrl(extra) {
+        function buildPreviewUrl() {
             const params = new URLSearchParams();
             previewVehicleCbs.forEach(function (cb) {
                 if (cb.checked) params.append('vehicle', cb.value);
             });
-            const techs = previewTechnicians ? previewTechnicians.value.trim() : '';
-            if (techs) params.set('technicians', techs);
-            Object.keys(extra || {}).forEach(function (k) { params.set(k, extra[k]); });
+            if (exampleTechnicians) params.set('technicians', exampleTechnicians);
             const qs = params.toString();
             return baseUrl + (qs ? '?' + qs : '');
         }
 
         function reloadPreview() {
             if (previewFrame) previewFrame.src = buildPreviewUrl();
-            if (previewPdfLink) previewPdfLink.href = buildPreviewUrl({ format: 'pdf' });
-        }
-
-        function scheduleReload() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(reloadPreview, 350);
         }
 
         previewVehicleCbs.forEach(function (cb) {
             cb.addEventListener('change', reloadPreview);
         });
-        if (previewTechnicians) previewTechnicians.addEventListener('input', scheduleReload);
 
         btnOpenPreview.addEventListener('click', function () {
             previewController.open();

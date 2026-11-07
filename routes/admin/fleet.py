@@ -304,11 +304,19 @@ def admin_safety_rules_config():
     general_rules = get_general_safety_rules()
     bv_referents_rules = get_bv_referents_safety_rules()
     equipment_catalog = get_safety_equipment_catalog()
+    from services.admin.safety_rules_config import (
+        EXAMPLE_BV_REFERENTS,
+        render_bv_referents_example,
+    )
+
     return render_template(
         "admin/safety_rules_catalog.html",
         catalog=catalog,
         general_rules=general_rules,
         bv_referents_rules=bv_referents_rules,
+        # Affichage uniquement : variables remplacées par des référents fictifs (l'éditeur garde les variables)
+        bv_referents_display=render_bv_referents_example(bv_referents_rules),
+        example_bv_referents=EXAMPLE_BV_REFERENTS,
         equipment_catalog=equipment_catalog,
     )
 

@@ -458,6 +458,18 @@
     color: #09090b;
 }
 
+/* Bloc équipements (trait + titre + liste) jamais coupé entre deux pages */
+.bvsr-equipment-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.bvsr-equipment-separator,
+.bvsr-equipment-title {
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
 /* Séparateur rouge bordeaux avant les équipements */
 .bvsr-equipment-separator {
     border: none;

@@ -119,19 +119,7 @@
     </div>
 
     <div class="u-mt-3">
-        {{ rule_pairs(bv_referents_rules.rules_fr, bv_referents_rules.rules_en) }}
-    </div>
-    <div class="bvsr-placeholder-note">
-        <i data-lucide="info"></i>
-        <div>
-            <p class="bvsr-placeholder-note__title">Variables remplacées par les noms des référents du projet</p>
-            <dl class="bvsr-var-list">
-                <dt><code>{technicians_and}</code></dt>
-                <dd>Maxime Perrard <strong>et</strong> Ewen Gicquel</dd>
-                <dt><code>{technicians_or}</code></dt>
-                <dd>Maxime Perrard <strong>ou</strong> Ewen Gicquel</dd>
-            </dl>
-        </div>
+        {{ rule_pairs(bv_referents_display.rules_fr, bv_referents_display.rules_en) }}
     </div>
 </div>
 
@@ -303,7 +291,7 @@
                         <label for="bvsr-example-technicians" class="u-text-xs u-text-muted">Aperçu avec les
                             référents :</label>
                         <input type="text" id="bvsr-example-technicians" class="form-input bvsr-example-input"
-                            value="Maxime Perrard, Ewen Gicquel" autocomplete="off">
+                            value="{{ example_bv_referents }}" autocomplete="off">
                         <div id="bvsr-placeholder-rendered" class="bvsr-placeholder-rendered">
                             <span class="u-text-muted">Cliquez dans une consigne pour voir son rendu.</span>
                         </div>
@@ -493,7 +481,8 @@
 <!-- ═══════════ MODAL APERÇU DU PROTOCOLE BVSR ═══════════ -->
 <div id="protocolPreviewModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true"
     aria-hidden="true" aria-labelledby="previewModalTitle"
-    data-preview-url="{{ url_for('admin_fleet.admin_safety_rules_protocol_preview') }}">
+    data-preview-url="{{ url_for('admin_fleet.admin_safety_rules_protocol_preview') }}"
+    data-example-technicians="{{ example_bv_referents }}">
     <div class="admin-modal-container bvsr-modal-container bvsr-preview-modal">
         <div class="bvsr-modal-header">
             <div class="u-flex u-align-center u-gap-3">
@@ -515,7 +504,7 @@
         <div class="bvsr-preview-layout">
             <aside class="bvsr-preview-controls">
                 <p class="form-label u-font-bold u-mb-2">Véhicules réservés</p>
-                <div class="u-flex u-flex-column u-gap-1 u-mb-4">
+                <div class="u-flex u-flex-column u-gap-1">
                     {% for key, cat in catalog.items() %}
                     <label class="bvsr-preview-vehicle">
                         <input type="checkbox" class="form-checkbox bvsr-preview-vehicle-cb" value="{{ cat.id }}">
@@ -524,16 +513,6 @@
                     {% endfor %}
                 </div>
 
-                <label for="bvsr-preview-technicians" class="form-label u-font-bold">Référents plateau BV</label>
-                <input type="text" id="bvsr-preview-technicians" class="form-input"
-                    placeholder="ex: Maxime Perrard, Ewen Gicquel" autocomplete="off">
-                <small class="u-text-muted u-text-xs u-d-block u-mt-1">Laisser vide si le tournage n'a pas de
-                    référent : la section 2 n'apparaîtra pas.</small>
-
-                <a id="bvsr-preview-pdf-link" href="#" target="_blank" rel="noopener"
-                    class="admin-btn admin-btn-secondary u-w-100 u-mt-4">
-                    <i data-lucide="download"></i> Ouvrir en PDF
-                </a>
             </aside>
             <div class="bvsr-preview-frame-wrap">
                 <iframe id="bvsr-preview-frame" class="bvsr-preview-frame" title="Aperçu du protocole BVSR"></iframe>

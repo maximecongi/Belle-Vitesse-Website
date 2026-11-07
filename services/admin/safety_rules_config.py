@@ -844,6 +844,42 @@ def format_bv_referents_rules(safety_technicians, rules_dict=None):
     }
 
 
+# Noms fictifs utilisés pour illustrer les variables {technicians_and} / {technicians_or} dans l'admin
+EXAMPLE_BV_REFERENTS = "référent BV 1, référent BV 2, référent BV 3"
+
+
+def render_bv_referents_example(rules_dict=None, technicians=EXAMPLE_BV_REFERENTS):
+    """
+    Version d'affichage (HTML sûr) des règles référents BV : les variables sont remplacées
+    par des noms d'exemple mis en évidence. Les règles stockées ne sont pas modifiées.
+    """
+    from markupsafe import Markup, escape
+
+    rules = rules_dict or get_bv_referents_safety_rules()
+
+    def _highlight(text):
+        return Markup('<span class="bvsr-var-value">{}</span>').format(text)
+
+    def _render(rule_list, and_word, or_word, lang):
+        names_and = _highlight(format_technicians_list(technicians, conjunction=and_word, lang=lang))
+        names_or = _highlight(format_technicians_list(technicians, conjunction=or_word, lang=lang))
+        rendered = []
+        for rule in rule_list or []:
+            html = str(escape(rule))
+            html = (
+                html.replace(TECHNICIANS_AND_PLACEHOLDER, str(names_and))
+                .replace(TECHNICIANS_OR_PLACEHOLDER, str(names_or))
+                .replace(LEGACY_TECHNICIANS_PLACEHOLDER, str(names_and))
+            )
+            rendered.append(Markup(html) if html else "")
+        return rendered
+
+    return {
+        "rules_fr": _render(rules.get("rules_fr"), "et", "ou", "fr"),
+        "rules_en": _render(rules.get("rules_en"), "and", "or", "en"),
+    }
+
+
 def get_merged_general_safety_rules(safety_technicians=None):
     """
     Retourne l'ensemble des règles de la Section 1 (Règles Générales).
