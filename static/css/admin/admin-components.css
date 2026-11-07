@@ -76,6 +76,7 @@
 .admin-btn-quaternary:hover {
     background-color: var(--grey-1);
     color: var(--white-1);
+    border-color: var(--grey-1);
 }
 
 .admin-btn:disabled,
@@ -108,7 +109,7 @@
 .filter-pill.active:focus {
     background-color: var(--grey-1) !important;
     color: white !important;
-    border-color: var(--white-3) !important;
+    border-color: var(--grey-1) !important;
 }
 
 .filter-pill .lucide-circle-check {

@@ -648,10 +648,16 @@
             }
         }
 
+        /** Libellé affiché en casse de phrase (« ZONE DE TOURNAGE » → « Zone de tournage »). */
+        function categoryLabel(cat) {
+            const lower = String(cat || '').toLocaleLowerCase('fr-FR');
+            return lower.charAt(0).toLocaleUpperCase('fr-FR') + lower.slice(1);
+        }
+
         function appendCategoryOption(parent, cat, selected) {
             const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
+            opt.value = cat;  // valeur enregistrée inchangée (majuscules)
+            opt.textContent = categoryLabel(cat);
             opt.selected = cat === selected;
             parent.appendChild(opt);
         }
@@ -726,7 +732,7 @@
                 '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
                 '<textarea class="form-input bvrs-rec-input-fr" rows="2" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
                 '<textarea class="form-input bvrs-rec-input-en" rows="2" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
-                '<button type="button" class="admin-btn admin-btn-secondary admin-btn-sm bvrs-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
+                '<button type="button" class="bvrs-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
                 '<i data-lucide="x" aria-hidden="true"></i></button>';
 
             const frArea = row.querySelector('.bvrs-rec-input-fr');

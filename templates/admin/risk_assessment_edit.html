@@ -68,9 +68,14 @@
             <!-- ONGLET 1 : ÉDITION -->
             <div id="tab-pane-edit" class="bvrs-maincard__content" role="tabpanel" aria-labelledby="tab-btn-edit">
                 <form id="form-edit-risk" novalidate>
-                    <!-- Ligne 1 : Niveau et Catégorie -->
-                    <div class="bvrs-form-toprow">
-                        <div class="form-group">
+                    <!--
+                        Grille commune (.bvrs-fgrid) : poignée | FR | EN | action.
+                        Les champs s'alignent ainsi sur les colonnes des recommandations.
+                    -->
+
+                    <!-- Niveau et catégorie -->
+                    <div class="bvrs-fgrid bvrs-form-toprow">
+                        <div class="form-group bvrs-col-fr">
                             <span class="form-label" id="label-level">Niveau de risque</span>
                             <div class="bvrs-level-segmented" role="group" aria-labelledby="label-level">
                                 <button type="button" id="btn-level-major" class="bvrs-level-btn bvrs-level-btn--major" aria-pressed="true">MAJEUR</button>
@@ -78,7 +83,7 @@
                             </div>
                         </div>
 
-                        <div class="form-group bvrs-cat-wrap">
+                        <div class="form-group bvrs-col-en bvrs-cat-wrap">
                             <label class="form-label" for="field-category-select">Catégorie</label>
                             <select id="field-category-select" class="form-input">
                                 <!-- Options injectées dynamiquement -->
@@ -99,43 +104,34 @@
                         </div>
                     </div>
 
-                    <!-- Ligne 2 : Titres FR et EN -->
-                    <div class="bvrs-two">
-                        <div class="form-group">
-                            <label class="form-label" for="field-title-fr">
-                                Titre du risque · FR <span class="u-text-danger">*</span>
-                            </label>
-                            <input type="text" id="field-title-fr" class="form-input" required autocomplete="off">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="field-title-en">
-                                Risk title · EN <span id="badge-title-en-status" class="badge-pill badge-pill-xs u-d-none" data-val="neutral">À TRADUIRE</span>
-                            </label>
-                            <input type="text" id="field-title-en" class="form-input" autocomplete="off"
-                                placeholder="Traduction manquante">
-                        </div>
+                    <!-- En-têtes de langue (remplacent les suffixes FR / EN des étiquettes) -->
+                    <div class="bvrs-fgrid bvrs-lang-row" aria-hidden="true">
+                        <span class="bvrs-col-fr"><span class="bvrs-lang-chip"><strong>FR</strong> Français</span></span>
+                        <span class="bvrs-col-en"><span class="bvrs-lang-chip"><strong>EN</strong> English</span></span>
                     </div>
 
-                    <!-- Ligne 3 : Descriptions détaillées FR et EN -->
-                    <div class="bvrs-two">
-                        <div class="form-group">
-                            <label class="form-label" for="field-desc-fr">Description détaillée du danger · FR</label>
-                            <textarea id="field-desc-fr" class="form-input" rows="2"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label" for="field-desc-en">
-                                Detailed description · EN <span id="badge-desc-en-status" class="badge-pill badge-pill-xs u-d-none" data-val="neutral">À TRADUIRE</span>
-                            </label>
-                            <textarea id="field-desc-en" class="form-input" rows="2"
-                                placeholder="Traduction anglaise manquante"></textarea>
-                        </div>
+                    <!-- Titres FR et EN -->
+                    <div class="bvrs-fgrid bvrs-field-row">
+                        <label class="form-label bvrs-col-fr" for="field-title-fr">
+                            Titre du risque <span class="u-text-danger">*</span>
+                        </label>
+                        <input type="text" id="field-title-fr" class="form-input bvrs-col-fr" required autocomplete="off">
+                        <input type="text" id="field-title-en" class="form-input bvrs-col-en" autocomplete="off"
+                            placeholder="Traduction manquante" aria-label="Titre du risque (EN)">
                     </div>
 
-                    <!-- Ligne 4 : Recommandations bilingues -->
-                    <div>
-                        <div class="bvrs-recs-head">
+                    <!-- Descriptions FR et EN -->
+                    <div class="bvrs-fgrid bvrs-field-row">
+                        <label class="form-label bvrs-col-fr" for="field-desc-fr">Description détaillée du danger</label>
+                        <textarea id="field-desc-fr" class="form-input bvrs-col-fr" rows="2"></textarea>
+                        <textarea id="field-desc-en" class="form-input bvrs-col-en" rows="2"
+                            placeholder="Traduction anglaise manquante"
+                            aria-label="Description détaillée du danger (EN)"></textarea>
+                    </div>
+
+                    <!-- Recommandations bilingues -->
+                    <div class="bvrs-recs-section">
+                        <div class="bvrs-fgrid bvrs-recs-head">
                             <div class="bvrs-recs-head__title">
                                 Recommandations <span class="bvrs-recs-head__count">· <span id="recs-count">0</span></span>
                             </div>
@@ -144,17 +140,13 @@
                             </button>
                         </div>
 
-                        <div class="bvrs-recs-cols" aria-hidden="true">
-                            <span></span><span>FRANÇAIS</span><span>ENGLISH</span><span></span>
-                        </div>
-
                         <div id="recs-list">
                             <!-- Lignes de recommandations générées dynamiquement -->
                         </div>
                     </div>
 
                     <!-- Zone de danger : suppression du risque -->
-                    <div class="bvrs-danger-foot u-mt-4">
+                    <div class="bvrs-danger-foot">
                         <span class="bvrs-danger-foot__text">Supprimer ce risque le retire de tous les futurs protocoles.</span>
                         <button type="button" id="btn-delete-risk" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer ce risque…</button>
                     </div>
