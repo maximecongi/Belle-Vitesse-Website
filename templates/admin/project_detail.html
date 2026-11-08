@@ -103,73 +103,12 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
     </div>
 </div>
 
-<!-- ═══════════ 2. PLANNING & COORDINATION (CALENDRIER, CONTACTS & NOTES) ═══════════ -->
-<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3">
-    <!-- COLONNE PRINCIPALE (2/3 : PLANNING & CALENDRIER) -->
-    <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
-        <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Planning & Dates</h2>
-                {% if is_punctual %}
-                <span class="badge-pill u-bg-project-light u-text-project">Dates ponctuelles</span>
-                {% else %}
-                <span class="badge-pill u-bg-project-light u-text-project">Période continue</span>
-                {% endif %}
-            </div>
-            <!-- Date Pills compactes -->
-            <div class="project-hub-dates-pills">
-                <span class="project-hub-date-pill pill-departure" title="Date d'enlèvement du matériel">
-                    <i data-lucide="truck"></i>
-                    <span>{{ departure_date_fr }}</span>
-                </span>
-                <span class="project-hub-date-pill pill-shoot" title="Période de tournage">
-                    <i data-lucide="clapperboard"></i>
-                    <span>
-                        {% if shoot_start_fr != '—' and shoot_end_fr != '—' and shoot_start_fr != shoot_end_fr %}
-                        {{ shoot_start_fr }} → {{ shoot_end_fr }}
-                        {% elif shoot_start_fr != '—' %}
-                        {{ shoot_start_fr }}
-                        {% elif shoot_end_fr != '—' %}
-                        Jusqu'au {{ shoot_end_fr }}
-                        {% else %}
-                        Dates à confirmer
-                        {% endif %}
-                    </span>
-                </span>
-                <span class="project-hub-date-pill pill-return"
-                    title="Date de restitution et réintégration du matériel">
-                    <i data-lucide="package-check"></i>
-                    <span>{{ return_date_fr }}</span>
-                </span>
-            </div>
-        </div>
-
-        {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
-        project.shoot_end_date or project.departure_date or project.return_date)) %}
-        {% if has_dates %}
-        <div id="projectShootCalendar" class="project-hub-calendar-viewport"></div>
-        <script id="projectShootCalendarData" type="application/json">
-            {{ {
-                "date_mode": "punctual" if is_punctual else "continuous",
-                "is_punctual": is_punctual,
-                "shoot_dates": shoot_dates,
-                "shoot_start": project.shoot_start_date|string if project.shoot_start_date else None,
-                "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
-                "departure_date": project.departure_date|string if project.departure_date else None,
-                "return_date": project.return_date|string if project.return_date else None,
-                "inter_shoot_intervals": inter_shoot_intervals
-            }|tojson|safe }}
-        </script>
-        {% else %}
-        {{ empty_state('calendar-x', "Aucune date définie", "Renseignez les dates de départ, tournage ou retour pour
-        afficher le calendrier du tournage.") }}
-        {% endif %}
-    </div>
-
-    <!-- COLONNE LATÉRALE (1/3 : CONTACTS & CONSIGNES) -->
-    <div class="u-flex u-flex-column u-gap-3">
+<!-- ═══════════ 2. HUB PROJET : COLONNE PRINCIPALE (2/3) + COLONNE LATÉRALE (1/3) ═══════════ -->
+<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3 u-grid-align-start project-hub-layout">
+    <!-- COLONNE PRINCIPALE : NOTES, PLANNING, MATÉRIEL, RAPPORTS -->
+    <div class="project-hub-column">
         <!-- Consignes & Notes Spécifiques -->
-        <div class="admin-card u-h-100" id="projectNotesCard">
+        <div class="admin-card" id="projectNotesCard">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
                 <div class="u-flex u-align-center u-gap-2">
                     <h2 class="admin-card-title u-m-0">Notes</h2>
@@ -215,6 +154,429 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
             </form>
         </div>
+
+        <!-- COLONNE PRINCIPALE (2/3 : PLANNING & CALENDRIER) -->
+        <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
+            <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Planning & Dates</h2>
+                    {% if is_punctual %}
+                    <span class="badge-pill u-bg-project-light u-text-project">Dates ponctuelles</span>
+                    {% else %}
+                    <span class="badge-pill u-bg-project-light u-text-project">Période continue</span>
+                    {% endif %}
+                </div>
+                <!-- Date Pills compactes -->
+                <div class="project-hub-dates-pills">
+                    <span class="project-hub-date-pill pill-departure" title="Date d'enlèvement du matériel">
+                        <i data-lucide="truck"></i>
+                        <span>{{ departure_date_fr }}</span>
+                    </span>
+                    <span class="project-hub-date-pill pill-shoot" title="Période de tournage">
+                        <i data-lucide="clapperboard"></i>
+                        <span>
+                            {% if shoot_start_fr != '—' and shoot_end_fr != '—' and shoot_start_fr != shoot_end_fr %}
+                            {{ shoot_start_fr }} → {{ shoot_end_fr }}
+                            {% elif shoot_start_fr != '—' %}
+                            {{ shoot_start_fr }}
+                            {% elif shoot_end_fr != '—' %}
+                            Jusqu'au {{ shoot_end_fr }}
+                            {% else %}
+                            Dates à confirmer
+                            {% endif %}
+                        </span>
+                    </span>
+                    <span class="project-hub-date-pill pill-return"
+                        title="Date de restitution et réintégration du matériel">
+                        <i data-lucide="package-check"></i>
+                        <span>{{ return_date_fr }}</span>
+                    </span>
+                </div>
+            </div>
+
+            {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
+            project.shoot_end_date or project.departure_date or project.return_date)) %}
+            {% if has_dates %}
+            <div id="projectShootCalendar" class="project-hub-calendar-viewport"></div>
+            <script id="projectShootCalendarData" type="application/json">
+                {{ {
+                    "date_mode": "punctual" if is_punctual else "continuous",
+                    "is_punctual": is_punctual,
+                    "shoot_dates": shoot_dates,
+                    "shoot_start": project.shoot_start_date|string if project.shoot_start_date else None,
+                    "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
+                    "departure_date": project.departure_date|string if project.departure_date else None,
+                    "return_date": project.return_date|string if project.return_date else None,
+                    "inter_shoot_intervals": inter_shoot_intervals
+                }|tojson|safe }}
+            </script>
+            {% else %}
+            {{ empty_state('calendar-x', "Aucune date définie", "Renseignez les dates de départ, tournage ou retour pour
+            afficher le calendrier du tournage.") }}
+            {% endif %}
+        </div>
+
+        <!-- COLONNE PRINCIPALE (2/3 : MATÉRIEL ENGAGÉ) -->
+        <div class="admin-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-3">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Matériel engagé sur le tournage</h2>
+                </div>
+                <div class="u-flex u-align-center u-gap-1">
+                    {{ status_badge(vehicles|length ~ (' véhicules' if vehicles|length > 1 else ' véhicule'), 'neutral') }}
+                    {% if heads and heads|length > 0 %}
+                    {{ status_badge(heads|length ~ (' têtes' if heads|length > 1 else ' tête'), 'neutral') }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Véhicules -->
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
+                Véhicules
+            </h3>
+            {% if vehicles and vehicles|length > 0 %}
+            <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
+                {% for v in vehicles %}
+                <div class="project-equipment-card">
+                    <div class="u-flex u-align-center u-justify-between u-gap-2 u-flex-wrap">
+                        <div class="u-flex u-align-center u-gap-2">
+                            {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
+                            v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
+                            }}
+                            <div>
+                                <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
+                                    }}</div>
+                                <div class="checkout-doc-id">{{ v.fields.unique_id }}</div>
+                            </div>
+                        </div>
+                        <button type="button"
+                            class="project-road-legal-badge js-toggle-road-legal {% if v.is_road_legal %}is-road-legal{% else %}is-closed-road{% endif %}"
+                            data-project-id="{{ project.id }}"
+                            data-vehicle-id="{{ v.id }}"
+                            data-url="{{ url_for('admin_projects.admin_project_vehicle_toggle_road_legal', record_id=project.id, vehicle_id=v.id) }}"
+                            title="Cliquer pour basculer : Homologué route / Route fermée">
+                            <i data-lucide="{% if v.is_road_legal %}check-circle{% else %}alert-triangle{% endif %}"></i>
+                            <span class="js-road-legal-label">{% if v.is_road_legal %}Homologué route{% else %}Route fermée{% endif %}</span>
+                        </button>
+                    </div>
+                    <div class="project-equipment-inspections u-mt-3 u-flex u-flex-column u-gap-2">
+                        <!-- Contrôle de départ -->
+                        <div class="u-flex u-justify-between u-align-center u-text-xs">
+                            <span class="u-text-muted">Départ :</span>
+                            {% if v.checkout_id %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
+                                    {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
+                                    **{'data-conform': v.checkout_conform}) }}
+                                </a>
+                                {{ doc_download_badge(v.checkout_pdf) }}
+                            </div>
+                            {% else %}
+                            <div class="projects-cell-item">
+                                <a
+                                    href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contrôle de retour -->
+                        <div class="u-flex u-justify-between u-align-center u-text-xs">
+                            <span class="u-text-muted">Retour :</span>
+                            {% if v.checkin_id %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
+                                    {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1',
+                                    **{'data-conform': v.checkin_conform}) }}
+                                </a>
+                                {{ doc_download_badge(v.checkin_pdf) }}
+                            </div>
+                            {% else %}
+                            <div class="projects-cell-item">
+                                <a
+                                    href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-mb-3">Aucun véhicule assigné à ce projet.</p>
+            {% endif %}
+
+            <!-- Têtes gyrostabilisées -->
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
+                Têtes
+            </h3>
+            {% if heads and heads|length > 0 %}
+            <div class="u-grid u-grid-2 u-gap-2">
+                {% for h in heads %}
+                <div class="project-equipment-card">
+                    <div class="u-flex u-align-center u-gap-2">
+                        {{ head_avatar(h.image, h.name, class="project-equipment-img") }}
+                        <div>
+                            <div class="u-font-bold u-text-sm">{{ h.name }}</div>
+                            <div class="u-text-xs u-text-muted">{{ h.brand or 'Tête gyrostabilisée' }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-m-0">Aucune tête assignée à ce projet.</p>
+            {% endif %}
+        </div>
+
+    <!-- ═══════════ 4. COLLABORATION & SUIVI (RAPPORTS D'ÉQUIPE) ═══════════ -->
+    <div class="admin-card project-reports-container" id="reports">
+        <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+            <div class="project-reports-header-title">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Rapports d'Équipe</h2>
+                </div>
+                <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
+                    Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
+                </p>
+            </div>
+            {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral') }}
+        </div>
+
+        <!-- Boîte de rédaction de rapport -->
+        <form method="POST" action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
+            class="project-report-form u-mb-4" id="addReportForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- 1. Champ Titre autonome -->
+            <div class="project-report-field-group u-mb-3">
+                <label for="reportTitleInput" class="project-report-field-label">
+                    Titre du rapport <span class="u-text-danger">*</span>
+                </label>
+                <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
+                    placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off" required>
+            </div>
+
+            <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
+            <div class="project-report-field-group u-mb-3">
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label for="reportContentEditor" class="project-report-field-label u-m-0">
+                        Observation & Compte-rendu <span class="u-text-danger">*</span>
+                    </label>
+                    <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en
+                        direct</span>
+                </div>
+
+                <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
+                <textarea name="content" id="reportContentInput" class="u-d-none"></textarea>
+
+                <div class="notion-wysiwyg-wrapper" id="notionEditorWrapper">
+                    <div class="notion-slash-container">
+                        <div class="notion-slash-menu" id="notionSlashMenu" role="listbox" aria-label="Commandes Markdown">
+                        </div>
+                        <!-- Menu contextuel personnalisé au clic droit -->
+                        <div class="notion-context-menu" id="notionContextMenu" role="menu" aria-label="Menu de formatage">
+                            <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
+                                <span class="notion-context-icon">🧹</span>
+                                <span class="notion-context-label">Supprimer la mise en forme</span>
+                                <span class="notion-context-hint">Normal</span>
+                            </div>
+                            <div class="notion-context-divider"></div>
+                            <div class="notion-context-header">TRANSFORMER LE BLOC</div>
+                            <div class="notion-context-item" data-action="bullet" role="menuitem">
+                                <span class="notion-context-icon">•</span>
+                                <span class="notion-context-label">Liste à puces</span>
+                            </div>
+                            <div class="notion-context-item" data-action="numbered" role="menuitem">
+                                <span class="notion-context-icon">1.</span>
+                                <span class="notion-context-label">Liste numérotée</span>
+                            </div>
+                            <div class="notion-context-item" data-action="h2" role="menuitem">
+                                <span class="notion-context-icon">🏷️</span>
+                                <span class="notion-context-label">Titre de section</span>
+                            </div>
+                            <div class="notion-context-item" data-action="h3" role="menuitem">
+                                <span class="notion-context-icon">📌</span>
+                                <span class="notion-context-label">Sous-titre</span>
+                            </div>
+                            <div class="notion-context-item" data-action="quote" role="menuitem">
+                                <span class="notion-context-icon">💬</span>
+                                <span class="notion-context-label">Citation / Observation</span>
+                            </div>
+                            <div class="notion-context-divider"></div>
+                            <div class="notion-context-header">STYLE DU TEXTE</div>
+                            <div class="notion-context-item" data-action="bold" role="menuitem">
+                                <span class="notion-context-icon">𝐁</span>
+                                <span class="notion-context-label">Mettre en gras</span>
+                                <span class="notion-context-hint">⌘B</span>
+                            </div>
+                            <div class="notion-context-item" data-action="italic" role="menuitem">
+                                <span class="notion-context-icon">𝐼</span>
+                                <span class="notion-context-label">Mettre en italique</span>
+                                <span class="notion-context-hint">⌘I</span>
+                            </div>
+                        </div>
+
+                        <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
+                            contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" data-empty="true"
+                            data-placeholder="Rédigez votre observation ou compte-rendu...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Actions -->
+            <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
+                <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
+                    Publier le rapport
+                </button>
+            </div>
+        </form>
+
+        <!-- Fil chronologique des rapports (Timeline technique BV) -->
+        <div class="project-reports-stream" id="reportsStream">
+            {% if reports and reports|length > 0 %}
+            <div class="project-reports-timeline">
+                <div class="project-report-timeline-line"></div>
+                {% for report in reports %}
+                <div class="project-report-item" id="report-{{ report.id }}">
+                    <div class="project-report-timeline-axis">
+                        <div class="project-report-avatar" title="{{ report.author_job }}">
+                            {{ initials(report.author_name, '') }}
+                        </div>
+                    </div>
+                    <div class="project-report-card">
+                        <div
+                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
+                            <div class="u-flex u-align-center u-gap-2">
+                                <strong class="project-report-author">{{ report.author_name }}</strong>
+                                <span class="project-report-role-badge">{{ report.author_job }}</span>
+                                <span class="project-report-date u-text-muted">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-clock">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
+                                    </svg>
+                                    {{ report.created_at_fr }}
+                                    {% if report.is_edited %}
+                                    <span class="project-report-edited-badge"
+                                        title="Rapport modifié ultérieurement">(modifié)</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="project-report-actions u-flex u-align-center u-gap-1">
+                                {% if report.can_edit %}
+                                <button type="button" class="project-report-action-btn project-report-edit-btn"
+                                    data-action="edit-report" data-report-id="{{ report.id }}"
+                                    title="Modifier ce rapport (accessible pendant 3h)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-pencil">
+                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                        <path d="m15 5 4 4" />
+                                    </svg>
+                                </button>
+                                {% endif %}
+                                {% if report.can_delete %}
+                                <form method="POST"
+                                    action="{{ url_for('admin_projects.admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
+                                    class="u-m-0"
+                                    onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="project-report-action-btn project-report-delete-btn"
+                                        title="Supprimer ce rapport">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="lucide lucide-trash">
+                                            <path d="M10 11v6" />
+                                            <path d="M14 11v6" />
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                            <path d="M3 6h18" />
+                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                        </svg>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Mode Affichage Normal -->
+                        <div class="project-report-view-mode" id="reportView-{{ report.id }}">
+                            {% if report.title %}
+                            <h4 class="project-report-title">{{ report.title }}</h4>
+                            {% endif %}
+
+                            {% if report.content and report.content|length > 200 %}
+                            <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
+                                <div class="project-report-body markdown-rendered project-report-body-preview">
+                                    {{ report.content | truncate_report(200) | markdown }}
+                                </div>
+                                <div class="project-report-body markdown-rendered project-report-body-full">
+                                    {{ report.content | markdown }}
+                                </div>
+                                <div class="project-report-toggle-wrapper">
+                                    <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
+                                        aria-expanded="false" title="Afficher ou masquer la suite du rapport">
+                                        <span class="project-report-toggle-label">Déplier</span>
+                                        <span class="project-report-toggle-icon">▾</span>
+                                    </button>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="project-report-body markdown-rendered">
+                                {{ report.content | markdown }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Mode Édition Inline (disponible dans les 3h) -->
+                        {% if report.can_edit %}
+                        <form method="POST"
+                            action="{{ url_for('admin_projects.admin_project_report_edit', record_id=project.id, report_id=report.id) }}"
+                            class="project-report-edit-form is-hidden" id="reportEdit-{{ report.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="u-mb-2">
+                                <input type="text" name="title" class="project-report-edit-title-input"
+                                    value="{{ report.title or '' }}" placeholder="Titre du rapport" maxlength="255"
+                                    autocomplete="off" required>
+                            </div>
+                            <div class="u-mb-2">
+                                <textarea name="content" class="project-report-edit-textarea" rows="4"
+                                    required>{{ report.content }}</textarea>
+                            </div>
+                            <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                                <span class="u-text-2xs u-text-muted">Modification autorisée pendant 3h après
+                                    publication</span>
+                                <div class="u-flex u-align-center u-gap-2">
+                                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs"
+                                        data-action="cancel-edit" data-report-id="{{ report.id }}">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-xs">
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de
+            tournage, point technique ou débriefing d'équipe ci-dessus.") }}
+            {% endif %}
+        </div>
+    </div>
+    </div>
+
+    <!-- COLONNE LATÉRALE : CONTACTS, RÉFÉRENTS, LIEUX, DOCUMENTS -->
+    <div class="project-hub-column">
         <!-- Contacts Clés -->
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
@@ -334,830 +696,463 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun lieu de tournage renseigné.</p>
             {% endif %}
         </div>
-    </div>
-</div>
 
-<!-- ═══════════ 3. OPÉRATIONS & FLOTTE (MATÉRIEL & DOCUMENTS) ═══════════ -->
-<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3 project-hub-row-docs">
-    <!-- COLONNE PRINCIPALE (2/3 : MATÉRIEL ENGAGÉ) -->
-    <div class="admin-card">
-        <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Matériel engagé sur le tournage</h2>
-            </div>
-            <div class="u-flex u-align-center u-gap-1">
-                {{ status_badge(vehicles|length ~ (' véhicules' if vehicles|length > 1 else ' véhicule'), 'neutral') }}
-                {% if heads and heads|length > 0 %}
-                {{ status_badge(heads|length ~ (' têtes' if heads|length > 1 else ' tête'), 'neutral') }}
+        <!-- COLONNE LATÉRALE (1/3 : DOCUMENTS & CONFORMITÉ) -->
+        <div class="admin-card project-docs-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-3">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Documents & Décharges</h2>
+                </div>
+                {% if incidents and incidents|length > 0 %}
+                <span class="badge-pill u-bg-danger-light u-text-danger">{{ incidents|length }} incident{{ 's' if
+                    incidents|length > 1 else
+                    '' }}</span>
                 {% endif %}
             </div>
-        </div>
 
-        <!-- Véhicules -->
-        <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
-            Véhicules
-        </h3>
-        {% if vehicles and vehicles|length > 0 %}
-        <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
-            {% for v in vehicles %}
-            <div class="project-equipment-card">
-                <div class="u-flex u-align-center u-justify-between u-gap-2 u-flex-wrap">
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
+                CGL & Sécurité Plateau
+            </h3>
+
+            <div class="project-docs-groups">
+            <!-- 1. CONDITIONS GÉNÉRALES DE LOCATION (CGL) -->
+            <div class="project-doc-item project-doc-group u-border-left-waiver">
+                <div class="project-doc-group-header">
                     <div class="u-flex u-align-center u-gap-2">
-                        {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
-                        v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
-                        }}
-                        <div>
-                            <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
-                                }}</div>
-                            <div class="checkout-doc-id">{{ v.fields.unique_id }}</div>
-                        </div>
-                    </div>
-                    <button type="button"
-                        class="project-road-legal-badge js-toggle-road-legal {% if v.is_road_legal %}is-road-legal{% else %}is-closed-road{% endif %}"
-                        data-project-id="{{ project.id }}"
-                        data-vehicle-id="{{ v.id }}"
-                        data-url="{{ url_for('admin_projects.admin_project_vehicle_toggle_road_legal', record_id=project.id, vehicle_id=v.id) }}"
-                        title="Cliquer pour basculer : Homologué route / Route fermée">
-                        <i data-lucide="{% if v.is_road_legal %}check-circle{% else %}alert-triangle{% endif %}"></i>
-                        <span class="js-road-legal-label">{% if v.is_road_legal %}Homologué route{% else %}Route fermée{% endif %}</span>
-                    </button>
-                </div>
-                <div class="project-equipment-inspections u-mt-3 u-flex u-flex-column u-gap-2">
-                    <!-- Contrôle de départ -->
-                    <div class="u-flex u-justify-between u-align-center u-text-xs">
-                        <span class="u-text-muted">Départ :</span>
-                        {% if v.checkout_id %}
-                        <div class="projects-cell-item">
-                            <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
-                                {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
-                                **{'data-conform': v.checkout_conform}) }}
-                            </a>
-                            {{ doc_download_badge(v.checkout_pdf) }}
-                        </div>
-                        {% else %}
-                        <div class="projects-cell-item">
-                            <a
-                                href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
-                                {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
-                            </a>
-                        </div>
+                        <span class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="file-signature" class="u-text-waiver"></i> CGL
+                        </span>
+                        {% if cgl_waiver and cgl_waiver.waiver_num %}
+                        <span class="checkout-doc-id">{{ cgl_waiver.waiver_num }}</span>
                         {% endif %}
                     </div>
-
-                    <!-- Contrôle de retour -->
-                    <div class="u-flex u-justify-between u-align-center u-text-xs">
-                        <span class="u-text-muted">Retour :</span>
-                        {% if v.checkin_id %}
-                        <div class="projects-cell-item">
-                            <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
-                                {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1',
-                                **{'data-conform': v.checkin_conform}) }}
-                            </a>
-                            {{ doc_download_badge(v.checkin_pdf) }}
-                        </div>
-                        {% else %}
-                        <div class="projects-cell-item">
-                            <a
-                                href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
-                                {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
-                            </a>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="u-text-muted u-text-xs u-mb-3">Aucun véhicule assigné à ce projet.</p>
-        {% endif %}
-
-        <!-- Têtes gyrostabilisées -->
-        <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
-            Têtes
-        </h3>
-        {% if heads and heads|length > 0 %}
-        <div class="u-grid u-grid-2 u-gap-2">
-            {% for h in heads %}
-            <div class="project-equipment-card">
-                <div class="u-flex u-align-center u-gap-2">
-                    {{ head_avatar(h.image, h.name, class="project-equipment-img") }}
-                    <div>
-                        <div class="u-font-bold u-text-sm">{{ h.name }}</div>
-                        <div class="u-text-xs u-text-muted">{{ h.brand or 'Tête gyrostabilisée' }}</div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="u-text-muted u-text-xs u-m-0">Aucune tête assignée à ce projet.</p>
-        {% endif %}
-    </div>
-
-    <!-- COLONNE LATÉRALE (1/3 : DOCUMENTS & CONFORMITÉ) -->
-    <div class="admin-card project-docs-card">
-        <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Documents & Décharges</h2>
-            </div>
-            {% if incidents and incidents|length > 0 %}
-            <span class="badge-pill u-bg-danger-light u-text-danger">{{ incidents|length }} incident{{ 's' if
-                incidents|length > 1 else
-                '' }}</span>
-            {% endif %}
-        </div>
-
-        <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
-            CGL & Sécurité Plateau
-        </h3>
-
-        <div class="project-docs-groups">
-        <!-- 1. CONDITIONS GÉNÉRALES DE LOCATION (CGL) -->
-        <div class="project-doc-item project-doc-group u-border-left-waiver">
-            <div class="project-doc-group-header">
-                <div class="u-flex u-align-center u-gap-2">
-                    <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="file-signature" class="u-text-waiver"></i> Conditions Générales de Location
-                        (CGL)
-                    </span>
-                    {% if cgl_waiver and cgl_waiver.waiver_num %}
-                    <span class="checkout-doc-id">{{ cgl_waiver.waiver_num }}</span>
+                    {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
+                    <form action="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
+                        method="POST" class="u-m-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                            title="Créer et générer les CGL">
+                            <i data-lucide="plus"></i> Créer
+                        </button>
+                    </form>
                     {% endif %}
                 </div>
-                {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
-                <form action="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
-                    method="POST" class="u-m-0">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                        title="Créer et générer les CGL">
-                        <i data-lucide="plus"></i> Créer
-                    </button>
-                </form>
+
+                {% if cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num %}
+                <div
+                    class="project-signer-card">
+                    <div>
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <strong class="u-text-xs">{{ cgl_waiver.production_name or (project.production_company.name if
+                                project.production_company else 'Locataire') }}</strong>
+                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">Locataire</span>
+                        </div>
+                        <div class="u-text-2xs u-text-muted">
+                            {% if project.production_contact and project.production_contact.mail %}
+                            {{ project.production_contact.mail }}
+                            {% elif project.production_contact and project.production_contact.full_name %}
+                            {{ project.production_contact.full_name }}
+                            {% else %}
+                            Production signataire
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="u-flex u-align-center u-gap-1">
+                        {{ status_badge(cgl_waiver.status, cgl_waiver.raw_status) }}
+
+                        {% if cgl_waiver.raw_status in ['to_send', 'to_generate'] %}
+                        <form
+                            action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                title="Envoyer le lien par e-mail">
+                                <i data-lucide="send"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif cgl_waiver.raw_status == 'to_sign' %}
+                        <form
+                            action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                title="Relancer par e-mail">
+                                <i data-lucide="bell"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif cgl_waiver.raw_status == 'signed' %}
+                        <a href="{{ cgl_waiver.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary"
+                            target="_blank" rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                            <i data-lucide="file-text"></i> PDF
+                        </a>
+                        {% endif %}
+
+                        <form
+                            action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                            method="POST" class="u-m-0"
+                            onsubmit="return confirm('Supprimer ces Conditions Générales de Location (CGL) pour {{ cgl_waiver.production_name or project.title }} ?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
+                    Aucune CGL générée pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions
+                    Générales de Location.
+                </p>
                 {% endif %}
             </div>
 
-            {% if cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num %}
-            <div
-                class="project-signer-card">
-                <div>
-                    <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                        <strong class="u-text-xs">{{ cgl_waiver.production_name or (project.production_company.name if
-                            project.production_company else 'Locataire') }}</strong>
-                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">Locataire</span>
+            <!-- 2. RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR) -->
+            <div class="project-doc-item project-doc-group u-border-left-waiver">
+                <div class="project-doc-group-header">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <span class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="shield-check" class="u-text-waiver"></i> Règles de Sécurité
+                        </span>
+                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                            {{ safety_rules_waivers|length }} signataire{{ 's' if safety_rules_waivers|length > 1 else '' }}
+                        </span>
                     </div>
-                    <div class="u-text-2xs u-text-muted">
-                        {% if project.production_contact and project.production_contact.mail %}
-                        {{ project.production_contact.mail }}
-                        {% elif project.production_contact and project.production_contact.full_name %}
-                        {{ project.production_contact.full_name }}
-                        {% else %}
-                        Production signataire
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="u-flex u-align-center u-gap-1">
-                    {{ status_badge(cgl_waiver.status, cgl_waiver.raw_status) }}
-
-                    {% if cgl_waiver.raw_status in ['to_send', 'to_generate'] %}
-                    <form
-                        action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
-                        method="POST" class="u-m-0">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                            title="Envoyer le lien par e-mail">
-                            <i data-lucide="send"></i>
-                        </button>
-                    </form>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                        data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
-                        title="Copier le lien de signature">
-                        <i data-lucide="copy"></i>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-safety-signer-modal"
+                        title="Inviter un nouveau signataire aux règles de sécurité (Pilote, 1er AD, Cadreur, Régie...)">
+                        <i data-lucide="user-plus"></i> Inviter
                     </button>
-                    {% elif cgl_waiver.raw_status == 'to_sign' %}
-                    <form
-                        action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
-                        method="POST" class="u-m-0">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
-                            title="Relancer par e-mail">
-                            <i data-lucide="bell"></i>
-                        </button>
-                    </form>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                        data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
-                        title="Copier le lien de signature">
-                        <i data-lucide="copy"></i>
-                    </button>
-                    {% elif cgl_waiver.raw_status == 'signed' %}
-                    <a href="{{ cgl_waiver.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary"
-                        target="_blank" rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
-                        <i data-lucide="file-text"></i> PDF
-                    </a>
-                    {% endif %}
-
-                    <form
-                        action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
-                        method="POST" class="u-m-0"
-                        onsubmit="return confirm('Supprimer ces Conditions Générales de Location (CGL) pour {{ cgl_waiver.production_name or project.title }} ?');">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </form>
                 </div>
-            </div>
-            {% else %}
-            <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
-                Aucune CGL générée pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions
-                Générales de Location.
-            </p>
-            {% endif %}
-        </div>
 
-        <!-- 2. RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR) -->
-        <div class="project-doc-item project-doc-group u-border-left-waiver">
-            <div class="project-doc-group-header">
-                <div class="u-flex u-align-center u-gap-2">
-                    <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="shield-check" class="u-text-waiver"></i> Règles de Sécurité
-                    </span>
-                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
-                        {{ safety_rules_waivers|length }} signataire{{ 's' if safety_rules_waivers|length > 1 else '' }}
-                    </span>
-                </div>
-                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-safety-signer-modal"
-                    title="Inviter un nouveau signataire aux règles de sécurité (Pilote, 1er AD, Cadreur, Régie...)">
-                    <i data-lucide="user-plus"></i> Inviter
-                </button>
-            </div>
-
-            {% if safety_rules_waivers and safety_rules_waivers|length > 0 %}
-            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
-                {% for sr in safety_rules_waivers %}
-                <div
-                    class="project-signer-card">
-                    <div>
-                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                            <strong class="u-text-xs">{{ sr.signer_name }}</strong>
-                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
-                                {{ sr.signer_role_label }}
-                            </span>
-                        </div>
-                        <div class="u-text-2xs u-text-muted">
-                            {{ sr.signer_email or 'Sans e-mail' }}
-                            {% if sr.signer_company %} — {{ sr.signer_company }}{% endif %}
-                        </div>
-                    </div>
-
-                    <div class="u-flex u-align-center u-gap-1">
-                        {{ status_badge(sr.status, sr.raw_status) }}
-
-                        {% if sr.raw_status in ['to_send', 'to_generate'] %}
-                        <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                                title="Envoyer le lien par e-mail">
-                                <i data-lucide="send"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif sr.raw_status == 'to_sign' %}
-                        <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
-                                title="Relancer par e-mail">
-                                <i data-lucide="bell"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif sr.raw_status == 'signed' %}
-                        <a href="{{ sr.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
-                            rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
-                            <i data-lucide="file-text"></i> PDF
-                        </a>
-                        {% endif %}
-
-                        <form action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=sr.waiver_id) }}"
-                            method="POST" class="u-m-0"
-                            onsubmit="return confirm('Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
-                Aucun signataire invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer les
-                règles de sécurité à vos pilotes ou à l'équipe.
-            </p>
-            {% endif %}
-        </div>
-
-        <!-- 3. ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL) -->
-        <div class="project-doc-item project-doc-group u-border-left-waiver">
-            <div class="project-doc-group-header">
-                <div class="u-flex u-align-center u-gap-2">
-                    <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="file-signature" class="u-text-waiver"></i> Attestations Pilotes (Annexe 3)
-                    </span>
-                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
-                        {{ pilot_waivers|length }} pilote{{ 's' if pilot_waivers|length > 1 else '' }}
-                    </span>
-                </div>
-                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-pilot-signer-modal"
-                    title="Inviter un pilote ou cascadeur à signer l'attestation Annexe 3">
-                    <i data-lucide="user-plus"></i> Inviter
-                </button>
-            </div>
-
-            {% if pilot_waivers and pilot_waivers|length > 0 %}
-            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
-                {% for pw in pilot_waivers %}
-                <div
-                    class="project-signer-card">
-                    <div>
-                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                            <strong class="u-text-xs">{{ pw.signer_name }}</strong>
-                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
-                                {{ pw.signer_role_label }}
-                            </span>
-                        </div>
-                        <div class="u-text-2xs u-text-muted">
-                            {{ pw.signer_email or 'Sans e-mail' }}
-                            {% if pw.signer_company %} — {{ pw.signer_company }}{% endif %}
-                        </div>
-                        {% if pw.vehicles %}
-                        <div class="u-text-2xs u-text-muted u-mt-1">
-                            <span class="u-font-semibold">Véhicules confiés :</span> {{ pw.vehicles }}
-                        </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="u-flex u-align-center u-gap-1">
-                        {{ status_badge(pw.status, pw.raw_status) }}
-
-                        {% if pw.raw_status in ['to_send', 'to_generate'] %}
-                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                                title="Envoyer le lien par e-mail">
-                                <i data-lucide="send"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif pw.raw_status == 'to_sign' %}
-                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
-                                title="Relancer par e-mail">
-                                <i data-lucide="bell"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif pw.raw_status == 'signed' %}
-                        <a href="{{ pw.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
-                            rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
-                            <i data-lucide="file-text"></i> PDF
-                        </a>
-                        {% endif %}
-
-                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=pw.waiver_id) }}"
-                            method="POST" class="u-m-0"
-                            onsubmit="return confirm('Supprimer cette attestation pilote pour {{ pw.signer_name }} ?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="u-flex u-justify-between u-align-center u-mt-2">
-                <p class="u-text-2xs u-text-muted u-mb-0">
-                    Aucun pilote invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer
-                    l'attestation de non-subordination et de sécurité (Annexe 3).
-                </p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- 4. ANALYSE DES RISQUES (BVRA) -->
-        <div class="project-doc-item project-doc-group u-border-left-danger">
-            <div class="project-doc-group-header">
-                <div class="u-flex u-align-center u-gap-2">
-                    <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="shield-alert" class="u-text-danger"></i> Analyse des Risques (BVRA)
-                    </span>
-                    <span class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">
-                        {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
-                    </span>
-                </div>
-                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-risk-signer-modal"
-                    title="Inviter un signataire à l'analyse des risques (Production, Cascade, Machinerie, Régie...)">
-                    <i data-lucide="user-plus"></i> Inviter
-                </button>
-            </div>
-
-            {% if risk_assessment_waivers and risk_assessment_waivers|length > 0 %}
-            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
-                {% for ra in risk_assessment_waivers %}
-                <div
-                    class="project-signer-card">
-                    <div>
-                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                            <strong class="u-text-xs">{{ ra.signer_name }}</strong>
-                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
-                                {{ ra.signer_role_label }}
-                            </span>
-                        </div>
-                        <div class="u-text-2xs u-text-muted">
-                            {{ ra.signer_email or 'Sans e-mail' }}
-                            {% if ra.signer_company %} — {{ ra.signer_company }}{% endif %}
-                        </div>
-                    </div>
-
-                    <div class="u-flex u-align-center u-gap-1">
-                        {{ status_badge(ra.status, ra.raw_status) }}
-
-                        <a href="{{ url_for('admin_waivers.admin_risk_assessment_preview', waiver_id=ra.waiver_id) }}"
-                            class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
-                            rel="noopener noreferrer" title="Aperçu du document d'analyse des risques">
-                            <i data-lucide="eye"></i>
-                        </a>
-
-                        {% if ra.raw_status in ['to_send', 'to_generate'] %}
-                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                                title="Envoyer le lien par e-mail">
-                                <i data-lucide="send"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif ra.raw_status == 'to_sign' %}
-                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
-                            method="POST" class="u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
-                                title="Relancer par e-mail">
-                                <i data-lucide="bell"></i>
-                            </button>
-                        </form>
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
-                            data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
-                            title="Copier le lien de signature">
-                            <i data-lucide="copy"></i>
-                        </button>
-                        {% elif ra.raw_status == 'signed' %}
-                        <a href="{{ ra.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
-                            rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
-                            <i data-lucide="file-text"></i> PDF
-                        </a>
-                        {% endif %}
-
-                        <form action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=ra.waiver_id) }}"
-                            method="POST" class="u-m-0"
-                            onsubmit="return confirm('Supprimer cette analyse des risques pour {{ ra.signer_name }} ?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
-                                <i data-lucide="trash-2"></i>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="u-flex u-justify-between u-align-center u-mt-2">
-                <p class="u-text-2xs u-text-muted u-mb-0">
-                    Aucun signataire invité pour l'analyse des risques. Cliquez sur <strong>Inviter</strong> pour associer la production, les coordinateurs ou chefs d'équipe.
-                </p>
-            </div>
-            {% endif %}
-        </div>
-        </div>
-
-
-        <!-- Incidents éventuels -->
-        {% if incidents and incidents|length > 0 %}
-        <div class="project-doc-item project-doc-item--error u-flex u-flex-column u-p-2 u-mt-3">
-            <div class="project-doc-title u-font-semibold u-text-xs u-mb-1 u-text-error">
-                <i data-lucide="flag"></i> Incident{{ 's' if incidents|length > 1 else '' }} lié{{ 's' if
-                incidents|length > 1 else '' }} ({{ incidents|length }})
-            </div>
-            <div class="u-flex u-flex-column u-gap-1">
-                {% for inc in incidents %}
-                <div
-                    class="project-doc-item u-flex u-justify-between u-align-center u-p-2 u-flex-wrap u-gap-2 u-flex-column u-align-start">
-                    <div class="project-doc-info">
-                        <span class="u-text-xs u-font-semibold">{{ inc.title | truncate(60) }}</span>
-                        <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                            <span class="checkout-doc-id">{{ inc.incident_number }}</span>
-                        </div>
-                    </div>
-                    <div class="projects-cell-item u-flex u-align-center u-gap-2">
-                        {{ incident_severity_badge(inc.severity, inc.severity_label) }}
-                        {{ incident_status_badge(inc.status, inc.status_label) }}
-                        <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
-                            data-val="link" title="Voir l'incident" target="_blank"
-                            class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link">
-                            <i data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i>
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- ═══════════ 4. COLLABORATION & SUIVI (RAPPORTS D'ÉQUIPE) ═══════════ -->
-<div class="admin-card project-reports-container u-mb-3" id="reports">
-    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-        <div class="project-reports-header-title">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Rapports d'Équipe</h2>
-            </div>
-            <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
-                Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
-            </p>
-        </div>
-        {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral') }}
-    </div>
-
-    <!-- Boîte de rédaction de rapport -->
-    <form method="POST" action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
-        class="project-report-form u-mb-4" id="addReportForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <!-- 1. Champ Titre autonome -->
-        <div class="project-report-field-group u-mb-3">
-            <label for="reportTitleInput" class="project-report-field-label">
-                Titre du rapport <span class="u-text-danger">*</span>
-            </label>
-            <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
-                placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off" required>
-        </div>
-
-        <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
-        <div class="project-report-field-group u-mb-3">
-            <div class="u-flex u-justify-between u-align-center u-mb-1">
-                <label for="reportContentEditor" class="project-report-field-label u-m-0">
-                    Observation & Compte-rendu <span class="u-text-danger">*</span>
-                </label>
-                <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en
-                    direct</span>
-            </div>
-
-            <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
-            <textarea name="content" id="reportContentInput" class="u-d-none"></textarea>
-
-            <div class="notion-wysiwyg-wrapper" id="notionEditorWrapper">
-                <div class="notion-slash-container">
-                    <div class="notion-slash-menu" id="notionSlashMenu" role="listbox" aria-label="Commandes Markdown">
-                    </div>
-                    <!-- Menu contextuel personnalisé au clic droit -->
-                    <div class="notion-context-menu" id="notionContextMenu" role="menu" aria-label="Menu de formatage">
-                        <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
-                            <span class="notion-context-icon">🧹</span>
-                            <span class="notion-context-label">Supprimer la mise en forme</span>
-                            <span class="notion-context-hint">Normal</span>
-                        </div>
-                        <div class="notion-context-divider"></div>
-                        <div class="notion-context-header">TRANSFORMER LE BLOC</div>
-                        <div class="notion-context-item" data-action="bullet" role="menuitem">
-                            <span class="notion-context-icon">•</span>
-                            <span class="notion-context-label">Liste à puces</span>
-                        </div>
-                        <div class="notion-context-item" data-action="numbered" role="menuitem">
-                            <span class="notion-context-icon">1.</span>
-                            <span class="notion-context-label">Liste numérotée</span>
-                        </div>
-                        <div class="notion-context-item" data-action="h2" role="menuitem">
-                            <span class="notion-context-icon">🏷️</span>
-                            <span class="notion-context-label">Titre de section</span>
-                        </div>
-                        <div class="notion-context-item" data-action="h3" role="menuitem">
-                            <span class="notion-context-icon">📌</span>
-                            <span class="notion-context-label">Sous-titre</span>
-                        </div>
-                        <div class="notion-context-item" data-action="quote" role="menuitem">
-                            <span class="notion-context-icon">💬</span>
-                            <span class="notion-context-label">Citation / Observation</span>
-                        </div>
-                        <div class="notion-context-divider"></div>
-                        <div class="notion-context-header">STYLE DU TEXTE</div>
-                        <div class="notion-context-item" data-action="bold" role="menuitem">
-                            <span class="notion-context-icon">𝐁</span>
-                            <span class="notion-context-label">Mettre en gras</span>
-                            <span class="notion-context-hint">⌘B</span>
-                        </div>
-                        <div class="notion-context-item" data-action="italic" role="menuitem">
-                            <span class="notion-context-icon">𝐼</span>
-                            <span class="notion-context-label">Mettre en italique</span>
-                            <span class="notion-context-hint">⌘I</span>
-                        </div>
-                    </div>
-
-                    <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
-                        contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" data-empty="true"
-                        data-placeholder="Rédigez votre observation ou compte-rendu...">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Actions -->
-        <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
-            <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
-                Publier le rapport
-            </button>
-        </div>
-    </form>
-
-    <!-- Fil chronologique des rapports (Timeline technique BV) -->
-    <div class="project-reports-stream" id="reportsStream">
-        {% if reports and reports|length > 0 %}
-        <div class="project-reports-timeline">
-            <div class="project-report-timeline-line"></div>
-            {% for report in reports %}
-            <div class="project-report-item" id="report-{{ report.id }}">
-                <div class="project-report-timeline-axis">
-                    <div class="project-report-avatar" title="{{ report.author_job }}">
-                        {{ initials(report.author_name, '') }}
-                    </div>
-                </div>
-                <div class="project-report-card">
+                {% if safety_rules_waivers and safety_rules_waivers|length > 0 %}
+                <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                    {% for sr in safety_rules_waivers %}
                     <div
-                        class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
-                        <div class="u-flex u-align-center u-gap-2">
-                            <strong class="project-report-author">{{ report.author_name }}</strong>
-                            <span class="project-report-role-badge">{{ report.author_job }}</span>
-                            <span class="project-report-date u-text-muted">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-clock">
-                                    <circle cx="12" cy="12" r="10" />
-                                    <polyline points="12 6 12 12 16 14" />
-                                </svg>
-                                {{ report.created_at_fr }}
-                                {% if report.is_edited %}
-                                <span class="project-report-edited-badge"
-                                    title="Rapport modifié ultérieurement">(modifié)</span>
-                                {% endif %}
-                            </span>
+                        class="project-signer-card">
+                        <div>
+                            <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                                <strong class="u-text-xs">{{ sr.signer_name }}</strong>
+                                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                    {{ sr.signer_role_label }}
+                                </span>
+                            </div>
+                            <div class="u-text-2xs u-text-muted">
+                                {{ sr.signer_email or 'Sans e-mail' }}
+                                {% if sr.signer_company %} — {{ sr.signer_company }}{% endif %}
+                            </div>
                         </div>
-                        <div class="project-report-actions u-flex u-align-center u-gap-1">
-                            {% if report.can_edit %}
-                            <button type="button" class="project-report-action-btn project-report-edit-btn"
-                                data-action="edit-report" data-report-id="{{ report.id }}"
-                                title="Modifier ce rapport (accessible pendant 3h)">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-pencil">
-                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                    <path d="m15 5 4 4" />
-                                </svg>
-                            </button>
-                            {% endif %}
-                            {% if report.can_delete %}
-                            <form method="POST"
-                                action="{{ url_for('admin_projects.admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
-                                class="u-m-0"
-                                onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+
+                        <div class="u-flex u-align-center u-gap-1">
+                            {{ status_badge(sr.status, sr.raw_status) }}
+
+                            {% if sr.raw_status in ['to_send', 'to_generate'] %}
+                            <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
+                                method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="project-report-action-btn project-report-delete-btn"
-                                    title="Supprimer ce rapport">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-trash">
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                        <path d="M3 6h18" />
-                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    </svg>
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                    title="Envoyer le lien par e-mail">
+                                    <i data-lucide="send"></i>
                                 </button>
                             </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif sr.raw_status == 'to_sign' %}
+                            <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                    title="Relancer par e-mail">
+                                    <i data-lucide="bell"></i>
+                                </button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif sr.raw_status == 'signed' %}
+                            <a href="{{ sr.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                                rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                                <i data-lucide="file-text"></i> PDF
+                            </a>
+                            {% endif %}
+
+                            <form action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=sr.waiver_id) }}"
+                                method="POST" class="u-m-0"
+                                onsubmit="return confirm('Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
+                    Aucun signataire invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer les
+                    règles de sécurité à vos pilotes ou à l'équipe.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- 3. ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL) -->
+            <div class="project-doc-item project-doc-group u-border-left-waiver">
+                <div class="project-doc-group-header">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <span class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="file-signature" class="u-text-waiver"></i> Attestations Pilotes
+                        </span>
+                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                            {{ pilot_waivers|length }} pilote{{ 's' if pilot_waivers|length > 1 else '' }}
+                        </span>
+                    </div>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-pilot-signer-modal"
+                        title="Inviter un pilote ou cascadeur à signer l'attestation Annexe 3">
+                        <i data-lucide="user-plus"></i> Inviter
+                    </button>
+                </div>
+
+                {% if pilot_waivers and pilot_waivers|length > 0 %}
+                <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                    {% for pw in pilot_waivers %}
+                    <div
+                        class="project-signer-card">
+                        <div>
+                            <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                                <strong class="u-text-xs">{{ pw.signer_name }}</strong>
+                                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                    {{ pw.signer_role_label }}
+                                </span>
+                            </div>
+                            <div class="u-text-2xs u-text-muted">
+                                {{ pw.signer_email or 'Sans e-mail' }}
+                                {% if pw.signer_company %} — {{ pw.signer_company }}{% endif %}
+                            </div>
+                            {% if pw.vehicles %}
+                            <div class="u-text-2xs u-text-muted u-mt-1">
+                                <span class="u-font-semibold">Véhicules confiés :</span> {{ pw.vehicles }}
+                            </div>
                             {% endif %}
                         </div>
+
+                        <div class="u-flex u-align-center u-gap-1">
+                            {{ status_badge(pw.status, pw.raw_status) }}
+
+                            {% if pw.raw_status in ['to_send', 'to_generate'] %}
+                            <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                    title="Envoyer le lien par e-mail">
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif pw.raw_status == 'to_sign' %}
+                            <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                    title="Relancer par e-mail">
+                                    <i data-lucide="bell"></i>
+                                </button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif pw.raw_status == 'signed' %}
+                            <a href="{{ pw.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                                rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                                <i data-lucide="file-text"></i> PDF
+                            </a>
+                            {% endif %}
+
+                            <form action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=pw.waiver_id) }}"
+                                method="POST" class="u-m-0"
+                                onsubmit="return confirm('Supprimer cette attestation pilote pour {{ pw.signer_name }} ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="u-flex u-justify-between u-align-center u-mt-2">
+                    <p class="u-text-2xs u-text-muted u-mb-0">
+                        Aucun pilote invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer
+                        l'attestation de non-subordination et de sécurité (Annexe 3).
+                    </p>
+                </div>
+                {% endif %}
+            </div>
 
-                    <!-- Mode Affichage Normal -->
-                    <div class="project-report-view-mode" id="reportView-{{ report.id }}">
-                        {% if report.title %}
-                        <h4 class="project-report-title">{{ report.title }}</h4>
-                        {% endif %}
-
-                        {% if report.content and report.content|length > 200 %}
-                        <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
-                            <div class="project-report-body markdown-rendered project-report-body-preview">
-                                {{ report.content | truncate_report(200) | markdown }}
-                            </div>
-                            <div class="project-report-body markdown-rendered project-report-body-full">
-                                {{ report.content | markdown }}
-                            </div>
-                            <div class="project-report-toggle-wrapper">
-                                <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
-                                    aria-expanded="false" title="Afficher ou masquer la suite du rapport">
-                                    <span class="project-report-toggle-label">Déplier</span>
-                                    <span class="project-report-toggle-icon">▾</span>
-                                </button>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="project-report-body markdown-rendered">
-                            {{ report.content | markdown }}
-                        </div>
-                        {% endif %}
+            <!-- 4. ANALYSE DES RISQUES (BVRA) -->
+            <div class="project-doc-item project-doc-group u-border-left-waiver">
+                <div class="project-doc-group-header">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <span class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="shield-alert" class="u-text-waiver"></i> Analyse des Risques
+                        </span>
+                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                            {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
+                        </span>
                     </div>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-risk-signer-modal"
+                        title="Inviter un signataire à l'analyse des risques (Production, Cascade, Machinerie, Régie...)">
+                        <i data-lucide="user-plus"></i> Inviter
+                    </button>
+                </div>
 
-                    <!-- Mode Édition Inline (disponible dans les 3h) -->
-                    {% if report.can_edit %}
-                    <form method="POST"
-                        action="{{ url_for('admin_projects.admin_project_report_edit', record_id=project.id, report_id=report.id) }}"
-                        class="project-report-edit-form is-hidden" id="reportEdit-{{ report.id }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="u-mb-2">
-                            <input type="text" name="title" class="project-report-edit-title-input"
-                                value="{{ report.title or '' }}" placeholder="Titre du rapport" maxlength="255"
-                                autocomplete="off" required>
-                        </div>
-                        <div class="u-mb-2">
-                            <textarea name="content" class="project-report-edit-textarea" rows="4"
-                                required>{{ report.content }}</textarea>
-                        </div>
-                        <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
-                            <span class="u-text-2xs u-text-muted">Modification autorisée pendant 3h après
-                                publication</span>
-                            <div class="u-flex u-align-center u-gap-2">
-                                <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs"
-                                    data-action="cancel-edit" data-report-id="{{ report.id }}">
-                                    Annuler
-                                </button>
-                                <button type="submit" class="admin-btn admin-btn-primary admin-btn-xs">
-                                    Enregistrer
-                                </button>
+                {% if risk_assessment_waivers and risk_assessment_waivers|length > 0 %}
+                <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                    {% for ra in risk_assessment_waivers %}
+                    <div
+                        class="project-signer-card">
+                        <div>
+                            <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                                <strong class="u-text-xs">{{ ra.signer_name }}</strong>
+                                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                    {{ ra.signer_role_label }}
+                                </span>
+                            </div>
+                            <div class="u-text-2xs u-text-muted">
+                                {{ ra.signer_email or 'Sans e-mail' }}
+                                {% if ra.signer_company %} — {{ ra.signer_company }}{% endif %}
                             </div>
                         </div>
-                    </form>
-                    {% endif %}
+
+                        <div class="u-flex u-align-center u-gap-1">
+                            {{ status_badge(ra.status, ra.raw_status) }}
+
+                            {% if ra.raw_status in ['to_send', 'to_generate'] %}
+                            <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                    title="Envoyer le lien par e-mail">
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif ra.raw_status == 'to_sign' %}
+                            <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                    title="Relancer par e-mail">
+                                    <i data-lucide="bell"></i>
+                                </button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
+                                title="Copier le lien de signature">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            {% elif ra.raw_status == 'signed' %}
+                            <a href="{{ ra.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                                rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                                <i data-lucide="file-text"></i> PDF
+                            </a>
+                            {% endif %}
+
+                            <form action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=ra.waiver_id) }}"
+                                method="POST" class="u-m-0"
+                                onsubmit="return confirm('Supprimer cette analyse des risques pour {{ ra.signer_name }} ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                    <i data-lucide="trash-2"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="u-flex u-justify-between u-align-center u-mt-2">
+                    <p class="u-text-2xs u-text-muted u-mb-0">
+                        Aucun signataire invité pour l'analyse des risques. Cliquez sur <strong>Inviter</strong> pour associer la production, les coordinateurs ou chefs d'équipe.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            </div>
+
+
+            <!-- Incidents éventuels -->
+            {% if incidents and incidents|length > 0 %}
+            <div class="project-doc-item project-doc-item--error u-flex u-flex-column u-p-2 u-mt-3">
+                <div class="project-doc-title u-font-semibold u-text-xs u-mb-1 u-text-error">
+                    <i data-lucide="flag"></i> Incident{{ 's' if incidents|length > 1 else '' }} lié{{ 's' if
+                    incidents|length > 1 else '' }} ({{ incidents|length }})
+                </div>
+                <div class="u-flex u-flex-column u-gap-1">
+                    {% for inc in incidents %}
+                    <div
+                        class="project-doc-item u-flex u-justify-between u-align-center u-p-2 u-flex-wrap u-gap-2 u-flex-column u-align-start">
+                        <div class="project-doc-info">
+                            <span class="u-text-xs u-font-semibold">{{ inc.title | truncate(60) }}</span>
+                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                                <span class="checkout-doc-id">{{ inc.incident_number }}</span>
+                            </div>
+                        </div>
+                        <div class="projects-cell-item u-flex u-align-center u-gap-2">
+                            {{ incident_severity_badge(inc.severity, inc.severity_label) }}
+                            {{ incident_status_badge(inc.status, inc.status_label) }}
+                            <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
+                                data-val="link" title="Voir l'incident" target="_blank"
+                                class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link">
+                                <i data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% endfor %}
+            {% endif %}
         </div>
-        {% else %}
-        {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de
-        tournage, point technique ou débriefing d'équipe ci-dessus.") }}
-        {% endif %}
     </div>
 </div>
+
 
 <!-- ═══════════ MODAL AJOUT SIGNATAIRE RÈGLES DE SÉCURITÉ (BVSR) ═══════════ -->
 <div id="addSafetyRulesSignerModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true"
