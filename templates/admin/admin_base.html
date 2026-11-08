@@ -145,7 +145,7 @@
                 {% call nav_group('Documents', 'documents', 'file-signature', ['cgl', 'safety_rules', 'pilot_waivers', 'risk_assessments']) %}
                 {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Conditions générales (CGL)', 'cgl') }}
                 {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles de sécurité (BVSR)', 'safety_rules') }}
-                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations pilotes', 'pilot_waivers') }}
+                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations pilotes (BVPA)', 'pilot_waivers') }}
                 {{ nav_item(url_for('admin_waivers.admin_risk_assessment_list'), 'Analyses des risques (BVRA)', 'risk_assessments') }}
                 {% endcall %}
 
