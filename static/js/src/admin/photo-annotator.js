@@ -280,9 +280,9 @@
         };
 
         // Clear all
-        document.getElementById('annotatorClearBtn').onclick = () => {
+        document.getElementById('annotatorClearBtn').onclick = async () => {
             hideTextPopover();
-            if (historyStack.length > 0 && confirm("Effacer toutes les annotations sur cette photo ?")) {
+            if (historyStack.length > 0 && await window.adminConfirm('Effacer toutes les annotations sur cette photo ?', { label: 'Effacer' })) {
                 historyStack = [];
                 selectedShapeIndex = null;
                 updateDeleteBtnVisibility();

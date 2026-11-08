@@ -87,6 +87,7 @@
     --status-info-text: #1E40AF;
     --status-info-border: rgba(59, 130, 246, 0.3);
     --status-info-glow: rgba(59, 130, 246, 0.4);
+    --status-dirty: #F97316; /* Modifié, non enregistré */
     --status-neutral: #6B7280;
     --status-neutral-bg: #F3F4F6;
     --status-neutral-text: #374151;

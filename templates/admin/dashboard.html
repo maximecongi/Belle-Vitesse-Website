@@ -76,7 +76,7 @@
                         {% for vehicle in project.vehicles %}
                         {% if vehicle.checkout_id %}
                         <a class="today-row-vehicle-link"
-                            href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=vehicle.checkout_id) }}">
+                            href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="truck"></i>
                                 <span>{{ vehicle.fields.name }}</span>
@@ -86,7 +86,7 @@
                             vehicle.checkout_ready}) }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                        <a href="{{ url_from_here('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                             class="today-row-vehicle-link">
                             <span class="today-row-label">
                                 <i data-lucide="truck"></i>
@@ -212,7 +212,7 @@
                         {% for vehicle in project.vehicles %}
                         {% if vehicle.checkin_id %}
                         <a class="today-row-vehicle-link"
-                            href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=vehicle.checkin_id) }}">
+                            href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="truck"></i>
                                 <span>{{ vehicle.fields.name }}</span>
@@ -221,7 +221,7 @@
                             vehicle.checkin_status_id, class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                        <a href="{{ url_from_here('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                             class="today-row-vehicle-link">
                             <span class="today-row-label">
                                 <i data-lucide="truck"></i>
@@ -239,7 +239,7 @@
                     <div class="agenda-section-title">
                         <span>Bilan retour</span>
                         {% if project.incidents and project.incidents|length > 0 %}
-                        <a href="{{ url_for('admin_incidents.admin_incident_new', project_id=project.id) }}"
+                        <a href="{{ url_from_here('admin_incidents.admin_incident_new', project_id=project.id) }}"
                             class="agenda-section-action" title="Déclarer un autre incident">
                             <i data-lucide="plus"></i> <span>Incident</span>
                         </a>
@@ -249,7 +249,7 @@
                         {% if project.incidents and project.incidents|length > 0 %}
                         {% for inc in project.incidents %}
                         <a class="today-row-incident-link today-row-incident-link--active"
-                            href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
+                            href="{{ url_from_here('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
                             title="{{ inc.title }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="wrench"></i>
@@ -262,7 +262,7 @@
                         </a>
                         {% endfor %}
                         {% else %}
-                        <a href="{{ url_for('admin_incidents.admin_incident_new', project_id=project.id) }}"
+                        <a href="{{ url_from_here('admin_incidents.admin_incident_new', project_id=project.id) }}"
                             class="today-row-incident-link"
                             title="Aucun incident signalé · Déclarer un dommage constaté">
                             <span class="today-row-label">

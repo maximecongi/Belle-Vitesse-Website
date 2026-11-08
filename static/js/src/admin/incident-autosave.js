@@ -354,7 +354,7 @@
 
         if (btnDiscard) {
             btnDiscard.addEventListener('click', async function () {
-                if (confirm('Voulez-vous vraiment supprimer définitivement ce brouillon de constat ?')) {
+                if (await window.adminConfirm('Supprimer définitivement ce brouillon de constat ?', { label: 'Supprimer le brouillon' })) {
                     if (store) {
                         await store.deleteDraft(storageKey);
                     }

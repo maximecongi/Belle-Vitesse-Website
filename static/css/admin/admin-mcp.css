@@ -67,8 +67,8 @@
 }
 
 .mcp-scope-write {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--status-info-bg) !important;
+    color: var(--status-info-text) !important;
     font-weight: 600 !important;
 }
 
@@ -79,18 +79,18 @@
 }
 
 .mcp-token-expired {
-    background: #fee2e2 !important;
+    background: var(--status-danger-bg) !important;
     color: #b91c1c !important;
     font-weight: 600 !important;
 }
 
 .mcp-token-active {
-    background: #dcfce7 !important;
-    color: #15803d !important;
+    background: var(--status-success-bg) !important;
+    color: var(--status-success) !important;
 }
 
 .mcp-token-revoked {
-    background: #fee2e2 !important;
+    background: var(--status-danger-bg) !important;
     color: #b91c1c !important;
 }
 
@@ -137,19 +137,19 @@
 }
 
 .mcp-audit-status-success {
-    background: #dcfce7 !important;
-    color: #15803d !important;
+    background: var(--status-success-bg) !important;
+    color: var(--status-success) !important;
     font-weight: 600 !important;
 }
 
 .mcp-audit-status-warning {
-    background: #fef3c7 !important;
+    background: var(--status-warning-bg) !important;
     color: #d97706 !important;
     font-weight: 600 !important;
 }
 
 .mcp-audit-status-error {
-    background: #fee2e2 !important;
+    background: var(--status-danger-bg) !important;
     color: #b91c1c !important;
     font-weight: 600 !important;
 }
@@ -203,6 +203,7 @@
 
 .mcp-modal-result-box {
     border-left: 4px solid var(--status-success, #15803D) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .mcp-input-mono {

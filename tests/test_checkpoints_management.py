@@ -60,9 +60,9 @@ class CheckpointsManagementTest(BaseTestCase):
         resp = self.client.get("/admin/checkpoints")
         self.assertEqual(resp.status_code, 200)
         html = resp.data.decode("utf-8")
-        self.assertIn("Points de Contr", html)
+        self.assertIn("Points de contr", html)
         self.assertIn("Pression des pneus", html)
-        self.assertIn("Matrice Flotte", html)
+        self.assertIn("Matrice par véhicule", html)
 
         # Test tolérance au slash terminal (évite l'erreur 404)
         resp_slash = self.client.get("/admin/checkpoints/")
@@ -198,6 +198,59 @@ class CheckpointsManagementTest(BaseTestCase):
 
             self.assertTrue(brakes_cp.is_vehicle_enabled("recCar1"))
             self.assertFalse(tires_cp.is_vehicle_enabled("recCar1"))
+
+    @patch("services.admin.vehicle_config.get_vehicles")
+    def test_matrix_batch_save_api(self, mock_get_vehicles):
+        """La matrice enregistre toutes les lignes modifiées en une seule requête."""
+        self._login_as("administrator")
+        mock_get_vehicles.return_value = [
+            {"id": "recCar1", "fields": {"name": "eCar Proto"}},
+            {"id": "recCar2", "fields": {"name": "Titan"}},
+        ]
+        with self.app.app_context():
+            ensure_default_checkpoints()
+
+        resp = self.client.post(
+            "/admin/api/vehicle-configs/batch",
+            json={"configs": {"recCar1": ["brakes"], "recCar2": ["tires", "brakes"]}},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.get_json(), {"success": True, "updated": 2})
+
+        with self.app.app_context():
+            brakes_cp = CheckpointDefinition.query.filter_by(key="brakes").first()
+            tires_cp = CheckpointDefinition.query.filter_by(key="tires").first()
+            self.assertTrue(brakes_cp.is_vehicle_enabled("recCar1"))
+            self.assertFalse(tires_cp.is_vehicle_enabled("recCar1"))
+            self.assertTrue(brakes_cp.is_vehicle_enabled("recCar2"))
+            self.assertTrue(tires_cp.is_vehicle_enabled("recCar2"))
+
+    def test_matrix_batch_save_api_rejects_invalid_payload(self):
+        """Charges utiles vides ou mal formées refusées, rôle non administrateur refusé."""
+        self._login_as("administrator")
+        for payload in ({}, {"configs": {}}, {"configs": {"recCar1": "brakes"}}, {"configs": {"recCar1": [1]}}):
+            resp = self.client.post("/admin/api/vehicle-configs/batch", json=payload)
+            self.assertEqual(resp.status_code, 400, payload)
+
+        self._login_as("Manager")
+        resp = self.client.post("/admin/api/vehicle-configs/batch", json={"configs": {"recCar1": []}})
+        self.assertEqual(resp.status_code, 302)
+
+    @patch("services.admin.vehicle_config.get_vehicles")
+    def test_matrix_page_renders_single_save_bar(self, mock_get_vehicles):
+        """La page matrice affiche une barre d'enregistrement unique et plus de bouton par véhicule."""
+        self._login_as("administrator")
+        mock_get_vehicles.return_value = [
+            {"id": "recCar1", "fields": {"name": "eCar Proto"}},
+            {"id": "recCar2", "fields": {"name": "Titan"}},
+        ]
+        resp = self.client.get("/admin/vehicle-configs")
+        self.assertEqual(resp.status_code, 200)
+        html = resp.data.decode("utf-8")
+        self.assertEqual(html.count('id="cpMatrixSave"'), 1)
+        self.assertNotIn("save-vehicle-btn", html)
+        self.assertIn("checkpoint-category-dot--security", html)
+        self.assertIn("Véhicules concernés", html)
 
     @patch("services.admin.vehicle_config.get_vehicles")
     def test_reorder_checkpoints_api(self, mock_get_vehicles):

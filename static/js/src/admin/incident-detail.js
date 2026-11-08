@@ -124,6 +124,32 @@
         const detailView = document.getElementById('incidentDetailView');
         if (!detailView) return;
 
+        // Ouverture / fermeture des modales via attributs data-* (aucun handler inline)
+        if (!window._incidentModalDelegation) {
+            window._incidentModalDelegation = true;
+            document.addEventListener('click', function (e) {
+                const opener = e.target.closest('[data-incident-modal-open]');
+                if (opener) {
+                    e.preventDefault();
+                    openIncidentModal(opener.dataset.incidentModalOpen);
+                    return;
+                }
+                const closer = e.target.closest('[data-incident-modal-close]');
+                if (closer) {
+                    e.preventDefault();
+                    closeIncidentModal(closer.dataset.incidentModalClose);
+                }
+            });
+        }
+
+        // Changement rapide de statut depuis l'en-tête
+        const quickStatus = document.querySelector('[data-quick-status]');
+        if (quickStatus) {
+            quickStatus.addEventListener('change', function () {
+                quickStatusSelect(this.value);
+            });
+        }
+
         // Fermeture des modales : clic overlay ou touche Échap
         document.querySelectorAll('.incident-modal-overlay').forEach(overlay => {
             overlay.addEventListener('click', function (e) {

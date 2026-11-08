@@ -313,7 +313,7 @@ class BvsrComprehensiveTest(BaseTestCase):
             response = self.client.get("/admin/safety-rules")
             self.assertEqual(response.status_code, 200)
             self.assertIn(
-                b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9", response.data)
+                "Règles de sécurité (BVSR)".encode("utf-8"), response.data)
             self.assertIn(b"Jean Pilote", response.data)
 
     def test_07_admin_safety_rules_catalog_ui_and_save(self):

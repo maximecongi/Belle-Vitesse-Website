@@ -1,12 +1,8 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}
-{% if is_edit %}Modifier l'utilisateur{% else %}Nouvel Utilisateur{% endif %}
-{% endblock %}
+{% block title %}{% if is_edit %}Modifier le membre{% else %}Nouveau membre{% endif %}{% endblock %}
 
-{% block page_title %}
-{% if is_edit %}Modifier l'utilisateur{% else %}Nouvel Utilisateur{% endif %}
-{% endblock %}
+{% block page_title %}{% if is_edit %}Modifier le membre{% else %}Nouveau membre{% endif %}{% endblock %}
 
 {% block content %}
 <div class="admin-card u-max-w-600">
@@ -79,7 +75,7 @@
         <div class="u-text-right u-mt-4">
             <a href="{{ url_for('admin_users.admin_users_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
-                {% if is_edit %}Mettre à jour{% else %}Créer l'utilisateur{% endif %}
+                {% if is_edit %}Mettre à jour{% else %}Créer le membre{% endif %}
             </button>
         </div>
     </form>

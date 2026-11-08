@@ -503,6 +503,7 @@
 .bvpa-signature-box {
     text-align: center;
     border-left: 1px solid #e4e4e7;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding-left: 10pt;
 }
 

@@ -1,19 +1,18 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import incident_severity_badge, incident_status_badge, incident_impact_badge,
-incident_signature_badge, equipment_icon, empty_state %}
+incident_signature_badge, equipment_icon, empty_state, danger_zone, back_button %}
 
-{% block title %}Détail Incident {% endblock %}
-{% block page_title %}Détail Incident{% endblock %}
+{% block title %}Incident {{ incident.incident_number }}{% endblock %}
+{% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
-    liste</a>
+{{ back_button(url_for('admin_incidents.admin_incidents_list')) }}
 {% if incident.is_sealed %}
 <a href="{{ url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}" target="_blank"
-    class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
+    class="admin-btn admin-btn-secondary"><i data-lucide="file-text"></i> Rapport PDF ↗</a>
 {% endif %}
-<a href="{{ url_for('admin_incidents.admin_incident_edit', record_id=incident.id) }}"
+<a href="{{ url_keep_return('admin_incidents.admin_incident_edit', record_id=incident.id) }}"
     class="admin-btn admin-btn-primary">
     {% if incident.is_sealed %}Modifier le suivi{% else %}Modifier l'incident{% endif %}
 </a>
@@ -69,7 +68,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                     title="Cliquer pour changer rapidement le statut">
                     <span class="status-label" id="incidentHeaderStatusLabel"><i data-lucide="{{ cur_meta.icon }}"></i>
                         {{ cur_meta.label }}</span>
-                    <select id="incidentHeaderStatusSelect" onchange="quickStatusSelect(this.value)">
+                    <select id="incidentHeaderStatusSelect" data-quick-status>
                         {% for sk, sv in status_meta.items() %}
                         <option value="{{ sk }}" data-val="{{ sv.val }}" {% if current_status==sk %}selected{% endif %}>
                             {{ sv.label }}
@@ -166,9 +165,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                     {% else %}
                     <p class="u-text-xs u-text-muted u-m-0 u-mb-2">Le responsable Belle Vitesse n'a pas encore apposé
                         son visa manuscrit.</p>
-                    <button type="button" class="admin-btn admin-btn-primary admin-btn-sm u-w-100"
-                        onclick="openIncidentModal('modalBvSign')">
-                        ✍️ Apposer le visa BV
+                    <button type="button" class="admin-btn admin-btn-primary admin-btn-sm u-w-100" data-incident-modal-open="modalBvSign">
+                        <i data-lucide="pen-line"></i> Apposer le visa BV
                     </button>
                     {% endif %}
                 </div>
@@ -206,13 +204,11 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <p class="u-text-xs u-text-muted u-m-0 u-mb-2">La production peut signer directement sur place ou à
                         distance par lien sécurisé.</p>
                     <div class="u-flex u-flex-column u-gap-1">
-                        <button type="button" class="admin-btn admin-btn-primary admin-btn-sm u-w-100"
-                            onclick="openIncidentModal('modalProdSign')">
-                            ✍️ Signer sur place
+                        <button type="button" class="admin-btn admin-btn-primary admin-btn-sm u-w-100" data-incident-modal-open="modalProdSign">
+                            <i data-lucide="pen-line"></i> Signer sur place
                         </button>
-                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm u-w-100"
-                            onclick="openIncidentModal('modalSendToken')">
-                            ✉️ Envoyer par email (48h)
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm u-w-100" data-incident-modal-open="modalSendToken">
+                            <i data-lucide="mail"></i> Envoyer par e-mail (48h)
                         </button>
                     </div>
                     {% endif %}
@@ -240,12 +236,12 @@ incident_signature_badge, equipment_icon, empty_state %}
                         {% if incident.signed_pdf_path %}
                         <a href="{{ incident.signed_pdf_url or url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}"
                             target="_blank" class="admin-btn admin-btn-sm admin-btn-seal">
-                            📄 PDF Scellé
+                            <i data-lucide="file-lock"></i> PDF scellé
                         </a>
                         {% endif %}
                         <a href="/incidents/verify/{{ incident.incident_number }}" target="_blank"
                             class="admin-btn admin-btn-secondary admin-btn-sm">
-                            🔍 Contrôle Public ↗
+                            <i data-lucide="shield-check"></i> Contrôle public ↗
                         </a>
                     </div>
                 </div>
@@ -308,7 +304,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             <div class="u-flex u-flex-column u-gap-2">
                 {% for doc in incident.documents %}
                 <div class="u-flex u-justify-between u-align-center u-p-2 u-rounded incident-empty-photos">
-                    <span class="u-text-sm u-font-semibold">📄 {{ doc.filename }}</span>
+                    <span class="u-text-sm u-font-semibold"><i data-lucide="file"></i> {{ doc.filename }}</span>
                     <a href="{{ doc.url }}" target="_blank"
                         class="admin-btn admin-btn-secondary admin-btn-sm">Télécharger
                         ↗</a>
@@ -347,7 +343,7 @@ incident_signature_badge, equipment_icon, empty_state %}
 
             <!-- SOUS-BLOC 1 : PROJET & PRODUCTION -->
             <div class="incident-context-section">
-                <div class="incident-context-section-title u-mb-2">🎬 Tournage</div>
+                <div class="incident-context-section-title u-mb-2"><i data-lucide="clapperboard"></i> Projet</div>
                 <div class="u-mb-2">
                     <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
                     <div class="u-font-semibold u-mt-1">
@@ -375,7 +371,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
             <!-- SOUS-BLOC 2 : SURVENANCE & PLATEAU -->
             <div class="incident-context-section">
-                <div class="incident-context-section-title u-mb-2">📍 Contexte</div>
+                <div class="incident-context-section-title u-mb-2"><i data-lucide="map-pin"></i> Contexte</div>
                 <div class="u-mb-2">
                     <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date & Heure :</span>
                     <div class="u-font-semibold u-mt-1">
@@ -416,7 +412,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
             <!-- SOUS-BLOC 3 : MATÉRIEL IMPACTÉ -->
             <div class="incident-context-section">
-                <div class="incident-context-section-title">⚙️ Matériel & Équipements Concernés</div>
+                <div class="incident-context-section-title"><i data-lucide="cog"></i> Matériel et équipements concernés</div>
 
                 {% if incident.equipments and incident.equipments|length > 0 %}
                 <div class="incident-detail-equipment-list u-mb-2">
@@ -448,11 +444,11 @@ incident_signature_badge, equipment_icon, empty_state %}
             <!-- LIENS INSPECTIONS (Check-out / Check-in) -->
             {% if incident.checkout or incident.checkin %}
             <div class="incident-context-section">
-                <div class="incident-context-section-title">🔍 Rapprochement États des Lieux</div>
+                <div class="incident-context-section-title"><i data-lucide="git-compare"></i> Rapprochement avec les contrôles</div>
                 {% if incident.checkout %}
                 <div class="u-mb-1">
-                    <span class="u-text-xs u-text-muted">Constaté au Check-out :</span>
-                    <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=incident.checkout.id) }}"
+                    <span class="u-text-xs u-text-muted">Constaté au départ :</span>
+                    <a href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=incident.checkout.id) }}"
                         class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                         {{ incident.checkout.inspection_number }} →
                     </a>
@@ -460,8 +456,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {% endif %}
                 {% if incident.checkin %}
                 <div>
-                    <span class="u-text-xs u-text-muted">Constaté au Check-in retour :</span>
-                    <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=incident.checkin.id) }}"
+                    <span class="u-text-xs u-text-muted">Constaté au retour :</span>
+                    <a href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=incident.checkin.id) }}"
                         class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                         {{ incident.checkin.inspection_number }} →
                     </a>
@@ -519,19 +515,10 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {% endif %}
             </div>
         </div>
-
-        <!-- Actions de sécurité (Suppression conforme à la DA) -->
-        <div class="admin-card danger-card-top">
-            <div class="admin-card-title danger-card-title">Actions de sécurité</div>
-            <p class="u-text-sm u-text-muted u-mb-2">Ces actions sont irréversibles.</p>
-            <form action="{{ url_for('admin_incidents.admin_incident_delete', record_id=incident.id) }}" method="POST"
-                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer cet incident</button>
-            </form>
-        </div>
     </div>
 </div>
+
+{{ danger_zone(url_for('admin_incidents.admin_incident_delete', record_id=incident.id), 'Supprimer cet incident ? Cette action est irréversible.', 'Supprimer cet incident') }}
 
 <!-- ═══════════ MODALES DE SIGNATURE ═══════════ -->
 
@@ -539,9 +526,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 <div id="modalBvSign" class="incident-modal-overlay">
     <div class="incident-modal-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <h3 class="u-text-lg u-font-bold u-m-0">🏢 Visa Belle Vitesse</h3>
-            <button type="button" class="incident-modal-close-btn"
-                onclick="closeIncidentModal('modalBvSign')">&times;</button>
+            <h3 class="u-text-lg u-font-bold u-m-0"><i data-lucide="building-2"></i> Visa Belle Vitesse</h3>
+            <button type="button" class="incident-modal-close-btn" data-incident-modal-close="modalBvSign">&times;</button>
         </div>
         <p class="u-text-xs u-text-muted u-mb-3">
             Apposez votre visa manuscrit attestant de l'exactitude des constatations matérielles et circonstances du
@@ -577,8 +563,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
 
             <div class="u-flex u-justify-end u-gap-2 u-mt-3">
-                <button type="button" class="admin-btn admin-btn-secondary"
-                    onclick="closeIncidentModal('modalBvSign')">Annuler</button>
+                <button type="button" class="admin-btn admin-btn-secondary" data-incident-modal-close="modalBvSign">Annuler</button>
                 <button type="submit" class="admin-btn admin-btn-primary">Valider le visa BV</button>
             </div>
         </form>
@@ -589,9 +574,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 <div id="modalProdSign" class="incident-modal-overlay">
     <div class="incident-modal-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <h3 class="u-text-lg u-font-bold u-m-0">🎬 Signature Production (Sur place)</h3>
-            <button type="button" class="incident-modal-close-btn"
-                onclick="closeIncidentModal('modalProdSign')">&times;</button>
+            <h3 class="u-text-lg u-font-bold u-m-0"><i data-lucide="pen-line"></i> Signature production (sur place)</h3>
+            <button type="button" class="incident-modal-close-btn" data-incident-modal-close="modalProdSign">&times;</button>
         </div>
         <p class="u-text-xs u-text-muted u-mb-3">
             Recueillez la signature contradictoire du représentant de la production sur le plateau. Le document sera
@@ -625,8 +609,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
 
             <div class="u-flex u-justify-end u-gap-2 u-mt-3">
-                <button type="button" class="admin-btn admin-btn-secondary"
-                    onclick="closeIncidentModal('modalProdSign')">Annuler</button>
+                <button type="button" class="admin-btn admin-btn-secondary" data-incident-modal-close="modalProdSign">Annuler</button>
                 <button type="submit" class="admin-btn admin-btn-primary">Valider & Sceller</button>
             </div>
         </form>
@@ -637,9 +620,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 <div id="modalSendToken" class="incident-modal-overlay">
     <div class="incident-modal-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <h3 class="u-text-lg u-font-bold u-m-0">✉️ Inviter la Production à distance</h3>
-            <button type="button" class="incident-modal-close-btn"
-                onclick="closeIncidentModal('modalSendToken')">&times;</button>
+            <h3 class="u-text-lg u-font-bold u-m-0"><i data-lucide="mail"></i> Inviter la production à distance</h3>
+            <button type="button" class="incident-modal-close-btn" data-incident-modal-close="modalSendToken">&times;</button>
         </div>
         <p class="u-text-xs u-text-muted u-mb-3">
             Générez un lien sécurisé valide <strong>48 heures</strong> transmis par email au représentant de la
@@ -660,8 +642,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
 
             <div class="u-flex u-justify-end u-gap-2">
-                <button type="button" class="admin-btn admin-btn-secondary"
-                    onclick="closeIncidentModal('modalSendToken')">Annuler</button>
+                <button type="button" class="admin-btn admin-btn-secondary" data-incident-modal-close="modalSendToken">Annuler</button>
                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer l'invitation</button>
             </div>
         </form>
@@ -672,9 +653,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 <div id="modalQuickResolve" class="incident-modal-overlay">
     <div class="incident-modal-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <h3 class="u-text-lg u-font-bold u-m-0">✅ Résolution & Clôture du Sinistre</h3>
-            <button type="button" class="incident-modal-close-btn"
-                onclick="closeIncidentModal('modalQuickResolve')">&times;</button>
+            <h3 class="u-text-lg u-font-bold u-m-0"><i data-lucide="circle-check"></i> Résolution et clôture de l'incident</h3>
+            <button type="button" class="incident-modal-close-btn" data-incident-modal-close="modalQuickResolve">&times;</button>
         </div>
         <p class="u-text-xs u-text-muted u-mb-3">
             Enregistrez les conclusions de l'intervention, les réparations effectuées et le coût réel facturé.
@@ -705,8 +685,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             </div>
 
             <div class="u-flex u-justify-end u-gap-2">
-                <button type="button" class="admin-btn admin-btn-secondary"
-                    onclick="closeIncidentModal('modalQuickResolve')">Annuler</button>
+                <button type="button" class="admin-btn admin-btn-secondary" data-incident-modal-close="modalQuickResolve">Annuler</button>
                 <button type="submit" class="admin-btn admin-btn-primary">Valider la résolution</button>
             </div>
         </form>

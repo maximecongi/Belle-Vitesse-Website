@@ -1,15 +1,12 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header %}
+{% from "admin/macros.html" import filter_header, list_header_actions, table_empty_row %}
 
 {% block title %}Contacts{% endblock %}
 {% block page_title %}Contacts{% endblock %}
 
 {% block header_actions %}
-<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un contact..."
-    autocomplete="off">
-<a href="{{ url_for('admin_contacts.admin_contact_new') }}" class="admin-btn admin-btn-primary">+ Nouveau
-    Contact</a>
+{{ list_header_actions('Rechercher un contact...', url_for('admin_contacts.admin_contact_new'), '+ Nouveau contact', mode='client') }}
 {% endblock %}
 
 {% block content %}
@@ -65,15 +62,11 @@
                     </td>
                     <td>
                         <a href="{{ url_for('admin_contacts.admin_contact_edit', record_id=c.id) }}"
-                            class="admin-btn admin-btn-secondary">Éditer</a>
+                            class="admin-btn admin-btn-secondary">Modifier</a>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" class="u-text-center u-p-5 u-text-muted">
-                        Aucun contact trouvé.
-                    </td>
-                </tr>
+                {{ table_empty_row(7, 'Aucun contact trouvé.', 'contact') }}
                 {% endfor %}
             </tbody>
         </table>
@@ -87,7 +80,7 @@
         <div id="qrModalCode" class="contact-modal-qrcode-container"></div>
         <div class="u-mt-3">
             <button id="qrModalDownload" class="admin-btn admin-btn-primary u-text-sm">
-                ⬇ Télécharger la VCard
+                <i data-lucide="download"></i> Télécharger la VCard
             </button>
         </div>
         <p class="u-mt-2 u-text-center u-text-xs u-text-muted-light">Scannez le QR code pour importer le contact</p>

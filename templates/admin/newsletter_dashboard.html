@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Newsletter - Dashboard{% endblock %}
+{% block title %}Newsletter{% endblock %}
 {% block page_title %}Newsletter{% endblock %}
 
 {% block header_actions %}
@@ -32,7 +32,7 @@
                     </td>
                     <td>
                         <form action="{{ url_for('admin_newsletter.admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
-                            class="u-d-inline" onsubmit="return confirm('Supprimer cet abonné ?');">
+                            class="u-d-inline" data-confirm="Supprimer cet abonné ?">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">
                                 Supprimer

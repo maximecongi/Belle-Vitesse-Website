@@ -1,22 +1,13 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import filter_header, incident_severity_badge, incident_status_badge, incident_impact_badge,
-incident_signature_badge, render_pagination %}
+incident_signature_badge, render_pagination, list_header_actions, table_empty_row %}
 
-{% block title %}Gestion des Incidents de Tournage{% endblock %}
-{% block page_title %}Incidents de Tournage{% endblock %}
+{% block title %}Incidents{% endblock %}
+{% block page_title %}Incidents{% endblock %}
 
 {% block header_actions %}
-<form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}" class="u-m-0">
-    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
-    {% if filters.severity %}<input type="hidden" name="severity" value="{{ filters.severity }}">{% endif %}
-    {% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
-    {% if filters.project_id %}<input type="hidden" name="project_id" value="{{ filters.project_id }}">{% endif %}
-    <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un incident..."
-        value="{{ filters.q or '' }}" autocomplete="off">
-</form>
-<a href="{{ url_for('admin_incidents.admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un
-    Incident</a>
+{{ list_header_actions('Rechercher un incident...', url_for('admin_incidents.admin_incident_new'), '+ Déclarer un incident', hidden={'status': filters.status, 'severity': filters.severity, 'category': filters.category, 'project_id': filters.project_id}) }}
 {% endblock %}
 
 {% block content %}
@@ -58,14 +49,14 @@ incident_signature_badge, render_pagination %}
         <form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}"
             class="u-flex u-align-center u-gap-2 u-flex-wrap" id="incident-filter-form">
             {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
-            <select name="severity" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+            <select name="severity" class="form-input form-input-sm form-input-inline" data-autosubmit>
                 <option value="">Toutes gravités</option>
                 {% for key, label in context.severities %}
                 <option value="{{ key }}" {% if filters.severity==key %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
-            <select name="status" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+            <select name="status" class="form-input form-input-sm form-input-inline" data-autosubmit>
                 <option value="">Tous statuts</option>
                 {% set status_icons = {
                 'signale': '📣',
@@ -81,7 +72,7 @@ incident_signature_badge, render_pagination %}
                 {% endfor %}
             </select>
 
-            <select name="category" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+            <select name="category" class="form-input form-input-sm form-input-inline" data-autosubmit>
                 <option value="">Toutes catégories</option>
                 {% for key, label in context.categories %}
                 <option value="{{ key }}" {% if filters.category==key %}selected{% endif %}>{{ label }}</option>
@@ -155,11 +146,7 @@ incident_signature_badge, render_pagination %}
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="10" class="u-text-center u-p-4 u-text-muted">
-                        Aucun incident enregistré ou correspondant aux critères sélectionnés.
-                    </td>
-                </tr>
+                {{ table_empty_row(8, 'Aucun incident enregistré ou correspondant aux critères sélectionnés.', 'alert-triangle') }}
                 {% endfor %}
             </tbody>
         </table>

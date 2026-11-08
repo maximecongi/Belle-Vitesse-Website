@@ -68,10 +68,12 @@
 /* Status Borders */
 .admin-card.status-yellow {
     border-left: 3px solid var(--status-warning, #F59E0B);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-card.status-green {
     border-left: 3px solid var(--status-success, #15803D);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 @media (max-width: 1000px) {
@@ -145,6 +147,7 @@
     border-bottom: 1px solid #f0f0f0;
     font-size: 0.85rem;
     border-left: 3px solid var(--admin-sidebar-bg);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background-color: var(--admin-bg);
     padding: 1rem;
     margin-bottom: 1rem;

@@ -117,7 +117,7 @@
 
 /* Specific Milestone Colors when Active */
 .pdp-milestone-card.type-departure.active {
-    border-color: #3b82f6;
+    border-color: var(--status-info);
 }
 
 .pdp-milestone-card.type-shoot_start.active,
@@ -148,7 +148,7 @@
 }
 
 .pdp-milestone-card.type-immobilization.is-immobilized.active {
-    border-color: #f59e0b;
+    border-color: var(--entity-project);
     box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
 }
 
@@ -163,7 +163,7 @@
 }
 
 .type-immobilization .pdp-milestone-label {
-    color: #b45309;
+    color: var(--entity-project-text);
 }
 
 .type-immobilization.is-released .pdp-milestone-label {
@@ -181,13 +181,13 @@
 }
 
 .type-immobilization.is-immobilized .pdp-immob-badge {
-    background: #fef3c7;
+    background: var(--entity-project-bg);
     color: #92400e;
     border: 1px solid #fde68a;
 }
 
 .type-immobilization.is-released .pdp-immob-badge {
-    background: #dcfce7;
+    background: var(--status-success-bg);
     color: #166534;
     border: 1px solid #bbf7d0;
 }
@@ -306,11 +306,11 @@
 }
 
 .pdp-mini-btn.btn-clear {
-    color: #ef4444;
+    color: var(--status-danger);
 }
 
 .pdp-mini-btn.btn-clear:hover {
-    background: #fee2e2;
+    background: var(--status-danger-bg);
     border-color: #fca5a5;
 }
 
@@ -377,11 +377,11 @@
 .pdp-preset-btn.btn-highlight {
     background: #fffbeb;
     border-color: #fde68a;
-    color: #b45309;
+    color: var(--entity-project-text);
 }
 
 .pdp-preset-btn.btn-highlight:hover {
-    background: #fef3c7;
+    background: var(--entity-project-bg);
     border-color: #fcd34d;
 }
 
@@ -531,7 +531,7 @@
 }
 
 .pdp-day-cell.departure-day {
-    background: #3b82f6 !important;
+    background: var(--status-info) !important;
     color: #ffffff !important;
     font-weight: 700;
     border-radius: 6px;
@@ -561,7 +561,7 @@
 }
 
 .pdp-dot.dot-dep {
-    background: #3b82f6;
+    background: var(--status-info);
 }
 
 .pdp-dot.dot-shoot {
@@ -584,8 +584,8 @@
 /* Intermediate Immobilisé / immobilized day (Ambre doux hachuré) */
 .pdp-day-cell.intermediate-standby-day {
     background: repeating-linear-gradient(45deg,
-            #fef3c7,
-            #fef3c7 6px,
+            var(--entity-project-bg),
+            var(--entity-project-bg) 6px,
             #fde68a 6px,
             #fde68a 12px) !important;
     color: #92400e !important;
@@ -634,7 +634,7 @@
 }
 
 .pdp-legend-swatch.swatch-dep {
-    background: #3b82f6;
+    background: var(--status-info);
 }
 
 .pdp-legend-swatch.swatch-shoot {
@@ -643,8 +643,8 @@
 
 .pdp-legend-swatch.swatch-standby {
     background: repeating-linear-gradient(45deg,
-            #fef3c7,
-            #fef3c7 3px,
+            var(--entity-project-bg),
+            var(--entity-project-bg) 3px,
             #fde68a 3px,
             #fde68a 6px);
     border: 1px solid #fcd34d;
@@ -710,11 +710,13 @@
     transition: all 0.15s ease;
     flex-wrap: wrap;
     border-left: 4px solid var(--entity-checkout, #15803D);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     gap: 0.6rem;
 }
 
 .pdp-interval-card.is-immob {
     border-left: 4px solid var(--entity-project, #f59e0b);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background: #fffdfa;
 }
 
@@ -736,8 +738,8 @@
 }
 
 .pdp-interval-card.is-immob .pdp-interval-badge {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
 }
 
 .pdp-interval-text {
@@ -783,16 +785,16 @@
 }
 
 .pdp-interval-btn.btn-immob.active {
-    background: #fef3c7;
+    background: var(--entity-project-bg);
     border-color: #fcd34d;
-    color: #b45309;
+    color: var(--entity-project-text);
     font-weight: 700;
     box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
 }
 
 .pdp-interval-btn.btn-immob.active:hover {
     background: #fde68a;
-    border-color: #f59e0b;
+    border-color: var(--entity-project);
 }
 
 .pdp-interval-btn .lucide {

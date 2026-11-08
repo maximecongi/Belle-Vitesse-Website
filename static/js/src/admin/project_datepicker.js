@@ -1091,10 +1091,10 @@
             });
 
             // Bouton Reset Tout
-            this.container.addEventListener('click', (e) => {
+            this.container.addEventListener('click', async (e) => {
                 if (e.target.closest('#pdp-btn-reset')) {
                     e.preventDefault();
-                    if (confirm("Voulez-vous réinitialiser toutes les dates de ce projet ?")) {
+                    if (await window.adminConfirm('Réinitialiser toutes les dates de ce projet ?', { label: 'Réinitialiser' })) {
                         this.dates = {
                             departure: null,
                             shoot_start: null,

@@ -75,11 +75,13 @@
 
 .bvra-risk-card--major {
     border-left: 3pt solid #dc2626;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background-color: rgba(254, 242, 242, 0.5);
 }
 
 .bvra-risk-card--standard {
     border-left: 3pt solid #ffc845;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background-color: rgba(254, 243, 199, 0.35);
 }
 
@@ -200,6 +202,7 @@
 .bvra-road-legal-card {
     border: 1px solid #E2E2E2;
     border-left: 3.5pt solid #dc2626;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     /* background-color: #fdf2f2; */
     padding: 8pt 11pt 9pt 11pt;
     margin-top: 7pt;
@@ -277,6 +280,7 @@
 /* Encart combiné Règles de sécurité & Informations (Bordure gauche jaune BV, 2 rangées) */
 .bvra-notice-card {
     border-left: 3.5pt solid #ffc845;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background-color: #f1f5f9;
     margin-top: 6pt;
     margin-bottom: 8pt;
@@ -337,14 +341,17 @@
 
 .bvra-callout-card--red {
     border-left: 3pt solid #dc2626;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-callout-card--amber {
     border-left: 3pt solid #f59e0b;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-callout-card--blue {
     border-left: 3pt solid var(--status-info);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-callout-card p {

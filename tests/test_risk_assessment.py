@@ -287,7 +287,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
 
         res = self.client.get("/admin/fleet/risk-assessment")
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b"Catalogue Analyse des Risques (BVRA)", res.data)
+        self.assertIn(b"d'analyse (BVRA)", res.data)
         self.assertIn(b"Risques G", res.data)
         self.assertIn(b"/admin/fleet/risk-assessment/edit/general", res.data)
         self.assertIn(b"/admin/fleet/risk-assessment/edit/vehicle/", res.data)
@@ -296,14 +296,14 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_fleet = self.client.get("/admin/fleet")
         if res_fleet.status_code == 200:
             self.assertNotIn(b"Matrice Flotte", res_fleet.data)
-            self.assertIn(b"Analyse des Risques", res_fleet.data)
+            self.assertIn(b"d'analyse (BVRA)", res_fleet.data)
 
     def test_admin_sidebar_contains_bvra_navigation(self):
-        """Vérifie que l'entrée Analyse des Risques (BVRA) est visible dans la barre latérale sous Départs."""
+        """Vérifie que l'entrée Analyses des risques (BVRA) est visible dans la barre latérale sous Documents."""
         self.login_as_admin()
         res = self.client.get("/admin/projects")
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b"Analyse des Risques (BVRA)", res.data)
+        self.assertIn(b"Analyses des risques (BVRA)", res.data)
         self.assertIn(b"/admin/risk-assessments", res.data)
 
     def test_admin_fleet_risk_assessment_save_post(self):
@@ -567,7 +567,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_cat = self.client.get("/admin/fleet/risk-assessment")
         self.assertEqual(res_cat.status_code, 200)
         html_cat = res_cat.data.decode("utf-8")
-        self.assertIn("Catalogue Analyse des Risques (BVRA)", html_cat)
+        self.assertIn("Modèles d'analyse (BVRA)", html_cat)
         self.assertIn("Risques Généraux", html_cat)
         self.assertIn("Risques Spécifiques par Véhicules", html_cat)
         self.assertIn("Rechercher un risque...", html_cat)

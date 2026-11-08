@@ -164,7 +164,7 @@ const SCOPE_CONFIG = {
     'all': { label: 'Tous', prefix: '' },
     'project': { label: 'Projets', prefix: 'p:' },
     'inspection': { label: 'Contrôles', prefix: 'c:' },
-    'waiver': { label: 'Décharges', prefix: 'w:' },
+    'waiver': { label: 'Documents', prefix: 'w:' },
     'vehicle': { label: 'Véhicules', prefix: 'v:' },
     'contact': { label: 'Contacts', prefix: 'ct:' },
     'production': { label: 'Productions', prefix: 'prod:' },

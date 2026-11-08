@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% block title %}Connecteur IA (MCP){% endblock %}
-{% block page_title %}Connecteur IA{% endblock %}
+{% block page_title %}Connecteur IA (MCP){% endblock %}
 
 {% block header_actions %}
 <button type="button" id="openCreateTokenModal" class="admin-btn admin-btn-primary">
@@ -119,7 +119,7 @@
                                 </button>
                             </form>
                             <form action="{{ url_for('admin_mcp_tokens.delete_token', token_id=t.id) }}" method="POST"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cette clé ?');"
+                                data-confirm="Êtes-vous sûr de vouloir supprimer définitivement cette clé ?"
                                 class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
@@ -162,7 +162,7 @@
                 <thead>
                     <tr>
                         <th>Horodatage</th>
-                        <th>Utilisateur</th>
+                        <th>Membre</th>
                         <th>Clé / Agent IA</th>
                         <th>Outil Invoqué</th>
                         <th>Paramètres</th>
@@ -186,7 +186,7 @@
                         </td>
                         <td class="u-text-xs">
                             {% if log.token %}
-                            🔑 <strong>{{ log.token.name }}</strong> <span class="u-text-muted">({{
+                            <i data-lucide="key-round"></i> <strong>{{ log.token.name }}</strong> <span class="u-text-muted">({{
                                 log.token.token_prefix }})</span>
                             {% else %}
                             <span class="u-text-muted">—</span>

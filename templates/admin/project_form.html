@@ -2,18 +2,14 @@
 
 {% from "admin/macros.html" import empty_state, admin_banner %}
 
-{% block title %}
-{% if is_duplicate %}Dupliquer le Projet{% elif is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
-{% endblock %}
+{% block title %}{% if is_duplicate %}Dupliquer le projet{% elif is_edit %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
 {% endblock %}
 
-{% block page_title %}
-{% if is_duplicate %}Dupliquer le Projet{% elif is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
-{% endblock %}
+{% block page_title %}{% if is_duplicate %}Dupliquer le projet{% elif is_edit %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
 
 {% block content %}
 <div class="admin-card">
@@ -41,7 +37,7 @@
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">Production <span class="u-text-error">*</span></label>
                     <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-quick-add">
-                        ➕ Nouvelle production
+                        <i data-lucide="plus"></i> Nouvelle production
                     </button>
                 </div>
                 <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
@@ -60,7 +56,7 @@
                     <label class="form-label u-mb-0">Contact de Production</label>
                     <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
                         data-target="production_contact_id" data-job="Directeur.rice de production">
-                        ➕ Nouveau contact
+                        <i data-lucide="plus"></i> Nouveau contact
                     </button>
                 </div>
                 <select name="production_contact_id" class="form-input searchable-select">
@@ -81,7 +77,7 @@
                     <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
                     <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
                         data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
-                        ➕ Nouveau contact
+                        <i data-lucide="plus"></i> Nouveau contact
                     </button>
                 </div>
                 <select name="dop_contact_id" class="form-input searchable-select">
@@ -100,7 +96,7 @@
                     <label class="form-label u-mb-0">Pilote</label>
                     <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
                         data-target="pilot_contact_id" data-job="Pilote de précision">
-                        ➕ Nouveau contact
+                        <i data-lucide="plus"></i> Nouveau contact
                     </button>
                 </div>
                 <select name="pilot_contact_id" class="form-input searchable-select">
@@ -121,7 +117,7 @@
                     <label class="form-label u-mb-0">1er Assistant Caméra</label>
                     <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
                         data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
-                        ➕ Nouveau contact
+                        <i data-lucide="plus"></i> Nouveau contact
                     </button>
                 </div>
                 <select name="first_ac_contact_id" class="form-input searchable-select">
@@ -140,7 +136,7 @@
                     <label class="form-label u-mb-0">Chef Machiniste</label>
                     <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
                         data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
-                        ➕ Nouveau contact
+                        <i data-lucide="plus"></i> Nouveau contact
                     </button>
                 </div>
                 <select name="key_grip_contact_id" class="form-input searchable-select">
@@ -304,29 +300,18 @@
 
         <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
-                {% if is_edit %}
-                <button type="button" id="deleteProjectBtn" class="admin-btn admin-btn-danger">
-                    Supprimer
-                </button>
-                {% endif %}
+                
             </div>
             <div>
                 <a href="{{ url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else (url_for('admin_projects.admin_project_detail', record_id=source_project_id) if source_project_id else url_for('admin_projects.admin_projects_list')) }}"
                     class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
-                    {% if is_duplicate %}<i data-lucide="copy" class="u-mr-1"></i> Créer le Projet{% elif is_edit
-                    %}Enregistrer{% else %}Créer le Projet{% endif %}
+                    {% if is_duplicate %}<i data-lucide="copy" class="u-mr-1"></i> Créer le projet{% elif is_edit
+                    %}Enregistrer{% else %}Créer le projet{% endif %}
                 </button>
             </div>
         </div>
     </form>
-    {% if is_edit %}
-    <form id="deleteProjectForm" method="POST"
-        action="{{ url_for('admin_projects.admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
-        class="u-d-none">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    </form>
-    {% endif %}
 </div>
 
 <!-- Modal Nouvelle Production -->
@@ -377,7 +362,7 @@
         <button type="button" class="admin-modal-close" id="closeContactModalBtn" title="Fermer">&times;</button>
         <div class="admin-modal-content u-p-4 u-overflow-y-auto">
             <h2 class="admin-section-title u-mt-0 u-mb-3 u-text-lg">
-                👤 Nouveau Contact
+                <i data-lucide="user-plus"></i> Nouveau contact
             </h2>
             <form id="quickContactForm">
 

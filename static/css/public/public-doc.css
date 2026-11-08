@@ -266,6 +266,7 @@ a.public-doc-vehicle-card:hover {
     background-color: var(--white-2, #F8F9FA);
     padding: 1.75rem;
     border-left: 4px solid var(--yellow-1);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     font-size: 0.925rem;
     line-height: 1.65;
     color: var(--grey-1, #111827);
@@ -1024,13 +1025,14 @@ a.public-doc-vehicle-card:hover {
     background: var(--white-1, #FFFFFF);
     border: 1px solid var(--border-color, #E2E8F0);
     border-left: 4px solid #FFC845;
-    border-radius: 6px;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding: 0.85rem 1rem;
     margin-bottom: 0.75rem;
 }
 
 .bvra-reader-risk--major {
     border-left-color: #DC2626;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-reader-risk-header {

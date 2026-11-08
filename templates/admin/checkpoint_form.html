@@ -1,9 +1,9 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}{% if is_new %}Nouveau Point de Contrôle{% else %}Modifier « {{ checkpoint.label }} »{% endif %} —
-Belle Vitesse{% endblock %}
-{% block page_title %}{% if is_new %}Nouveau Point de Contrôle{% else %}Modifier le Point de Contrôle{% endif %}{%
-endblock %}
+{% from "admin/macros.html" import danger_zone %}
+
+{% block title %}{% if is_new %}Nouveau point de contrôle{% else %}Modifier « {{ checkpoint.label }} »{% endif %}{% endblock %}
+{% block page_title %}{% if is_new %}Nouveau point de contrôle{% else %}Modifier le point de contrôle{% endif %}{% endblock %}
 
 {% block header_actions %}
 <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
@@ -147,12 +147,7 @@ endblock %}
         <!-- ═══════════ ACTIONS ═══════════ -->
         <div class="u-flex u-justify-between u-align-center u-mt-4 u-pt-3 u-border-top">
             <div>
-                {% if not is_new %}
-                <button type="submit" form="deleteCheckpointForm" class="admin-btn admin-btn-danger"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ checkpoint.label }} » ? Cette action est irréversible.');">
-                    Supprimer ce point
-                </button>
-                {% endif %}
+                
             </div>
             <div class="u-flex u-align-center u-gap-2">
                 <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}"
@@ -165,11 +160,7 @@ endblock %}
     </form>
 
     {% if not is_new %}
-    <form id="deleteCheckpointForm" method="POST"
-        action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}"
-        class="u-d-none">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    </form>
+    {{ danger_zone(url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=checkpoint.id), 'Supprimer définitivement le point de contrôle « ' ~ checkpoint.label ~ ' » ? Cette action est irréversible.', 'Supprimer ce point de contrôle') }}
     {% endif %}
 </div>
 {% endblock %}

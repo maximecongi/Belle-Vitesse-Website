@@ -124,6 +124,7 @@
     background-color: var(--entity-checkout-bg) !important;
     border: 1px solid var(--entity-checkout-border) !important;
     border-left: 3.5px solid var(--entity-checkout) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkout-text) !important;
 }
 
@@ -138,6 +139,7 @@
     background-color: var(--entity-project-bg) !important;
     border: 1px solid var(--entity-project-border) !important;
     border-left: 3.5px solid var(--entity-project) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-project-text) !important;
 }
 
@@ -152,6 +154,7 @@
     background-color: var(--entity-checkin-bg) !important;
     border: 1px solid var(--entity-checkin-border) !important;
     border-left: 3.5px solid var(--entity-checkin) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkin-text) !important;
 }
 
@@ -272,6 +275,7 @@
     background-color: var(--entity-checkout-bg) !important;
     border: 1px solid var(--entity-checkout-border) !important;
     border-left: 3.5px solid var(--entity-checkout) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkout-text) !important;
     flex: 0 0 auto;
 }
@@ -298,6 +302,7 @@
     background-color: var(--entity-project-bg) !important;
     border: 1px solid var(--entity-project-border) !important;
     border-left: 3.5px solid var(--entity-project) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-project-text) !important;
     flex: 1 1 auto;
     min-width: 0;
@@ -362,6 +367,7 @@
     background-color: var(--entity-checkin-bg) !important;
     border: 1px solid var(--entity-checkin-border) !important;
     border-left: 3.5px solid var(--entity-checkin) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkin-text) !important;
     flex: 0 0 auto;
     margin-left: auto;
@@ -411,12 +417,13 @@
 
 .fc-phase-badge--interval-immob {
     background: repeating-linear-gradient(45deg,
-            #fef3c7,
-            #fef3c7 6px,
+            var(--entity-project-bg),
+            var(--entity-project-bg) 6px,
             #fde68a 6px,
             #fde68a 12px) !important;
     border: 1px solid #fcd34d !important;
     border-left: 3px solid var(--entity-project, #f59e0b) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: #92400e !important;
 }
 

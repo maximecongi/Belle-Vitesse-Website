@@ -81,7 +81,7 @@
                             value="{{ request.full_path if request.query_string else request.path }}">
                         <div class="admin-dev-role-wrapper">
                             <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select"
-                                data-val="{{ current_user.role }}" onchange="this.form.submit()">
+                                data-val="{{ current_user.role }}" data-autosubmit>
                                 {% for r in ['Super Administrateur', 'Administrateur', 'Manager', 'Commercial',
                                 'Technicien'] %}
                                 <option value="{{ r }}" {% if current_user.role_lower==r.lower() %}selected{% endif %}>
@@ -101,12 +101,13 @@
             </div>
 
             <nav class="admin-nav">
-                {% macro nav_group(title, id_suffix, section, default_open=false) %}
-                {% if has_section(section) %}
+                {# Un groupe n'est affiché que si au moins une de ses entrées est visible pour le rôle courant. #}
+                {% macro nav_group(title, id_suffix, icon, items, default_open=false) %}
+                {% if has_any_item(*items) %}
                 <div class="admin-nav-group {% if default_open %}default-open{% endif %}"
                     data-nav-group="{{ id_suffix }}">
                     <div class="admin-nav-group-trigger">
-                        <span>{{ title }}</span>
+                        <span class="admin-nav-label"><i data-lucide="{{ icon }}" class="admin-nav-icon"></i>{{ title }}</span>
                         <span class="arrow">▼</span>
                     </div>
                     <div class="admin-nav-group-items">
@@ -116,67 +117,62 @@
                 {% endif %}
                 {% endmacro %}
 
-                {% macro nav_item(href, title, item_key, target=none) %}
+                {% macro nav_item(href, title, item_key, target=none, icon=none) %}
                 {% if has_item(item_key) %}
                 <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
-                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming"><i
-                            data-lucide="sparkles"></i> Bientôt</span>{% endif
-                    %}
+                    {% if icon %}<span class="admin-nav-label"><i data-lucide="{{ icon }}" class="admin-nav-icon"></i>{{ title }}</span>{% else %}{{ title }}{% endif %}
+                    {% if target == '_blank' %}<i data-lucide="external-link" class="admin-nav-external"></i>{% endif %}
                 </a>
                 {% endif %}
                 {% endmacro %}
 
-                {{ nav_item(url_for('admin_dashboard.admin_dashboard'), '🗓️ Tableau de bord', 'dashboard') }}
+                {{ nav_item(url_for('admin_dashboard.admin_dashboard'), 'Tableau de bord', 'dashboard', icon='layout-dashboard') }}
 
-                {% call nav_group('🎬 Tournages', 'tournages', 'tournages', false) %}
+                {% call nav_group('Projets', 'projets', 'clapperboard', ['projects', 'archives', 'booking', 'productions', 'contacts']) %}
                 {{ nav_item(url_for('admin_projects.admin_projects_list'), 'Projets', 'projects') }}
                 {{ nav_item(url_for('admin_projects.admin_projects_archives'), 'Archives', 'archives') }}
-                {{ nav_item(url_for('admin_booking.admin_booking'), 'Calendrier Matériel', 'booking') }}
+                {{ nav_item(url_for('admin_booking.admin_booking'), 'Calendrier matériel', 'booking') }}
                 {{ nav_item(url_for('admin_productions.admin_productions_list'), 'Productions', 'productions') }}
                 {{ nav_item(url_for('admin_contacts.admin_contacts_list'), 'Contacts', 'contacts') }}
                 {% endcall %}
 
-                {% call nav_group('🚚 Départs', 'departs', 'departs', false) %}
-                {{ nav_item(url_for('admin_checkouts.admin_checkouts_list'), 'Checkouts', 'checkouts') }}
-                {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Conditions Générales (CGL)', 'cgl') }}
-                {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles de Sécurité', 'safety_rules') }}
-                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations Pilotes', 'pilot_waivers') }}
-                {{ nav_item(url_for('admin_waivers.admin_risk_assessment_list'), 'Analyse des Risques (BVRA)', 'risk_assessments') }}
+                {% call nav_group('Logistique', 'logistique', 'truck', ['checkouts', 'checkins', 'incidents']) %}
+                {{ nav_item(url_for('admin_checkouts.admin_checkouts_list'), 'Départs', 'checkouts') }}
+                {{ nav_item(url_for('admin_checkins.admin_checkins_list'), 'Retours', 'checkins') }}
+                {{ nav_item(url_for('admin_incidents.admin_incidents_list'), 'Incidents', 'incidents') }}
                 {% endcall %}
 
-                {% call nav_group('📦 Retours', 'retours', 'retours', false) %}
-                {{ nav_item(url_for('admin_checkins.admin_checkins_list'), 'Checkins', 'checkins') }}
-                {{ nav_item(url_for('admin_incidents.admin_incidents_list'), 'Gestion des incidents', 'incidents') }}
+                {% call nav_group('Documents', 'documents', 'file-signature', ['cgl', 'safety_rules', 'pilot_waivers', 'risk_assessments']) %}
+                {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Conditions générales (CGL)', 'cgl') }}
+                {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles de sécurité (BVSR)', 'safety_rules') }}
+                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations pilotes', 'pilot_waivers') }}
+                {{ nav_item(url_for('admin_waivers.admin_risk_assessment_list'), 'Analyses des risques (BVRA)', 'risk_assessments') }}
                 {% endcall %}
 
-                {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
-                {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Flotte Véhicules', 'fleet') }}
-                {{ nav_item(url_for('admin_checkpoints.admin_checkpoints_list'), 'Points de Contrôle', 'checkpoints') }}
+                {% call nav_group('Flotte', 'flotte', 'car', ['fleet', 'safety_rules_config', 'risk_assessment_config', 'checkpoints']) %}
+                {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Véhicules', 'fleet') }}
+                {{ nav_item(url_for('admin_fleet.admin_safety_rules_config'), 'Modèles de règles (BVSR)', 'safety_rules_config') }}
+                {{ nav_item(url_for('admin_fleet.admin_risk_assessment_config'), "Modèles d'analyse (BVRA)", 'risk_assessment_config') }}
+                {{ nav_item(url_for('admin_checkpoints.admin_checkpoints_list'), 'Points de contrôle', 'checkpoints') }}
                 {% endcall %}
 
-                {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}
+                {% call nav_group('Administration', 'administration', 'settings', ['users', 'pricing', 'catalog_pdf', 'catalog_update', 'calendar', 'newsletter', 'mcp_connector', 'settings']) %}
                 {{ nav_item(url_for('admin_users.admin_users_list'), 'Équipe', 'users') }}
                 {{ nav_item(url_for('admin_pricing.admin_pricing'), 'Tarification', 'pricing') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)',
-                'catalog_pdf') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)',
-                'catalog_pdf') }}
-                {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), 'Connecteur IA (MCP)', 'mcp_connector') }}
-                {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
-                {{ nav_item(url_for('admin_calendar.admin_calendar'), 'Calendrier', 'calendar') }}
+                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='1'), 'Catalogue avec prix', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='0'), 'Catalogue sans prix', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog.admin_catalog_preview'), 'Mise à jour du catalogue', 'catalog_update', target='_blank') }}
+                {{ nav_item(url_for('admin_calendar.admin_calendar'), 'Abonnements calendrier (ICS)', 'calendar') }}
                 {{ nav_item(url_for('admin_newsletter.admin_newsletter_dashboard'), 'Newsletter', 'newsletter') }}
+                {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), 'Connecteur IA (MCP)', 'mcp_connector') }}
+                {{ nav_item(url_for('admin_settings.admin_settings_edit'), 'Paramètres', 'settings') }}
                 {% endcall %}
 
-
-                {% call nav_group('🛠️ Outils', 'tools', 'tools', false) %}
-                {{ nav_item(url_for('admin_tools.admin_meeting_report'), 'Compte-rendu de réunion', 'file-text') }}
-                {{ nav_item(url_for('admin_tools.admin_signature_generator'), 'Générateur de signature mail',
-                'signature') }}
+                {% call nav_group('Outils', 'outils', 'hammer', ['meeting_report', 'signature', 'docs', 'api_docs']) %}
+                {{ nav_item(url_for('admin_tools.admin_meeting_report'), 'Compte-rendu de réunion', 'meeting_report') }}
+                {{ nav_item(url_for('admin_tools.admin_signature_generator'), 'Signature e-mail', 'signature') }}
                 {{ nav_item(url_for('admin_tools.admin_docs_index'), 'Documentation technique', 'docs') }}
                 {{ nav_item(url_for('admin_tools.admin_api_docs'), 'Documentation API', 'api_docs') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_preview'), 'Mise à jour du catalogue',
-                'catalog_update',
-                target='_blank') }}
                 {% endcall %}
             </nav>
 
@@ -225,6 +221,16 @@
         {% endwith %}
     </div>
 
+    <!-- Modale de confirmation commune (formulaires / boutons portant data-confirm) -->
+    {% from "admin/macros.html" import admin_modal %}
+    {% call admin_modal('confirmModal', 'Confirmer l\'action', 'sm') %}
+    <p class="admin-confirm-message" data-confirm-message></p>
+    <div class="admin-confirm-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" data-modal-close="confirmModal">Annuler</button>
+        <button type="button" class="admin-btn admin-btn-danger" data-confirm-accept>Supprimer</button>
+    </div>
+    {% endcall %}
+
     <!-- Modal protocoles freins et pneus -->
     <div class="admin-modal-overlay" id="vehiclesModal">
         <div class="admin-modal-container">
@@ -248,7 +254,7 @@
                 <div class="admin-cmdk-input-wrapper" id="cmdkInputWrapper">
                     <div class="admin-cmdk-badges-container" id="cmdkBadgesContainer"></div>
                     <input type="text" class="admin-cmdk-input" id="cmdkInput"
-                        placeholder="Rechercher un projet, contrôle, décharge, véhicule, contact... (ex: p:, c:, w:)"
+                        placeholder="Rechercher un projet, contrôle, document, véhicule, contact... (ex: p:, c:, w:)"
                         autocomplete="off" spellcheck="false">
                 </div>
                 <span class="admin-cmdk-close-hint" id="cmdkCloseBtn">ESC</span>
@@ -270,7 +276,7 @@
                 </button>
                 <button type="button" class="admin-cmdk-scope-chip" data-scope="waiver" data-prefix="w:">
                     <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--waiver"></span>
-                    <span>Décharges</span>
+                    <span>Documents</span>
                     <kbd class="admin-cmdk-chip-kbd">w:</kbd>
                 </button>
                 <button type="button" class="admin-cmdk-scope-chip" data-scope="vehicle" data-prefix="v:">

@@ -1,22 +1,25 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header, vehicle_status_badge, vehicle_avatar %}
+{% from "admin/macros.html" import filter_header, vehicle_status_badge, vehicle_avatar, list_header_actions %}
 
-{% block title %}Flotte & Parc Véhicules — Belle Vitesse{% endblock %}
-{% block page_title %}Flotte Véhicules{% endblock %}
+{% block title %}Véhicules{% endblock %}
+{% block page_title %}Véhicules{% endblock %}
 
 {% block header_actions %}
-<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un véhicule..."
-    autocomplete="off">
-{% if current_user and current_user.is_admin %}
+{{ list_header_actions('Rechercher un véhicule...', mode='client') }}
+{% if can('fleet_checkpoints_config') %}
 <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
-    <i class="admin-header__icon" data-lucide="list-checks"></i> Points de Contrôle
+    <i class="admin-header__icon" data-lucide="list-checks"></i> Points de contrôle
 </a>
+{% endif %}
+{% if can('fleet_risk_assessment_config') %}
 <a href="{{ url_for('admin_fleet.admin_risk_assessment_config') }}" class="admin-btn admin-btn-secondary">
-    <i class="admin-header__icon" data-lucide="file-warning"></i> Analyse des Risques
+    <i class="admin-header__icon" data-lucide="file-warning"></i> Modèles d'analyse (BVRA)
 </a>
+{% endif %}
+{% if can('fleet_safety_rules_config') %}
 <a href="{{ url_for('admin_fleet.admin_safety_rules_config') }}" class="admin-btn admin-btn-secondary">
-    <i class="admin-header__icon" data-lucide="shield-alert"></i> Règles de Sécurité
+    <i class="admin-header__icon" data-lucide="shield-alert"></i> Modèles de règles (BVSR)
 </a>
 {% endif %}
 {% endblock %}
@@ -107,7 +110,7 @@
                 <!-- Alerte Tournage en cours -->
                 {% if v.active_project %}
                 <div class="u-mt-2 u-p-2 u-text-xs fleet-project-alert">
-                    <span class="u-font-semibold">🎬 Tournage :</span> {{ v.active_project.name }}
+                    <span class="u-font-semibold"><i data-lucide="clapperboard"></i> Projet :</span> {{ v.active_project.name }}
                     <span class="u-text-muted">({{ v.active_project.production }})</span>
                 </div>
                 {% endif %}

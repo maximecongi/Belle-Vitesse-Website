@@ -1,17 +1,12 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, table_empty_row %}
+{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, table_empty_row, list_header_actions %}
 
-{% block title %}Attestations Pilotes{% endblock %}
-{% block page_title %}Attestations Pilotes{% endblock %}
+{% block title %}Attestations pilotes{% endblock %}
+{% block page_title %}Attestations pilotes{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <form method="GET" action="" class="u-m-0">
-        <input type="text" name="q" id="searchInput" class="form-input u-w-250"
-            placeholder="Rechercher un signataire..." value="{{ request.args.get('q', '') }}" autocomplete="off">
-    </form>
-</div>
+{{ list_header_actions('Rechercher un pilote, un projet...', from_project_url=url_for('admin_projects.admin_projects_list') if has_item('projects') else None) }}
 {% endblock %}
 
 {% block content %}
@@ -101,7 +96,7 @@
                             <form
                                 action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette attestation pilote ?');">
+                                data-confirm="Êtes-vous sûr de vouloir supprimer cette attestation pilote ?">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
                             </form>

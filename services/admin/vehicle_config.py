@@ -5,6 +5,7 @@ from models import VehicleCheckpointConfig, CheckpointDefinition, db
 from sqlalchemy import case
 from sqlalchemy.orm.attributes import flag_modified
 from utils.database import get_vehicles
+from utils.image_utils import extract_vehicle_image
 from services.admin.utils import handle_admin_service_error
 from services.admin.checkpoint_measurements import normalize_measurement_rules, format_rule_decimal
 
@@ -939,13 +940,38 @@ def get_vehicles_with_config():
         if not current_config:
             current_config = {cp.key: False for cp in all_cps}
 
+        fields = v.get("fields") or {}
         results.append({
             "id": record_id,
             "name": name,
+            "unique_id": fields.get("unique_id") or "",
+            "image_url": extract_vehicle_image(fields),
             "config": current_config
         })
 
     return results
+
+
+def _apply_vehicle_checkpoint_config(vehicle_id, enabled_keys, all_cps):
+    """Applique (sans commit) la configuration d'un véhicule : table de config + overrides des définitions."""
+    enabled = set(enabled_keys or [])
+    full_config = {cp.key: (cp.key in enabled) for cp in all_cps}
+
+    config_record = VehicleCheckpointConfig.query.filter_by(vehicle_id=vehicle_id).first()
+    if config_record:
+        config_record.config = full_config
+        flag_modified(config_record, "config")
+    else:
+        db.session.add(VehicleCheckpointConfig(vehicle_id=vehicle_id, config=full_config))
+
+    # Répercuter sur CheckpointDefinition.vehicle_overrides (les consignes spécifiques sont conservées)
+    for cp in all_cps:
+        ov = dict(cp.vehicle_overrides or {})
+        v_data = dict(ov.get(vehicle_id, {}))
+        v_data["enabled"] = cp.key in enabled
+        ov[vehicle_id] = v_data
+        cp.vehicle_overrides = ov
+        flag_modified(cp, "vehicle_overrides")
 
 
 @handle_admin_service_error
@@ -953,30 +979,24 @@ def save_vehicle_checkpoint_config(vehicle_id, enabled_keys):
     """Enregistre les points de contrôle activés pour un véhicule spécifique depuis la vue matrice."""
     ensure_default_checkpoints()
     all_cps = CheckpointDefinition.query.all()
-    full_config = {cp.key: (cp.key in enabled_keys) for cp in all_cps}
-
-    config_record = VehicleCheckpointConfig.query.filter_by(vehicle_id=vehicle_id).first()
-    if config_record:
-        config_record.config = full_config
-    else:
-        config_record = VehicleCheckpointConfig(
-            vehicle_id=vehicle_id,
-            config=full_config
-        )
-        db.session.add(config_record)
-
-    # Répercuter sur CheckpointDefinition.vehicle_overrides
-    for cp in all_cps:
-        ov = dict(cp.vehicle_overrides or {})
-        v_data = dict(ov.get(vehicle_id, {}))
-        v_data["enabled"] = bool(cp.key in enabled_keys)
-        ov[vehicle_id] = v_data
-        cp.vehicle_overrides = ov
-        flag_modified(cp, "vehicle_overrides")
-
-    if config_record:
-        flag_modified(config_record, "config")
-
+    _apply_vehicle_checkpoint_config(vehicle_id, enabled_keys, all_cps)
     db.session.commit()
     _invalidate_checkpoints_cache()
     return True
+
+
+@handle_admin_service_error
+def save_vehicle_checkpoint_configs(configs):
+    """
+    Enregistre en une seule transaction la configuration de plusieurs véhicules (vue matrice).
+
+    :param configs: dict {vehicle_id: [clés de points de contrôle activées]}
+    :return: nombre de véhicules mis à jour
+    """
+    ensure_default_checkpoints()
+    all_cps = CheckpointDefinition.query.all()
+    for vehicle_id, enabled_keys in configs.items():
+        _apply_vehicle_checkpoint_config(vehicle_id, enabled_keys, all_cps)
+    db.session.commit()
+    _invalidate_checkpoints_cache()
+    return len(configs)

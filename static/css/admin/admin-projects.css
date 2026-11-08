@@ -79,7 +79,7 @@
 }
 
 .projects-prequote-badge.draft {
-    background: #fef3c7;
+    background: var(--entity-project-bg);
     color: #d97706;
     border: 1px solid #fde68a;
 }
@@ -134,6 +134,7 @@
     color: #777;
     font-style: italic;
     border-left: 2px solid #e5e7eb;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding-left: 0.5rem;
     max-width: 250px;
     line-height: 1.3;
@@ -275,7 +276,7 @@
 }
 
 .project-date-step.is-active .project-date-step-lbl {
-    color: #b45309;
+    color: var(--entity-project-text);
 }
 
 .project-date-step.is-active .project-date-step-val {
@@ -562,6 +563,7 @@
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 3.5px solid #cbd5e1;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding: 0.95rem 1.15rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
@@ -570,6 +572,7 @@
 .project-report-item:hover .project-report-card {
     border-color: #cbd5e1;
     border-left-color: var(--admin-accent, #FFC845);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
@@ -686,7 +689,7 @@
     padding: 0.45rem 0.8rem;
     background: #f8fafc;
     border-left: 3px solid var(--admin-accent, #ffc845);
-    border-radius: 0 5px 5px 0;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: #475569;
     font-size: 0.80rem;
     font-style: italic;
@@ -1089,7 +1092,7 @@
     padding: 0.5rem 0.85rem;
     background: #f8fafc;
     border-left: 3px solid var(--admin-accent, #ffc845);
-    border-radius: 0 6px 6px 0;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: #475569;
 }
 
@@ -1175,8 +1178,8 @@
 }
 
 .project-report-delete-btn:hover {
-    color: #ef4444;
-    background-color: #fee2e2;
+    color: var(--status-danger);
+    background-color: var(--status-danger-bg);
 }
 
 .project-report-edited-badge {
@@ -1393,7 +1396,7 @@
 
 .project-road-legal-badge.is-closed-road:hover {
     background: #fecaca;
-    border-color: #ef4444;
+    border-color: var(--status-danger);
 }
 
 .project-road-legal-badge.is-road-legal {
@@ -1404,7 +1407,7 @@
 
 .project-road-legal-badge.is-road-legal:hover {
     background: #bbf7d0;
-    border-color: #15803d;
+    border-color: var(--status-success);
 }
 
 .project-road-legal-badge.is-loading {
@@ -1582,7 +1585,7 @@
 }
 
 .project-reports-list-badge.has-reports:hover {
-    background: #dbeafe;
+    background: var(--status-info-bg);
     transform: translateY(-1px);
 }
 
@@ -1600,10 +1603,12 @@
 /* ── Hub Projet & États de tournage ── */
 .project-hub-header {
     border-left: 5px solid var(--status-info, #5299D3);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="in_progress"] {
     border-left-color: var(--entity-project, #F59E0B) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="standby"],
@@ -1611,14 +1616,17 @@
 .project-hub-header[data-status="immobilise"],
 .project-hub-header[data-status="immobilisé"] {
     border-left-color: var(--status-warning, #F59E0B) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="completed"] {
     border-left-color: var(--status-neutral, #515151) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="upcoming"] {
     border-left-color: var(--status-info, #5299D3) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-id {}
@@ -1629,7 +1637,7 @@
 
 .project-doc-item--error {
     border-left: 3px solid var(--red-error, #b91c1c) !important;
-    border-radius: 0 !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-doc-item--error .project-doc-item {
@@ -1905,7 +1913,7 @@
 }
 
 .project-location-delete-btn:hover {
-    background-color: #fee2e2;
+    background-color: var(--status-danger-bg);
 }
 
 .project-location-delete-btn svg {

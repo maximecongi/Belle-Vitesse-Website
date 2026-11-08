@@ -1,11 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════════════
    BELLE VITESSE — BVSR : RÈGLES DE SÉCURITÉ FLOTTE (CATALOGUE & ÉDITEUR DYNAMIQUE)
-   Design System Belle Vitesse : Entité Sécurité / Décharges (--entity-waiver: #8B5CF6)
+   Design System Belle Vitesse : Entité Sécurité / Décharges (--entity-waiver: var(--entity-waiver))
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── Cartes du catalogue ── */
 .bvsr-catalog-card {
     border-left: 4px solid var(--entity-waiver, #8B5CF6) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -210,8 +211,8 @@
     padding: 2px 6px;
     border-radius: 4px;
     pointer-events: none;
-    background: #EDE9FE;
-    color: #5B21B6;
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
 }
 
 .bvsr-lang-pill--en {
@@ -268,7 +269,7 @@
 }
 
 .bvsr-action-btn--delete:hover {
-    background: #FEE2E2;
+    background: var(--status-danger-bg);
     color: #DC2626;
     border-color: #FECACA;
 }
@@ -326,7 +327,7 @@
     font-style: normal;
     font-size: 0.72rem;
     font-weight: 600;
-    color: #B45309;
+    color: var(--status-warning-text);
 }
 
 .bvsr-missing-badge {
@@ -356,7 +357,7 @@
 }
 
 .bvsr-rule-input.is-missing {
-    border-color: #F59E0B !important;
+    border-color: var(--status-warning) !important;
     background: #FFFBEB !important;
 }
 
@@ -365,8 +366,8 @@
 .bvsr-var-value {
     padding: 0 3px;
     border-radius: 3px;
-    background: #EDE9FE;
-    color: #5B21B6;
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
     font-style: normal;
     font-weight: 500;
     box-decoration-break: clone;
@@ -728,6 +729,7 @@
     background: var(--bvra-row-bg);
     border: 0;
     border-left: 4px solid var(--bvra-std);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     cursor: pointer;
     transition: background .12s ease;
 }
@@ -735,6 +737,7 @@
 .bvra-row--major,
 .bvra-side-it--major {
     border-left-color: var(--bvra-major);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-row:hover,

@@ -65,175 +65,147 @@ DEFAULT_SETTINGS = {
     "delivery_high_rate": "0.5",
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# MATRICE DES PERMISSIONS D'INTERFACE (source unique de vérité)
+# ─────────────────────────────────────────────────────────────────────────────
+# - "nav"      : entrées de menu visibles (clés utilisées par `has_item()`).
+# - "sections" : conservé pour compatibilité ; la sidebar dérive désormais
+#                l'affichage d'un groupe de la visibilité de ses entrées.
+# - ACTION_PERMISSIONS : actions ponctuelles (boutons) testées via `can()`.
+# Ces listes DOIVENT refléter les décorateurs `@require_roles` des routes.
+
+_NAV_TECHNICIEN = {
+    "dashboard",
+    "checkouts",
+    "checkins",
+    "incidents",
+    "fleet",
+    "signature",
+    "meeting_report",
+}
+
+_NAV_COMMERCIAL = {
+    "dashboard",
+    "projects",
+    "archives",
+    "booking",
+    "productions",
+    "contacts",
+    "cgl",
+    "safety_rules",
+    "pilot_waivers",
+    "risk_assessments",
+    "fleet",
+    "pricing",
+    "catalog_pdf",
+    "mcp_connector",
+    "calendar",
+    "signature",
+    "meeting_report",
+}
+
+_NAV_MANAGER = _NAV_COMMERCIAL | {
+    "checkouts",
+    "checkins",
+    "incidents",
+    "safety_rules_config",
+    "risk_assessment_config",
+    "users",
+    "newsletter",
+    "catalog_update",
+}
+
+_NAV_ADMINISTRATEUR = _NAV_MANAGER | {
+    "vehicles",
+    "checkpoints",
+    "settings",
+    "docs",
+    "api_docs",
+}
+
+_SECTIONS_FULL = {
+    "dashboard",
+    "tournages",
+    "departs",
+    "retours",
+    "documents",
+    "flotte",
+    "admin",
+    "tools",
+}
+
 ROLE_PERMISSIONS = {
     "technicien": {
         "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
-        "nav": {
-            "dashboard",
-            "checkouts",
-            "checkins",
-            "incidents",
-            "fleet",
-            "signature",
-        },
+        "nav": _NAV_TECHNICIEN,
     },
     "user": {
         "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
-        "nav": {
-            "dashboard",
-            "checkouts",
-            "checkins",
-            "incidents",
-            "fleet",
-            "signature",
-        },
+        "nav": _NAV_TECHNICIEN,
     },
     "commercial": {
-        "sections": {"dashboard", "tournages", "departs", "flotte", "admin", "tools"},
-        "nav": {
-            "dashboard",
-            "projects",
-            "archives",
-            "booking",
-            "productions",
-            "contacts",
-            "cgl",
-            "safety_rules",
-            "pilot_waivers",
-            "risk_assessments",
-            "fleet",
-            "risk_assessment_config",
-            "pricing",
-            "catalog_pdf",
-            "mcp_connector",
-            "calendar",
-            "signature",
-        },
-    },
-    "manager": {
         "sections": {
             "dashboard",
             "tournages",
             "departs",
-            "retours",
+            "documents",
             "flotte",
             "admin",
             "tools",
         },
-        "nav": {
-            "dashboard",
-            "projects",
-            "archives",
-            "booking",
-            "productions",
-            "contacts",
-            "checkouts",
-            "cgl",
-            "safety_rules",
-            "pilot_waivers",
-            "risk_assessments",
-            "checkins",
-            "incidents",
-            "fleet",
-            "safety_rules_config",
-            "risk_assessment_config",
-            "users",
-            "pricing",
-            "catalog_pdf",
-            "mcp_connector",
-            "calendar",
-            "newsletter",
-            "signature",
-            "catalog_update",
-        },
+        "nav": _NAV_COMMERCIAL,
     },
-    "administrateur": {
-        "sections": {
-            "dashboard",
-            "tournages",
-            "departs",
-            "retours",
-            "flotte",
-            "admin",
-            "tools",
-        },
-        "nav": {
-            "dashboard",
-            "projects",
-            "archives",
-            "booking",
-            "productions",
-            "contacts",
-            "checkouts",
-            "cgl",
-            "safety_rules",
-            "pilot_waivers",
-            "risk_assessments",
-            "checkins",
-            "incidents",
-            "fleet",
-            "vehicles",
-            "checkpoints",
-            "safety_rules_config",
-            "risk_assessment_config",
-            "users",
-            "pricing",
-            "catalog_pdf",
-            "mcp_connector",
-            "settings",
-            "calendar",
-            "newsletter",
-            "signature",
-            "docs",
-            "api_docs",
-            "catalog_update",
-        },
-    },
-    "administrator": {
-        "sections": {
-            "dashboard",
-            "tournages",
-            "departs",
-            "retours",
-            "flotte",
-            "admin",
-            "tools",
-        },
-        "nav": {
-            "dashboard",
-            "projects",
-            "archives",
-            "booking",
-            "productions",
-            "contacts",
-            "checkouts",
-            "cgl",
-            "safety_rules",
-            "pilot_waivers",
-            "risk_assessments",
-            "checkins",
-            "incidents",
-            "fleet",
-            "vehicles",
-            "checkpoints",
-            "safety_rules_config",
-            "risk_assessment_config",
-            "users",
-            "pricing",
-            "catalog_pdf",
-            "mcp_connector",
-            "settings",
-            "calendar",
-            "newsletter",
-            "signature",
-            "docs",
-            "api_docs",
-            "catalog_update",
-        },
-    },
+    "manager": {"sections": _SECTIONS_FULL, "nav": _NAV_MANAGER},
+    "administrateur": {"sections": _SECTIONS_FULL, "nav": _NAV_ADMINISTRATEUR},
+    "administrator": {"sections": _SECTIONS_FULL, "nav": _NAV_ADMINISTRATEUR},
     "super administrateur": {"sections": {"all"}, "nav": {"all"}},
     "super administrator": {"sections": {"all"}, "nav": {"all"}},
 }
+
+# Actions ponctuelles (boutons, champs éditables) → rôles autorisés.
+# Le super administrateur a toujours accès à tout.
+_ROLES_SALES = {"commercial", "manager", "administrateur"}
+_ROLES_MANAGEMENT = {"manager", "administrateur"}
+_ROLES_ADMIN = {"administrateur"}
+
+ACTION_PERMISSIONS = {
+    # Projets
+    "project_edit": _ROLES_SALES,
+    "project_duplicate": _ROLES_SALES,
+    "project_delete": _ROLES_SALES,
+    "project_kdrive_resync": _ROLES_MANAGEMENT,
+    # Flotte (configuration)
+    "fleet_safety_rules_config": _ROLES_MANAGEMENT,
+    "fleet_risk_assessment_config": _ROLES_MANAGEMENT,
+    "fleet_checkpoints_config": _ROLES_ADMIN,
+    # Tarification
+    "pricing_edit": _ROLES_ADMIN,
+    # Contrôles : choix libre du responsable du contrôle
+    "inspection_assign_controller": _ROLES_ADMIN,
+}
+
+
+def role_can(user_role: str, action: str, is_admin: bool = False) -> bool:
+    """Indique si un rôle (normalisé) peut réaliser une action d'interface."""
+    role = normalize_role(user_role)
+    if role == "super administrateur":
+        return True
+    if is_admin and role in ("administrateur", "administrator"):
+        role = "administrateur"
+    return role in ACTION_PERMISSIONS.get(action, set())
+
+
+def _permission_helpers(user_role: str, perms: dict, is_admin: bool = False) -> dict:
+    """Construit les helpers de permissions injectés dans les templates."""
+    return {
+        "user_role": user_role,
+        "user_perms": perms,
+        "has_section": lambda s: "all" in perms["sections"] or s in perms["sections"],
+        "has_item": lambda i: "all" in perms["nav"] or i in perms["nav"],
+        "has_any_item": lambda *items: "all" in perms["nav"]
+        or any(i in perms["nav"] for i in items),
+        "can": lambda action: role_can(user_role, action, is_admin=is_admin),
+    }
 
 
 def resolve_user_role(current_user_dict: dict, session_role: str = "") -> str:
@@ -404,6 +376,11 @@ def init_context_processors(app):
     app.jinja_env.globals["asset_version"] = asset_version
     app.jinja_env.globals["asset_url"] = asset_url
 
+    # Navigation contextuelle (return_to) : retour à la page d'origine
+    from utils.navigation import register_navigation_helpers
+
+    register_navigation_helpers(app)
+
     @app.context_processor
     def inject_globals():
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
@@ -427,16 +404,7 @@ def init_context_processors(app):
                 "privacy_last_update": privacy_last_update,
                 "asset_version": asset_version,
                 "asset_url": asset_url,
-                "user_role": "technicien",
-                "user_perms": ROLE_PERMISSIONS["technicien"],
-                "has_section": lambda s: (
-                    "all" in ROLE_PERMISSIONS["technicien"]["sections"]
-                    or s in ROLE_PERMISSIONS["technicien"]["sections"]
-                ),
-                "has_item": lambda i: (
-                    "all" in ROLE_PERMISSIONS["technicien"]["nav"]
-                    or i in ROLE_PERMISSIONS["technicien"]["nav"]
-                ),
+                **_permission_helpers("technicien", ROLE_PERMISSIONS["technicien"]),
             }
             base_ctx.update(company_ctx)
             return base_ctx
@@ -459,16 +427,7 @@ def init_context_processors(app):
                 "privacy_last_update": privacy_last_update,
                 "asset_version": asset_version,
                 "asset_url": asset_url,
-                "user_role": "technicien",
-                "user_perms": ROLE_PERMISSIONS["technicien"],
-                "has_section": lambda s: (
-                    "all" in ROLE_PERMISSIONS["technicien"]["sections"]
-                    or s in ROLE_PERMISSIONS["technicien"]["sections"]
-                ),
-                "has_item": lambda i: (
-                    "all" in ROLE_PERMISSIONS["technicien"]["nav"]
-                    or i in ROLE_PERMISSIONS["technicien"]["nav"]
-                ),
+                **_permission_helpers("technicien", ROLE_PERMISSIONS["technicien"]),
             }
             base_ctx.update(company_ctx)
             return base_ctx
@@ -495,16 +454,7 @@ def init_context_processors(app):
             "format_checkpoint_status": format_checkpoint_status,
             "INSPECTION_STATUS_MAP": INSPECTION_STATUS_MAP,
             "CHECKPOINT_STATUS_MAP": CHECKPOINT_STATUS_MAP,
-            "user_role": "technicien",
-            "user_perms": ROLE_PERMISSIONS["technicien"],
-            "has_section": lambda s: (
-                "all" in ROLE_PERMISSIONS["technicien"]["sections"]
-                or s in ROLE_PERMISSIONS["technicien"]["sections"]
-            ),
-            "has_item": lambda i: (
-                "all" in ROLE_PERMISSIONS["technicien"]["nav"]
-                or i in ROLE_PERMISSIONS["technicien"]["nav"]
-            ),
+            **_permission_helpers("technicien", ROLE_PERMISSIONS["technicien"]),
         }
         ctx.update(company_ctx)
 
@@ -592,26 +542,14 @@ def init_context_processors(app):
 
                 return {
                     "current_user": current_user,
-                    "user_role": user_role,
-                    "user_perms": perms,
-                    "has_section": lambda s: (
-                        "all" in perms["sections"] or s in perms["sections"]
+                    **_permission_helpers(
+                        user_role, perms, is_admin=current_user.get("is_admin", False)
                     ),
-                    "has_item": lambda i: "all" in perms["nav"] or i in perms["nav"],
                     "vehicles": LazyContextList("vehicles", get_vehicles),
                 }
             else:
                 return {
-                    "user_role": "technicien",
-                    "user_perms": ROLE_PERMISSIONS["technicien"],
-                    "has_section": lambda s: (
-                        "all" in ROLE_PERMISSIONS["technicien"]["sections"]
-                        or s in ROLE_PERMISSIONS["technicien"]["sections"]
-                    ),
-                    "has_item": lambda i: (
-                        "all" in ROLE_PERMISSIONS["technicien"]["nav"]
-                        or i in ROLE_PERMISSIONS["technicien"]["nav"]
-                    ),
+                    **_permission_helpers("technicien", ROLE_PERMISSIONS["technicien"]),
                     "vehicles": LazyContextList("vehicles", get_vehicles),
                     "heads": LazyContextList("heads", get_heads),
                     "grips_categories": LazyContextList(
@@ -645,15 +583,8 @@ def init_context_processors(app):
                         "role_lower": "user",
                         "is_admin": False,
                     }
-                    ctx["user_role"] = "technicien"
-                    ctx["user_perms"] = ROLE_PERMISSIONS["technicien"]
-                    ctx["has_section"] = lambda s: (
-                        "all" in ROLE_PERMISSIONS["technicien"]["sections"]
-                        or s in ROLE_PERMISSIONS["technicien"]["sections"]
-                    )
-                    ctx["has_item"] = lambda i: (
-                        "all" in ROLE_PERMISSIONS["technicien"]["nav"]
-                        or i in ROLE_PERMISSIONS["technicien"]["nav"]
+                    ctx.update(
+                        _permission_helpers("technicien", ROLE_PERMISSIONS["technicien"])
                     )
                     ctx["vehicles"] = []
                 else:

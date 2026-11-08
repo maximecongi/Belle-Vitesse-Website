@@ -1,13 +1,13 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Paramètres Généraux{% endblock %}
-{% block page_title %} Paramètres Belle Vitesse{% endblock %}
+{% block title %}Paramètres{% endblock %}
+{% block page_title %}Paramètres{% endblock %}
 
 {% block content %}
 <div class="admin-card u-max-w-800">
     <div class="admin-card-title">Informations de la Société</div>
     <p class="u-text-sm u-text-muted u-mb-4">
-        Ces informations sont utilisées pour générer les en-têtes des décharges et documents officiels.
+        Ces informations sont utilisées pour générer les en-têtes des documents officiels.
     </p>
 
     <form method="POST">
@@ -33,7 +33,7 @@
     </form>
 </div>
 <div class="admin-card u-max-w-800 u-mt-4 u-border-left-warning">
-    <div class="admin-card-title">💡 Conseil</div>
+    <div class="admin-card-title"><i data-lucide="lightbulb"></i> Conseil</div>
     <p class="u-text-sm">
         Si vous modifiez le nom ou l'adresse de la société ici, les futurs documents générés (PDF) prendront
         automatiquement en compte ces nouvelles valeurs. Les anciens documents déjà signés et archivés ne seront pas

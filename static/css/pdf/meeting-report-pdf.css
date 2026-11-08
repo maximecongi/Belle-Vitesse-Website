@@ -182,13 +182,13 @@
 .meeting-report-body blockquote {
     background-color: #fafafa;
     border-left: 2.5pt solid var(--bv-gold, #f59e0b);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding: 6pt 10pt;
     margin: 8pt 0;
     font-size: 7.5pt;
     line-height: 1.45;
     color: #27272a;
     page-break-inside: avoid;
-    border-radius: 0 3pt 3pt 0;
 }
 
 .meeting-report-body hr {

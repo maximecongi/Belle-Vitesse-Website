@@ -1,20 +1,17 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import equipment_icon, equipment_tag_class %}
+{% from "admin/macros.html" import equipment_icon, equipment_tag_class, return_to_field %}
 
-{% block title %}
-{% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclarer un Incident de Tournage{% endif %}
-{% endblock %}
+{% block title %}{% if is_edit %}Modifier l'incident {{ incident.incident_number }}{% else %}Déclarer un incident{% endif %}{% endblock %}
 
-{% block page_title %}
-{% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclaration d'Incident{% endif %}
-{% endblock %}
+{% block page_title %}{% if is_edit %}Modifier l'incident {{ incident.incident_number }}{% else %}Déclarer un incident{% endif %}{% endblock %}
 
 
 {% block content %}
 <div class="admin-card">
         <form method="POST" enctype="multipart/form-data" novalidate id="incidentForm">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            {{ return_to_field() }}
 
             <!-- ═══════════ STATUT, GRAVITÉ & IMPACT DU DOSSIER (BADGE-PILLS COMPACTS) ═══════════ -->
             {% set status_meta = {
@@ -67,7 +64,7 @@
                             id="incidentStatusPill" title="Cliquer pour changer le statut">
                             <span class="status-label" id="incidentStatusLabel"><i
                                     data-lucide="{{ current_meta.icon }}"></i> {{ ns_status.label }}</span>
-                            <select name="status" id="incidentStatusSelect" onchange="updateIncidentStatusPill(this)">
+                            <select name="status" id="incidentStatusSelect">
                                 {% for key, label in context.statuses %}
                                 {% set opt_meta = status_meta.get(key, {'val': 'neutral', 'icon': 'megaphone'}) %}
                                 <option value="{{ key }}" data-val="{{ opt_meta.val }}" {% if current_status==key
@@ -87,8 +84,7 @@
                             <span class="status-label" id="incidentSeverityLabel"><i
                                     data-lucide="{{ current_sev_meta.icon }}"></i> {{
                                 ns_sev.label }}</span>
-                            <select name="severity" id="incidentSeveritySelect"
-                                onchange="updateIncidentSeverityPill(this)">
+                            <select name="severity" id="incidentSeveritySelect">
                                 {% for key, label in context.severities %}
                                 {% set opt_sev = severity_meta.get(key, {'val': 'neutral', 'icon': 'info'}) %}
                                 <option value="{{ key }}" data-val="{{ opt_sev.val }}" {% if current_severity==key
@@ -108,8 +104,7 @@
                             <span class="status-label" id="incidentImpactLabel"><i
                                     data-lucide="{{ current_imp_meta.icon }}"></i> {{
                                 ns_imp.label }}</span>
-                            <select name="shooting_impact" id="incidentImpactSelect"
-                                onchange="updateIncidentImpactPill(this)">
+                            <select name="shooting_impact" id="incidentImpactSelect">
                                 {% for key, label in context.shooting_impacts %}
                                 {% set opt_imp = impact_meta.get(key, {'val': 'ok', 'icon': 'check-circle'}) %}
                                 <option value="{{ key }}" data-val="{{ opt_imp.val }}" {% if current_impact==key
@@ -128,7 +123,7 @@
             {% if is_sealed %}
             <div class="incident-sealed-notice u-p-3 u-mb-3 u-rounded">
                 <div class="u-flex u-align-center u-gap-2">
-                    <span class="u-text-lg">🛡️</span>
+                    <span class="u-text-lg"><i data-lucide="shield"></i></span>
                     <div>
                         <strong class="u-text-sm">Constat contradictoire scellé</strong>
                         <p class="u-text-xs u-m-0 u-mt-1">
@@ -227,7 +222,7 @@
                 <div class="form-group">
                     <label class="form-label">Moment de la constatation</label>
                     <input type="text" class="form-input" disabled
-                        value="{% if incident.checkout %}Check-out {{ incident.checkout.inspection_number }}{% elif incident.checkin %}Check-in {{ incident.checkin.inspection_number }}{% else %}En cours d'opération (sur le plateau){% endif %}" />
+                        value="{% if incident.checkout %}Départ {{ incident.checkout.inspection_number }}{% elif incident.checkin %}Retour {{ incident.checkin.inspection_number }}{% else %}En cours d'opération (sur le plateau){% endif %}" />
                     <input type="hidden" name="attached_inspection" value="{{ incident.attached_inspection or '' }}" />
                 </div>
                 {% endif %}
@@ -260,8 +255,7 @@
             <!-- Mode Création : Champs Interactifs -->
             <div class="form-group">
                 <label class="form-label" for="project_id">Projet (Tournage) <span class="u-text-error">*</span></label>
-                <select name="project_id" id="project_id" class="form-input" required
-                    onchange="updateProjectEquipment(this.value)">
+                <select name="project_id" id="project_id" class="form-input" required>
                     <option value="">— Sélectionner un projet —</option>
                     {% for p in context.projects %}
                     <option value="{{ p.id }}" {% if incident.project_id|string==p.id|string or (incident.project and
@@ -357,7 +351,7 @@
                     <option value="">En cours d'opération (sur le plateau)</option>
                 </select>
                 <span class="u-text-xs u-text-muted u-mt-1">
-                    Liez ce sinistre à l'état des lieux contradictoire de départ (Check-out) ou de retour (Check-in) du
+                    Liez ce sinistre à l'état des lieux contradictoire de départ ou de retour du
                     projet.
                 </span>
             </div>
@@ -473,7 +467,7 @@
                             <input type="checkbox" name="remove_photos" value="{{ p.rel_path }}"> Supprimer
                         </label>
                         {% else %}
-                        <div class="u-mt-1 u-text-2xs u-text-muted u-text-center">🛡️ Scellée au constat</div>
+                        <div class="u-mt-1 u-text-2xs u-text-muted u-text-center"><i data-lucide="shield"></i> Scellée au constat</div>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -485,16 +479,14 @@
                 {% if not is_sealed %}
                 <div class="form-group">
                     <label class="form-label" for="photos">Ajouter des photos des dommages (JPEG, PNG)</label>
-                    <input type="file" name="photos" id="photos" multiple accept="image/*" class="form-input"
-                        onchange="previewFiles(this, 'photos-preview')">
+                    <input type="file" name="photos" id="photos" multiple accept="image/*" class="form-input" data-preview-target="photos-preview">
                     <div id="photos-preview" class="u-flex u-flex-wrap u-gap-2 u-mt-2"></div>
                 </div>
                 {% endif %}
 
                 <div class="form-group">
                     <label class="form-label" for="documents">Devis, factures ou constats scannés (PDF, images)</label>
-                    <input type="file" name="documents" id="documents" multiple accept=".pdf,image/*" class="form-input"
-                        onchange="previewDocs(this, 'docs-preview')">
+                    <input type="file" name="documents" id="documents" multiple accept=".pdf,image/*" class="form-input" data-preview-target="docs-preview">
                     <div id="docs-preview" class="u-flex u-flex-wrap u-gap-1 u-mt-2"></div>
                 </div>
             </div>
@@ -502,17 +494,10 @@
             <!-- ═══════════ BOUTONS D'ACTION ═══════════ -->
             <div class="u-mt-4 u-flex u-justify-between u-align-center">
                 <div>
-                    {% if is_edit %}
-                    <button type="submit"
-                        formaction="{{ url_for('admin_incidents.admin_incident_delete', record_id=incident.id) }}"
-                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');"
-                        class="admin-btn admin-btn-danger" formnovalidate>
-                        Supprimer
-                    </button>
-                    {% endif %}
+                    
                 </div>
                 <div>
-                    <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=incident.id) if is_edit else url_for('admin_incidents.admin_incidents_list') }}"
+                    <a href="{{ url_keep_return('admin_incidents.admin_incident_detail', record_id=incident.id) if is_edit else (get_return_to() or url_for('admin_incidents.admin_incidents_list')) }}"
                         class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                     <button type="submit" class="admin-btn admin-btn-primary">
                         {% if is_edit %}Enregistrer les modifications{% else %}Déclarer l'incident{% endif %}

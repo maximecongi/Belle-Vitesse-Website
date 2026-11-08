@@ -796,7 +796,7 @@ class ProjectsTest(BaseTestCase):
             res = self.client.get(f"/admin/projects/{proj.id}/duplicate")
             self.assertEqual(res.status_code, 200)
             html = res.data.decode("utf-8")
-            self.assertIn("Dupliquer le Projet", html)
+            self.assertIn("Dupliquer le projet", html)
             self.assertIn("Projet Source (Copie)", html)
             self.assertIn("Duplication de tournage", html)
             self.assertIn("Projet Source", html)

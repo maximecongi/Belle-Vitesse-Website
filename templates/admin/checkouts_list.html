@@ -2,28 +2,23 @@
 
 {% from "admin/macros.html" import status_badge, filter_header, list_header_actions, table_empty_row, render_pagination %}
 
-{% block title %}Liste des Checkouts{% endblock %}
-{% block page_title %}Checkouts{% endblock %}
+{% block title %}Départs{% endblock %}
+{% block page_title %}Départs{% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions('Rechercher un checkout...', url_for('admin_checkouts.admin_checkout_new'), '+ Nouveau Checkout') }}
+{{ list_header_actions('Rechercher un départ...', url_for('admin_checkouts.admin_checkout_new'), '+ Nouveau départ') }}
 {% endblock %}
 
 {% block content %}
 <!-- Search & Table -->
 <div class="admin-card">
-    {{ filter_header("Checkouts filtrés", count=pagination.total if pagination else checkouts|length) }}
-    <div class="u-flex u-justify-end u-align-center u-mb-2">
-        <div class="u-text-sm u-text-muted">
-            <span id="result-count">{{ pagination.total if pagination else checkouts|length }}</span> résultats
-        </div>
-    </div>
+    {{ filter_header("Départs filtrés", count=pagination.total if pagination else checkouts|length) }}
 
     <div class="admin-table-container">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>N° Inspection</th>
+                    <th>N° contrôle</th>
                     <th>Projet</th>
                     <th>Véhicule</th>
                     <th>Date contrôle</th>
@@ -51,14 +46,10 @@
                     </td>
                 </tr>
                 {% else %}
-                {{ table_empty_row(7, 'Aucun checkout trouvé.', 'truck') }}
+                {{ table_empty_row(7, 'Aucun départ trouvé.', 'truck') }}
                 {% endfor %}
             </tbody>
         </table>
-
-        <div id="no-results" class="u-text-center u-p-4 u-text-muted">
-            Aucun résultat pour cette recherche.
-        </div>
     </div>
     {{ render_pagination(pagination, label_singular="départ", label_plural="départs") }}
 </div>

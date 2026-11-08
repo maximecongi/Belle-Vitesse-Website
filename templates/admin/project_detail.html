@@ -1,10 +1,10 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
-initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar %}
+initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
 
 {% block title %}{{ project.name }}{% endblock %}
-{% block page_title %}Détail Projet{% endblock %}
+{% block page_title %}Projet {{ project.project_id }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -12,16 +12,14 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 {% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_projects.admin_projects_list') }}" class="admin-btn admin-btn-secondary">
-    ← Liste des projets
-</a>
+{{ back_button(url_for('admin_projects.admin_projects_list')) }}
 {% if project.kdrive_web_url %}
 <a href="{{ project.kdrive_web_url }}" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary"
     title="Ouvrir le dossier du projet dans kDrive Infomaniak">
     <i data-lucide="cloud"></i>
     <span>Dossier kDrive</span>
 </a>
-{% elif is_admin or session.get('admin_user_role') in ['administrator', 'manager'] %}
+{% elif can('project_kdrive_resync') %}
 <form action="{{ url_for('admin_projects.admin_project_kdrive_resync', record_id=project.id) }}" method="POST"
     class="u-inline">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -31,27 +29,18 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
     </button>
 </form>
 {% endif %}
-{% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
+{% if can('project_duplicate') %}
 <a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}"
-    class="admin-btn admin-btn-secondary" title="Dupliquer ce tournage">
+    class="admin-btn admin-btn-secondary" title="Dupliquer ce projet">
     <i data-lucide="copy"></i>
     <span>Dupliquer</span>
 </a>
 {% endif %}
+{% if can('project_edit') %}
 <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
     <i data-lucide="edit-3"></i>
     <span>Modifier</span>
 </a>
-{% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
-<form method="POST" action="{{ url_for('admin_projects.admin_project_delete', record_id=project.id) }}"
-    class="u-d-inline"
-    onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action supprimera également son dossier sur kDrive.');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="admin-btn admin-btn-danger" title="Supprimer le projet">
-        <i data-lucide="trash-2"></i>
-        <span>Supprimer</span>
-    </button>
-</form>
 {% endif %}
 {% endblock %}
 
@@ -94,7 +83,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 <span class="project-stat-lbl">Tête{{ 's' if heads|length > 1 else '' }}</span>
             </div>
             {% if incidents|length > 0 %}
-            <div class="project-stat-box warning" title="Incidents signalés sur ce tournage">
+            <div class="project-stat-box warning" title="Incidents signalés sur ce projet">
                 <span class="project-stat-num">{{ incidents|length }}</span>
                 <span class="project-stat-lbl">Incident{{ 's' if incidents|length > 1 else '' }}</span>
             </div>
@@ -265,7 +254,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             <span class="u-text-muted">Départ :</span>
                             {% if v.checkout_id %}
                             <div class="projects-cell-item">
-                                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
+                                <a href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
                                     {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
                                     **{'data-conform': v.checkout_conform}) }}
                                 </a>
@@ -274,7 +263,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             {% else %}
                             <div class="projects-cell-item">
                                 <a
-                                    href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    href="{{ url_from_here('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                             </div>
@@ -286,7 +275,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             <span class="u-text-muted">Retour :</span>
                             {% if v.checkin_id %}
                             <div class="projects-cell-item">
-                                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
+                                <a href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
                                     {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1',
                                     **{'data-conform': v.checkin_conform}) }}
                                 </a>
@@ -295,7 +284,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             {% else %}
                             <div class="projects-cell-item">
                                 <a
-                                    href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    href="{{ url_from_here('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                             </div>
@@ -380,7 +369,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                         <!-- Menu contextuel personnalisé au clic droit -->
                         <div class="notion-context-menu" id="notionContextMenu" role="menu" aria-label="Menu de formatage">
                             <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
-                                <span class="notion-context-icon">🧹</span>
+                                <span class="notion-context-icon"><i data-lucide="eraser"></i></span>
                                 <span class="notion-context-label">Supprimer la mise en forme</span>
                                 <span class="notion-context-hint">Normal</span>
                             </div>
@@ -395,15 +384,15 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                                 <span class="notion-context-label">Liste numérotée</span>
                             </div>
                             <div class="notion-context-item" data-action="h2" role="menuitem">
-                                <span class="notion-context-icon">🏷️</span>
+                                <span class="notion-context-icon"><i data-lucide="heading-2"></i></span>
                                 <span class="notion-context-label">Titre de section</span>
                             </div>
                             <div class="notion-context-item" data-action="h3" role="menuitem">
-                                <span class="notion-context-icon">📌</span>
+                                <span class="notion-context-icon"><i data-lucide="heading-3"></i></span>
                                 <span class="notion-context-label">Sous-titre</span>
                             </div>
                             <div class="notion-context-item" data-action="quote" role="menuitem">
-                                <span class="notion-context-icon">💬</span>
+                                <span class="notion-context-icon"><i data-lucide="quote"></i></span>
                                 <span class="notion-context-label">Citation / Observation</span>
                             </div>
                             <div class="notion-context-divider"></div>
@@ -485,7 +474,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                                 <form method="POST"
                                     action="{{ url_for('admin_projects.admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
                                     class="u-m-0"
-                                    onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                    data-confirm="Confirmer la suppression de ce commentaire ?">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="project-report-action-btn project-report-delete-btn"
                                         title="Supprimer ce rapport">
@@ -617,7 +606,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% endfor %}
             </div>
             {% else %}
-            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun contact spécifique rattaché à ce tournage.</p>
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun contact spécifique rattaché à ce projet.</p>
             {% endif %}
         </div>
 
@@ -661,7 +650,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% endfor %}
             </div>
             {% else %}
-            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun référent BV désigné sur ce tournage.</p>
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun référent BV désigné sur ce projet.</p>
             {% endif %}
         </div>
 
@@ -701,7 +690,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         <div class="admin-card project-docs-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="u-flex u-align-center u-gap-2">
-                    <h2 class="admin-card-title u-m-0">Documents & Décharges</h2>
+                    <h2 class="admin-card-title u-m-0">Documents</h2>
                 </div>
                 {% if incidents and incidents|length > 0 %}
                 <span class="badge-pill u-bg-danger-light u-text-danger">{{ incidents|length }} incident{{ 's' if
@@ -803,7 +792,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                         <form
                             action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             method="POST" class="u-m-0"
-                            onsubmit="return confirm('Supprimer ces Conditions Générales de Location (CGL) pour {{ cgl_waiver.production_name or project.title }} ?');">
+                            data-confirm="Supprimer ces Conditions Générales de Location (CGL) pour {{ cgl_waiver.production_name or project.title }} ?">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="return_to" value="{{ request.full_path }}">
                             <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
@@ -814,7 +803,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
-                    Aucune CGL générée pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions
+                    Aucune CGL générée pour ce projet. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions
                     Générales de Location.
                 </p>
                 {% endif %}
@@ -897,7 +886,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
                             <form action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=sr.waiver_id) }}"
                                 method="POST" class="u-m-0"
-                                onsubmit="return confirm('Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?');">
+                                data-confirm="Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="return_to" value="{{ request.full_path }}">
                                 <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
@@ -910,7 +899,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
-                    Aucun signataire invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer les
+                    Aucun signataire invité pour ce projet. Cliquez sur <strong>Inviter</strong> pour faire signer les
                     règles de sécurité à vos pilotes ou à l'équipe.
                 </p>
                 {% endif %}
@@ -998,7 +987,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
                             <form action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=pw.waiver_id) }}"
                                 method="POST" class="u-m-0"
-                                onsubmit="return confirm('Supprimer cette attestation pilote pour {{ pw.signer_name }} ?');">
+                                data-confirm="Supprimer cette attestation pilote pour {{ pw.signer_name }} ?">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="return_to" value="{{ request.full_path }}">
                                 <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
@@ -1012,7 +1001,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% else %}
                 <div class="u-flex u-justify-between u-align-center u-mt-2">
                     <p class="u-text-2xs u-text-muted u-mb-0">
-                        Aucun pilote invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer
+                        Aucun pilote invité pour ce projet. Cliquez sur <strong>Inviter</strong> pour faire signer
                         l'attestation de non-subordination et de sécurité (Annexe 3).
                     </p>
                 </div>
@@ -1096,7 +1085,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
                             <form action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=ra.waiver_id) }}"
                                 method="POST" class="u-m-0"
-                                onsubmit="return confirm('Supprimer cette analyse des risques pour {{ ra.signer_name }} ?');">
+                                data-confirm="Supprimer cette analyse des risques pour {{ ra.signer_name }} ?">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="return_to" value="{{ request.full_path }}">
                                 <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
@@ -1138,7 +1127,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                         <div class="projects-cell-item u-flex u-align-center u-gap-2">
                             {{ incident_severity_badge(inc.severity, inc.severity_label) }}
                             {{ incident_status_badge(inc.status, inc.status_label) }}
-                            <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
+                            <a href="{{ url_from_here('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
                                 data-val="link" title="Voir l'incident" target="_blank"
                                 class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link">
                                 <i data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i>
@@ -1246,7 +1235,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
                 <p class="u-text-xs u-mt-1 u-mb-0 u-text-muted">
                     {% if project.bv_referents_names %}
-                    Référent(s) BV associés à ce tournage : <strong>{{ project.bv_referents_names }}</strong>. Ils
+                    Référent(s) BV associés à ce projet : <strong>{{ project.bv_referents_names }}</strong>. Ils
                     seront automatiquement appliqués à ce protocole.
                     {% else %}
                     Aucun référent BV n'a été rattaché au projet pour l'instant. Vous pouvez les configurer dans
@@ -1493,4 +1482,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </form>
     </div>
 </div>
+{% if can('project_delete') %}
+{{ danger_zone(url_for('admin_projects.admin_project_delete', record_id=project.id), 'Supprimer ce projet ? Son dossier kDrive sera également supprimé. Cette action est irréversible.', 'Supprimer ce projet', desc='Supprime le projet, ses documents rattachés et son dossier kDrive.') }}
+{% endif %}
 {% endblock %}

@@ -1,15 +1,12 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header %}
+{% from "admin/macros.html" import filter_header, list_header_actions, table_empty_row %}
 
 {% block title %}Productions{% endblock %}
 {% block page_title %}Productions{% endblock %}
 
 {% block header_actions %}
-<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher une production..."
-    autocomplete="off">
-<a href="{{ url_for('admin_productions.admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle
-    Production</a>
+{{ list_header_actions('Rechercher une production...', url_for('admin_productions.admin_production_new'), '+ Nouvelle production', mode='client') }}
 {% endblock %}
 
 {% block content %}
@@ -36,15 +33,11 @@
                     <td>{{ prod.phone or "—" }}</td>
                     <td>
                         <a href="{{ url_for('admin_productions.admin_production_edit', record_id=prod.id) }}"
-                            class="admin-btn admin-btn-secondary">Éditer</a>
+                            class="admin-btn admin-btn-secondary">Modifier</a>
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="5" class="u-text-center u-p-5 u-text-muted">
-                        Aucune production trouvée.
-                    </td>
-                </tr>
+                {{ table_empty_row(5, 'Aucune production trouvée.', 'building-2') }}
                 {% endfor %}
             </tbody>
         </table>

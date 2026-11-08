@@ -1,26 +1,23 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header %}
+{% from "admin/macros.html" import filter_header, list_header_actions %}
 
-{% block title %}Points de Contrôle — Belle Vitesse{% endblock %}
-{% block page_title %}Points de Contrôle{% endblock %}
+{% block title %}Points de contrôle{% endblock %}
+{% block page_title %}Points de contrôle{% endblock %}
 
 {% block header_actions %}
-<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un point..."
-    autocomplete="off">
-<a href="{{ url_for('admin_checkpoints.admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau
-    Point</a>
+{{ list_header_actions('Rechercher un point de contrôle...', url_for('admin_checkpoints.admin_checkpoint_new'), '+ Nouveau point de contrôle', mode='client') }}
 {% endblock %}
 
 {% block content %}
 <!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
 <div class="checkpoint-nav-tabs">
     <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="checkpoint-nav-tab active">
-        Points de Contrôle
+        Points de contrôle
         <span class="badge-pill u-ml-1" data-val="neutral">{{ stats.total }}</span>
     </a>
     <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="checkpoint-nav-tab">
-        Matrice Flotte
+        Matrice par véhicule
     </a>
 </div>
 
@@ -45,7 +42,7 @@
         <table class="admin-table" id="checkpointsTable">
             <thead>
                 <tr>
-                    <th>Point de Contrôle</th>
+                    <th>Point de contrôle</th>
                     <th>Catégorie</th>
                     <th>Consigne standard</th>
                     <th>Véhicules concernés</th>
@@ -147,7 +144,7 @@
                             <form method="POST"
                                 action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=cp.id) }}"
                                 class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ cp.label }} » ? Cette action est irréversible.');">
+                                data-confirm="Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ cp.label }} » ? Cette action est irréversible.">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
                             </form>

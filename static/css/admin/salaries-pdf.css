@@ -182,9 +182,9 @@ body.salary-pdf-container {
     background-color: #FEFCE8;
     border: 0.5pt solid #FEF08A;
     border-left: 3pt solid var(--yellow-1, #FFC845);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding: 8pt 12pt;
     margin-bottom: 14pt;
-    border-radius: 3pt;
     page-break-inside: avoid;
 }
 

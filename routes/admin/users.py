@@ -114,9 +114,9 @@ def admin_user_create():
             "job": request.form.get("job")
         }
         if create_user(data):
-            flash("Utilisateur créé avec succès.", "success")
+            flash("Membre créé avec succès.", "success")
             return redirect(url_for("admin_users.admin_users_list"))
-        flash("Erreur lors de la création de l'utilisateur.", "error")
+        flash("Erreur lors de la création du membre.", "error")
 
     return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
 
@@ -125,12 +125,12 @@ def admin_user_create():
 def admin_user_edit(record_id):
     user = get_user(record_id)
     if not user:
-        flash("Utilisateur introuvable.", "error")
+        flash("Membre introuvable.", "error")
         return redirect(url_for("admin_users.admin_users_list"))
 
     # Vérifier que l'utilisateur connecté peut gérer cet utilisateur
     if not _can_manage_user(user):
-        flash("Vous ne pouvez pas modifier un utilisateur de rang égal ou supérieur.", "error")
+        flash("Vous ne pouvez pas modifier un membre de rang égal ou supérieur.", "error")
         return redirect(url_for("admin_users.admin_users_list"))
 
     assignable = _get_assignable_roles()
@@ -158,9 +158,9 @@ def admin_user_edit(record_id):
             "job": request.form.get("job")
         }
         if update_user(record_id, data):
-            flash("Utilisateur mis à jour avec succès.", "success")
+            flash("Membre mis à jour avec succès.", "success")
             return redirect(url_for("admin_users.admin_users_list"))
-        flash("Erreur lors de la mise à jour de l'utilisateur.", "error")
+        flash("Erreur lors de la mise à jour du membre.", "error")
 
     return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
 
@@ -169,7 +169,7 @@ def admin_user_edit(record_id):
 def admin_user_delete(record_id):
     user = get_user(record_id)
     if not user:
-        flash("Utilisateur introuvable.", "error")
+        flash("Membre introuvable.", "error")
         return redirect(url_for("admin_users.admin_users_list"))
 
     # Interdire la suppression de son propre compte et des utilisateurs de rang >= 
@@ -178,16 +178,16 @@ def admin_user_delete(record_id):
         return redirect(url_for("admin_users.admin_users_list"))
 
     if _get_current_role_level() <= _get_target_role_level(user):
-        flash("Vous ne pouvez pas supprimer un utilisateur de rang égal ou supérieur.", "error")
+        flash("Vous ne pouvez pas supprimer un membre de rang égal ou supérieur.", "error")
         return redirect(url_for("admin_users.admin_users_list"))
 
     try:
         delete_user(record_id)
-        flash("Utilisateur supprimé avec succès.", "success")
+        flash("Membre supprimé avec succès.", "success")
     except Exception as e:
         from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la suppression de l'utilisateur {record_id} : {e}")
-        flash(format_user_friendly_error(e, "Erreur lors de la suppression de l'utilisateur."), "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression du membre."), "error")
     return redirect(url_for("admin_users.admin_users_list"))
 
 def init_users_routes(app):

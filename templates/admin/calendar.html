@@ -1,13 +1,13 @@
 {% extends "admin/admin_base.html" %}
 {% from "admin/macros.html" import status_badge %}
 
-{% block title %}Calendrier ICS{% endblock %}
-{% block page_title %}Abonnements Calendrier{% endblock %}
+{% block title %}Abonnements calendrier (ICS){% endblock %}
+{% block page_title %}Abonnements calendrier (ICS){% endblock %}
 
 {% block content %}
 <div class="admin-card cal-info-card">
     <div class="cal-info-header">
-        <div class="cal-info-icon">📱</div>
+        <div class="cal-info-icon"><i data-lucide="smartphone"></i></div>
         <div>
             <div class="cal-info-title">Comment ça marche ?</div>
             <div class="cal-info-desc">
@@ -45,7 +45,7 @@
         <table class="admin-table" id="calendarTable">
             <thead>
                 <tr>
-                    <th>Utilisateur</th>
+                    <th>Membre</th>
                     <th>Rôle</th>
                     <th>Statut</th>
                     <th>Dernier accès</th>
@@ -107,7 +107,7 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary admin-btn-sm"
-                                    title="Envoyer le lien par email à l'utilisateur">
+                                    title="Envoyer le lien par e-mail au membre">
                                     <i data-lucide="mail"></i>Email
                                 </button>
                             </form>
@@ -117,7 +117,7 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary admin-btn-sm"
-                                    onclick="return confirm('Régénérer le lien calendrier ? L\'ancien lien cessera de fonctionner.')">
+                                    data-confirm="Régénérer le lien calendrier ? L'ancien lien cessera de fonctionner." data-confirm-label="Régénérer" data-confirm-variant="primary">
                                     <i data-lucide="refresh-cw"></i> Régénérer
                                 </button>
                             </form>
@@ -127,7 +127,7 @@
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm"
-                                    onclick="return confirm('Révoquer le lien calendrier ? L\'utilisateur n\'aura plus accès au calendrier.')">
+                                    data-confirm="Révoquer le lien calendrier ? Le membre n'aura plus accès au calendrier." data-confirm-label="Révoquer">
                                     <i data-lucide="x"></i> Révoquer
                                 </button>
                             </form>
@@ -149,7 +149,7 @@
                 <tr>
                     <td colspan="6" class="u-text-center u-text-muted u-p-4">
 
-                        Aucun utilisateur trouvé.
+                        Aucun membre trouvé.
                     </td>
                 </tr>
                 {% endfor %}

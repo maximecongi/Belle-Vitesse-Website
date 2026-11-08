@@ -227,7 +227,7 @@
     margin-top: 6pt;
     border: 0.75pt solid #e4e4e7;
     border-left: 3pt solid #FFC845;
-    border-radius: 3pt;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .vs-pdf .vs-contact-body {

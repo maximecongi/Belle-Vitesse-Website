@@ -4,7 +4,7 @@
 vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge, shoot_status_badge %}
 
 {% block title %}Historique — {{ vehicle.name }} ({{ vehicle.unique_id }}){% endblock %}
-{% block page_title %}Timeline{% endblock %}
+{% block page_title %}Historique du véhicule{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-gap-2 u-align-center">
@@ -86,17 +86,17 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                     {{ evt.project_name or evt.title }}
                 </a>
                 {% elif evt.type == 'checkout' %}
-                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
                     class="u-text-inherit">
                     Contrôle de départ
                 </a>
                 {% elif evt.type == 'checkin' %}
-                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
                     class="u-text-inherit">
                     Contrôle de retour
                 </a>
                 {% elif evt.type == 'incident' %}
-                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
                     class="u-text-inherit">
                     {{ evt.title|replace('Incident : ', '') }}
                 </a>
@@ -166,17 +166,17 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                     Détails →
                 </a>
                 {% elif evt.type == 'checkout' %}
-                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>
                 {% elif evt.type == 'checkin' %}
-                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>
                 {% elif evt.type == 'incident' %}
-                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_from_here('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>

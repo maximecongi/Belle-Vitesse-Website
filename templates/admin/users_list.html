@@ -1,30 +1,26 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header %}
+{% from "admin/macros.html" import filter_header, list_header_actions, table_empty_row %}
 
-{% block title %}Utilisateurs{% endblock %}
-{% block page_title %}Gestion des Utilisateurs{% endblock %}
+{% block title %}Équipe{% endblock %}
+{% block page_title %}Équipe{% endblock %}
 
 {% block header_actions %}
-<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un utilisateur..."
-    autocomplete="off">
-<a href="{{ url_for('admin_users.admin_user_create') }}" class="admin-btn admin-btn-primary">
-    + Nouvel utilisateur
-</a>
+{{ list_header_actions('Rechercher un membre...', url_for('admin_users.admin_user_create'), '+ Nouveau membre', mode='client') }}
 {% endblock %}
 
 {% block content %}
 <div class="admin-card">
-    {{ filter_header("Utilisateurs filtrés", count=users|length) }}
+    {{ filter_header("Membres filtrés", count=users|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table" id="usersTable">
             <thead>
                 <tr>
-                    <th>Prénom</th>
-                    <th>Nom</th>
+                    <th class="sortable" data-col="0">Prénom</th>
+                    <th class="sortable" data-col="1">Nom</th>
                     <th>Email</th>
-                    <th>Poste</th>
-                    <th>Rôle</th>
+                    <th class="sortable" data-col="3">Poste</th>
+                    <th class="sortable" data-col="4">Rôle</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -57,7 +53,7 @@
                             <a href="{{ url_for('admin_users.admin_user_edit', record_id=u.id) }}"
                                 class="admin-btn admin-btn-secondary admin-btn-sm">Modifier</a>
                             <form action="{{ url_for('admin_users.admin_user_delete', record_id=u.id) }}" method="POST"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');"
+                                data-confirm="Supprimer ce membre de l'équipe ? Cette action est irréversible."
                                 class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
@@ -69,15 +65,11 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr id="emptyRow">
-                    <td colspan="5" class="u-text-center u-text-muted u-p-4">
-                        Aucun utilisateur trouvé.
-                    </td>
-                </tr>
+                {{ table_empty_row(6, 'Aucun membre trouvé.', 'users') }}
                 {% endfor %}
                 <tr id="noResultsRow" class="u-d-none">
-                    <td colspan="5" class="u-text-center u-text-muted u-p-4">
-                        Aucun utilisateur ne correspond à votre recherche.
+                    <td colspan="6" class="u-text-center u-text-muted u-p-4">
+                        Aucun membre ne correspond à votre recherche.
                     </td>
                 </tr>
             </tbody>

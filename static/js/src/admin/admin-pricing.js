@@ -331,7 +331,7 @@ class PricingAdmin {
 
     async handleDeleteGroup(btn) {
         const name = btn.dataset.group;
-        if (!confirm(`Supprimer le groupe "${name}" ?`)) return;
+        if (!(await window.adminConfirm(`Supprimer le groupe « ${name} » ?`))) return;
 
         const res = await this.fetchAPI('/admin/api/pricing/salary/delete-group', 'DELETE', { group_name: name });
         if (res.success) {
@@ -341,7 +341,7 @@ class PricingAdmin {
     }
 
     async handleDeleteLine(btn) {
-        if (!confirm('Supprimer cette ligne ?')) return;
+        if (!(await window.adminConfirm('Supprimer cette ligne ?'))) return;
         const type = btn.dataset.type;
         const id = btn.dataset.id;
         const url = (type === 'salary' ? '/admin/api/pricing/salary/' : '/admin/api/pricing/logistics/') + id;

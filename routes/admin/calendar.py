@@ -105,7 +105,7 @@ def admin_calendar_generate():
     """Crée un nouveau token calendrier pour un utilisateur."""
     user_id = _get_target_user_id(request.form)
     if not user_id:
-        flash("Utilisateur invalide.", "error")
+        flash("Membre invalide.", "error")
         return redirect(url_for("admin_calendar.admin_calendar"))
 
     sub = create_subscription(user_id)
@@ -132,7 +132,7 @@ def admin_calendar_revoke():
     """Révoque le token calendrier actif d'un utilisateur."""
     user_id = _get_target_user_id(request.form)
     if not user_id:
-        flash("Utilisateur invalide.", "error")
+        flash("Membre invalide.", "error")
         return redirect(url_for("admin_calendar.admin_calendar"))
 
     if revoke_subscription(user_id):
@@ -150,7 +150,7 @@ def admin_calendar_regenerate():
     """Régénère le token calendrier d'un utilisateur (révoque + recrée)."""
     user_id = _get_target_user_id(request.form)
     if not user_id:
-        flash("Utilisateur invalide.", "error")
+        flash("Membre invalide.", "error")
         return redirect(url_for("admin_calendar.admin_calendar"))
 
     sub = regenerate_subscription(user_id)
@@ -178,14 +178,14 @@ def admin_calendar_send_email():
     """Envoie manuellement le lien calendrier par email."""
     user_id = _get_target_user_id(request.form)
     if not user_id:
-        flash("Utilisateur invalide.", "error")
+        flash("Membre invalide.", "error")
         return redirect(url_for("admin_calendar.admin_calendar"))
 
     user = db.session.get(User, user_id)
     sub = get_subscription_for_user(user_id)
 
     if not user or not user.mail:
-        flash("Utilisateur sans adresse email.", "error")
+        flash("Membre sans adresse e-mail.", "error")
     elif not sub or not sub.is_active:
         flash("Aucun abonnement actif trouvé.", "error")
     else:

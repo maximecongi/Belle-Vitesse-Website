@@ -12,42 +12,61 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
-function initCheckoutsListSearch() {
-    const checkoutSearchInput = document.getElementById('search-input');
-    if (!checkoutSearchInput) return;
+/**
+ * Recherche côté serveur (listes paginées) : soumission différée du formulaire GET.
+ * Toute la base est interrogée — jamais seulement la page affichée.
+ */
+const SERVER_SEARCH_DEBOUNCE_MS = 450;
+const SERVER_SEARCH_FOCUS_KEY = 'bv-server-search-focus';
 
-    const tbody = document.getElementById('checkouts-tbody') || document.getElementById('checkins-tbody');
-    if (!tbody) return;
+function initServerSearch(input) {
+    if (input._serverSearchBound || !input.form) return;
+    input._serverSearchBound = true;
 
-    const rows = tbody.querySelectorAll('tr[data-search]');
-    const resultCount = document.getElementById('result-count');
-    const noResults = document.getElementById('no-results');
+    // Restaure le focus et le curseur après le rechargement déclenché par la saisie
+    try {
+        if (sessionStorage.getItem(SERVER_SEARCH_FOCUS_KEY) === window.location.pathname) {
+            sessionStorage.removeItem(SERVER_SEARCH_FOCUS_KEY);
+            input.focus();
+            const len = input.value.length;
+            input.setSelectionRange(len, len);
+        }
+    } catch (e) { /* stockage indisponible : pas de restauration du focus */ }
 
-    checkoutSearchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        let visibleCount = 0;
+    let timer = null;
+    let lastSubmitted = input.value.trim();
 
-        rows.forEach(row => {
-            const searchText = row.getAttribute('data-search') || '';
-            if (searchText.includes(query)) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
-            }
-        });
+    const submit = () => {
+        const value = input.value.trim();
+        if (value === lastSubmitted) return;
+        // Évite les requêtes sur 1 caractère (trop de bruit), sauf pour vider la recherche
+        if (value.length === 1) return;
+        lastSubmitted = value;
+        try { sessionStorage.setItem(SERVER_SEARCH_FOCUS_KEY, window.location.pathname); } catch (e) { /* ignore */ }
+        input.form.requestSubmit ? input.form.requestSubmit() : input.form.submit();
+    };
 
-        if (resultCount) resultCount.innerText = visibleCount;
-        if (noResults) noResults.style.display = visibleCount === 0 && rows.length > 0 ? 'block' : 'none';
-        tbody.style.display = visibleCount === 0 && rows.length > 0 ? 'none' : '';
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(submit, SERVER_SEARCH_DEBOUNCE_MS);
+    });
+    input.form.addEventListener('submit', () => {
+        clearTimeout(timer);
+        lastSubmitted = input.value.trim();
     });
 }
 
 function initCentralizedSearch() {
+    const searchInput = document.getElementById('searchInput') || document.getElementById('search-input');
+
+    if (searchInput && searchInput.dataset.searchMode === 'server') {
+        initServerSearch(searchInput);
+        return;
+    }
+
     const searchableRows = document.querySelectorAll('.searchable-row');
     if (searchableRows.length === 0) return;
 
-    const searchInput = document.getElementById('searchInput') || document.getElementById('search-input');
     const resultCount = document.getElementById('result-count') || document.getElementById('visible-count');
     const noResults = document.getElementById('no-results') || document.getElementById('noResultsRow');
 
@@ -65,7 +84,7 @@ function initCentralizedSearch() {
         if (noResults) noResults.style.display = (visibleCount === 0 && searchableRows.length > 0) ? '' : 'none';
     };
 
-    // Gestion du paramètre URL 'q'
+    // Gestion du paramètre URL 'q' (liens profonds vers une liste filtrée)
     const urlParams = new URLSearchParams(window.location.search);
     const qParam = urlParams.get('q');
     if (qParam) {
@@ -111,7 +130,6 @@ function initSortableColumns() {
 }
 
 function initTables() {
-    initCheckoutsListSearch();
     initCentralizedSearch();
     initSortableColumns();
 }

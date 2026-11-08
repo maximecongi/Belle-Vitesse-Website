@@ -210,20 +210,20 @@
             inspectionSelect.disabled = false;
             let insOptions = '<option value="">En cours d\'opération (sur le plateau)</option>';
             if (project.checkouts && project.checkouts.length > 0) {
-                insOptions += '<optgroup label="📋 Contrôles au départ (Check-out)">';
+                insOptions += '<optgroup label="Contrôles au départ">';
                 project.checkouts.forEach(co => {
                     const val = `checkout:${co.id}`;
                     const isSelected = (val === initialAttachedInspection) ? 'selected' : '';
-                    insOptions += `<option value="${val}" ${isSelected}>Check-out ${co.inspection_number} (${co.date || 'Date N/A'})</option>`;
+                    insOptions += `<option value="${val}" ${isSelected}>Départ ${co.inspection_number} (${co.date || 'Date N/A'})</option>`;
                 });
                 insOptions += '</optgroup>';
             }
             if (project.checkins && project.checkins.length > 0) {
-                insOptions += '<optgroup label="📋 Contrôles au retour (Check-in)">';
+                insOptions += '<optgroup label="Contrôles au retour">';
                 project.checkins.forEach(ci => {
                     const val = `checkin:${ci.id}`;
                     const isSelected = (val === initialAttachedInspection) ? 'selected' : '';
-                    insOptions += `<option value="${val}" ${isSelected}>Check-in ${ci.inspection_number} (${ci.date || 'Date N/A'})</option>`;
+                    insOptions += `<option value="${val}" ${isSelected}>Retour ${ci.inspection_number} (${ci.date || 'Date N/A'})</option>`;
                 });
                 insOptions += '</optgroup>';
             }
@@ -548,7 +548,28 @@
     }
     window.updateIncidentImpactPill = updateIncidentImpactPill;
 
+    /**
+     * Liaison des écouteurs (remplace les handlers inline onchange du template).
+     * jQuery est utilisé lorsqu'il est présent afin de capter aussi les événements
+     * déclenchés par les widgets (select2).
+     */
+    function bindIncidentFormEvents() {
+        const on = (el, handler) => {
+            if (!el || el._bvBound) return;
+            el._bvBound = true;
+            if (window.jQuery) window.jQuery(el).on('change', function () { handler(this); });
+            else el.addEventListener('change', function () { handler(this); });
+        };
+        on(document.getElementById('incidentStatusSelect'), el => window.updateIncidentStatusPill && window.updateIncidentStatusPill(el));
+        on(document.getElementById('incidentSeveritySelect'), el => window.updateIncidentSeverityPill && window.updateIncidentSeverityPill(el));
+        on(document.getElementById('incidentImpactSelect'), el => window.updateIncidentImpactPill && window.updateIncidentImpactPill(el));
+        on(document.getElementById('project_id'), el => window.updateProjectEquipment && window.updateProjectEquipment(el.value));
+        on(document.getElementById('photos'), el => window.previewFiles && window.previewFiles(el, el.dataset.previewTarget));
+        on(document.getElementById('documents'), el => window.previewDocs && window.previewDocs(el, el.dataset.previewTarget));
+    }
+
     function initIncidentForm() {
+        bindIncidentFormEvents();
         const dataEl = document.getElementById('incidentFormData');
         if (!dataEl) return;
 

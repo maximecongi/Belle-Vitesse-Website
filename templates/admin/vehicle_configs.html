@@ -1,68 +1,161 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Configuration des Véhicules{% endblock %}
-{% block page_title %}Configuration des Points de Contrôle{% endblock %}
+{% from "admin/macros.html" import back_button, vehicle_avatar %}
+
+{% block title %}Matrice des points de contrôle{% endblock %}
+{% block page_title %}Matrice des points de contrôle{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
-    ← Retour au Parc
-</a>
+{{ back_button(url_for('admin_fleet.admin_fleet_list'), '← Retour à la flotte') }}
 {% endblock %}
 
+{% macro cat_modifier(category) -%}
+{{ 'security' if category == 'Sécurité' else ('equipment' if category == 'Équipements' else 'other') }}
+{%- endmacro %}
+
 {% block content %}
+{% set total_cps = possible_checkpoints|length %}
+
 <!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
 <div class="checkpoint-nav-tabs">
     <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="checkpoint-nav-tab">
-        Points de Contrôle
+        Points de contrôle
+        <span class="badge-pill u-ml-1" data-val="neutral">{{ total_cps }}</span>
     </a>
     <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="checkpoint-nav-tab active">
-        Matrice Flotte
+        Matrice par véhicule
     </a>
 </div>
 
-<div class="admin-card">
-    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span
-            class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
-            title="Voir les protocoles techniques"><i data-lucide="info" class="u-w-1rem u-h-1rem"></i></span></div>
-    <p class="u-text-muted u-mb-4 u-text-sm">
-        Cochez les points de contrôle qui doivent apparaître pour chaque véhicule lors des Checkouts et Checkins.
-    </p>
+<div class="admin-card cp-matrix-card" id="cpMatrix"
+    data-save-url="{{ url_for('admin_api.admin_api_save_vehicle_configs_batch') }}">
+    <!-- En-tête : titre et consigne -->
+    <div class="cp-matrix-intro">
+        <h2 class="cp-matrix-title">
+            Points de contrôle par véhicule
+            <button type="button" class="cp-matrix-info vehicle-modal-trigger" title="Voir les protocoles techniques"
+                aria-label="Voir les protocoles techniques"><i data-lucide="info"></i></button>
+        </h2>
+        <p class="cp-matrix-lead">
+            Cochez les points vérifiés lors des départs et des retours de chaque véhicule.<br>Cliquez sur un en-tête de
+            colonne ou sur « Tout » pour basculer une colonne ou une ligne entière.
+        </p>
+    </div>
 
-    <div class="u-overflow-x-auto">
-        <table class="admin-table">
+    <!-- Barre d'outils : filtre à gauche, légende à droite -->
+    <div class="cp-matrix-toolbar">
+        <input type="search" id="cpMatrixSearch" class="form-input cp-matrix-search"
+            placeholder="Filtrer les véhicules…" autocomplete="off" aria-label="Filtrer les véhicules">
+        <div class="cp-matrix-legend" aria-hidden="true">
+            <span class="cp-matrix-legend-item">
+                <input type="checkbox" checked tabindex="-1" class="cp-matrix-legend-sample"> Vérifié
+            </span>
+            <span class="cp-matrix-legend-item">
+                <input type="checkbox" tabindex="-1" class="cp-matrix-legend-sample"> Non concerné
+            </span>
+            <span class="cp-matrix-legend-item is-dirty">Modifié, non enregistré</span>
+        </div>
+    </div>
+
+    <div class="cp-matrix-scroll">
+        <table class="cp-matrix">
             <thead>
-                <tr>
-                    <th class="u-min-w-150">Véhicule</th>
-                    {% for cp in possible_checkpoints %}
-                    <th class="th-vertical-header">
-                        {{ cp.label }}
+                <tr class="cp-matrix-groups">
+                    <th class="cp-matrix-corner" rowspan="2" scope="col">Véhicule</th>
+                    {% for group in checkpoint_groups %}
+                    <th colspan="{{ group.checkpoints|length }}" scope="colgroup" class="cp-matrix-group is-group-start cp-cat--{{ cat_modifier(group.category) }}">
+                        <span class="checkpoint-category-dot checkpoint-category-dot--{{ cat_modifier(group.category) }}"></span>
+                        {{ group.category }} · {{ group.checkpoints|length }}
                     </th>
                     {% endfor %}
-                    <th>Actions</th>
+                    <th class="cp-matrix-total-head" rowspan="2" scope="col">Total</th>
+                </tr>
+                <tr class="cp-matrix-labels">
+                    {% for group in checkpoint_groups %}
+                    {% for cp in group.checkpoints %}
+                    <th scope="col" class="cp-matrix-col cp-cat--{{ cat_modifier(group.category) }}{% if loop.first %} is-group-start{% endif %}"
+                        data-col-key="{{ cp.key }}">
+                        <button type="button" class="cp-matrix-col-toggle" data-col-key="{{ cp.key }}"
+                            title="{{ cp.label }} — activer / désactiver pour tous les véhicules affichés">
+                            {{ cp.label }}
+                        </button>
+                    </th>
+                    {% endfor %}
+                    {% endfor %}
                 </tr>
             </thead>
+
             <tbody>
                 {% for vehicle in vehicles %}
-                <tr>
-                    <td class="u-text-bold">{{ vehicle.name }}</td>
-
-                    {% for cp in possible_checkpoints %}
-                    <td class="u-text-center">
-                        <input type="checkbox" class="checkpoint-toggle" data-vehicle="{{ vehicle.id }}"
-                            data-key="{{ cp.key }}" {% if vehicle.config[cp.key] %}checked{% endif %}>
+                <tr class="cp-matrix-row" data-vehicle="{{ vehicle.id }}"
+                    data-search="{{ vehicle.name|lower }} {{ (vehicle.unique_id or '')|lower }}">
+                    <th scope="row" class="cp-matrix-vehicle">
+                        <div class="cp-matrix-vehicle-inner">
+                            {{ vehicle_avatar(vehicle.image_url, vehicle.name, 'cp-matrix-thumb') }}
+                            <span class="cp-matrix-vehicle-text">
+                                <span class="cp-matrix-vehicle-name">{{ vehicle.name }}</span>
+                                <span class="cp-matrix-vehicle-id">{{ vehicle.unique_id or '—' }}</span>
+                            </span>
+                            <button type="button" class="cp-matrix-row-toggle" data-row-toggle
+                                title="Activer / désactiver tous les points pour {{ vehicle.name }}">Tout</button>
+                        </div>
+                    </th>
+                    {% for group in checkpoint_groups %}
+                    {% for cp in group.checkpoints %}
+                    <td class="cp-matrix-cell cp-cat--{{ cat_modifier(group.category) }}{% if loop.first %} is-group-start{% endif %}" data-col-key="{{ cp.key }}">
+                        <label class="cp-matrix-check" title="{{ vehicle.name }} — {{ cp.label }}">
+                            <input type="checkbox" class="checkpoint-toggle" data-vehicle="{{ vehicle.id }}"
+                                data-key="{{ cp.key }}" {% if vehicle.config[cp.key] %}checked{% endif %}>
+                            <span class="u-sr-only">{{ cp.label }} pour {{ vehicle.name }}</span>
+                        </label>
                     </td>
                     {% endfor %}
-
-                    <td>
-                        <button class="admin-btn admin-btn-primary admin-btn-sm save-vehicle-btn"
-                            data-vehicle="{{ vehicle.id }}">
-                            Enregistrer
-                        </button>
+                    {% endfor %}
+                    <td class="cp-matrix-total"><strong data-row-count>0</strong>/{{ total_cps }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{{ total_cps + 2 }}" class="u-text-center u-p-4 u-text-muted">
+                        Aucun véhicule dans la flotte.
                     </td>
                 </tr>
                 {% endfor %}
+                <tr class="u-d-none" id="cpMatrixNoResults">
+                    <td colspan="{{ total_cps + 2 }}" class="u-text-center u-p-4 u-text-muted">
+                        Aucun véhicule ne correspond à ce filtre.
+                    </td>
+                </tr>
             </tbody>
+
+            <tfoot>
+                <tr class="cp-matrix-footer">
+                    <th scope="row" class="cp-matrix-footer-label">Véhicules concernés</th>
+                    {% for group in checkpoint_groups %}
+                    {% for cp in group.checkpoints %}
+                    <td class="cp-matrix-col-count cp-cat--{{ cat_modifier(group.category) }}{% if loop.first %} is-group-start{% endif %}"
+                        data-col-key="{{ cp.key }}" data-col-count="{{ cp.key }}">0</td>
+                    {% endfor %}
+                    {% endfor %}
+                    <td></td>
+                </tr>
+            </tfoot>
         </table>
+    </div>
+</div>
+
+<!-- Barre d'enregistrement unique, fixée en bas de l'écran, visible uniquement en présence de modifications -->
+<div class="admin-savebar u-d-none" id="cpMatrixSavebar" role="region" aria-label="Modifications non enregistrées"
+    aria-live="polite">
+    <div class="admin-savebar-title">
+        <span class="admin-savebar-dot"></span>
+        <span id="cpMatrixDirtyLabel">Modifications non enregistrées</span>
+    </div>
+    <div class="admin-savebar-desc">S’appliquent aux prochains départs et retours.</div>
+    <div class="admin-savebar-actions">
+        <button type="button" class="admin-btn admin-btn-secondary" id="cpMatrixCancel">Annuler</button>
+        <button type="button" class="admin-btn admin-btn-primary" id="cpMatrixSave" title="Enregistrer (⌘S / Ctrl+S)">
+            <span>Enregistrer</span>
+        </button>
     </div>
 </div>
 {% endblock %}

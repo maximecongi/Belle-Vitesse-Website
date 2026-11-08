@@ -28,6 +28,7 @@ from services.admin.incidents import (
 )
 from utils.decorators import require_roles
 from utils.entity_resolvers import resolve_incident
+from utils.navigation import redirect_back_or, redirect_keep_return
 
 
 
@@ -110,7 +111,7 @@ def admin_incident_detail_by_code(incident_code):
     inc = resolve_incident(incident_code)
     if not inc or inc.deleted_at is not None:
         abort(404)
-    return redirect(url_for("admin_incidents.admin_incident_detail", record_id=inc.id))
+    return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=inc.id)
 
 @incidents_bp.route("/incidents/new", methods=["GET", "POST"])
 @require_roles("administrator", "manager", "user")
@@ -130,7 +131,7 @@ def admin_incident_new():
                 uploaded_documents=documents,
             )
             flash(f"✅ Incident {incident.incident_number} déclaré avec succès.", "success")
-            return redirect(url_for("admin_incidents.admin_incident_detail", record_id=incident.id))
+            return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=incident.id)
         except Exception as e:
             from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création d'incident : {e}")
@@ -193,7 +194,7 @@ def admin_incident_edit(record_id):
                 removed_photos=removed_photos,
             )
             flash(f"✅ Incident {incident.incident_number} mis à jour.", "success")
-            return redirect(url_for("admin_incidents.admin_incident_detail", record_id=incident.id))
+            return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=incident.id)
         except Exception as e:
             from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la mise à jour d'incident : {e}")
@@ -250,7 +251,7 @@ def admin_incident_status(record_id):
             return jsonify({"success": False, "error": friendly_msg}), 400
         flash(friendly_msg, "error")
 
-    return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
+    return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=record_id)
 
 @incidents_bp.route("/incidents/<int:record_id>/delete", methods=["POST"])
 @require_roles("administrator", "manager")
@@ -266,7 +267,7 @@ def admin_incident_delete(record_id):
         current_app.logger.error(f"❌ Erreur suppression incident : {e}")
         flash(format_user_friendly_error(e, "Erreur lors de la suppression de l'incident."), "error")
 
-    return redirect(url_for("admin_incidents.admin_incidents_list"))
+    return redirect_back_or("admin_incidents.admin_incidents_list")
 
 @incidents_bp.route("/incidents/<int:record_id>/pdf")
 @require_roles("administrator", "manager", "user")
@@ -284,7 +285,7 @@ def admin_incident_pdf(record_id):
     except Exception as e:
         current_app.logger.error(f"❌ Erreur génération PDF incident : {e}")
         flash(f"Erreur lors de la génération du PDF : {e}", "error")
-        return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
+        return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=record_id)
 
 @incidents_bp.route("/incidents/<int:record_id>/sign/bv", methods=["POST"])
 @require_roles("administrator", "manager", "user")
@@ -313,7 +314,7 @@ def admin_incident_sign_bv(record_id):
         current_app.logger.error(f"❌ Erreur visa Belle Vitesse : {e}")
         flash(f"Erreur lors de l'enregistrement du visa : {e}", "error")
 
-    return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
+    return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=record_id)
 
 @incidents_bp.route("/incidents/<int:record_id>/sign/prod", methods=["POST"])
 @require_roles("administrator", "manager", "user")
@@ -336,7 +337,7 @@ def admin_incident_sign_prod(record_id):
         current_app.logger.error(f"❌ Erreur signature Production : {e}")
         flash(f"Erreur lors de la signature : {e}", "error")
 
-    return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
+    return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=record_id)
 
 @incidents_bp.route("/incidents/<int:record_id>/send-token", methods=["POST"])
 @require_roles("administrator", "manager", "user")
@@ -352,7 +353,7 @@ def admin_incident_send_token(record_id):
         current_app.logger.error(f"❌ Erreur envoi jeton signature incident : {e}")
         flash(f"Erreur lors de la génération du lien : {e}", "error")
 
-    return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
+    return redirect_keep_return("admin_incidents.admin_incident_detail", record_id=record_id)
 
 def init_incidents_routes(app):
     """Enregistre le blueprint admin_incidents (compatibilité ascendante)."""

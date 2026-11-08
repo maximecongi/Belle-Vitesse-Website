@@ -92,10 +92,20 @@ def admin_api_checkin_status(record_id):
 def admin_vehicle_configs():
     try:
         vehicles = get_vehicles_with_config()
+        checkpoints = get_all_checkpoints()
+
+        # Regroupement par catégorie en conservant l'ordre métier (Sécurité, Équipements, autres)
+        checkpoint_groups = []
+        for cp in checkpoints:
+            if not checkpoint_groups or checkpoint_groups[-1]["category"] != cp["category"]:
+                checkpoint_groups.append({"category": cp["category"], "checkpoints": []})
+            checkpoint_groups[-1]["checkpoints"].append(cp)
+
         return render_template(
             "admin/vehicle_configs.html",
             vehicles=vehicles,
-            possible_checkpoints=get_all_checkpoints()
+            possible_checkpoints=checkpoints,
+            checkpoint_groups=checkpoint_groups,
         )
     except Exception as e:
         current_app.logger.error(
@@ -122,6 +132,30 @@ def admin_api_save_vehicle_config():
         current_app.logger.error(
             f"❌ Erreur dans admin_api_save_vehicle_config : {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route("/api/vehicle-configs/batch", methods=["POST"])
+@require_roles('administrator')
+def admin_api_save_vehicle_configs_batch():
+    """Enregistre en une fois les lignes modifiées de la matrice points de contrôle × véhicules."""
+    from services.admin.vehicle_config import save_vehicle_checkpoint_configs
+
+    data = request.get_json(silent=True) or {}
+    configs = data.get("configs")
+    if not isinstance(configs, dict) or not configs:
+        return jsonify({"success": False, "error": "Aucune modification à enregistrer."}), 400
+    if not all(
+        isinstance(vid, str) and vid and isinstance(keys, list) and all(isinstance(k, str) for k in keys)
+        for vid, keys in configs.items()
+    ):
+        return jsonify({"success": False, "error": "Format de configuration invalide."}), 400
+
+    try:
+        count = save_vehicle_checkpoint_configs(configs)
+        return jsonify({"success": True, "updated": count})
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur dans admin_api_save_vehicle_configs_batch : {e}")
+        return jsonify({"success": False, "error": "Erreur lors de l'enregistrement de la matrice."}), 500
 
 
 @api_bp.route("/api/search")

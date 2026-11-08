@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+{% set can_edit_pricing = can('pricing_edit') %}
 
 <!-- ══════════════════════════════════════════════════════════ -->
 <!-- TAB : Équipement                                          -->
@@ -29,19 +30,19 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        {% if current_user.is_admin %}<th class="u-w-30px"></th>{% endif %}
+                        {% if can_edit_pricing %}<th class="u-w-30px"></th>{% endif %}
                         <th>Item</th>
                         <th class="u-w-140px u-text-right">Tarif journalier HT</th>
                     </tr>
                 </thead>
                 <tbody class="equipment-drop-zone" data-table="{{ cat_data.table }}">
                     {% for item in cat_data['items'] %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {% endif %}>
-                        {% if current_user.is_admin %}
+                    <tr data-row-id="{{ item.id }}" {% if can_edit_pricing %}draggable="true" {% endif %}>
+                        {% if can_edit_pricing %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
                         <td class="u-text-semibold">{{ item.name }}</td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                        <td class="{% if can_edit_pricing %}editable-cell{% endif %} u-text-right"
                             data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
                             data-field="daily_rate">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }} €</span>
@@ -69,8 +70,8 @@
     <div class="admin-card-header u-mb-2">
         <h3 class="pricing-section-title u-m-0">Grille des salaires</h3>
         <div class="u-flex u-align-center u-gap-0.75rem">
-            <button class="admin-btn admin-btn-secondary" id="btnExportPDF">📄 Exporter PDF</button>
-            {% if current_user.is_admin %}
+            <button class="admin-btn admin-btn-secondary" id="btnExportPDF"><i data-lucide="file-down"></i> Exporter PDF</button>
+            {% if can_edit_pricing %}
             <button class="admin-btn admin-btn-primary" id="btnAddGroup">+ Nouveau groupe</button>
             {% endif %}
         </div>
@@ -100,12 +101,12 @@
         <div class="salary-group" data-group-name="{{ group_name }}">
             <div class="salary-group-header">
                 <div class="u-flex u-align-center u-gap-1">
-                    <span class="salary-group-title {% if current_user.is_admin %}editable-group-title{% endif %}"
-                        title="{% if current_user.is_admin %}Cliquez pour renommer{% endif %}">{{
+                    <span class="salary-group-title {% if can_edit_pricing %}editable-group-title{% endif %}"
+                        title="{% if can_edit_pricing %}Cliquez pour renommer{% endif %}">{{
                         group_name }}</span>
                     <span class="salary-group-count">{{ rates | length }}</span>
                 </div>
-                {% if current_user.is_admin %}
+                {% if can_edit_pricing %}
                 <div class="u-flex u-align-center u-gap-1">
                     <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-salary-line"
                         data-group="{{ group_name }}">+ Nouvelle position</button>
@@ -118,7 +119,7 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            {% if current_user.is_admin %}<th class="u-w-30px"></th>{% endif %}
+                            {% if can_edit_pricing %}<th class="u-w-30px"></th>{% endif %}
                             <th>Position</th>
                             <th class="u-w-80px u-text-right">Base/H</th>
                             <th class="u-w-100px u-text-right">8h</th>
@@ -129,12 +130,12 @@
                     <tbody class="salary-drop-zone" data-group="{{ group_name }}">
                         {% for rate in rates %}
                         <tr data-row-id="{{ rate.id }}" data-position-id="{{ rate.position_id }}"
-                            data-annexe="{{ rate.annexe or 'Annexe 1' }}" {% if current_user.is_admin %}draggable="true"
+                            data-annexe="{{ rate.annexe or 'Annexe 1' }}" {% if can_edit_pricing %}draggable="true"
                             {% endif %}>
-                            {% if current_user.is_admin %}
+                            {% if can_edit_pricing %}
                             <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                             {% endif %}
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}"
+                            <td class="{% if can_edit_pricing %}editable-cell{% endif %}" data-id="{{ rate.id }}"
                                 data-field="position" data-type="salary">
                                 <span class="cell-value u-text-semibold">{{ rate.position }}</span>
                             </td>
@@ -145,7 +146,7 @@
                                     €</span>
                             </td>
                             {% else %}
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                            <td class="{% if can_edit_pricing %}editable-cell{% endif %} u-text-right"
                                 data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary">
                                 <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}
                                     €</span>
@@ -167,7 +168,7 @@
                             </td>
 
                             <td class="u-text-center">
-                                {% if current_user.is_admin %}
+                                {% if can_edit_pricing %}
                                 <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line"
                                     data-id="{{ rate.id }}" data-type="salary">Supprimer</button>
                                 {% endif %}
@@ -196,7 +197,7 @@
                 <span class="salary-group-title">Frais logistiques</span>
                 <span class="salary-group-count">{{ logistics | length }}</span>
             </div>
-            {% if current_user.is_admin %}
+            {% if can_edit_pricing %}
             <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-line" data-type="logistics">+ Nouvelle
                 ligne</button>
             {% endif %}
@@ -205,7 +206,7 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        {% if current_user.is_admin %}<th class="u-w-30px"></th>{% endif %}
+                        {% if can_edit_pricing %}<th class="u-w-30px"></th>{% endif %}
                         <th>Désignation</th>
                         <th class="u-w-140px u-text-right">Tarif HT</th>
                         <th>Notes</th>
@@ -214,24 +215,24 @@
                 </thead>
                 <tbody id="logistics-tbody" class="logistics-drop-zone">
                     {% for item in logistics %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {% endif %}>
-                        {% if current_user.is_admin %}
+                    <tr data-row-id="{{ item.id }}" {% if can_edit_pricing %}draggable="true" {% endif %}>
+                        {% if can_edit_pricing %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                        <td class="{% if can_edit_pricing %}editable-cell{% endif %}" data-id="{{ item.id }}"
                             data-field="item_name" data-type="logistics">
                             <span class="cell-value u-text-semibold">{{ item.item_name }}</span>
                         </td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                        <td class="{% if can_edit_pricing %}editable-cell{% endif %} u-text-right"
                             data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
                         </td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                        <td class="{% if can_edit_pricing %}editable-cell{% endif %}" data-id="{{ item.id }}"
                             data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
                         </td>
                         <td class="u-text-center">
-                            {% if current_user.is_admin %}
+                            {% if can_edit_pricing %}
                             <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line"
                                 data-id="{{ item.id }}" data-type="logistics">Supprimer</button>
                             {% endif %}
@@ -247,7 +248,7 @@
 <script id="pricingConfigData" type="application/json">
 {
     "csrfToken": "{{ csrf_token() }}",
-    "isAdmin": {{ 'true' if current_user.is_admin else 'false' }},
+    "isAdmin": {{ 'true' if can_edit_pricing else 'false' }},
     "invoiceFactor": {{ invoice_factor }}
 }
 </script>

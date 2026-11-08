@@ -197,7 +197,7 @@
 
 .bv-btn-danger:hover {
     background: #f8b4b4 !important;
-    color: #991b1b !important;
+    color: var(--status-danger-text) !important;
 }
 
 /* Nuancier */
@@ -226,7 +226,7 @@
 }
 
 .bv-swatch[data-color="#F59E0B"] {
-    background-color: #F59E0B;
+    background-color: var(--status-warning);
 }
 
 .bv-swatch[data-color="#FFC845"] {
@@ -568,9 +568,9 @@
 }
 
 .annotator-edit-badge.is-annotated {
-    background: #DCFCE7;
+    background: var(--status-success-bg);
     border-color: #86EFAC;
-    color: #14532D;
+    color: var(--status-success-text);
 }
 
 .annotator-edit-badge.is-annotated:hover {

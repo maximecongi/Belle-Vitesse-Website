@@ -186,6 +186,16 @@ async function updatePhotoLabel(input) {
 }
 window.updatePhotoLabel = updatePhotoLabel;
 
+// Libellé des champs photo des contrôles (remplace onchange="updatePhotoLabel(this)")
+if (!window._photoLabelDelegation) {
+    window._photoLabelDelegation = true;
+    document.addEventListener('change', e => {
+        if (e.target.matches && e.target.matches('input[type="file"][data-photo-label]')) {
+            updatePhotoLabel(e.target);
+        }
+    });
+}
+
 /**
  * Initialise les boutons de suppression pour les photos existantes (mode édition).
  */
@@ -418,9 +428,9 @@ function initInspectionDetail() {
 
     if (sealBtn && recordId && !sealBtn.dataset.bound) {
         sealBtn.dataset.bound = 'true';
-        sealBtn.addEventListener('click', function () {
-            const label = inspectionType === 'checkouts' ? 'checkout' : 'checkin';
-            if (!confirm(`Êtes-vous sûr de vouloir sceller ce ${label} ? Cette action est irréversible.`)) return;
+        sealBtn.addEventListener('click', async function () {
+            const label = inspectionType === 'checkouts' ? 'départ' : 'retour';
+            if (!(await window.adminConfirm(`Sceller ce ${label} ? Le document sera figé et ne pourra plus être modifié.`, { label: 'Sceller', variant: 'primary' }))) return;
 
             sealBtn.disabled = true;
             sealBtn.classList.add('btn-disabled');

@@ -299,15 +299,15 @@
 }
 
 .admin-cmdk-chip-dot--project {
-    background: #f59e0b;
+    background: var(--entity-project);
 }
 
 .admin-cmdk-chip-dot--inspection {
-    background: #3b82f6;
+    background: var(--status-info);
 }
 
 .admin-cmdk-chip-dot--waiver {
-    background: #8b5cf6;
+    background: var(--entity-waiver);
 }
 
 .admin-cmdk-chip-dot--vehicle {
@@ -319,7 +319,7 @@
 }
 
 .admin-cmdk-chip-dot--incident {
-    background: #ef4444;
+    background: var(--entity-incident);
 }
 
 .admin-cmdk-chip-kbd {
@@ -333,7 +333,7 @@
 
 .admin-cmdk-scope-chip.is-active .admin-cmdk-chip-kbd {
     border-color: rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
+    color: var(--status-warning);
 }
 
 /* Results List */
@@ -399,7 +399,7 @@
 }
 
 .admin-cmdk-clear-history:hover {
-    color: #ef4444;
+    color: var(--status-danger);
     background: rgba(239, 68, 68, 0.1);
 }
 
@@ -451,7 +451,7 @@
 
 .admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="project"] {
     background: rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    color: var(--status-warning);
 }
 
 .admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="checkout"] {
@@ -616,7 +616,7 @@
 }
 
 .admin-active-filter-bar strong {
-    color: #f59e0b;
+    color: var(--status-warning);
 }
 
 .admin-btn-clear-filter {

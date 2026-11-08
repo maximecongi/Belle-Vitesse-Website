@@ -890,9 +890,9 @@
         }
 
         // ── Suppression ──
-        function deleteActiveRisk() {
+        async function deleteActiveRisk() {
             if (!activeRiskId) return;
-            if (!window.confirm('Supprimer ce risque le retire de tous les futurs protocoles. Êtes-vous sûr de vouloir continuer ?')) return;
+            if (!(await window.adminConfirm('Supprimer ce risque ? Il sera retiré de tous les futurs protocoles.', { label: 'Supprimer le risque' }))) return;
 
             const removeLocally = function () {
                 const idx = risksList.findIndex(function (r) { return r.id === activeRiskId; });

@@ -97,7 +97,7 @@
 {% if request.args.get('q') %}
 <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
     <h2 class="admin-section-title u-m-0">
-        🔍 {{ label }} : « {{ request.args.get('q') }} »{% if count is not none %} ({{ count }}){% endif %}
+        <i data-lucide="search"></i> {{ label }} : « {{ request.args.get('q') }} »{% if count is not none %} ({{ count }}){% endif %}
     </h2>
     <a href="{{ clear_url or request.path }}" class="admin-btn admin-btn-sm admin-btn-secondary">
         ✕ Effacer le filtre
@@ -244,14 +244,14 @@ endif %}
 {% set placeholder = url_for('static', filename='imgs/placeholders/vehicle.svg') %}
 {% set src_val = image_url if image_url else placeholder %}
 <img src="{{ src_val }}" alt="{{ name }}" class="{{ class }}"
-    onerror="this.onerror=null; this.src='{{ placeholder }}'; this.classList.add('vehicle-avatar-fallback');">
+    data-fallback-src="{{ placeholder }}" loading="lazy">
 {% endmacro %}
 
 {% macro head_avatar(image_url, name, class="") %}
 {% set placeholder = url_for('static', filename='imgs/placeholders/head.svg') %}
 {% set src_val = image_url if image_url else placeholder %}
 <img src="{{ src_val }}" alt="{{ name }}" class="{{ class }}"
-    onerror="this.onerror=null; this.src='{{ placeholder }}'; this.classList.add('vehicle-avatar-fallback');">
+    data-fallback-src="{{ placeholder }}" loading="lazy">
 {% endmacro %}
 
 
@@ -359,13 +359,34 @@ admin-multiselect-tag--custom
 {% endif %}
 {% endmacro %}
 
-{% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false) %}
-<form method="GET" action="" class="u-m-0">
-    <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}"
-        value="{{ request.args.get('q', '') }}" autocomplete="off">
+{#
+  En-tête standard des pages de liste.
+  - mode='server' : recherche côté serveur (listes paginées / filtrées en base). La saisie
+    déclenche une soumission différée (debounce) qui interroge toute la base.
+  - mode='client' : filtrage instantané des lignes affichées (petites listes chargées en entier).
+  - hidden : paramètres GET à conserver lors de la recherche (filtres actifs).
+  - from_project_url : pour les documents créés depuis la fiche projet (pas de création directe).
+#}
+{% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false, mode='server', hidden=None, from_project_url=None) %}
+{% if mode == 'server' %}
+<form method="GET" action="" class="u-m-0" role="search">
+    {% for key, value in (hidden or {}).items() if value %}
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
+    {% endfor %}
+    <input type="search" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}"
+        value="{{ request.args.get('q', '') }}" autocomplete="off" data-search-mode="server">
 </form>
+{% else %}
+<input type="search" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}" autocomplete="off"
+    data-search-mode="client">
+{% endif %}
 {% if new_url and not is_archive %}
 <a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
+{% elif from_project_url %}
+<a href="{{ from_project_url }}" class="admin-btn admin-btn-secondary"
+    title="Ces documents se créent et s'envoient depuis la fiche d'un projet">
+    <i data-lucide="clapperboard"></i> Créer depuis un projet
+</a>
 {% endif %}
 {% endmacro %}
 
@@ -528,9 +549,41 @@ admin-multiselect-tag--custom
     <div class="admin-banner-actions">
         {% if actions %}{{ actions }}{% endif %}
         {% if dismissible %}
-        <button type="button" class="admin-banner-close" aria-label="Fermer" onclick="this.closest('.admin-banner').remove()">&times;</button>
+        <button type="button" class="admin-banner-close" aria-label="Fermer" data-dismiss="banner">&times;</button>
         {% endif %}
     </div>
     {% endif %}
 </div>
+{% endmacro %}
+{#
+  Zone de danger : emplacement unique des suppressions, en bas des fiches (détail ou édition).
+  La confirmation passe par la modale commune (data-confirm → confirm-dialog.js).
+#}
+{% macro danger_zone(action, confirm, label='Supprimer', title='Zone de danger', desc='La suppression est définitive et ne peut pas être annulée.') %}
+<section class="admin-danger-zone" aria-label="{{ title }}">
+    <div>
+        <p class="admin-danger-zone-title">{{ title }}</p>
+        <p class="admin-danger-zone-desc">{{ desc }}</p>
+    </div>
+    <form action="{{ action }}" method="POST" class="u-m-0" data-confirm="{{ confirm }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% set rt = get_return_to() %}{% if rt %}<input type="hidden" name="return_to" value="{{ rt }}">{% endif %}
+        <button type="submit" class="admin-btn admin-btn-danger"><i data-lucide="trash-2"></i> {{ label }}</button>
+    </form>
+</section>
+{% endmacro %}
+
+{#
+  Bouton retour contextuel : revient à la page d'origine (paramètre return_to validé),
+  sinon à la liste par défaut.
+#}
+{% macro back_button(default_url, default_label='← Retour à la liste') %}
+{% set rt = get_return_to() %}
+<a href="{{ rt or default_url }}" class="admin-btn admin-btn-secondary">{{ back_label(rt, default_label) }}</a>
+{% endmacro %}
+
+{# Champ caché propageant le contexte de retour dans un formulaire POST. #}
+{% macro return_to_field() %}
+{% set rt = get_return_to() %}
+{% if rt %}<input type="hidden" name="return_to" value="{{ rt }}">{% endif %}
 {% endmacro %}

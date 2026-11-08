@@ -1,17 +1,16 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}
-{% if is_edit %}Modifier le Checkin{% else %}Nouveau Checkin{% endif %}
-{% endblock %}
+{% from "admin/macros.html" import return_to_field %}
 
-{% block page_title %}
-{% if is_edit %}Modifier le Checkin{% else %}Nouveau Checkin{% endif %}
-{% endblock %}
+{% block title %}{% if is_edit %}Modifier le retour{% else %}Nouveau retour{% endif %}{% endblock %}
+
+{% block page_title %}{% if is_edit %}Modifier le retour{% else %}Nouveau retour{% endif %}{% endblock %}
 
 {% block content %}
 <div class="admin-card">
     <form method="POST" enctype="multipart/form-data" novalidate id="inspectionForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        {{ return_to_field() }}
 
         <div class="admin-card-title">Informations de base</div>
 
@@ -62,10 +61,10 @@
                                         }}</span>
                                     {% endif %}
                                     {% if pf.get('Date de retour') %}
-                                    <span class="rich-meta-item">🚚 {{ pf.get('Date de retour', '') }}</span>
+                                    <span class="rich-meta-item"><i data-lucide="package-check"></i> {{ pf.get('Date de retour', '') }}</span>
                                     {% endif %}
                                     {% if pf.get('Date de début de tournage') %}
-                                    <span class="rich-meta-item">🎬 {{ pf.get('Date de début de tournage', '') }}{% if
+                                    <span class="rich-meta-item"><i data-lucide="clapperboard"></i> {{ pf.get('Date de début de tournage', '') }}{% if
                                         pf.get('Date de fin de tournage') %} → {{ pf.get('Date de fin de tournage', '')
                                         }}{% endif %}</span>
                                     {% endif %}
@@ -82,7 +81,7 @@
                 <label class="form-label u-flex u-align-center u-justify-between">
                     <span>Véhicule <span class="u-text-error">*</span></span>
                     <button type="button" class="admin-btn admin-btn-secondary admin-btn-quick-add" id="lookupVehicles">
-                        🔍 protocoles freins et pneus
+                        <i data-lucide="search"></i> protocoles freins et pneus
                     </button>
                 </label>
                 {% if is_edit %}
@@ -186,7 +185,7 @@
                 <div class="form-input form-input-readonly u-text-muted">
                     {{ data.controller.name if data and data.controller else '—' }}
                 </div>
-                {% elif not current_user.is_admin %}
+                {% elif not can('inspection_assign_controller') %}
                 <!-- Auto-select for non-admin users -->
                 <input type="text" name="controller_id"
                     value="{{ data.controller_id if (data and data.controller_id) else (data.controller.id if (data and data.controller and data.controller.id) else session.get('admin_user_id', '')) }}"
@@ -354,18 +353,17 @@
                     <div class="u-text-semibold u-text-sm">Ajouter des photos</div>
                     <div class="u-text-xs u-text-muted">Cliquez ou glissez-déposez • JPG, PNG</div>
                 </div>
-                <input type="file" name="{{ field_name }}" multiple accept="image/*" class="u-file-input-hidden"
-                    onchange="updatePhotoLabel(this)">
+                <input type="file" name="{{ field_name }}" multiple accept="image/*" class="u-file-input-hidden" data-photo-label>
             </label>
             <div class="photo-preview u-flex u-flex-wrap u-gap-1 u-mt-1" data-for="{{ field_name }}"></div>
         </div>
         {% endfor %}
 
         <div class="u-mt-4 u-text-right">
-            <a href="{{ url_for('admin_checkins.admin_checkins_list') }}"
+            <a href="{{ url_keep_return('admin_checkins.admin_checkin_detail', record_id=request.view_args.get('record_id')) if is_edit else (get_return_to() or url_for('admin_checkins.admin_checkins_list')) }}"
                 class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
-                {% if is_edit %}Enregistrer les modifications{% else %}Créer le Checkin{% endif %}
+                {% if is_edit %}Enregistrer les modifications{% else %}Créer le retour{% endif %}
             </button>
         </div>
 

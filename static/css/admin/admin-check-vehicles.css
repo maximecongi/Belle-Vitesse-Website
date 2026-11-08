@@ -268,6 +268,7 @@ tr.data-row:hover td {
     background: var(--surface);
     border: 1px solid var(--border);
     border-left: 4px solid var(--yellow);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding: 50px;
     position: relative;
 }
@@ -347,6 +348,7 @@ tr.data-row:hover td {
     padding: 15px 20px;
     background: rgba(195, 47, 39, 0.1);
     border-left: 3px solid var(--red);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     font-size: 13px;
     font-weight: 600;
     color: #EFA8A8;

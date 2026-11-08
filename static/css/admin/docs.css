@@ -105,6 +105,7 @@ h1 {
 h2 {
     font-size: 1.8rem;
     border-left: 6px solid var(--bv-yellow);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding-left: 1rem;
 }
 
@@ -157,10 +158,12 @@ code {
     margin: 1.5rem 0;
     background-color: var(--bv-gray-100);
     border-left: 5px solid var(--bv-gray-300);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .callout-important {
     border-left-color: var(--bv-yellow);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     background-color: #fffdf0;
 }
 

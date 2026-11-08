@@ -57,7 +57,7 @@ class CommercialWaiversAccessTest(BaseTestCase):
 
         response = self.client.get("/admin/cgl")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Conditions G", response.data)
+        self.assertIn(b"Conditions g", response.data)
 
     def test_commercial_can_access_cgl_new(self):
         """Vérifie que le rôle commercial peut afficher le formulaire de création des CGL."""
@@ -90,7 +90,7 @@ class CommercialWaiversAccessTest(BaseTestCase):
 
         response = self.client.get("/admin/safety-rules")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9", response.data)
+        self.assertIn("Règles de sécurité (BVSR)".encode("utf-8"), response.data)
 
     def test_commercial_can_quick_create_cgl(self):
         """Vérifie que le rôle commercial peut créer des CGL en un clic."""

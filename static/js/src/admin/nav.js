@@ -41,7 +41,19 @@ function updateActiveNavLink() {
 
     if (bestMatch) {
         bestMatch.classList.add('active');
+        // Ouvre le groupe contenant la page active pour que l'utilisateur sache où il se trouve
+        const parentGroup = bestMatch.closest('.admin-nav-group');
+        if (parentGroup) parentGroup.classList.add('open');
     }
+}
+
+// Soumission automatique des formulaires portant un champ [data-autosubmit] (remplace les onchange inline)
+if (!window._adminAutosubmitAttached) {
+    window._adminAutosubmitAttached = true;
+    document.addEventListener('change', e => {
+        const field = e.target.closest('[data-autosubmit]');
+        if (field && field.form) field.form.submit();
+    });
 }
 
 // Global click listener pour sidebar triggers et fermeture dropdowns/tooltips
@@ -148,7 +160,31 @@ function initSidebarDrawer() {
     }, { passive: true });
 }
 
+// Propage le contexte de retour (?return_to=) aux formulaires POST ciblant la fiche courante,
+// afin que les actions (statut, scellement, signature…) ne fassent pas perdre la page d'origine.
+function propagateReturnTo() {
+    const returnTo = new URLSearchParams(window.location.search).get('return_to');
+    if (!returnTo || !returnTo.startsWith('/admin')) return;
+    const basePath = window.location.pathname.replace(/\/edit$/, '');
+    document.querySelectorAll('form[method="POST"], form[method="post"]').forEach(form => {
+        if (form.querySelector('input[name="return_to"]')) return;
+        let actionPath;
+        try {
+            actionPath = new URL(form.getAttribute('action') || window.location.href, window.location.href).pathname;
+        } catch (e) {
+            return;
+        }
+        if (!actionPath.startsWith(basePath)) return;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'return_to';
+        input.value = returnTo;
+        form.appendChild(input);
+    });
+}
+
 function initNav() {
+    propagateReturnTo();
     restoreNavState();
     updateActiveNavLink();
     initSidebarDrawer();

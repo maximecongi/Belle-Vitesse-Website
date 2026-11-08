@@ -14,18 +14,26 @@
 
 .fleet-kpi-card--grey {
     border-left: 3px solid var(--status-neutral, #64748b) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .fleet-kpi-card--green {
     border-left: 3px solid var(--status-success, #15803D) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .fleet-kpi-card--orange {
     border-left: 3px solid var(--entity-project, #f59e0b) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .fleet-kpi-card--red {
     border-left: 3px solid var(--entity-incident, #ef4444) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .fleet-kpi-value--orange {
@@ -121,7 +129,9 @@
 
 .fleet-project-alert {
     background: rgba(59, 130, 246, 0.08) !important;
-    border-left: 3px solid #3b82f6 !important;
+    border-left: 3px solid var(--status-info) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .fleet-metrics-grid {
@@ -138,27 +148,37 @@
 .timeline-event-card {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     border-left: 4px solid var(--status-neutral, #cbd5e1);
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .timeline-event-card[data-type="checkout"],
 .timeline-event-card--checkout {
     border-left: 4px solid var(--entity-checkout, #15803D) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .timeline-event-card[data-type="checkin"],
 .timeline-event-card--checkin {
     border-left: 4px solid var(--entity-checkin, #3b82f6) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .timeline-event-card[data-type="project"],
 .timeline-event-card[data-type="project_mission"],
 .timeline-event-card--project {
     border-left: 4px solid var(--entity-project, #f59e0b) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .timeline-event-card[data-type="incident"],
 .timeline-event-card--incident {
     border-left: 4px solid var(--entity-incident, #ef4444) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .mission-sub-item .timeline-event-card {
@@ -167,20 +187,28 @@
 
 .vehicle-timeline-header {
     border-left: 5px solid var(--status-success, #15803D);
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .vehicle-timeline-header[data-status="incident"] {
     border-left-color: var(--entity-incident, #EF4444) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .vehicle-timeline-header[data-status="tournage"],
 .vehicle-timeline-header[data-status="in_progress"] {
     border-left-color: var(--entity-project, #F59E0B) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .vehicle-timeline-header[data-status="available"],
 .vehicle-timeline-header[data-status="disponible"] {
     border-left-color: var(--status-success, #15803D) !important;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .timeline-vehicle-meta {
@@ -286,7 +314,7 @@
 }
 
 .timeline-dot--in_progress {
-    background: #F59E0B !important;
+    background: var(--status-warning) !important;
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.45) !important;
 }
 
@@ -445,8 +473,8 @@
 }
 
 .checkpoint-cat--securite {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
 }
 
 .checkpoint-cat--equipements {
@@ -504,7 +532,7 @@
 
 .checkpoint-v-tag--spec:hover,
 .checkpoint-tooltip-container.open .checkpoint-v-tag--spec {
-    background: #fef3c7;
+    background: var(--status-warning-bg);
     border-color: var(--admin-accent, #FFC845);
     box-shadow: 0 1px 4px rgba(255, 200, 69, 0.3);
 }
@@ -579,8 +607,9 @@
     background: #f8f9fa;
     border: 1px solid var(--white-3, #e9ecef);
     border-left: 4px solid var(--admin-accent, #FFC845);
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     padding: 0.85rem 1rem;
-    border-radius: 4px;
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--grey-1, #151515);
@@ -883,4 +912,425 @@
     height: 180px;
     display: block;
     margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATRICE POINTS DE CONTRÔLE × VÉHICULES (vehicle_configs.html)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.checkpoint-category-dot--other {
+    background-color: var(--status-neutral);
+}
+
+.cp-matrix-intro {
+    margin-bottom: 1.5rem;
+}
+
+.cp-matrix-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 0.6rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--grey-1);
+}
+
+/* Bouton protocoles : l'icône Lucide « info » porte déjà son cercle, pas de bordure en plus */
+.cp-matrix-info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--status-info);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.cp-matrix-info:hover {
+    transform: scale(1.1);
+}
+
+.cp-matrix-info .lucide {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2;
+}
+
+.cp-matrix-lead {
+    margin: 0;
+    max-width: 760px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--grey-2);
+}
+
+/* Barre d'outils : filtre à gauche, légende à droite */
+.cp-matrix-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.cp-matrix-search {
+    width: 280px;
+    max-width: 100%;
+}
+
+.cp-matrix-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--grey-2);
+}
+
+.cp-matrix-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+/* Échantillons de légende : même rendu que les cases du tableau ERP */
+.cp-matrix-legend-sample {
+    pointer-events: none;
+    border-radius: 5px;
+    margin: 0;
+}
+
+/* ── Tableau ── */
+.cp-matrix-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--white-3);
+}
+
+.cp-matrix {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 0.85rem;
+}
+
+.cp-matrix th,
+.cp-matrix td {
+    background: var(--white-1);
+    border-bottom: 1px solid var(--white-3);
+}
+
+/* Séparateur vertical avant la colonne Total */
+.cp-matrix-total-head,
+.cp-matrix-total {
+    border-left: 1px solid var(--white-3);
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
+}
+
+.cp-matrix-corner,
+.cp-matrix-vehicle,
+.cp-matrix-footer-label {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    border-right: 1px solid var(--white-3);
+    text-align: left;
+}
+
+.cp-matrix-corner,
+.cp-matrix-total-head {
+    vertical-align: bottom;
+    padding: 0 1rem 0.9rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+}
+
+.cp-matrix-corner {
+    min-width: 230px;
+    z-index: 3;
+}
+
+.cp-matrix-total-head {
+    text-align: center;
+    min-width: 110px;
+}
+
+/* En-têtes de groupe : pastille + catégorie + nombre de points */
+.cp-matrix-group {
+    height: 32px;
+    padding: 0 0.75rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-1);
+    white-space: nowrap;
+}
+
+.cp-matrix-group .checkpoint-category-dot {
+    width: 7px;
+    height: 7px;
+    margin-right: 0.4rem;
+    vertical-align: 1px;
+}
+
+/* Libellés de colonnes verticaux (cliquables : bascule de toute la colonne) */
+.cp-matrix-labels th {
+    height: 235px;
+    background-color: transparent;
+}
+
+.cp-matrix-col {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    vertical-align: bottom;
+}
+
+.cp-matrix-col-toggle {
+    display: block;
+    margin: 0 auto;
+    padding: 0.6rem 0.2rem;
+    max-height: 225px;
+    background: none;
+    border: none;
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--grey-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    margin-bottom: 0.25rem;
+}
+
+.cp-matrix-col-toggle:hover,
+.cp-matrix-col-toggle:focus-visible {
+    text-decoration: underline;
+    text-decoration-color: var(--admin-accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    outline: none;
+}
+
+/* Colonne Véhicule : vignette, nom, identifiant, bascule de ligne */
+.cp-matrix-vehicle {
+    padding: 0.55rem 0.75rem 0.55rem 1rem;
+    font-weight: 400;
+}
+
+.cp-matrix-vehicle-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.cp-matrix-thumb {
+    width: 36px;
+    height: 28px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--grey-bg);
+    border: 1px solid var(--white-3);
+}
+
+.cp-matrix-vehicle-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+}
+
+.cp-matrix-vehicle-name {
+    font-weight: 600;
+    color: var(--grey-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cp-matrix-vehicle-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+
+.cp-matrix-row-toggle {
+    flex-shrink: 0;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    background: var(--white-1);
+    border: 1px solid var(--white-3);
+    color: var(--grey-1);
+    cursor: pointer;
+}
+
+.cp-matrix-row-toggle:hover,
+.cp-matrix-row-toggle:focus-visible {
+    border-color: var(--admin-accent);
+    outline: none;
+}
+
+/* Cellules : toute la surface est cliquable */
+.cp-matrix-cell {
+    padding: 0;
+    text-align: center;
+}
+
+.cp-matrix-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    cursor: pointer;
+}
+
+/* La case reste le composant jaune standard de l'ERP (voir admin-components.css) */
+.cp-matrix-check input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Modifié, non enregistré : pastille d'angle sur la cellule et à côté du nom du véhicule */
+.cp-matrix-check {
+    position: relative;
+}
+
+.cp-matrix-cell.is-dirty .cp-matrix-check::after,
+.cp-matrix-legend-item.is-dirty::after,
+.cp-matrix-row.is-dirty .cp-matrix-vehicle-name::after {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-dirty);
+    flex-shrink: 0;
+}
+
+.cp-matrix-cell.is-dirty .cp-matrix-check::after {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+.cp-matrix-legend-item.is-dirty::after {
+    order: -1;
+}
+
+.cp-matrix-row.is-dirty .cp-matrix-vehicle-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Colonne Total */
+.cp-matrix-total {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--grey-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cp-matrix-total strong {
+    color: var(--grey-1);
+}
+
+/* Pied de tableau : nombre de véhicules concernés par point */
+.cp-matrix-footer th,
+.cp-matrix-footer td {
+    background: var(--grey-bg);
+    border-top: 1px solid var(--white-3);
+    border-bottom: none;
+    padding: 0.8rem 0;
+    font-size: 0.78rem;
+}
+
+.cp-matrix-footer-label {
+    padding-left: 1rem !important;
+    font-weight: 600;
+    color: var(--grey-2);
+}
+
+.cp-matrix-col-count {
+    text-align: center;
+    color: var(--grey-1);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Distinction des catégories : titre de groupe en couleur, trait de couleur sous les
+   libellés de colonnes, teinte claire derrière les cases */
+.cp-matrix .cp-cat--security {
+    --cp-cat: var(--status-danger-bg);
+    --cp-cat-strong: var(--status-danger);
+}
+
+.cp-matrix .cp-cat--equipment {
+    --cp-cat: var(--status-info-bg);
+    --cp-cat-strong: var(--status-info);
+}
+
+.cp-matrix .cp-cat--other {
+    --cp-cat: var(--status-neutral-bg);
+    --cp-cat-strong: var(--status-neutral);
+}
+
+/* Teinte claire de la catégorie derrière les cases à cocher */
+.cp-matrix .cp-matrix-cell[class*="cp-cat--"] {
+    background-color: color-mix(in srgb, var(--cp-cat) 30%, var(--white-1));
+}
+
+.cp-matrix .cp-matrix-group[class*="cp-cat--"] {
+    color: var(--cp-cat-strong);
+}
+
+.cp-matrix .cp-matrix-col[class*="cp-cat--"] {
+    box-shadow: inset 0 -3px 0 var(--cp-cat-strong);
+}
+
+/* Pas d'espace entre les groupes : le trait et la teinte restent continus,
+   le changement de couleur suffit à marquer la frontière. */
+
+/* Survol : ligne et colonne en jaune pâle (calque posé sur le fond, cellules collantes opaques) */
+.cp-matrix-row:hover>th,
+.cp-matrix-row:hover>td,
+.cp-matrix .is-col-hover {
+    background-image: linear-gradient(rgba(255, 200, 69, 0.1), rgba(255, 200, 69, 0.1));
+}
+
+.cp-matrix-row:hover>.is-col-hover {
+    background-image: linear-gradient(rgba(255, 200, 69, 0.2), rgba(255, 200, 69, 0.2));
+}
+
+@media (max-width: 768px) {
+    .cp-matrix-corner {
+        min-width: 180px;
+    }
+
+    .cp-matrix-thumb,
+    .cp-matrix-vehicle-id {
+        display: none;
+    }
+
+    .cp-matrix-search {
+        width: 100%;
+    }
 }

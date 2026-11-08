@@ -251,6 +251,7 @@
 .gantt-grid-cell.today {
     background-color: rgba(255, 200, 69, 0.08);
     border-left: 1.5px solid rgba(255, 200, 69, 0.4);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     border-right: 1.5px solid rgba(255, 200, 69, 0.4);
 }
 
@@ -289,6 +290,7 @@
     background-color: var(--entity-checkout-bg) !important;
     border: 1px solid var(--entity-checkout-border) !important;
     border-left: 3.5px solid var(--entity-checkout) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkout-text) !important;
     justify-content: center;
     padding: 0 6px;
@@ -309,6 +311,7 @@
     background-color: var(--entity-project-bg) !important;
     border: 1px solid var(--entity-project-border) !important;
     border-left: 3.5px solid var(--entity-project) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-project-text) !important;
 }
 
@@ -331,6 +334,7 @@
             #FDE68A 12px) !important;
     border: 1px solid var(--status-warning-border) !important;
     border-left: 3.5px solid var(--status-warning) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--status-warning-text) !important;
     font-size: 0.75rem;
 }
@@ -357,6 +361,7 @@
     background-color: var(--entity-checkin-bg) !important;
     border: 1px solid var(--entity-checkin-border) !important;
     border-left: 3.5px solid var(--entity-checkin) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--entity-checkin-text) !important;
     justify-content: center;
     padding: 0 6px;

@@ -300,7 +300,7 @@ class FleetTest(BaseTestCase):
             resp = self.client.get("/admin/dashboard")
             self.assertEqual(resp.status_code, 200)
             self.assertIn("/admin/fleet", resp.data.decode("utf-8"), f"Lien /admin/fleet absent pour le rôle {r}")
-            self.assertIn("Flotte Véhicules", resp.data.decode("utf-8"), f"Flotte Véhicules absent pour le rôle {r}")
+            self.assertIn("Véhicules", resp.data.decode("utf-8"), f"Entrée Véhicules absente pour le rôle {r}")
 
             # 2. Vérification sur la page /admin/fleet (boutons de configuration réservés admin)
             resp_fleet = self.client.get("/admin/fleet")
@@ -484,8 +484,10 @@ class FleetTest(BaseTestCase):
             <div id="h2">{{ head_avatar('https://cdn.example.com/head.png', 'Shotover') }}</div>
             """
             html = render_template_string(tpl)
-            # Vérifier l'anti-boucle JS onerror=null
-            self.assertIn("this.onerror=null;", html)
+            # Repli d'image déclaratif (aucun JS inline) : data-fallback-src géré par le bundle admin
+            self.assertNotIn("onerror=", html)
+            self.assertIn('data-fallback-src="/static/imgs/placeholders/vehicle.svg"', html)
+            self.assertIn('data-fallback-src="/static/imgs/placeholders/head.svg"', html)
             # Vérifier que le fallback vide injecte directement le placeholder
             self.assertIn('src="/static/imgs/placeholders/vehicle.svg"', html)
             self.assertIn('src="/static/imgs/placeholders/head.svg"', html)

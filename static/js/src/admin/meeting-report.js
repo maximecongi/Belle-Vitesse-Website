@@ -433,8 +433,8 @@ function initMeetingReport() {
 
     // Bouton Effacer
     if (btnClear) {
-        btnClear.addEventListener('click', () => {
-            if (confirm('Voulez-vous réinitialiser le compte-rendu ?')) {
+        btnClear.addEventListener('click', async () => {
+            if (await window.adminConfirm('Réinitialiser le compte-rendu ? Le texte saisi sera effacé.', { label: 'Réinitialiser' })) {
                 mdInput.value = '';
                 userEditedRef = false;
                 userEditedDate = false;

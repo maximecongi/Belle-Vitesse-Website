@@ -4,6 +4,7 @@ Routes d'administration pour les inspections (Check-outs et Check-ins) — couch
 Définit un gestionnaire générique d'enregistrement des routes CRUD d'administration.
 """
 
+from utils.navigation import redirect_back_or, redirect_keep_return
 from flask import (
     Response,
     abort,
@@ -148,7 +149,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
         rec = resolve_inspection(mode, inspection_code)
         if not rec or rec.deleted_at is not None:
             abort(404)
-        return redirect(url_for(endpoint_detail, record_id=rec.id))
+        return redirect_keep_return(endpoint_detail, record_id=rec.id)
 
     # 3. Création d'une inspection
     @app_or_bp.route(f"{base_path}/new", methods=["GET", "POST"], endpoint=endpoint_new)
@@ -169,7 +170,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
                 flash(f"{label_title} créé avec succès !", "success")
                 record_id = getattr(record, "id", None) or (record.get("id") if isinstance(record, dict) else None)
                 if record_id:
-                    return redirect(url_for(endpoint_detail, record_id=record_id))
+                    return redirect_keep_return(endpoint_detail, record_id=record_id)
                 return redirect(url_for(endpoint_list))
             except Exception as e:
                 current_app.logger.error(f"❌ Erreur lors de la création du {label_fr} : {e}")
@@ -197,7 +198,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
             if request.method == "POST":
                 update_func(record_id, request.form, request.files)
                 flash(f"{label_title} modifié avec succès !", "success")
-                return redirect(url_for(endpoint_detail, record_id=record_id))
+                return redirect_keep_return(endpoint_detail, record_id=record_id)
 
             return render_template(
                 template_form, data=data, is_edit=True, **context
@@ -205,7 +206,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
         except Exception as e:
             current_app.logger.error(f"❌ Erreur lors de la modification du {label_fr} : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
-            return redirect(url_for(endpoint_detail, record_id=record_id))
+            return redirect_keep_return(endpoint_detail, record_id=record_id)
 
     # 5. Suppression d'une inspection
     @app_or_bp.route(f"{base_path}/<int:record_id>/delete", methods=["POST"], endpoint=endpoint_delete)
@@ -214,12 +215,12 @@ def register_admin_inspection_routes(app_or_bp, mode):
         try:
             delete_func(record_id)
             flash(f"{label_title} supprimé définitivement.", "success")
-            return redirect(url_for(endpoint_list))
+            return redirect_back_or(endpoint_list)
         except Exception as e:
             from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la suppression du {label_fr} : {e}")
             flash(format_user_friendly_error(e, f"Erreur lors de la suppression du {label_fr}."), "error")
-            return redirect(url_for(endpoint_detail, record_id=record_id))
+            return redirect_keep_return(endpoint_detail, record_id=record_id)
 
     # 6. Scellement d'une inspection
     @app_or_bp.route(f"{base_path}/<int:record_id>/seal", methods=["POST"], endpoint=endpoint_seal)
@@ -232,7 +233,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
             if not token:
                 flash(
                     f"{label_title} introuvable ou erreur lors de la création du lien de signature.", "error")
-                return redirect(url_for(endpoint_detail, record_id=record_id))
+                return redirect_keep_return(endpoint_detail, record_id=record_id)
 
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
             return redirect(url_for(sign_page_endpoint, token=token["token"]))
@@ -241,7 +242,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
             current_app.logger.error(f"❌ Erreur lors du scellement du {label_fr} : {e}")
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
-            return redirect(url_for(endpoint_detail, record_id=record_id))
+            return redirect_keep_return(endpoint_detail, record_id=record_id)
 
     # 7. Prévisualisation écran et PDF de l'inspection
     endpoint_preview = f"admin_{mode}_preview"

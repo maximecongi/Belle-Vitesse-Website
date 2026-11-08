@@ -179,18 +179,22 @@
 .flash-error,
 .flash-danger {
     border-left: 4px solid var(--status-danger) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .flash-success {
     border-left: 4px solid var(--status-success) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .flash-warning {
     border-left: 4px solid var(--status-warning) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .flash-info {
     border-left: 4px solid var(--status-info) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 /* Badge Select (custom dropdowns) */
@@ -568,7 +572,7 @@ a.badge-pill:hover {
 .vehicle-status-badge[data-val="critical"],
 .badge-pill.vehicle-status-badge[data-val="critical"] {
     background: var(--status-danger-bg, #FEE2E2);
-    color: var(--status-danger-text, #991B1B);
+    color: var(--status-danger-text);
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
@@ -594,6 +598,7 @@ a.badge-pill:hover {
     background: var(--status-warning-bg, #FEF3C7);
     border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.25));
     border-left: 4px solid var(--status-warning, #F59E0B);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
 }
 
@@ -770,8 +775,8 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 .badge-pill[data-val="link"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
     stroke-width: 2.5;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -791,7 +796,7 @@ a:hover>.badge-pill[data-val="download-available"] {
     font-weight: 500;
     line-height: 1.3;
     border-radius: 9999px;
-    background: #fef3c7;
+    background: var(--status-warning-bg);
     color: #92400e;
     border: none;
     box-shadow: none;
@@ -804,7 +809,7 @@ a:hover>.badge-pill[data-val="download-available"] {
     width: 12px;
     height: 12px;
     flex-shrink: 0;
-    color: #b45309;
+    color: var(--status-warning-text);
 }
 
 /* Admin Badges (legacy) */
@@ -822,7 +827,7 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 .badge-pending {
-    background-color: #fef3c7;
+    background-color: var(--status-warning-bg);
     color: #92400e;
 }
 
@@ -926,7 +931,8 @@ a:hover>.badge-pill[data-val="download-available"] {
    Custom Checkbox 
    =========================== */
 
-.admin-table input[type="checkbox"] {
+.admin-table input[type="checkbox"],
+.cp-matrix input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
     width: 22px;
@@ -944,7 +950,8 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 /* Checkmark icon */
-.admin-table input[type="checkbox"]::after {
+.admin-table input[type="checkbox"]::after,
+.cp-matrix input[type="checkbox"]::after {
     content: '';
     display: block;
     width: 4px;
@@ -957,35 +964,41 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 /* Hover */
-.admin-table input[type="checkbox"]:hover {
+.admin-table input[type="checkbox"]:hover,
+.cp-matrix input[type="checkbox"]:hover {
     border-color: #e6a800;
     box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.15);
 }
 
 /* Checked */
-.admin-table input[type="checkbox"]:checked {
+.admin-table input[type="checkbox"]:checked,
+.cp-matrix input[type="checkbox"]:checked {
     background-color: #ffc845;
     border-color: #ffc845;
 }
 
-.admin-table input[type="checkbox"]:checked::after {
+.admin-table input[type="checkbox"]:checked::after,
+.cp-matrix input[type="checkbox"]:checked::after {
     border-color: #fff;
 }
 
 /* Focus (accessibilité) */
-.admin-table input[type="checkbox"]:focus-visible {
+.admin-table input[type="checkbox"]:focus-visible,
+.cp-matrix input[type="checkbox"]:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.35);
 }
 
 /* Disabled */
-.admin-table input[type="checkbox"]:disabled {
+.admin-table input[type="checkbox"]:disabled,
+.cp-matrix input[type="checkbox"]:disabled {
     border-color: #ddd;
     background-color: #f5f5f5;
     cursor: not-allowed;
 }
 
-.admin-table input[type="checkbox"]:disabled:checked {
+.admin-table input[type="checkbox"]:disabled:checked,
+.cp-matrix input[type="checkbox"]:disabled:checked {
     background-color: #ffd97a;
     border-color: #ffd97a;
 }
@@ -1358,6 +1371,25 @@ input[type="checkbox"]:checked {
     transform: scale(1.1);
 }
 
+/* Dans un en-tête de modale (macro admin_modal), le bouton fermer suit le flux flex
+   et s'aligne verticalement sur le titre au lieu d'être positionné en absolu. */
+.admin-modal-header {
+    gap: 1rem;
+}
+
+.admin-modal-header .admin-modal-close {
+    position: static;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+    margin: -0.25rem -0.5rem -0.25rem 0;
+}
+
+.admin-modal-header .admin-modal-title {
+    line-height: 1.3;
+}
+
 @media (max-width: 640px) {
     .admin-modal-container {
         width: 100%;
@@ -1382,7 +1414,6 @@ input[type="checkbox"]:checked {
     .admin-modal-header {
         padding: 1rem;
         padding-top: max(1rem, env(safe-area-inset-top, 0));
-        padding-right: 3.5rem;
     }
 
     .admin-modal-body {
@@ -1449,7 +1480,7 @@ input[type="checkbox"]:checked {
 
 .feedback-box.error {
     background: var(--status-danger-bg, #FEE2E2);
-    color: var(--status-danger-text, #991B1B);
+    color: var(--status-danger-text);
     border: 1px solid var(--status-danger-border, rgba(239, 68, 68, 0.3));
 }
 
@@ -1639,6 +1670,7 @@ input[type="checkbox"]:checked {
     padding-left: 28px;
     margin-top: 10px;
     border-left: 2px dashed rgba(0, 0, 0, 0.15);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .mission-sub-item {
@@ -1967,10 +1999,10 @@ input[type="checkbox"]:checked {
 /* ── Cartes KPI Transversales Standardisées (Belle Vitesse Design System) ── */
 .admin-kpi-card {
     background: #ffffff;
-    border-radius: 6px;
     padding: 1.15rem 1.25rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border-left: 4px solid var(--status-neutral, #64748b);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -1980,42 +2012,52 @@ input[type="checkbox"]:checked {
 
 .admin-kpi-card--checkin {
     border-left-color: var(--entity-checkin) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--checkout {
     border-left-color: var(--entity-checkout) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--project {
     border-left-color: var(--entity-project) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--incident {
     border-left-color: var(--entity-incident) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--waiver {
     border-left-color: var(--entity-waiver) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--success {
     border-left-color: var(--status-success) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--warning {
     border-left-color: var(--status-warning) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--danger {
     border-left-color: var(--status-danger) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--info {
     border-left-color: var(--status-info) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-card--neutral {
     border-left-color: var(--status-neutral) !important;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .admin-kpi-label {
@@ -2224,6 +2266,7 @@ input[type="checkbox"]:checked {
     background-color: var(--entity-waiver-bg, #ede9fe);
     border: 1px solid rgba(139, 92, 246, 0.3);
     border-left: 4px solid var(--entity-waiver, #8b5cf6);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     gap: 12px;
 }
 
@@ -2463,6 +2506,7 @@ button.badge-pill:hover {
     background-color: var(--status-warning-bg, #FEF3C7);
     border: 1px solid rgba(245, 158, 11, 0.35);
     border-left: 4px solid var(--status-warning, #F59E0B);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--status-warning-text, #B45309);
 }
 
@@ -2470,6 +2514,7 @@ button.badge-pill:hover {
     background-color: var(--status-info-bg, #DBEAFE);
     border: 1px solid rgba(59, 130, 246, 0.35);
     border-left: 4px solid var(--status-info, #3B82F6);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--status-info-text, #1E40AF);
 }
 
@@ -2478,6 +2523,7 @@ button.badge-pill:hover {
     background-color: var(--status-success-bg, #DCFCE7);
     border: 1px solid rgba(21, 128, 61, 0.35);
     border-left: 4px solid var(--status-success, #15803D);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--status-success-text, #14532D);
 }
 
@@ -2486,13 +2532,15 @@ button.badge-pill:hover {
     background-color: var(--status-danger-bg, #FEE2E2);
     border: 1px solid rgba(239, 68, 68, 0.35);
     border-left: 4px solid var(--status-danger, #EF4444);
-    color: var(--status-danger-text, #991B1B);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    color: var(--status-danger-text);
 }
 
 .admin-banner--neutral {
     background-color: var(--status-neutral-bg, #F3F4F6);
     border: 1px solid rgba(107, 114, 128, 0.35);
     border-left: 4px solid var(--status-neutral, #6B7280);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     color: var(--status-neutral-text, #374151);
 }
 
@@ -2521,5 +2569,144 @@ button.badge-pill:hover {
     .inspection-autosave-actions {
         width: 100%;
         justify-content: flex-end;
+    }
+}
+/* Icônes Lucide inline (remplacement des emojis dans les libellés, titres et méta-données) */
+.admin-card-title .lucide,
+.rich-meta-item .lucide,
+.projects-contacts-cell-item .lucide,
+.incident-context-section-title .lucide,
+.notion-context-icon .lucide,
+.filter-header .lucide,
+.cal-info-icon .lucide,
+h3 > .lucide {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+}
+
+.rich-meta-item,
+.incident-context-section-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+/* Modale de confirmation commune (confirm-dialog.js) */
+.admin-confirm-message {
+    margin: 0 0 1.5rem;
+    line-height: 1.5;
+    color: var(--text-color);
+}
+
+.admin-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* Zone de danger : emplacement unique des suppressions en bas des fiches détail */
+.admin-danger-zone {
+    margin-top: 2rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--status-danger-border);
+    border-left: 4px solid var(--status-danger);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.admin-danger-zone-title {
+    font-weight: 600;
+    color: var(--status-danger-text);
+    margin: 0 0 0.25rem;
+}
+
+.admin-danger-zone-desc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--grey-2);
+}
+
+/* ── Barre d'enregistrement (modifications en attente) ──────────────────────
+   Composant générique : une seule action « Enregistrer » pour toute la page,
+   fixée en bas de la zone de contenu et affichée uniquement en présence de
+   modifications non enregistrées. */
+.admin-savebar {
+    position: fixed;
+    left: var(--admin-sidebar-width);
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    padding: 1rem 2rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    background: var(--white-1);
+    border-top: 1px solid var(--white-3);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* Réserve l'espace de la barre sous le contenu pour ne rien masquer */
+body.has-admin-savebar .admin-content {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+.admin-savebar-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grey-1);
+}
+
+.admin-savebar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--status-dirty);
+    flex-shrink: 0;
+}
+
+.admin-savebar-desc {
+    flex: 1;
+    min-width: 200px;
+    font-size: 0.82rem;
+    color: var(--grey-2);
+}
+
+.admin-savebar-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-left: auto;
+}
+
+@media (max-width: 1200px) {
+    .admin-savebar {
+        left: 0;
+        padding: 0.9rem 1.25rem;
+        padding-bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-savebar-desc {
+        display: none;
+    }
+
+    .admin-savebar-actions {
+        width: 100%;
+    }
+
+    .admin-savebar-actions .admin-btn {
+        flex: 1;
+        justify-content: center;
     }
 }

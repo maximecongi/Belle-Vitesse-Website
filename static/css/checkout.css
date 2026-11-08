@@ -264,6 +264,7 @@ body {
     background-color: var(--white-3);
     padding: 8pt 10pt;
     border-left: 3pt solid var(--yellow-1);
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     font-size: 8pt;
     line-height: 1.5;
     font-weight: 300;

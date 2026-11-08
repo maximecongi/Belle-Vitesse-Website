@@ -139,7 +139,7 @@ class DevRoleSwitcherTestCase(BaseTestCase):
         dash_html = resp_dash.data.decode("utf-8")
         self.assertNotIn("Décharge Production", dash_html)
         self.assertNotIn("Décharge Pilote", dash_html)
-        self.assertIn("Checkouts", dash_html)
+        self.assertIn("Départs", dash_html)
 
         # Accessing /admin/cgl directly should redirect to dashboard (restricted to manager and admin)
         resp_cgl = self.client.get("/admin/cgl", follow_redirects=False)

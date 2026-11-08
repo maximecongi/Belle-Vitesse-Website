@@ -181,6 +181,7 @@ body.sticker-body {
     justify-content: center;
     text-align: center;
     border-left: 0.5pt dashed #d4d4d8;
+    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
     padding-left: 2.5mm;
 }
 

@@ -1,11 +1,11 @@
 {% extends "admin/admin_base.html" %}
 {% from "admin/macros.html" import list_header_actions %}
 
-{% block title %}Catalogue Analyse des Risques (BVRA){% endblock %}
-{% block page_title %}Catalogue Analyse des Risques (BVRA){% endblock %}
+{% block title %}Modèles d'analyse (BVRA){% endblock %}
+{% block page_title %}Modèles d'analyse (BVRA){% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions('Rechercher un risque...') }}
+{{ list_header_actions('Rechercher un risque...', mode='client') }}
 <button type="button" id="btn-toggle-all-accordions" class="admin-btn admin-btn-secondary" aria-expanded="false">
     <i data-lucide="chevrons-up-down" class="admin-header__icon"></i>
     <span class="js-toggle-all-label">Tout déplier</span>

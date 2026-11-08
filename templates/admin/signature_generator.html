@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Générateur de signature mail{% endblock %}
-{% block page_title %}Générateur de signature mail{% endblock %}
+{% block title %}Signature e-mail{% endblock %}
+{% block page_title %}Signature e-mail{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-signature-generator.css') }}?v={{ asset_version('css/admin/admin-signature-generator.css') }}">
@@ -16,26 +16,26 @@
         <div class="form-group">
             <label class="form-label" for="f-name">Nom complet</label>
             <input type="text" id="f-name" class="form-input"
-                value="{{ current_user.firstname }} {{ current_user.lastname }}" oninput="update()">
+                value="{{ current_user.firstname }} {{ current_user.lastname }}">
         </div>
 
         <div class="form-group">
             <label class="form-label" for="f-job">Poste</label>
-            <input type="text" id="f-job" class="form-input" value="{{ current_user.job }}" oninput="update()">
+            <input type="text" id="f-job" class="form-input" value="{{ current_user.job }}">
         </div>
 
         <div class="form-group">
             <label class="form-label" for="f-email">Email (préfixe)</label>
             <div class="u-flex u-align-center">
                 <input type="text" id="f-email" class="form-input u-flex-1"
-                    value="{{ current_user.mail.split('@')[0] }}" oninput="update()">
+                    value="{{ current_user.mail.split('@')[0] }}">
                 <span class="sig-email-suffix">@bellevitesse.com</span>
             </div>
         </div>
 
         <div class="form-group">
             <label class="form-label" for="f-phone">Téléphone</label>
-            <input type="text" id="f-phone" class="form-input" value="{{ current_user.phone }}" oninput="update()">
+            <input type="text" id="f-phone" class="form-input" value="{{ current_user.phone }}">
         </div>
     </div>
 
@@ -53,7 +53,7 @@
         <div class="admin-card sig-code-card">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
                 <h3 class="u-m-0 u-text-lg">Code HTML</h3>
-                <button type="button" class="admin-btn admin-btn-secondary" id="copy-btn" onclick="copyHtml()">Copier le
+                <button type="button" class="admin-btn admin-btn-secondary" id="copy-btn">Copier le
                     code</button>
             </div>
             <div id="code-output" class="code-output"></div>

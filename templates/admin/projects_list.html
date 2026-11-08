@@ -9,7 +9,7 @@ list_header_actions, table_empty_row, render_pagination %}
 
 
 {% block header_actions %}
-{{ list_header_actions('Rechercher un projet...', url_for('admin_projects.admin_project_new'), '+ Nouveau Projet',
+{{ list_header_actions('Rechercher un projet...', url_for('admin_projects.admin_project_new'), '+ Nouveau projet',
 is_archive) }}
 {% endblock %}
 
@@ -71,7 +71,7 @@ is_archive) }}
                     {% for v in project.vehicles %}
                     {% if v.checkout_id %}
                     <div class="projects-cell-item">
-                        <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
+                        <a href="{{ url_from_here('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', v.checkout_status_id,
                             class_name='u-m-1', **{'data-conform': v.checkout_conform, 'title': 'Contrôle de départ : '
                             ~ v.checkout_status}) }}
@@ -81,7 +81,7 @@ is_archive) }}
                     {% else %}
                     <div class="projects-cell-item">
                         <a
-                            href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                            href="{{ url_from_here('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de départ : À contrôler'}) }}
                         </a>
@@ -95,7 +95,7 @@ is_archive) }}
                     {% for v in project.vehicles %}
                     {% if v.checkin_id %}
                     <div class="projects-cell-item">
-                        <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
+                        <a href="{{ url_from_here('admin_checkins.admin_checkin_detail', record_id=v.checkin_id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', v.checkin_status_id,
                             class_name='u-m-1', **{'data-conform': v.checkin_conform, 'title': 'Contrôle de retour : ' ~
                             v.checkin_status}) }}
@@ -105,7 +105,7 @@ is_archive) }}
                     {% else %}
                     <div class="projects-cell-item">
                         <a
-                            href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                            href="{{ url_from_here('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de retour : À contrôler'}) }}
                         </a>
@@ -212,7 +212,7 @@ is_archive) }}
                     </div>
                 </td>
                 <td>
-                    <div class="projects-contacts-cell-item" title="DOP"><span>🎥</span>
+                    <div class="projects-contacts-cell-item" title="DOP"><span><i data-lucide="video"></i></span>
                         {% if project.dop_contact_name and project.dop_contact_name != '—' %}
                         <a href="{{ url_for('admin_contacts.admin_contacts_list', q=project.dop_contact_name) }}">{{
                             project.dop_contact_name }}</a>
@@ -220,7 +220,7 @@ is_archive) }}
                         <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item" title="1er Assistant Caméra"><span>🎯</span>
+                    <div class="projects-contacts-cell-item" title="1er Assistant Caméra"><span><i data-lucide="crosshair"></i></span>
                         {% if project.first_ac_contact_name and project.first_ac_contact_name != '—' %}
                         <a href="{{ url_for('admin_contacts.admin_contacts_list', q=project.first_ac_contact_name) }}">{{
                             project.first_ac_contact_name }}</a>
@@ -228,7 +228,7 @@ is_archive) }}
                         <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item" title="Chef Machiniste"><span>🔧</span>
+                    <div class="projects-contacts-cell-item" title="Chef Machiniste"><span><i data-lucide="hard-hat"></i></span>
                         {% if project.key_grip_contact_name and project.key_grip_contact_name != '—' %}
                         <a href="{{ url_for('admin_contacts.admin_contacts_list', q=project.key_grip_contact_name) }}">{{
                             project.key_grip_contact_name }}</a>
@@ -236,7 +236,7 @@ is_archive) }}
                         <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item" title="Pilote"><span>🏎️</span>
+                    <div class="projects-contacts-cell-item" title="Pilote"><span><i data-lucide="car"></i></span>
                         {% if project.pilot_contact_name and project.pilot_contact_name != '—' %}
                         <a href="{{ url_for('admin_contacts.admin_contacts_list', q=project.pilot_contact_name) }}">{{
                             project.pilot_contact_name }}</a>
@@ -244,7 +244,7 @@ is_archive) }}
                         <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item u-mt-1" title="Contact de Production"><span>🎬</span>
+                    <div class="projects-contacts-cell-item u-mt-1" title="Contact de Production"><span><i data-lucide="clapperboard"></i></span>
                         {% if project.production_contact_name and project.production_contact_name != '—' %}
                         <a
                             href="{{ url_for('admin_contacts.admin_contacts_list', q=project.production_contact_name) }}">{{
@@ -258,10 +258,10 @@ is_archive) }}
                     <div class="u-flex u-flex-column u-gap-1">
                         <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}"
                             class="admin-btn admin-btn-secondary admin-btn-sm u-text-center">Détails →</a>
-                        {% if session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
+                        {% if can('project_duplicate') %}
                         <a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}"
                             class="admin-btn admin-btn-secondary admin-btn-xs u-text-center"
-                            title="Dupliquer ce tournage">
+                            title="Dupliquer ce projet">
                             <i data-lucide="copy"></i> Dupliquer
                         </a>
                         {% endif %}
