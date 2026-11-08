@@ -166,7 +166,7 @@ class CmdKSearchApiTestCase(BaseTestCase):
         self.assertEqual(ci_res["entity_type"], "checkin")
 
     def test_cmdk_search_waiver_points_to_project_hub_section(self):
-        """Vérifie que les décharges BVSR/BVRA/BVPA pointent vers le Project Hub avec l'ancre #waivers."""
+        """Vérifie que les décharges BVSR/BVTC/BVPA pointent vers le Project Hub avec l'ancre #waivers."""
         self._login_as_manager()
         from models import db, Project, Production, SafetyRulesWaiver
 

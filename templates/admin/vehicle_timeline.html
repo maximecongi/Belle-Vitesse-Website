@@ -19,6 +19,12 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
         <span>Règles &amp; Sticker QR</span>
     </button>
     {% endif %}
+    <a href="{{ url_for('public_vehicle_sheet.view_vehicle_sheet', vehicle_id=vehicle.slug or vehicle.id) }}"
+        class="admin-btn admin-btn-secondary" target="_blank" rel="noopener noreferrer"
+        title="Ouvrir la fiche technique publique (mobile, impression, PDF)">
+        <i data-lucide="file-text"></i>
+        <span>Fiche véhicule</span>
+    </a>
 </div>
 {% endblock %}
 

@@ -4,7 +4,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block extra_css %}
-{# Gabarit du PDF réutilisé tel quel pour l'onglet « Aperçu PDF » (sélecteurs tous préfixés .bvrs-*) #}
+{# Gabarit du PDF réutilisé tel quel pour l'onglet « Aperçu PDF » (sélecteurs tous préfixés .bvra-*) #}
 <link rel="stylesheet" href="{{ asset_url('css/admin/risk-assessment-pdf.css') }}">
 {% endblock %}
 
@@ -17,17 +17,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="bvrs-edit-page"
+<div class="bvra-edit-page"
      data-url-save="{{ url_for('admin_fleet.admin_risk_assessment_api_save_risk') }}"
      data-url-delete="{{ url_for('admin_fleet.admin_risk_assessment_api_delete_risk') }}"
      data-url-reorder="{{ url_for('admin_fleet.admin_risk_assessment_api_reorder_risks') }}">
 
-    <div class="bvrs-edit-wrap">
+    <div class="bvra-edit-wrap">
         <!-- ═══════════ COLONNE GAUCHE : LISTE DES RISQUES ═══════════ -->
-        <aside class="admin-card bvrs-sidecard" aria-label="Liste des risques">
-            <div class="bvrs-sidecard__head">
-                <div class="bvrs-sidecard__title">
-                    Risques <span class="bvrs-sidecard__count">· <strong id="sidebar-risks-count">{{ risks|length }}</strong></span>
+        <aside class="admin-card bvra-sidecard" aria-label="Liste des risques">
+            <div class="bvra-sidecard__head">
+                <div class="bvra-sidecard__title">
+                    Risques <span class="bvra-sidecard__count">· <strong id="sidebar-risks-count">{{ risks|length }}</strong></span>
                 </div>
                 <button type="button" id="btn-add-risk" class="admin-btn admin-btn-primary admin-btn-sm">
                     <i data-lucide="plus" aria-hidden="true"></i> Ajouter
@@ -37,58 +37,58 @@
             <input type="search" id="sidebar-search-input" class="form-input"
                 placeholder="Rechercher un risque…" autocomplete="off" aria-label="Rechercher un risque">
 
-            <div class="bvrs-filter-pills" role="group" aria-label="Filtrer les risques">
+            <div class="bvra-filter-pills" role="group" aria-label="Filtrer les risques">
                 <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active" aria-pressed="true" data-filter="all">Tous</button>
                 <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill" aria-pressed="false" data-filter="major">Majeurs</button>
                 <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill" aria-pressed="false" data-filter="en-incomplete">EN incomplet</button>
             </div>
 
-            <div class="bvrs-side-list" id="sidebar-risks-list">
+            <div class="bvra-side-list" id="sidebar-risks-list">
                 <!-- Rendu dynamique des catégories et risques par JS -->
             </div>
         </aside>
 
         <!-- ═══════════ COLONNE DROITE : PANNEAU DE DÉTAIL ═══════════ -->
-        <section class="admin-card bvrs-maincard" aria-label="Détail du risque sélectionné">
-            <div class="bvrs-maincard__head">
-                <div class="bvrs-maincard__titlewrap">
-                    <h2 id="detail-risk-title" class="bvrs-maincard__title">Chargement…</h2>
+        <section class="admin-card bvra-maincard" aria-label="Détail du risque sélectionné">
+            <div class="bvra-maincard__head">
+                <div class="bvra-maincard__titlewrap">
+                    <h2 id="detail-risk-title" class="bvra-maincard__title">Chargement…</h2>
                     <span id="detail-risk-level-badge" class="badge-pill badge-pill-xs" data-val="danger">Majeur</span>
                     <span id="detail-risk-trans-badge" class="badge-pill badge-pill-xs u-d-none" data-val="neutral"></span>
                 </div>
 
-                <div role="tablist" class="bvrs-maincard__tablist">
-                    <button type="button" id="tab-btn-edit" class="bvrs-tab-btn" role="tab"
+                <div role="tablist" class="bvra-maincard__tablist">
+                    <button type="button" id="tab-btn-edit" class="bvra-tab-btn" role="tab"
                         aria-selected="true" aria-controls="tab-pane-edit">Édition</button>
-                    <button type="button" id="tab-btn-pdf" class="bvrs-tab-btn" role="tab"
+                    <button type="button" id="tab-btn-pdf" class="bvra-tab-btn" role="tab"
                         aria-selected="false" aria-controls="tab-pane-pdf">Aperçu PDF</button>
                 </div>
             </div>
 
             <!-- ONGLET 1 : ÉDITION -->
-            <div id="tab-pane-edit" class="bvrs-maincard__content" role="tabpanel" aria-labelledby="tab-btn-edit">
+            <div id="tab-pane-edit" class="bvra-maincard__content" role="tabpanel" aria-labelledby="tab-btn-edit">
                 <form id="form-edit-risk" novalidate>
                     <!--
-                        Grille commune (.bvrs-fgrid) : poignée | FR | EN | action.
+                        Grille commune (.bvra-fgrid) : poignée | FR | EN | action.
                         Les champs s'alignent ainsi sur les colonnes des recommandations.
                     -->
 
                     <!-- Niveau et catégorie -->
-                    <div class="bvrs-fgrid bvrs-form-toprow">
-                        <div class="form-group bvrs-col-fr">
+                    <div class="bvra-fgrid bvra-form-toprow">
+                        <div class="form-group bvra-col-fr">
                             <span class="form-label" id="label-level">Niveau de risque</span>
-                            <div class="bvrs-level-segmented" role="group" aria-labelledby="label-level">
-                                <button type="button" id="btn-level-major" class="bvrs-level-btn bvrs-level-btn--major" aria-pressed="true">MAJEUR</button>
-                                <button type="button" id="btn-level-standard" class="bvrs-level-btn bvrs-level-btn--standard" aria-pressed="false">STANDARD</button>
+                            <div class="bvra-level-segmented" role="group" aria-labelledby="label-level">
+                                <button type="button" id="btn-level-major" class="bvra-level-btn bvra-level-btn--major" aria-pressed="true">MAJEUR</button>
+                                <button type="button" id="btn-level-standard" class="bvra-level-btn bvra-level-btn--standard" aria-pressed="false">STANDARD</button>
                             </div>
                         </div>
 
-                        <div class="form-group bvrs-col-en bvrs-cat-wrap">
+                        <div class="form-group bvra-col-en bvra-cat-wrap">
                             <label class="form-label" for="field-category-select">Catégorie</label>
                             <select id="field-category-select" class="form-input">
                                 <!-- Options injectées dynamiquement -->
                             </select>
-                            <div id="wrap-new-cat" class="bvrs-new-cat u-d-none">
+                            <div id="wrap-new-cat" class="bvra-new-cat u-d-none">
                                 <input type="text" id="input-new-cat" class="form-input"
                                     placeholder="Nom FR (ex : ROUES)" maxlength="50"
                                     aria-label="Nom de la nouvelle catégorie (FR)">
@@ -105,35 +105,35 @@
                     </div>
 
                     <!-- En-têtes de langue (remplacent les suffixes FR / EN des étiquettes) -->
-                    <div class="bvrs-fgrid bvrs-lang-row" aria-hidden="true">
-                        <span class="bvrs-col-fr"><span class="bvrs-lang-chip"><strong>FR</strong> Français</span></span>
-                        <span class="bvrs-col-en"><span class="bvrs-lang-chip"><strong>EN</strong> English</span></span>
+                    <div class="bvra-fgrid bvra-lang-row" aria-hidden="true">
+                        <span class="bvra-col-fr"><span class="bvra-lang-chip"><strong>FR</strong> Français</span></span>
+                        <span class="bvra-col-en"><span class="bvra-lang-chip"><strong>EN</strong> English</span></span>
                     </div>
 
                     <!-- Titres FR et EN -->
-                    <div class="bvrs-fgrid bvrs-field-row">
-                        <label class="form-label bvrs-col-fr" for="field-title-fr">
+                    <div class="bvra-fgrid bvra-field-row">
+                        <label class="form-label bvra-col-fr" for="field-title-fr">
                             Titre du risque <span class="u-text-danger">*</span>
                         </label>
-                        <input type="text" id="field-title-fr" class="form-input bvrs-col-fr" required autocomplete="off">
-                        <input type="text" id="field-title-en" class="form-input bvrs-col-en" autocomplete="off"
+                        <input type="text" id="field-title-fr" class="form-input bvra-col-fr" required autocomplete="off">
+                        <input type="text" id="field-title-en" class="form-input bvra-col-en" autocomplete="off"
                             placeholder="Traduction manquante" aria-label="Titre du risque (EN)">
                     </div>
 
                     <!-- Descriptions FR et EN -->
-                    <div class="bvrs-fgrid bvrs-field-row">
-                        <label class="form-label bvrs-col-fr" for="field-desc-fr">Description détaillée du danger</label>
-                        <textarea id="field-desc-fr" class="form-input bvrs-col-fr" rows="2"></textarea>
-                        <textarea id="field-desc-en" class="form-input bvrs-col-en" rows="2"
+                    <div class="bvra-fgrid bvra-field-row">
+                        <label class="form-label bvra-col-fr" for="field-desc-fr">Description détaillée du danger</label>
+                        <textarea id="field-desc-fr" class="form-input bvra-col-fr" rows="2"></textarea>
+                        <textarea id="field-desc-en" class="form-input bvra-col-en" rows="2"
                             placeholder="Traduction anglaise manquante"
                             aria-label="Description détaillée du danger (EN)"></textarea>
                     </div>
 
                     <!-- Recommandations bilingues -->
-                    <div class="bvrs-recs-section">
-                        <div class="bvrs-fgrid bvrs-recs-head">
-                            <div class="bvrs-recs-head__title">
-                                Recommandations <span class="bvrs-recs-head__count">· <span id="recs-count">0</span></span>
+                    <div class="bvra-recs-section">
+                        <div class="bvra-fgrid bvra-recs-head">
+                            <div class="bvra-recs-head__title">
+                                Recommandations <span class="bvra-recs-head__count">· <span id="recs-count">0</span></span>
                             </div>
                             <button type="button" id="btn-add-rec" class="admin-btn admin-btn-secondary admin-btn-sm">
                                 <i data-lucide="plus" aria-hidden="true"></i> Ajouter une recommandation
@@ -146,27 +146,27 @@
                     </div>
 
                     <!-- Zone de danger : suppression du risque -->
-                    <div class="bvrs-danger-foot">
-                        <span class="bvrs-danger-foot__text">Supprimer ce risque le retire de tous les futurs protocoles.</span>
+                    <div class="bvra-danger-foot">
+                        <span class="bvra-danger-foot__text">Supprimer ce risque le retire de tous les futurs protocoles.</span>
                         <button type="button" id="btn-delete-risk" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer ce risque…</button>
                     </div>
                 </form>
             </div>
 
             <!-- ONGLET 2 : APERÇU PDF -->
-            <div id="tab-pane-pdf" class="bvrs-maincard__content u-d-none" role="tabpanel" aria-labelledby="tab-btn-pdf">
-                <div class="bvrs-preview-topbar">
-                    <p class="bvrs-preview-subtitle">
+            <div id="tab-pane-pdf" class="bvra-maincard__content u-d-none" role="tabpanel" aria-labelledby="tab-btn-pdf">
+                <div class="bvra-preview-topbar">
+                    <p class="bvra-preview-subtitle">
                         Rendu avec le même gabarit que le PDF. Les risques voisins sont atténués pour situer la carte dans la page.
                     </p>
-                    <div class="bvrs-lang-toggle" role="group" aria-label="Langue de l'aperçu">
-                        <button type="button" id="btn-lang-fr" class="bvrs-lang-btn" aria-pressed="true">FR</button>
-                        <button type="button" id="btn-lang-en" class="bvrs-lang-btn" aria-pressed="false">EN</button>
+                    <div class="bvra-lang-toggle" role="group" aria-label="Langue de l'aperçu">
+                        <button type="button" id="btn-lang-fr" class="bvra-lang-btn" aria-pressed="true">FR</button>
+                        <button type="button" id="btn-lang-en" class="bvra-lang-btn" aria-pressed="false">EN</button>
                     </div>
                 </div>
 
-                <div class="bvrs-pdf-preview-sheet-wrap">
-                    <div class="bvrs-pdf-preview-sheet" id="pdf-preview-sheet">
+                <div class="bvra-pdf-preview-sheet-wrap">
+                    <div class="bvra-pdf-preview-sheet" id="pdf-preview-sheet">
                         <!-- Rendu dynamique du risque et de son voisin -->
                     </div>
                 </div>
@@ -175,14 +175,14 @@
     </div>
 
     <!-- Barre inférieure pour modifications non enregistrées -->
-    <div id="bvrs-bottom-bar" class="bvrs-sticky-bar u-d-none" role="region" aria-label="Modifications non enregistrées">
-        <div class="bvrs-sticky-bar__title">
-            <span class="bvrs-sticky-bar__dot"></span> Modifications non enregistrées sur ce risque
+    <div id="bvra-bottom-bar" class="bvra-sticky-bar u-d-none" role="region" aria-label="Modifications non enregistrées">
+        <div class="bvra-sticky-bar__title">
+            <span class="bvra-sticky-bar__dot"></span> Modifications non enregistrées sur ce risque
         </div>
-        <div class="bvrs-sticky-bar__desc">
-            S’appliquent instantanément aux futurs protocoles BVRS générés.
+        <div class="bvra-sticky-bar__desc">
+            S’appliquent instantanément aux futurs protocoles BVRA générés.
         </div>
-        <div class="bvrs-sticky-bar__actions">
+        <div class="bvra-sticky-bar__actions">
             <button type="button" id="btn-cancel-risk" class="admin-btn admin-btn-secondary">Annuler</button>
             <button type="button" id="btn-save-risk" class="admin-btn admin-btn-primary">
                 <i data-lucide="check" aria-hidden="true"></i>
@@ -193,7 +193,7 @@
 </div>
 
 <!-- Modale : changement de risque avec modifications non enregistrées -->
-{% call admin_modal('bvrs-unsaved-modal', title='Modifications non enregistrées', size='sm') %}
+{% call admin_modal('bvra-unsaved-modal', title='Modifications non enregistrées', size='sm') %}
 <p class="u-mt-0">
     Vous avez des modifications non enregistrées sur ce risque. Voulez-vous les enregistrer avant de continuer ?
 </p>
@@ -204,9 +204,9 @@
 {% endcall %}
 
 <!-- Payloads JSON non exécutables -->
-<script type="application/json" id="bvrs-scope-data">{{ scope|tojson }}</script>
-<script type="application/json" id="bvrs-vehicle-key-data">{{ (vehicle_key or '')|tojson }}</script>
-<script type="application/json" id="bvrs-risks-data">{{ risks|tojson }}</script>
-<script type="application/json" id="bvrs-categories-data">{{ (categories or [])|tojson }}</script>
-<script type="application/json" id="bvrs-csrf-token">{{ csrf_token()|tojson }}</script>
+<script type="application/json" id="bvra-scope-data">{{ scope|tojson }}</script>
+<script type="application/json" id="bvra-vehicle-key-data">{{ (vehicle_key or '')|tojson }}</script>
+<script type="application/json" id="bvra-risks-data">{{ risks|tojson }}</script>
+<script type="application/json" id="bvra-categories-data">{{ (categories or [])|tojson }}</script>
+<script type="application/json" id="bvra-csrf-token">{{ csrf_token()|tojson }}</script>
 {% endblock %}

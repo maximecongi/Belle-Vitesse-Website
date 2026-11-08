@@ -9,6 +9,7 @@ from routes.public.calendar_feed import cal_feed_bp
 from routes.public.incidents import public_incidents_bp
 from routes.public.inspections import public_inspections_bp
 from routes.public.safety_rules import public_safety_rules_bp
+from routes.public.vehicle_sheet import public_vehicle_sheet_bp
 from routes.public.waivers import public_waivers_bp
 from routes.public.web import public_web_bp
 
@@ -27,6 +28,7 @@ def public_url_alias_handler(error, endpoint, values):
         "public_waivers.",
         "public_incidents.",
         "public_safety_rules.",
+        "public_vehicle_sheet.",
     )
     for prefix in prefixes:
         candidate = f"{prefix}{endpoint}"
@@ -46,6 +48,7 @@ def init_routes(app):
     app.register_blueprint(public_waivers_bp)
     app.register_blueprint(public_incidents_bp)
     app.register_blueprint(public_safety_rules_bp)
+    app.register_blueprint(public_vehicle_sheet_bp)
 
     # Flux calendrier ICS public (exempt CSRF — accédé par les apps calendrier)
     from extensions import csrf

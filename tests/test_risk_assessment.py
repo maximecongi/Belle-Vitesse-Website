@@ -1,5 +1,5 @@
 """
-tests/test_risk_assessment.py — Tests unitaires et d'intégration pour le Risk Assessment (BVRS).
+tests/test_risk_assessment.py — Tests unitaires et d'intégration pour le Risk Assessment (BVRA).
 """
 
 import json
@@ -43,7 +43,7 @@ from services.admin.waivers import (
 
 
 class RiskAssessmentComprehensiveTest(BaseTestCase):
-    """Suite de tests complète pour l'Analyse des Risques (BVRS)."""
+    """Suite de tests complète pour l'Analyse des Risques (BVRA)."""
 
     def _create_mock_project(self):
         """Crée un projet avec production, contact et véhicules de test en mémoire."""
@@ -148,10 +148,10 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertIsNotNone(waiver)
         waiver_id = waiver.waiver_id
 
-        # Vérification du préfixe BVRS-
+        # Vérification du préfixe BVRA-
         self.assertTrue(
-            waiver_id.startswith("BVRS-"),
-            f"L'ID doit commencer par BVRS- (obtenu: {waiver_id})",
+            waiver_id.startswith("BVRA-"),
+            f"L'ID doit commencer par BVRA- (obtenu: {waiver_id})",
         )
 
         # Vérification de l'accès via le projet
@@ -206,7 +206,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         # 1. GET page de signature
         res_get = self.client.get(f"/sign/risk-assessment/{token_obj.token}")
         self.assertEqual(res_get.status_code, 200)
-        self.assertIn(b"Analyse des Risques (BVRS)", res_get.data)
+        self.assertIn(b"Analyse des Risques (BVRA)", res_get.data)
         self.assertIn(b"RISQUE MAJEUR", res_get.data)
         self.assertIn(b"RISQUE", res_get.data)
 
@@ -257,10 +257,10 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         )
         res_verify = self.client.get(verify_url)
         self.assertEqual(res_verify.status_code, 200)
-        self.assertIn(b"Analyse des Risques BVRS", res_verify.data)
+        self.assertIn(b"Analyse des Risques BVRA", res_verify.data)
 
     def test_risk_assessment_roles_labels(self):
-        """Vérifie le mapping et libellé de tous les rôles acceptés pour le BVRS."""
+        """Vérifie le mapping et libellé de tous les rôles acceptés pour le BVRA."""
         roles_expectations = {
             "production": "Directeur de production",
             "stunt_coordinator": "Coordinateur Cascades",
@@ -282,12 +282,12 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertEqual(w.signer_role_label, "Chef Électricien")
 
     def test_admin_fleet_risk_assessment_route(self):
-        """Vérifie que la route admin du catalogue BVRS répond correctement et contient les contrôles d'édition."""
+        """Vérifie que la route admin du catalogue BVRA répond correctement et contient les contrôles d'édition."""
         self.login_as_admin()
 
         res = self.client.get("/admin/fleet/risk-assessment")
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b"Catalogue Analyse des Risques (BVRS)", res.data)
+        self.assertIn(b"Catalogue Analyse des Risques (BVRA)", res.data)
         self.assertIn(b"Risques G", res.data)
         self.assertIn(b"/admin/fleet/risk-assessment/edit/general", res.data)
         self.assertIn(b"/admin/fleet/risk-assessment/edit/vehicle/", res.data)
@@ -298,12 +298,12 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
             self.assertNotIn(b"Matrice Flotte", res_fleet.data)
             self.assertIn(b"Analyse des Risques", res_fleet.data)
 
-    def test_admin_sidebar_contains_bvrs_navigation(self):
-        """Vérifie que l'entrée Analyse des Risques (BVRS) est visible dans la barre latérale sous Départs."""
+    def test_admin_sidebar_contains_bvra_navigation(self):
+        """Vérifie que l'entrée Analyse des Risques (BVRA) est visible dans la barre latérale sous Départs."""
         self.login_as_admin()
         res = self.client.get("/admin/projects")
         self.assertEqual(res.status_code, 200)
-        self.assertIn(b"Analyse des Risques (BVRS)", res.data)
+        self.assertIn(b"Analyse des Risques (BVRA)", res.data)
         self.assertIn(b"/admin/risk-assessments", res.data)
 
     def test_admin_fleet_risk_assessment_save_post(self):
@@ -463,7 +463,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertFalse(project.is_vehicle_road_legal("rec_erover"))
 
     def test_risk_assessment_road_legal_callouts_render_and_condition(self):
-        """Vérifie l'intégration et le conditionnement dynamique des 3 blocs d'avertissement dans le PDF BVRS."""
+        """Vérifie l'intégration et le conditionnement dynamique des 3 blocs d'avertissement dans le PDF BVRA."""
         with self.client.session_transaction() as sess:
             sess["admin_authenticated"] = True
             sess["admin_user_id"] = 1
@@ -567,7 +567,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_cat = self.client.get("/admin/fleet/risk-assessment")
         self.assertEqual(res_cat.status_code, 200)
         html_cat = res_cat.data.decode("utf-8")
-        self.assertIn("Catalogue Analyse des Risques (BVRS)", html_cat)
+        self.assertIn("Catalogue Analyse des Risques (BVRA)", html_cat)
         self.assertIn("Risques Généraux", html_cat)
         self.assertIn("Risques Spécifiques par Véhicules", html_cat)
         self.assertIn("Rechercher un risque...", html_cat)
@@ -721,7 +721,7 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
 
         self.login_as_admin()
         html = self.client.get("/admin/fleet/risk-assessment/edit/general").data.decode("utf-8")
-        self.assertIn('id="bvrs-categories-data"', html)
+        self.assertIn('id="bvra-categories-data"', html)
         self.assertIn("SHARED CATEGORY", html)
 
 if __name__ == "__main__":

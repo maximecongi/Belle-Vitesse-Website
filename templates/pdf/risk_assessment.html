@@ -1,6 +1,6 @@
 {% extends "pdf/base_pdf.html" %}
 
-{% block title %}BVRS — {{ waiver.waiver_id }} — {{ waiver.display_project_name }}{% endblock %}
+{% block title %}BVRA — {{ waiver.waiver_id }} — {{ waiver.display_project_name }}{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ asset_url('css/admin/risk-assessment-pdf.css') }}">
@@ -9,7 +9,7 @@
 {% block preview_toolbar %}
 {% if is_preview %}
 {{ pdf_preview_toolbar(
-doc_title="Analyse des Risques (BVRS)",
+doc_title="Analyse des Risques (BVRA)",
 doc_id=waiver.waiver_id,
 format_pdf_url="?format=pdf",
 show_print=True
@@ -81,10 +81,10 @@ company_name=company_name
     {% endfor %}
 {% endif %}
 {% set vehicles_str = vehicles_names|join(', ') if vehicles_names else 'techniques' %}
-{% set bvrs_scope_text = "Le présent document formalise l'analyse des risques (Risk Assessment) liée à l'utilisation des véhicules travelling et équipements spéciaux " ~ vehicles_str ~ ", mis à disposition par Belle Vitesse SAS auprès de la Production " ~ waiver.display_production_name ~ ", dans le cadre du tournage de « " ~ waiver.display_project_name ~ " ». Le signataire atteste en avoir pris parfaite connaissance et s'engage à respecter et faire respecter l'ensemble des mesures préventives et recommandations prescrites." %}
+{% set bvra_scope_text = "Le présent document formalise l'analyse des risques (Risk Assessment) liée à l'utilisation des véhicules travelling et équipements spéciaux " ~ vehicles_str ~ ", mis à disposition par Belle Vitesse SAS auprès de la Production " ~ waiver.display_production_name ~ ", dans le cadre du tournage de « " ~ waiver.display_project_name ~ " ». Le signataire atteste en avoir pris parfaite connaissance et s'engage à respecter et faire respecter l'ensemble des mesures préventives et recommandations prescrites." %}
 
 {{ pdf_mission_scope(
-    text=bvrs_scope_text,
+    text=bvra_scope_text,
     project_name=waiver.display_project_name,
     shooting_locations=waiver.display_shooting_locations,
     locations_list=waiver.display_shooting_locations_list,
@@ -93,10 +93,10 @@ company_name=company_name
 ) }}
 
 <!-- ═══════════ SECTION FRANÇAISE : ANALYSE DES RISQUES ═══════════ -->
-<div class="bvrs-page-break"></div>
+<div class="bvra-page-break"></div>
 <section class="pdf-section">
     <!-- Consignes Générales-->
-    <div class="bvrs-category-title">CONSIGNES GÉNÉRALES</div>
+    <div class="bvra-category-title">CONSIGNES GÉNÉRALES</div>
 
     <!-- ── BLOCS D'AVERTISSEMENT & SÉCURITÉ ROUTIÈRE (FR) ── -->
     {% set nrl_vehicles = waiver.non_road_legal_vehicles if (waiver and waiver.non_road_legal_vehicles is defined) else [] %}
@@ -135,17 +135,17 @@ company_name=company_name
             {% set _ = nrl_with_articles.append(art ~ v_clean) %}
         {% endfor %}
         <!-- Bloc 1 : Utilisation sur route fermée uniquement -->
-        <div class="bvrs-road-legal-card">
-            <div class="bvrs-road-legal-header">
-                <div class="bvrs-road-legal-title-cell">
-                    <span class="bvrs-road-legal-icon-wrap">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+        <div class="bvra-road-legal-card">
+            <div class="bvra-road-legal-header">
+                <div class="bvra-road-legal-title-cell">
+                    <span class="bvra-road-legal-icon-wrap">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
                     </span>
-                    <span class="bvrs-road-legal-title">Utilisation sur route fermée uniquement</span>
-                    <span class="bvrs-road-legal-badge">IMPÉRATIF SÉCURITÉ</span>
+                    <span class="bvra-road-legal-title">Utilisation sur route fermée uniquement</span>
+                    <span class="bvra-road-legal-badge">IMPÉRATIF SÉCURITÉ</span>
                 </div>
             </div>
-            <div class="bvrs-road-legal-desc bvrs-recs-box">
+            <div class="bvra-road-legal-desc bvra-recs-box">
                 <p>
                     {% if nrl_with_articles|length == 1 %}
                         {{ nrl_with_articles[0]|safe }} roule uniquement sur une route fermée à toute circulation extérieure (voie fermée par arrêté de l'autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production. Modifié pour la prise de vue, il n'est pas homologué pour circuler sur une voie ouverte au public.
@@ -156,7 +156,7 @@ company_name=company_name
                 <p>
                     Toute circulation sur une voie ouverte, y compris pour se déplacer entre deux décors, est <strong>strictement interdite</strong>. Les déplacements entre deux décors se font sur une voie fermée à la circulation, ou par transport sur plateau ou remorque.
                 </p>
-                <p class="bvrs-road-legal-highlight">
+                <p class="bvra-road-legal-highlight">
                     <strong>Tout manquement à cette règle engage la seule responsabilité de la production.</strong>
                 </p>
             </div>
@@ -164,16 +164,16 @@ company_name=company_name
     {% endif %}
 
     <!-- Bloc 2 & 3 Combinés : Règles de Sécurité Plateau & Manuel / Information -->
-    <div class="bvrs-notice-card">
-        <div class="bvrs-notice-row bvrs-notice-row--bordered">
-            <div class="bvrs-notice-label">À SIGNER</div>
-            <div class="bvrs-notice-text">
+    <div class="bvra-notice-card">
+        <div class="bvra-notice-row bvra-notice-row--bordered">
+            <div class="bvra-notice-label">À SIGNER</div>
+            <div class="bvra-notice-text">
                 Les règles de sécurité à appliquer sur le plateau figurent dans le document <strong>Règles de sécurité</strong>, à signer par la production et le pilote.
             </div>
         </div>
-        <div class="bvrs-notice-row">
-            <div class="bvrs-notice-label">INFORMATION</div>
-            <div class="bvrs-notice-text">
+        <div class="bvra-notice-row">
+            <div class="bvra-notice-label">INFORMATION</div>
+            <div class="bvra-notice-text">
                 Le manuel officiel du véhicule est disponible à bord. Le manuel, l’analyse des risques et les règles de sécurité sont aussi accessibles sur téléphone via le QR code collé sur le véhicule.
             </div>
         </div>
@@ -187,41 +187,41 @@ company_name=company_name
         {% endif %}
     {% endfor %}
     <!-- Risques Généraux Travelling -->
-    <div class="bvrs-category-title">RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
+    <div class="bvra-category-title">RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</div>
     {% for cat in cat_list %}
-        <div class="bvrs-category-banner">{{ cat }}</div>
+        <div class="bvra-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_fr or r.category) == cat %}
-        <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
-            <div class="bvrs-risk-header">
-                <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+        <div class="bvra-risk-card {{ 'bvra-risk-card--major' if r.level == 'major' else 'bvra-risk-card--standard' }}">
+            <div class="bvra-risk-header">
+                <div class="bvra-risk-header-cell bvra-risk-icon-cell">
                     {% if r.level == 'major' %}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
                     {% else %}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                     {% endif %}
                 </div>
-                <div class="bvrs-risk-header-cell">
-                    <span class="bvrs-risk-title">{{ r.title_fr or r.title }}</span>
+                <div class="bvra-risk-header-cell">
+                    <span class="bvra-risk-title">{{ r.title_fr or r.title }}</span>
                     {% if r.level == 'major' %}
-                    <span class="bvrs-badge-major">RISQUE MAJEUR</span>
+                    <span class="bvra-badge-major">RISQUE MAJEUR</span>
                     {% else %}
-                    <span class="bvrs-badge-standard">RISQUE</span>
+                    <span class="bvra-badge-standard">RISQUE</span>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="bvrs-risk-desc">{{ r.description_fr or r.description }}</div>
+            <div class="bvra-risk-desc">{{ r.description_fr or r.description }}</div>
 
             {% set recs = r.recommendations_fr or r.recommendations %}
             {% if recs and recs|length > 0 %}
-            <div class="bvrs-recs-box">
-                <div class="bvrs-recs-title">Recommandations</div>
-                <table class="bvrs-recs-table">
+            <div class="bvra-recs-box">
+                <div class="bvra-recs-title">Recommandations</div>
+                <table class="bvra-recs-table">
                     <tbody>
                         {% for rec in recs %}
-                        <tr class="bvrs-rec-row">
-                            <td class="bvrs-rec-check">✓</td>
-                            <td class="bvrs-rec-text">{{ rec }}</td>
+                        <tr class="bvra-rec-row">
+                            <td class="bvra-rec-check">✓</td>
+                            <td class="bvra-rec-text">{{ rec }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -235,7 +235,7 @@ company_name=company_name
     <!-- Risques Spécifiques par Véhicule (FR) -->
     {% if vehicle_sections %}
         {% for vsec in vehicle_sections %}
-        <div class="bvrs-category-title">RISQUES SPÉCIFIQUES — {{ vsec.label|upper }}</div>
+        <div class="bvra-category-title">RISQUES SPÉCIFIQUES — {{ vsec.label|upper }}</div>
         {% set vcat_list = [] %}
         {% for r in vsec.risks %}
             {% set c_name = r.category_fr or r.category %}
@@ -245,39 +245,39 @@ company_name=company_name
         {% endfor %}
 
         {% for cat in vcat_list %}
-            <div class="bvrs-category-banner">{{ cat }}</div>
+            <div class="bvra-category-banner">{{ cat }}</div>
             {% for r in vsec.risks if (r.category_fr or r.category) == cat %}
-            <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
-                <div class="bvrs-risk-header">
-                    <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+            <div class="bvra-risk-card {{ 'bvra-risk-card--major' if r.level == 'major' else 'bvra-risk-card--standard' }}">
+                <div class="bvra-risk-header">
+                    <div class="bvra-risk-header-cell bvra-risk-icon-cell">
                         {% if r.level == 'major' %}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
                         {% else %}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                         {% endif %}
                     </div>
-                    <div class="bvrs-risk-header-cell">
-                        <span class="bvrs-risk-title">{{ r.title_fr or r.title }}</span>
+                    <div class="bvra-risk-header-cell">
+                        <span class="bvra-risk-title">{{ r.title_fr or r.title }}</span>
                         {% if r.level == 'major' %}
-                        <span class="bvrs-badge-major">RISQUE MAJEUR</span>
+                        <span class="bvra-badge-major">RISQUE MAJEUR</span>
                         {% else %}
-                        <span class="bvrs-badge-standard">RISQUE</span>
+                        <span class="bvra-badge-standard">RISQUE</span>
                         {% endif %}
                     </div>
                 </div>
 
-                <div class="bvrs-risk-desc">{{ r.description_fr or r.description }}</div>
+                <div class="bvra-risk-desc">{{ r.description_fr or r.description }}</div>
 
                 {% set recs = r.recommendations_fr or r.recommendations %}
                 {% if recs and recs|length > 0 %}
-                <div class="bvrs-recs-box">
-                    <div class="bvrs-recs-title">Recommandations</div>
-                    <table class="bvrs-recs-table">
+                <div class="bvra-recs-box">
+                    <div class="bvra-recs-title">Recommandations</div>
+                    <table class="bvra-recs-table">
                         <tbody>
                             {% for rec in recs %}
-                            <tr class="bvrs-rec-row">
-                                <td class="bvrs-rec-check">✓</td>
-                                <td class="bvrs-rec-text">{{ rec }}</td>
+                            <tr class="bvra-rec-row">
+                                <td class="bvra-rec-check">✓</td>
+                                <td class="bvra-rec-text">{{ rec }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -292,26 +292,26 @@ company_name=company_name
 </section>
 
 <!-- ═══════════ SAUT DE PAGE VERS LA VERSION ANGLAISE ═══════════ -->
-<div class="bvrs-page-break"></div>
+<div class="bvra-page-break"></div>
 
 <!-- ═══════════ SECTION ANGLAISE : RISK ASSESSMENT ═══════════ -->
 <section class="pdf-section">
     <!-- General Instructions -->
-    <div class="bvrs-category-title">GENERAL INSTRUCTIONS</div>
+    <div class="bvra-category-title">GENERAL INSTRUCTIONS</div>
     <!-- ── WARNING & ROAD SAFETY CALLOUTS (EN) ── -->
     {% if nrl_vehicles and nrl_vehicles|length > 0 %}
         <!-- Block 1 : Use on Closed Roads Only -->
-        <div class="bvrs-road-legal-card">
-            <div class="bvrs-road-legal-header">
-                <div class="bvrs-road-legal-title-cell">
-                    <span class="bvrs-road-legal-icon-wrap">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
+        <div class="bvra-road-legal-card">
+            <div class="bvra-road-legal-header">
+                <div class="bvra-road-legal-title-cell">
+                    <span class="bvra-road-legal-icon-wrap">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>
                     </span>
-                    <span class="bvrs-road-legal-title">Use on closed roads only</span>
-                    <span class="bvrs-road-legal-badge">SAFETY MANDATE</span>
+                    <span class="bvra-road-legal-title">Use on closed roads only</span>
+                    <span class="bvra-road-legal-badge">SAFETY MANDATE</span>
                 </div>
             </div>
-            <div class="bvrs-road-legal-desc bvrs-recs-box">
+            <div class="bvra-road-legal-desc bvra-recs-box">
                 <p>
                     {% if nrl_names|length == 1 %}
                         The {{ nrl_names[0] }} operates exclusively on a road closed to all outside traffic (road closed by municipal or police order, private grounds, or dedicated track), demarcated and secured by the production. Modified for camera tracking, it is not certified or homologated for operation on open public roads.
@@ -322,7 +322,7 @@ company_name=company_name
                 <p>
                     Any driving on open public roads, including transit between two locations, is <strong>strictly prohibited</strong>. Transfers between locations must be carried out on a road closed to traffic, or via flatbed trailer transport.
                 </p>
-                <p class="bvrs-road-legal-highlight">
+                <p class="bvra-road-legal-highlight">
                     <strong>Any failure to comply with this requirement engages the sole responsibility of the production.</strong>
                 </p>
             </div>
@@ -330,16 +330,16 @@ company_name=company_name
     {% endif %}
 
     <!-- Block 2 & 3 Combined: On-Set Safety Rules & Vehicle Manual Notice -->
-    <div class="bvrs-notice-card">
-        <div class="bvrs-notice-row bvrs-notice-row--bordered">
-            <div class="bvrs-notice-label">TO SIGN</div>
-            <div class="bvrs-notice-text">
+    <div class="bvra-notice-card">
+        <div class="bvra-notice-row bvra-notice-row--bordered">
+            <div class="bvra-notice-label">TO SIGN</div>
+            <div class="bvra-notice-text">
                 On-set safety guidelines are set out in the document <strong>Safety Rules</strong>, to be signed by the production and the driver/pilot.
             </div>
         </div>
-        <div class="bvrs-notice-row">
-            <div class="bvrs-notice-label">INFORMATION</div>
-            <div class="bvrs-notice-text">
+        <div class="bvra-notice-row">
+            <div class="bvra-notice-label">INFORMATION</div>
+            <div class="bvra-notice-text">
                 The official vehicle manual is available on board. The manual, risk assessment, and safety rules are also accessible on smartphone via the QR code sticker affixed to the vehicle.
             </div>
         </div>
@@ -353,41 +353,41 @@ company_name=company_name
         {% endif %}
     {% endfor %}
     <!-- General Risks Tracking Vehicles -->
-    <div class="bvrs-category-title">GENERAL RISKS — TRACKING VEHICLES</div>
+    <div class="bvra-category-title">GENERAL RISKS — TRACKING VEHICLES</div>
     {% for cat in cat_en_list %}
-        <div class="bvrs-category-banner">{{ cat }}</div>
+        <div class="bvra-category-banner">{{ cat }}</div>
         {% for r in general_risks if (r.category_en or r.category_fr or r.category) == cat %}
-        <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
-            <div class="bvrs-risk-header">
-                <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+        <div class="bvra-risk-card {{ 'bvra-risk-card--major' if r.level == 'major' else 'bvra-risk-card--standard' }}">
+            <div class="bvra-risk-header">
+                <div class="bvra-risk-header-cell bvra-risk-icon-cell">
                     {% if r.level == 'major' %}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
                     {% else %}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                     {% endif %}
                 </div>
-                <div class="bvrs-risk-header-cell">
-                    <span class="bvrs-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
+                <div class="bvra-risk-header-cell">
+                    <span class="bvra-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
                     {% if r.level == 'major' %}
-                    <span class="bvrs-badge-major">HIGH RISK</span>
+                    <span class="bvra-badge-major">HIGH RISK</span>
                     {% else %}
-                    <span class="bvrs-badge-standard">RISK</span>
+                    <span class="bvra-badge-standard">RISK</span>
                     {% endif %}
                 </div>
             </div>
 
-            <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
+            <div class="bvra-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
 
             {% set recs = r.recommendations_fr or r.recommendations or r.recommendations_en %}{% set recs_en = r.recommendations_en or [] %}
             {% if recs and recs|length > 0 %}
-            <div class="bvrs-recs-box">
-                <div class="bvrs-recs-title">Recommendations</div>
-                <table class="bvrs-recs-table">
+            <div class="bvra-recs-box">
+                <div class="bvra-recs-title">Recommendations</div>
+                <table class="bvra-recs-table">
                     <tbody>
                         {% for rec in recs %}
-                        <tr class="bvrs-rec-row">
-                            <td class="bvrs-rec-check">✓</td>
-                            <td class="bvrs-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
+                        <tr class="bvra-rec-row">
+                            <td class="bvra-rec-check">✓</td>
+                            <td class="bvra-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -401,7 +401,7 @@ company_name=company_name
     <!-- Specific Risks per Vehicle (EN) -->
     {% if vehicle_sections %}
         {% for vsec in vehicle_sections %}
-        <div class="bvrs-category-title">SPECIFIC RISKS — {{ (vsec.label_en or vsec.label)|upper }}</div>
+        <div class="bvra-category-title">SPECIFIC RISKS — {{ (vsec.label_en or vsec.label)|upper }}</div>
         {% set vcat_en_list = [] %}
         {% for r in vsec.risks %}
             {% set c_name = r.category_en or r.category_fr or r.category %}
@@ -411,39 +411,39 @@ company_name=company_name
         {% endfor %}
 
         {% for cat in vcat_en_list %}
-            <div class="bvrs-category-banner">{{ cat }}</div>
+            <div class="bvra-category-banner">{{ cat }}</div>
             {% for r in vsec.risks if (r.category_en or r.category_fr or r.category) == cat %}
-            <div class="bvrs-risk-card {{ 'bvrs-risk-card--major' if r.level == 'major' else 'bvrs-risk-card--standard' }}">
-                <div class="bvrs-risk-header">
-                    <div class="bvrs-risk-header-cell bvrs-risk-icon-cell">
+            <div class="bvra-risk-card {{ 'bvra-risk-card--major' if r.level == 'major' else 'bvra-risk-card--standard' }}">
+                <div class="bvra-risk-header">
+                    <div class="bvra-risk-header-cell bvra-risk-icon-cell">
                         {% if r.level == 'major' %}
-                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"></polygon><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"></line><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"></circle></svg>
                         {% else %}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>
                         {% endif %}
                     </div>
-                    <div class="bvrs-risk-header-cell">
-                        <span class="bvrs-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
+                    <div class="bvra-risk-header-cell">
+                        <span class="bvra-risk-title">{{ r.title_en or r.title_fr or r.title }}</span>
                         {% if r.level == 'major' %}
-                        <span class="bvrs-badge-major">HIGH RISK</span>
+                        <span class="bvra-badge-major">HIGH RISK</span>
                         {% else %}
-                        <span class="bvrs-badge-standard">RISK</span>
+                        <span class="bvra-badge-standard">RISK</span>
                         {% endif %}
                     </div>
                 </div>
 
-                <div class="bvrs-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
+                <div class="bvra-risk-desc">{{ r.description_en or r.description_fr or r.description }}</div>
 
                 {% set recs = r.recommendations_fr or r.recommendations or r.recommendations_en %}{% set recs_en = r.recommendations_en or [] %}
                 {% if recs and recs|length > 0 %}
-                <div class="bvrs-recs-box">
-                    <div class="bvrs-recs-title">Recommendations</div>
-                    <table class="bvrs-recs-table">
+                <div class="bvra-recs-box">
+                    <div class="bvra-recs-title">Recommendations</div>
+                    <table class="bvra-recs-table">
                         <tbody>
                             {% for rec in recs %}
-                            <tr class="bvrs-rec-row">
-                                <td class="bvrs-rec-check">✓</td>
-                                <td class="bvrs-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
+                            <tr class="bvra-rec-row">
+                                <td class="bvra-rec-check">✓</td>
+                                <td class="bvra-rec-text">{{ recs_en[loop.index0] if (loop.index0 < recs_en|length and recs_en[loop.index0]) else rec }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -482,7 +482,7 @@ custom_meta_lines=[
 {% block pdf_footer %}
 {{ pdf_footer(
 company_name=company_name or 'Belle Vitesse',
-note="Belle Vitesse — Analyse des Risques (BVRS) — Document A4 officiel",
+note="Belle Vitesse — Analyse des Risques (BVRA) — Document A4 officiel",
 extra_class="bvsr-screen-footer"
 ) }}
 {% endblock %}

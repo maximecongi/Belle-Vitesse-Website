@@ -2,8 +2,8 @@
 
 {% from "admin/macros.html" import status_badge, filter_header, reminder_badge, table_empty_row %}
 
-{% block title %}Analyses des Risques (BVRS){% endblock %}
-{% block page_title %}Analyses des Risques (BVRS){% endblock %}
+{% block title %}Analyses des Risques (BVRA){% endblock %}
+{% block page_title %}Analyses des Risques (BVRA){% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
@@ -16,7 +16,7 @@
 
 {% block content %}
 <div class="admin-card">
-    {{ filter_header("Analyses des risques BVRS filtrées", count=risk_assessment_items|length) }}
+    {{ filter_header("Analyses des risques BVRA filtrées", count=risk_assessment_items|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
@@ -96,7 +96,7 @@
                             <form
                                 action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette analyse des risques BVRS ?');">
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette analyse des risques BVRA ?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-icon" title="Supprimer">
                                     <i data-lucide="trash-2"></i>

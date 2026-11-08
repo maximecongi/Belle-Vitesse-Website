@@ -1,5 +1,5 @@
 """
-services/admin/waivers/cgl.py — Logique métier et administration des Conditions Générales de Location (CGL - BVRA).
+services/admin/waivers/cgl.py — Logique métier et administration des Conditions Générales de Location (CGL - BVTC).
 """
 import logging
 from datetime import datetime

@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
-    <title>Vérification Analyse des Risques (BVRS) — Belle Vitesse</title>
+    <title>Vérification Analyse des Risques (BVRA) — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/verification.css') }}">
@@ -30,7 +30,7 @@
                     alt="Belle Vitesse">
             </div>
             <div class="checkout-header-meta">
-                <strong class="dot-before">Vérification Analyse des Risques (BVRS)</strong><br>
+                <strong class="dot-before">Vérification Analyse des Risques (BVRA)</strong><br>
                 <span class="checkout-doc-id">{{ inspection_id }}</span>
                 {% if signed_doc and signed_doc.version %}
                 <div class="u-mt-1">
@@ -43,7 +43,7 @@
         </header>
 
         <!-- ── Badge sceau de données ── -->
-        {{ vmacro.seal_banner(seal_valid, ok_label="Analyse des Risques BVRS Scellée & Intacte", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. L'analyse des risques n'a pas été modifiée depuis sa signature.", error_hint="Le sceau ne correspond pas à l'enregistrement original. Le document ou ses données ont pu être altérés.") }}
+        {{ vmacro.seal_banner(seal_valid, ok_label="Analyse des Risques BVRA Scellée & Intacte", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. L'analyse des risques n'a pas été modifiée depuis sa signature.", error_hint="Le sceau ne correspond pas à l'enregistrement original. Le document ou ses données ont pu être altérés.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}

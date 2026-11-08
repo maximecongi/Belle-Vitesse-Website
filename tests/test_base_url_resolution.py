@@ -77,7 +77,7 @@ class BaseUrlResolutionTest(BaseTestCase):
             db.session.flush()
 
             cgl = CglWaiver(
-                waiver_id="BVRA-BASEURL-TEST",
+                waiver_id="BVTC-BASEURL-TEST",
                 project_id=project.id,
                 project_name="Projet Test BaseURL",
                 production_name="Prod BaseURL Test",

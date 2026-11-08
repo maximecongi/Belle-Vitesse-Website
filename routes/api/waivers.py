@@ -19,7 +19,7 @@ from utils.jwt_auth import require_api_auth
 api_waivers_bp = Blueprint("api_waivers", __name__)
 
 
-# ── Conditions Générales de Location (CGL - BVRA) ────────────────────
+# ── Conditions Générales de Location (CGL - BVTC) ────────────────────
 
 @api_waivers_bp.route("/cgl", methods=["GET"])
 @require_api_auth("administrator", "manager", "commercial", "user")

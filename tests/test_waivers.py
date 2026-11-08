@@ -1,5 +1,5 @@
 """
-Tests unitaires pour le nouveau système unifié de Contrats CGL (BVRA) et Règles de Sécurité.
+Tests unitaires pour le nouveau système unifié de Contrats CGL (BVTC) et Règles de Sécurité.
 Remplace intégralement les anciens tests de double décharge pilote/production.
 """
 
@@ -86,7 +86,7 @@ class WaiversCglAndSafetyRulesTest(BaseTestCase):
             self.assertEqual(len(cgl_items), 1)
             self.assertEqual(
                 cgl_items[0]["project_name"], "Tournage Pub Alpes")
-            self.assertTrue(cgl_items[0]["waiver_id"].startswith("BVRA"))
+            self.assertTrue(cgl_items[0]["waiver_id"].startswith("BVTC"))
             self.assertEqual(cgl_items[0]["raw_status"], "to_send")
 
             # Vérification list_safety_rules_waivers
@@ -185,7 +185,7 @@ class WaiversCglAndSafetyRulesTest(BaseTestCase):
             seal_args = ["Studio Horizon", "Claire Directrice"]
             sig_data = "signatures/waivers/mock_cgl.png"
             iso_signed = "2026-06-02T10:00:00"
-            h = compute_hmac_seal("BVRA", cgl.waiver_id,
+            h = compute_hmac_seal("BVTC", cgl.waiver_id,
                                   *seal_args, sig_data, iso_signed)
 
             signed_doc = WaiverSignedDocument(
@@ -217,7 +217,7 @@ class WaiversCglAndSafetyRulesTest(BaseTestCase):
             self.assertIn(cgl.waiver_id.encode("utf-8"), resp.data)
 
             # Inexistant -> 404
-            resp_404 = self.client.get("/cgl/verify/BVRA-INEXISTANT")
+            resp_404 = self.client.get("/cgl/verify/BVTC-INEXISTANT")
             self.assertEqual(resp_404.status_code, 404)
 
     def test_verify_safety_rules_route(self):

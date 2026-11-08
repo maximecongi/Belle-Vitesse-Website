@@ -14,11 +14,11 @@ def _generate_default_waiver_id(context):
     params = context.get_current_parameters()
     w_type = params.get("waiver_type", "safety_rules")
     if w_type == "cgl":
-        prefix = "BVRA"
+        prefix = "BVTC"
     elif w_type == "pilot_waiver":
         prefix = "BVPA"
     elif w_type == "risk_assessment":
-        prefix = "BVRS"
+        prefix = "BVRA"
     else:
         prefix = "BVSR"
     return generate_inspection_number(prefix)
@@ -128,7 +128,7 @@ class Waiver(db.Model):
     bv_signed_at = db.Column(db.DateTime, nullable=True)
     bv_signer_name = db.Column(db.String(100), nullable=True)
 
-    # Données signataire Production (BVRA / CGL)
+    # Données signataire Production (BVTC / CGL)
     production_name = db.Column(db.String(255), nullable=True)
     production_representative = db.Column(db.String(255), nullable=True)
     production_address = db.Column(db.Text, nullable=True)
@@ -348,11 +348,11 @@ class Waiver(db.Model):
         if "waiver_id" not in kwargs:
             wt = kwargs.get("waiver_type")
             if wt == "cgl":
-                prefix = "BVRA"
+                prefix = "BVTC"
             elif wt == "pilot_waiver":
                 prefix = "BVPA"
             elif wt == "risk_assessment":
-                prefix = "BVRS"
+                prefix = "BVRA"
             else:
                 prefix = "BVSR"
             kwargs["waiver_id"] = generate_inspection_number(prefix)
@@ -543,7 +543,7 @@ class Waiver(db.Model):
 
 
 class CglWaiver(Waiver):
-    """Conditions Générales de Location (CGL - BVRA)."""
+    """Conditions Générales de Location (CGL - BVTC)."""
     __mapper_args__ = {
         "polymorphic_identity": "cgl",
     }
@@ -663,7 +663,7 @@ class LegacyPilotWaiver(PilotWaiver):
 
 
 class RiskAssessmentWaiver(Waiver):
-    """Analyse des Risques (Risk Assessment - BVRS)."""
+    """Analyse des Risques (Risk Assessment - BVRA)."""
     __mapper_args__ = {
         "polymorphic_identity": "risk_assessment",
     }

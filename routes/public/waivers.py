@@ -74,7 +74,7 @@ def _get_waiver_route_config(mode):
             "template_sign": "public/waivers/sign_risk_assessment.html",
             "template_verify": "public/waivers/risk_assessment_verify.html",
             "route_base": "risk-assessment",
-            "seal_prefix": "BVRS",
+            "seal_prefix": "BVRA",
         }
     return {
         "mode": "cgl",
@@ -84,7 +84,7 @@ def _get_waiver_route_config(mode):
         "template_sign": "public/cgl/sign_cgl.html",
         "template_verify": "public/cgl/cgl_verify.html",
         "route_base": "cgl",
-        "seal_prefix": "BVRA",
+        "seal_prefix": "BVTC",
     }
 
 
@@ -422,15 +422,15 @@ def _handle_sign_waiver(mode, token):
 
             rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
 
-            bvrs_sign_data = dict(waiver.sign_data or {})
-            bvrs_sign_data["entity_type"] = entity_type
+            bvra_sign_data = dict(waiver.sign_data or {})
+            bvra_sign_data["entity_type"] = entity_type
             if entity_type == "company":
-                bvrs_sign_data["company_name"] = comp_name
-                bvrs_sign_data["company_address"] = comp_addr
-            bvrs_sign_data["ack_risk_assessment"] = True
-            bvrs_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
-            bvrs_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
-            waiver.sign_data = bvrs_sign_data
+                bvra_sign_data["company_name"] = comp_name
+                bvra_sign_data["company_address"] = comp_addr
+            bvra_sign_data["ack_risk_assessment"] = True
+            bvra_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+            bvra_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
+            waiver.sign_data = bvra_sign_data
         else:
             # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
             if data.get("accepted_terms") != "1":

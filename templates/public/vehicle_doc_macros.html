@@ -1,0 +1,158 @@
+{# ══════════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — MACROS COMMUNES DES DOCUMENTS PUBLICS VÉHICULE
+   Fiche technique (/vehicle-sheet) et règles de sécurité (/safety-rules).
+   Styles : static/css/public/vehicle-doc.css
+   ══════════════════════════════════════════════════════════════════════════════ #}
+{% from "pdf/macros.html" import pdf_header %}
+
+
+{# ── En-tête officiel (macro commune des documents ERP), titre bilingue ── #}
+{% macro vdoc_header(title_fr, title_en, ref, date_str=None, company_name=None) %}
+{% set title %}<span data-lang="fr">{{ title_fr }}</span><span data-lang="en">{{ title_en }}</span>{% endset %}
+{{ pdf_header(doc_type_title=title, doc_id=ref, date_str=date_str, company_name=company_name) }}
+{% endmacro %}
+
+
+{# ── Barre d'outils : Imprimer, PDF (optionnel), bascule FR/EN ── #}
+{% macro vdoc_toolbar(pdf_url=None) %}
+<div class="public-doc-lang-bar vdoc-toolbar">
+    <div class="vdoc-actions">
+        <button type="button" class="vdoc-action" data-vdoc-action="print">
+            <i data-lucide="printer"></i>
+            <span data-lang="fr">Imprimer</span>
+            <span data-lang="en">Print</span>
+        </button>
+        {% if pdf_url %}
+        <a href="{{ pdf_url }}?lang=fr&amp;download=1" class="vdoc-action" id="vdocPdfLink"
+            data-pdf-base="{{ pdf_url }}">
+            <i data-lucide="file-down"></i>
+            <span>PDF</span>
+        </a>
+        {% endif %}
+    </div>
+    <div class="safety-lang-switcher" role="group" aria-label="Langue">
+        <button type="button" class="safety-lang-btn active" data-set-lang="fr">FR</button>
+        <button type="button" class="safety-lang-btn" data-set-lang="en">EN</button>
+    </div>
+</div>
+{% endmacro %}
+
+
+{# ── Hero véhicule : visuel, identifiant, nom, marque/modèle, accroche, KPIs ── #}
+{% macro vdoc_hero(vehicle, image_url=None, tagline_fr=None, tagline_en=None) %}
+<section class="public-doc-section vdoc-hero">
+    {% if image_url %}
+    <div class="vdoc-hero-media">
+        <img src="{{ image_url }}" alt="{{ vehicle.name }}" class="vdoc-hero-img" loading="eager">
+    </div>
+    {% endif %}
+
+    <div class="vdoc-hero-body">
+        <span class="sticker-vehicle-badge">{{ vehicle.unique_id or vehicle.slug }}</span>
+        <h1 class="vdoc-title">{{ vehicle.name }}</h1>
+        {% if vehicle.brand or vehicle.model %}
+        <p class="vdoc-subtitle">{{ vehicle.brand }} {{ vehicle.model }}</p>
+        {% endif %}
+        {% if tagline_fr or tagline_en %}
+        <p class="vdoc-tagline">
+            <span data-lang="fr">{{ tagline_fr }}</span>
+            <span data-lang="en">{{ tagline_en }}</span>
+        </p>
+        {% endif %}
+
+        {% if vehicle.max_speed or vehicle.passengers or vehicle.battery_life %}
+        <div class="vdoc-kpis">
+            {% if vehicle.max_speed %}
+            <div class="vdoc-kpi">
+                <i data-lucide="gauge"></i>
+                <span class="vdoc-kpi-value">{{ vehicle.max_speed }}<small> km/h</small></span>
+                <span class="vdoc-kpi-label">
+                    <span data-lang="fr">Vitesse max</span>
+                    <span data-lang="en">Max speed</span>
+                </span>
+            </div>
+            {% endif %}
+            {% if vehicle.passengers %}
+            <div class="vdoc-kpi">
+                <i data-lucide="users"></i>
+                <span class="vdoc-kpi-value">{{ vehicle.passengers }}</span>
+                <span class="vdoc-kpi-label">
+                    <span data-lang="fr">Passagers</span>
+                    <span data-lang="en">Passengers</span>
+                </span>
+            </div>
+            {% endif %}
+            {% if vehicle.battery_life %}
+            <div class="vdoc-kpi">
+                <i data-lucide="battery-charging"></i>
+                <span class="vdoc-kpi-value">{{ vehicle.battery_life }}<small> h</small></span>
+                <span class="vdoc-kpi-label">
+                    <span data-lang="fr">Autonomie</span>
+                    <span data-lang="en">Battery life</span>
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endmacro %}
+
+
+{# ── Lien croisé vers l'autre document véhicule (masqué à l'impression) ── #}
+{% macro vdoc_crosslink(url, icon, title_fr, title_en, sub_fr, sub_en, variant=None) %}
+<section class="public-doc-section vdoc-no-print">
+    <a href="{{ url }}" class="vdoc-crosslink{% if variant %} vdoc-crosslink--{{ variant }}{% endif %}">
+        <i data-lucide="{{ icon }}"></i>
+        <span class="vdoc-crosslink-text">
+            <strong>
+                <span data-lang="fr">{{ title_fr }}</span>
+                <span data-lang="en">{{ title_en }}</span>
+            </strong>
+            <small>
+                <span data-lang="fr">{{ sub_fr }}</span>
+                <span data-lang="en">{{ sub_en }}</span>
+            </small>
+        </span>
+        <i data-lucide="chevron-right" class="vdoc-crosslink-chevron"></i>
+    </a>
+</section>
+{% endmacro %}
+
+
+{# ── Bloc contact (Téléphone si configuré, E-mail, Web) ── #}
+{% macro vdoc_contact(title_fr, title_en, company_phone=None, company_email=None) %}
+<section class="public-doc-section vdoc-contact">
+    <h2 class="public-doc-section-title dot-before">
+        <span data-lang="fr">{{ title_fr }}</span>
+        <span data-lang="en">{{ title_en }}</span>
+    </h2>
+
+    <div class="public-doc-info-grid">
+        {% if company_phone %}
+        <div class="public-doc-info-item">
+            <span class="public-doc-info-label">
+                <span data-lang="fr">Téléphone</span>
+                <span data-lang="en">Phone</span>
+            </span>
+            <span class="public-doc-info-value">
+                <a href="tel:{{ company_phone }}" class="bvsr-contact-link">{{ company_phone }}</a>
+            </span>
+        </div>
+        {% endif %}
+        <div class="public-doc-info-item">
+            <span class="public-doc-info-label">E-mail</span>
+            <span class="public-doc-info-value">
+                <a href="mailto:{{ company_email or 'contact@bellevitesse.com' }}" class="bvsr-contact-link">{{
+                    company_email or 'contact@bellevitesse.com' }}</a>
+            </span>
+        </div>
+        <div class="public-doc-info-item">
+            <span class="public-doc-info-label">Web</span>
+            <span class="public-doc-info-value">
+                <a href="https://bellevitesse.com" class="bvsr-contact-link">bellevitesse.com</a>
+            </span>
+        </div>
+    </div>
+</section>
+{% endmacro %}

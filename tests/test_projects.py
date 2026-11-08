@@ -621,7 +621,7 @@ class ProjectsTest(BaseTestCase):
             self.assertFalse(local_path.exists())
 
     def test_admin_projects_list_render_with_bvsr_and_cgl(self):
-        """Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR, BVPA et BVRA."""
+        """Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR, BVPA et BVTC."""
         from models import CglWaiver, SafetyRulesWaiver, PilotWaiver
         with self.app.app_context():
             user = User(firstname="Admin", lastname="User", mail="admin_render@example.com", role="administrator")
@@ -633,7 +633,7 @@ class ProjectsTest(BaseTestCase):
             db.session.add(proj)
             db.session.commit()
 
-            cgl = CglWaiver(project_id=proj.id, waiver_id="BVRA-TEST01", status="to_send")
+            cgl = CglWaiver(project_id=proj.id, waiver_id="BVTC-TEST01", status="to_send")
             sr1 = SafetyRulesWaiver(project_id=proj.id, waiver_id="BVSR-TEST01", signer_role="pilot", signer_first_name="Romain", status="signed", signed_pdf_path="waivers/safety_rules/BVSR-TEST01.pdf")
             pw1 = PilotWaiver(project_id=proj.id, waiver_id="BVPA-TEST01", signer_role="pilot", signer_first_name="Romain", status="signed", signed_pdf_path="waivers/pilot_waiver/BVPA-TEST01.pdf")
             db.session.add_all([cgl, sr1, pw1])

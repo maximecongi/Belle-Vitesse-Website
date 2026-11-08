@@ -1,5 +1,5 @@
 """
-services/admin/waivers/risk_assessment.py — Logique métier et administration de l'Analyse des Risques (BVRS).
+services/admin/waivers/risk_assessment.py — Logique métier et administration de l'Analyse des Risques (BVRA).
 """
 import logging
 from datetime import datetime
@@ -33,32 +33,32 @@ logger = logging.getLogger(__name__)
 
 
 def create_risk_assessment_waiver(project_id, **kwargs):
-    """Crée une analyse des risques (BVRS) pour un signataire individuel d'un projet."""
+    """Crée une analyse des risques (BVRA) pour un signataire individuel d'un projet."""
     return create_waiver(project_id, waiver_type="risk_assessment", **kwargs)
 
 
 def delete_risk_assessment_waiver(waiver_id):
-    """Supprime logiquement une analyse des risques BVRS (soft-delete et nettoyage assets)."""
+    """Supprime logiquement une analyse des risques BVRA (soft-delete et nettoyage assets)."""
     return delete_waiver(waiver_id, waiver_type="risk_assessment")
 
 
 def generate_risk_assessment_waiver(waiver_id):
-    """Génère (fige les données de snapshot) une analyse des risques BVRS."""
+    """Génère (fige les données de snapshot) une analyse des risques BVRA."""
     return generate_waiver(waiver_id, waiver_type="risk_assessment")
 
 
 def send_risk_assessment_waiver(waiver_id, base_url=None):
-    """Envoie l'invitation de signature par e-mail au signataire de l'analyse des risques BVRS."""
+    """Envoie l'invitation de signature par e-mail au signataire de l'analyse des risques BVRA."""
     return send_waiver(waiver_id, waiver_type="risk_assessment", base_url=base_url)
 
 
 def reset_risk_assessment_waiver(waiver_id):
-    """Réinitialise complètement une analyse des risques BVRS (supprime signatures et PDF)."""
+    """Réinitialise complètement une analyse des risques BVRA (supprime signatures et PDF)."""
     return reset_waiver(waiver_id, waiver_type="risk_assessment")
 
 
 def delete_risk_assessment_waiver_internal(project_id):
-    """Supprime proprement les BVRS en interne lors de la suppression d'un projet."""
+    """Supprime proprement les BVRA en interne lors de la suppression d'un projet."""
     delete_waiver_internal(project_id, waiver_type="risk_assessment")
 
 
@@ -66,7 +66,7 @@ delete_risk_assessment_internal = delete_risk_assessment_waiver_internal
 
 
 def list_risk_assessment_waivers(project_id=None):
-    """Liste et formate les analyses des risques (BVRS) d'un projet ou de tous les projets."""
+    """Liste et formate les analyses des risques (BVRA) d'un projet ou de tous les projets."""
     query = RiskAssessmentWaiver.query.outerjoin(Project).filter(
         RiskAssessmentWaiver.deleted_at.is_(None)
     ).options(joinedload(RiskAssessmentWaiver.project))

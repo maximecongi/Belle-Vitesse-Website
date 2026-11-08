@@ -82,7 +82,7 @@ class CglComprehensiveTest(BaseTestCase):
 
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
             self.assertIsNotNone(cgl)
-            self.assertTrue(cgl.waiver_id.startswith("BVRA-"))
+            self.assertTrue(cgl.waiver_id.startswith("BVTC-"))
             self.assertEqual(cgl.waiver_type, "cgl")
             self.assertEqual(cgl.status, "to_send")
             self.assertEqual(proj.cgl.id, cgl.id)
@@ -483,7 +483,7 @@ class CglComprehensiveTest(BaseTestCase):
         resp_pilot_direct = self.client.get("/preview/pdf/pilot-waiver")
         self.assertEqual(resp_pilot_direct.status_code, 200)
 
-        # 4. Prévisualisation directe Analyse des Risques BVRS (mock)
+        # 4. Prévisualisation directe Analyse des Risques BVRA (mock)
         resp_risk_admin = self.client.get("/admin/risk-assessment/preview")
         self.assertEqual(resp_risk_admin.status_code, 200)
         risk_html = resp_risk_admin.get_data(as_text=True)

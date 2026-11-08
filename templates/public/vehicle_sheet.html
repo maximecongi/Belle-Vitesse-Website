@@ -1,0 +1,147 @@
+{% from "public/vehicle_doc_macros.html" import vdoc_header, vdoc_toolbar, vdoc_hero, vdoc_crosslink, vdoc_contact %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, follow">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+
+    <title>Fiche Technique — {{ vehicle.name }} — Belle Vitesse</title>
+
+    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/public/public-doc.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/public/vehicle-safety-rules.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/public/vehicle-doc.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/public/vehicle-sheet.css') }}">
+</head>
+
+<body class="public-doc-container vdoc-page vehicle-sheet-page">
+
+    <div class="public-doc vdoc vehicle-sheet">
+
+        <!-- ═══════════ EN-TÊTE OFFICIEL (macro commune des documents ERP) ═══════════ -->
+        {{ vdoc_header('Fiche Technique', 'Technical Sheet', vehicle.unique_id or vehicle.slug, doc_date_str, company_name) }}
+
+        <!-- ═══════════ BARRE D'ACTIONS : IMPRESSION / PDF / LANGUE ═══════════ -->
+        {{ vdoc_toolbar(pdf_url=pdf_url) }}
+
+        <!-- ═══════════ 1. HERO VÉHICULE ═══════════ -->
+        {{ vdoc_hero(vehicle, hero_image, tagline_fr, tagline_en) }}
+
+        <!-- ═══════════ 2. PRÉSENTATION ═══════════ -->
+        {% if description_fr_paragraphs or description_en_paragraphs %}
+        <section class="public-doc-section">
+            <h2 class="public-doc-section-title dot-before">
+                <span data-lang="fr">Présentation</span>
+                <span data-lang="en">Overview</span>
+            </h2>
+            <div class="vehicle-sheet-description" data-lang="fr">
+                {% for p in description_fr_paragraphs %}<p>{{ p }}</p>{% endfor %}
+            </div>
+            <div class="vehicle-sheet-description" data-lang="en">
+                {% for p in description_en_paragraphs %}<p>{{ p }}</p>{% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ 3. CARACTÉRISTIQUES TECHNIQUES ═══════════ -->
+        {% if specs %}
+        <section class="public-doc-section">
+            <h2 class="public-doc-section-title dot-before">
+                <span data-lang="fr">Caractéristiques techniques</span>
+                <span data-lang="en">Technical specifications</span>
+            </h2>
+            <dl class="vehicle-sheet-specs">
+                {% for spec in specs %}
+                <div class="vehicle-sheet-spec-row">
+                    <dt>
+                        <span data-lang="fr">{{ spec.label_fr }}</span>
+                        <span data-lang="en">{{ spec.label_en }}</span>
+                    </dt>
+                    <dd>{{ spec.value }}</dd>
+                </div>
+                {% endfor %}
+            </dl>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ 4. SETUPS CAMÉRA COMPATIBLES ═══════════ -->
+        {% if setups %}
+        <section class="public-doc-section">
+            <h2 class="public-doc-section-title dot-before">
+                <span data-lang="fr">Setups caméra compatibles</span>
+                <span data-lang="en">Compatible camera setups</span>
+            </h2>
+            <ul class="vehicle-sheet-setups">
+                {% for setup in setups %}
+                <li class="vehicle-sheet-setup">
+                    {% if setup.icon_url %}
+                    <img src="{{ setup.icon_url }}" alt="" class="vehicle-sheet-setup-icon">
+                    {% endif %}
+                    <span class="tag-setups">{{ setup.name }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ 5. CONFIGURATIONS ═══════════ -->
+        {% if config_groups %}
+        <section class="public-doc-section vehicle-sheet-configs">
+            <h2 class="public-doc-section-title dot-before">Configurations</h2>
+
+            {% for group in config_groups %}
+            <div class="vehicle-sheet-config-group">
+                <div class="bvsr-category-banner">
+                    <span data-lang="fr">{{ group.label_fr }}</span>
+                    <span data-lang="en">{{ group.label_en }}</span>
+                    <span class="vehicle-sheet-config-count">{{ group['items'] | length }}</span>
+                </div>
+                <div class="vehicle-sheet-config-grid">
+                    {% for item in group['items'] %}
+                    <figure class="vehicle-sheet-config-card">
+                        {% if item.image_url %}
+                        <img src="{{ item.image_url }}" alt="{{ item.name_en }}" loading="lazy">
+                        {% endif %}
+                        <figcaption>
+                            <span data-lang="fr">{{ item.name_fr }}</span>
+                            <span data-lang="en">{{ item.name_en }}</span>
+                        </figcaption>
+                    </figure>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ 6. LIEN CROISÉ : RÈGLES DE SÉCURITÉ ═══════════ -->
+        {{ vdoc_crosslink(safety_url, 'shield-check',
+            'Règles de sécurité du véhicule', 'Vehicle safety rules',
+            'Consignes spécifiques et protocole général Belle Vitesse',
+            'Vehicle-specific guidelines and Belle Vitesse general protocol',
+            variant='safety') }}
+
+        <!-- ═══════════ 7. CONTACT  ═══════════ -->
+        {{ vdoc_contact('Contact', 'Contact', company_phone, company_email) }}
+
+        <!-- ═══════════ PIED DE PAGE OFFICIEL ═══════════ -->
+        {% with footer_subtitle = '<span data-lang="fr">Fiche technique officielle du véhicule</span><span data-lang="en">Official vehicle technical sheet</span>'|safe %}
+            {% include 'public/signature_footer.html' %}
+        {% endwith %}
+
+    </div>
+
+    <!-- Lucide Icons & JS modulaire externe (aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{{ asset_url('js/public.bundle.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,269 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — FICHE TECHNIQUE VÉHICULE (PDF A4 WeasyPrint)
+   Complète css/pdf/base-pdf.css (format A4, pagination, typographie).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.vs-pdf table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.vs-pdf .vs-avoid-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+/* ── Sections ── */
+.vs-pdf .pdf-section {
+    margin-bottom: 4pt;
+}
+
+/* ── Hero ── */
+.vs-pdf .vs-hero {
+    margin-bottom: 12pt;
+    border: 0.75pt solid #e4e4e7;
+    border-radius: 4pt;
+}
+
+.vs-pdf .vs-hero-media {
+    width: 46%;
+    background: #F4F6F9;
+    text-align: center;
+    vertical-align: middle;
+    padding: 8pt;
+}
+
+.vs-pdf .vs-hero-media img {
+    max-width: 100%;
+    max-height: 62mm;
+}
+
+.vs-pdf .vs-hero-body {
+    vertical-align: middle;
+    padding: 10pt 12pt;
+}
+
+.vs-pdf .vs-title {
+    font-size: 22pt;
+    font-weight: 800;
+    margin: 0 0 1pt 0;
+    line-height: 1.1;
+    color: #0F172A;
+}
+
+.vs-pdf .vs-subtitle {
+    font-size: 9.5pt;
+    color: #6B7280;
+    margin-bottom: 4pt;
+}
+
+.vs-pdf .vs-tagline {
+    font-size: 9.5pt;
+    font-style: italic;
+    margin-bottom: 8pt;
+}
+
+.vs-pdf .vs-kpis {
+    margin-top: 4pt;
+    border-collapse: separate !important;
+    border-spacing: 4pt 0;
+    margin-left: -4pt;
+}
+
+.vs-pdf .vs-kpi {
+    background: #F8F9FA;
+    border: 0.75pt solid #e4e4e7;
+    border-radius: 3pt;
+    padding: 5pt 6pt;
+    vertical-align: top;
+}
+
+.vs-pdf .vs-kpi-value {
+    font-size: 13pt;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1.1;
+}
+
+.vs-pdf .vs-kpi-value small {
+    font-size: 7.5pt;
+    font-weight: 600;
+    color: #6B7280;
+}
+
+.vs-pdf .vs-kpi-label {
+    font-size: 6.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6B7280;
+    font-weight: 600;
+}
+
+.vs-pdf .vs-description p {
+    margin: 0 0 4pt 0;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    color: #334155;
+    text-align: justify;
+}
+
+/* ── Specs ── */
+.vs-pdf .vs-specs {
+    border: 0.75pt solid #e4e4e7;
+}
+
+.vs-pdf .vs-specs tr:nth-child(even) td {
+    background: #FAFAFA;
+}
+
+.vs-pdf .vs-specs td {
+    padding: 3.5pt 6pt;
+    border-bottom: 0.75pt solid #e4e4e7;
+    font-size: 8pt;
+}
+
+.vs-pdf .vs-spec-label {
+    color: #6B7280;
+    width: 22%;
+}
+
+.vs-pdf .vs-spec-value {
+    font-weight: 700;
+    width: 28%;
+    border-right: 0.75pt solid #e4e4e7;
+}
+
+.vs-pdf .vs-specs td:last-child {
+    border-right: none;
+}
+
+/* ── Setups caméra (icônes du site public) ── */
+.vs-pdf .vs-setups {
+    table-layout: fixed;
+}
+
+.vs-pdf .vs-setup {
+    width: 16.66%;
+    padding: 0 1.5pt;
+    vertical-align: top;
+}
+
+.vs-pdf .vs-setup:first-child {
+    padding-left: 0;
+}
+
+.vs-pdf .vs-setup:last-child {
+    padding-right: 0;
+}
+
+.vs-pdf .vs-setup-box {
+    text-align: center;
+    padding: 5pt 2pt 4pt;
+    border: 0.75pt solid #e4e4e7;
+    border-radius: 3pt;
+    background: #F8F9FA;
+}
+
+.vs-pdf .vs-setup-icon {
+    width: 16pt;
+    height: 16pt;
+}
+
+.vs-pdf .vs-setup-name {
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: 2pt;
+}
+
+/* ── Configurations ── */
+.vs-pdf .vs-config-group {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin-bottom: 7pt;
+}
+
+.vs-pdf .vs-config-banner {
+    background: #18181b;
+    color: #ffffff;
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3pt 7pt;
+    border-radius: 2pt 2pt 0 0;
+}
+
+.vs-pdf .vs-config-grid {
+    border: 0.75pt solid #e4e4e7;
+    border-top: none;
+    table-layout: fixed;
+}
+
+.vs-pdf .vs-config-cell {
+    width: 33.33%;
+    padding: 4pt;
+    vertical-align: top;
+    text-align: center;
+}
+
+.vs-pdf .vs-config-cell img {
+    width: 100%;
+    height: auto;
+    background: #F8FAFC;
+    border: 0.5pt solid #e4e4e7;
+    border-radius: 2pt;
+}
+
+.vs-pdf .vs-config-name {
+    font-size: 7.5pt;
+    font-weight: 600;
+    margin-top: 2pt;
+}
+
+/* ── Contact & QR ── */
+.vs-pdf .vs-contact {
+    margin-top: 6pt;
+    border: 0.75pt solid #e4e4e7;
+    border-left: 3pt solid #FFC845;
+    border-radius: 3pt;
+}
+
+.vs-pdf .vs-contact-body {
+    padding: 7pt 10pt;
+    font-size: 8pt;
+    line-height: 1.5;
+    vertical-align: middle;
+}
+
+.vs-pdf .vs-contact-title {
+    font-size: 8.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 2pt;
+}
+
+.vs-pdf .vs-contact-note {
+    margin-top: 4pt;
+    color: #6B7280;
+    font-size: 7pt;
+}
+
+.vs-pdf .vs-url {
+    font-family: monospace;
+    color: #18181b;
+}
+
+.vs-pdf .vs-contact-qr {
+    width: 26mm;
+    padding: 5pt;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.vs-pdf .vs-contact-qr img {
+    width: 22mm;
+    height: 22mm;
+}

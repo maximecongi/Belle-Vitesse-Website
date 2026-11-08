@@ -190,7 +190,7 @@ class KDriveServiceTestCase(BaseTestCase):
     
     
     def test_delete_entity_cgl_polymorphic(self):
-        """Vérifie que delete_entity normalise 'cgl_waiver' -> 'cgl', retrouve le parent BVRA et purge la DB."""
+        """Vérifie que delete_entity normalise 'cgl_waiver' -> 'cgl', retrouve le parent BVTC et purge la DB."""
         from models.waiver import CglWaiver
     
         prod = Production(name="Production CGL")
@@ -208,7 +208,7 @@ class KDriveServiceTestCase(BaseTestCase):
         db.session.flush()
     
         cgl = CglWaiver(
-            waiver_id="BVRA-POLY-123",
+            waiver_id="BVTC-POLY-123",
             project_id=project.id,
             project_name="Tournage Pub",
             production_name="Production CGL",
@@ -220,7 +220,7 @@ class KDriveServiceTestCase(BaseTestCase):
         k_obj1 = KDriveObject(
             project_id=project.id,
             entity_type="cgl",
-            entity_id="BVRA-POLY-123",
+            entity_id="BVTC-POLY-123",
             role="pdf",
             source_key="cgl.pdf",
             kdrive_file_id=1111,
@@ -231,7 +231,7 @@ class KDriveServiceTestCase(BaseTestCase):
         k_obj2 = KDriveObject(
             project_id=project.id,
             entity_type="cgl_waiver",
-            entity_id="BVRA-POLY-123",
+            entity_id="BVTC-POLY-123",
             role="insurance",
             source_key="attestation.pdf",
             kdrive_file_id=3333,
@@ -242,24 +242,24 @@ class KDriveServiceTestCase(BaseTestCase):
         db.session.commit()
     
         mock_client = MagicMock()
-        # Le sous-dossier 2222 a pour parent 9999 nommé 'BVRA-POLY-123'
-        # Le sous-dossier 4444 a pour parent 9999 nommé 'BVRA-POLY-123'
+        # Le sous-dossier 2222 a pour parent 9999 nommé 'BVTC-POLY-123'
+        # Le sous-dossier 4444 a pour parent 9999 nommé 'BVTC-POLY-123'
         mock_client.get_file.side_effect = lambda file_id: {
             2222: {"id": 2222, "name": "1_CGL", "parent_id": 9999},
             4444: {"id": 4444, "name": "2_ATTESTATION_ASSURANCE", "parent_id": 9999},
-            9999: {"id": 9999, "name": "BVRA-POLY-123", "parent_id": 5000},
+            9999: {"id": 9999, "name": "BVTC-POLY-123", "parent_id": 5000},
         }.get(file_id, {})
     
         service = KDriveService(client=mock_client)
     
         # Appel avec le type cgl_waiver
-        success = service.delete_entity("cgl_waiver", "BVRA-POLY-123")
+        success = service.delete_entity("cgl_waiver", "BVTC-POLY-123")
     
         assert success is True
         # Le dossier racine 9999 du CGL doit avoir été supprimé
         assert 9999 in [call.args[0] for call in mock_client.delete.call_args_list]
         # Les deux KDriveObjects doivent avoir été supprimés
-        assert KDriveObject.query.filter_by(entity_id="BVRA-POLY-123").count() == 0
+        assert KDriveObject.query.filter_by(entity_id="BVTC-POLY-123").count() == 0
     
     
     def test_delete_entity_safety_rules_tree_fallback(self):
@@ -328,7 +328,7 @@ class KDriveServiceTestCase(BaseTestCase):
     
         # CGL marqué comme supprimé (deleted_at != None)
         cgl_deleted = CglWaiver(
-            waiver_id="BVRA-ORPHAN-1",
+            waiver_id="BVTC-ORPHAN-1",
             project_id=project.id,
             project_name="Projet Test Cleanup",
             production_name="Prod Script Test",
@@ -344,9 +344,9 @@ class KDriveServiceTestCase(BaseTestCase):
             clean_orphaned_documents(filter_type="cgl", dry_run=True)
             mock_delete.assert_not_called()
     
-            # Mode réel (--force) : doit appeler delete_entity avec ('cgl', 'BVRA-ORPHAN-1')
+            # Mode réel (--force) : doit appeler delete_entity avec ('cgl', 'BVTC-ORPHAN-1')
             clean_orphaned_documents(filter_type="cgl", dry_run=False)
-            mock_delete.assert_called_once_with("cgl", "BVRA-ORPHAN-1")
+            mock_delete.assert_called_once_with("cgl", "BVTC-ORPHAN-1")
     
     
     def test_delete_project_folder(self):

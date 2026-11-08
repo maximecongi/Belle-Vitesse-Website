@@ -52,12 +52,16 @@ class VehicleSafetyRulesQRTestCase(BaseTestCase):
         self.assertIn("eRover Test", html)
         self.assertIn("EROVER-TEST", html)
         self.assertIn("Polaris Kinetic", html)
-        self.assertIn("60 km/h", html)
-        self.assertIn("3 passagers", html)
+        # Hero commun avec la fiche technique (KPIs) + en-tête officiel ERP
+        self.assertIn("vdoc-hero", html)
+        self.assertIn("60<small> km/h</small>", html)
+        self.assertIn("Passagers", html)
+        self.assertIn("pdf-header-title-row", html)
+        self.assertIn('data-vdoc-action="print"', html)
         self.assertIn("Règles de Sécurité Véhicules", html)
         self.assertIn("Tous les véhicules", html)
         self.assertIn("Équipements mis à disposition", html)
-        self.assertIn("Contact &amp; Assistance Plateau", html)
+        self.assertIn("vdoc-contact", html)
         self.assertIn("public-doc-footer-subtitle", html)
 
     def test_public_vehicle_safety_rules_slug_alias(self):
@@ -103,3 +107,34 @@ class VehicleSafetyRulesQRTestCase(BaseTestCase):
         self.assertIn(
             "Sticker-Securite", response.headers.get("Content-Disposition", "")
         )
+
+
+class VehicleSafetyRulesPdfTestCase(VehicleSafetyRulesQRTestCase):
+    """PDF public des règles de sécurité (même gabarit que la fiche technique)."""
+
+    def test_public_page_exposes_pdf_link(self):
+        html = self.client.get(f"/safety-rules/v/{self.vehicle_slug}").data.decode("utf-8")
+        self.assertIn(f"/safety-rules/v/{self.vehicle_slug}/pdf", html)
+
+    def test_pdf_endpoint_returns_pdf(self):
+        for lang in ("fr", "en"):
+            response = self.client.get(
+                f"/safety-rules/v/{self.vehicle_slug}/pdf?lang={lang}&download=1"
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.headers["Content-Type"], "application/pdf")
+            self.assertIn(f"-{lang.upper()}.pdf", response.headers["Content-Disposition"])
+
+    def test_pdf_template_monolingual(self):
+        from flask import render_template
+        from routes.public.safety_rules import _build_safety_context
+
+        with self.app.test_request_context("/"):
+            ctx = _build_safety_context(self.vehicle_slug)
+            html_fr = render_template("pdf/vehicle_safety_rules.html", lang="fr", fr=True, qr_base64="", **ctx)
+            html_en = render_template("pdf/vehicle_safety_rules.html", lang="en", fr=False, qr_base64="", **ctx)
+
+        self.assertIn("Tous les véhicules", html_fr)
+        self.assertIn("pdf-header-title-row", html_fr)
+        self.assertIn("All vehicles", html_en)
+        self.assertNotIn("Tous les véhicules", html_en)

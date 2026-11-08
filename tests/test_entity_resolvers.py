@@ -64,7 +64,7 @@ class EntityResolversTestCase(BaseTestCase):
         )
         self.cgl_waiver = CglWaiver(
             project_id=self.project.id,
-            waiver_id="BVRA-CGL001",
+            waiver_id="BVTC-CGL001",
             production_name="Studio Alpes",
             status="to_send"
         )
@@ -145,18 +145,18 @@ class EntityResolversTestCase(BaseTestCase):
             # Résolution générique polymorphique Waiver
             self.assertEqual(resolve_waiver("BVSR-RULES001").waiver_id, "BVSR-RULES001")
             self.assertEqual(resolve_waiver("BVSR-RULES001").waiver_type, "safety_rules")
-            self.assertEqual(resolve_waiver("BVRA-CGL001").waiver_id, "BVRA-CGL001")
-            self.assertEqual(resolve_waiver("BVRA-CGL001").waiver_type, "cgl")
+            self.assertEqual(resolve_waiver("BVTC-CGL001").waiver_id, "BVTC-CGL001")
+            self.assertEqual(resolve_waiver("BVTC-CGL001").waiver_type, "cgl")
             self.assertEqual(resolve_waiver(self.safety_rules_waiver_id).id, self.safety_rules_waiver_id)
             self.assertEqual(resolve_waiver(self.cgl_waiver_id).id, self.cgl_waiver_id)
             self.assertIsNone(resolve_waiver("BVXX-INCONNU"))
 
             # CGL par int, str num, code
-            self.assertEqual(resolve_cgl(self.cgl_waiver_id).waiver_id, "BVRA-CGL001")
-            self.assertEqual(resolve_cgl(str(self.cgl_waiver_id)).waiver_id, "BVRA-CGL001")
-            self.assertEqual(resolve_cgl("BVRA-CGL001").id, self.cgl_waiver_id)
+            self.assertEqual(resolve_cgl(self.cgl_waiver_id).waiver_id, "BVTC-CGL001")
+            self.assertEqual(resolve_cgl(str(self.cgl_waiver_id)).waiver_id, "BVTC-CGL001")
+            self.assertEqual(resolve_cgl("BVTC-CGL001").id, self.cgl_waiver_id)
             self.assertIsNone(resolve_cgl(None))
-            self.assertIsNone(resolve_cgl("BVRA-INCONNU"))
+            self.assertIsNone(resolve_cgl("BVTC-INCONNU"))
 
     def test_resolve_incident(self):
         """Vérifie la résolution d'incident par int, str num, ou numéro BVIC-*."""

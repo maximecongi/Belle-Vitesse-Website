@@ -1,0 +1,90 @@
+{# ══════════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — RÈGLES DE SÉCURITÉ D'UN VÉHICULE (PDF A4 WeasyPrint)
+   Hérite du socle commun des documents ERP (en-tête officiel pdf_header).
+   Rendu monolingue (fr = True | False, fourni par la route).
+   ══════════════════════════════════════════════════════════════════════════════ #}
+{% extends "pdf/base_pdf.html" %}
+{% from "pdf/vehicle_doc_macros.html" import vs_hero, vs_contact %}
+
+{% block title %}{{ 'Règles de Sécurité' if fr else 'Safety Rules' }} — {{ vehicle.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/pdf/vehicle-sheet-pdf.css') }}">
+<link rel="stylesheet" href="{{ asset_url('css/pdf/vehicle-safety-rules-pdf.css') }}">
+{% endblock %}
+
+{% block body_class %}vs-pdf{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title=('Règles de Sécurité' if fr else 'Safety Rules'),
+    doc_id=vehicle.unique_id or vehicle.slug,
+    date_str=doc_date_str,
+    company_name=company_name
+) }}
+{% endblock %}
+
+{% block content %}
+
+{# ── Hero ── #}
+{{ vs_hero(vehicle, hero_image, fr) }}
+
+{# ── Règles de sécurité véhicules (BVSR) ── #}
+{% set general = (general_rules.rules_fr if fr else general_rules.rules_en) if general_rules else [] %}
+{% set specific = rules_fr if fr else rules_en %}
+{% set equipment = equipment_fr if fr else equipment_en %}
+
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">{{ 'Règles de Sécurité Véhicules' if fr else 'Vehicle Safety Rules' }}</h2>
+
+    <div class="vsr-group">
+        <div class="vsr-banner">{{ 'Tous les véhicules' if fr else 'All vehicles' }}</div>
+        <table class="vsr-table">
+            {% for rule in (general or []) if rule %}
+            <tr>
+                <td class="vsr-check">✓</td>
+                <td class="vsr-text">{{ rule }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="vsr-group">
+        <div class="vsr-banner">{{ vehicle.name }}</div>
+        <table class="vsr-table">
+            {% for rule in (specific or []) if rule %}
+            <tr>
+                <td class="vsr-check">✓</td>
+                <td class="vsr-text">{{ rule }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td class="vsr-check">✓</td>
+                <td class="vsr-text">{{ 'Casque et ceinture obligatoires pour toute personne en roulage.' if fr else 'Helmet and seatbelt mandatory for anyone on board while moving.' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    {% if equipment %}
+    <div class="vsr-equipment vs-avoid-break">
+        <div class="vsr-equipment-title">{{ 'Équipements mis à disposition' if fr else 'Provided safety equipment' }}</div>
+        <ul class="vsr-equipment-list">
+            {% for item in equipment if item %}
+            <li><span class="vsr-bullet">•</span>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+
+{# ── Contact & QR ── #}
+{{ vs_contact(
+    'Contact',
+    ('Règles consultables en ligne et fiche technique du véhicule :' if fr else 'Online safety rules and vehicle technical sheet:'),
+    page_url, qr_base64, company_name, company_phone, company_email
+) }}
+
+{% endblock %}
+
+{% block pdf_footer %}{% endblock %}

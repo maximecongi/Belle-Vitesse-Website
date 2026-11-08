@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BELLE VITESSE — ANALYSE DES RISQUES (BVRS / RISK ASSESSMENT)
+   BELLE VITESSE — ANALYSE DES RISQUES (BVRA / RISK ASSESSMENT)
    Feuille de style d'impression & export PDF continu (WeasyPrint / A4)
    ========================================================================== */
 
@@ -15,7 +15,7 @@
     }
 
     @bottom-left {
-        content: "BELLE VITESSE — Analyse des Risques (BVRS)";
+        content: "BELLE VITESSE — Analyse des Risques (BVRA)";
         font-size: 7.5pt;
         font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: #a1a1aa;
@@ -27,7 +27,7 @@
 }
 
 /* ── 1. Bandeaux de Parties (Type BVSR Compact) ─────────────────────────── */
-.bvrs-category-banner {
+.bvra-category-banner {
     background-color: #18181b;
     color: #ffffff;
     font-size: 8pt;
@@ -41,7 +41,7 @@
 }
 
 /* ── 2. Titres de Catégories Thématiques ─────────────────────────────────── */
-.bvrs-category-title {
+.bvra-category-title {
     font-size: 8.5pt;
     font-weight: 700;
     text-transform: uppercase;
@@ -54,7 +54,7 @@
     page-break-after: avoid;
 }
 
-.bvrs-category-title::before {
+.bvra-category-title::before {
     content: "";
     display: inline-block;
     width: 6px;
@@ -65,7 +65,7 @@
 }
 
 /* ── 3. Cartes de Risques (Majeur & Standard) ────────────────────────────── */
-.bvrs-risk-card {
+.bvra-risk-card {
     /* margin-bottom: 9pt; */
     padding: 6pt 9pt;
     border-radius: 1px;
@@ -73,47 +73,47 @@
     box-sizing: border-box;
 }
 
-.bvrs-risk-card--major {
+.bvra-risk-card--major {
     border-left: 3pt solid #dc2626;
     background-color: rgba(254, 242, 242, 0.5);
 }
 
-.bvrs-risk-card--standard {
+.bvra-risk-card--standard {
     border-left: 3pt solid #ffc845;
     background-color: rgba(254, 243, 199, 0.35);
 }
 
-.bvrs-risk-header {
+.bvra-risk-header {
     display: table;
     width: 100%;
     margin-bottom: 3pt;
 }
 
-.bvrs-risk-header-cell {
+.bvra-risk-header-cell {
     display: table-cell;
     vertical-align: middle;
 }
 
-.bvrs-risk-icon-cell {
+.bvra-risk-icon-cell {
     width: 20pt;
     vertical-align: middle;
 }
 
-.bvrs-risk-icon-svg {
+.bvra-risk-icon-svg {
     display: inline-block;
     vertical-align: middle;
     width: 15px;
     height: 15px;
 }
 
-.bvrs-risk-title {
+.bvra-risk-title {
     font-size: 8.5pt;
     font-weight: 700;
     color: #18181b;
     vertical-align: middle;
 }
 
-.bvrs-badge-major {
+.bvra-badge-major {
     display: inline-block;
     background-color: #dc2626;
     color: #ffffff;
@@ -127,7 +127,7 @@
     vertical-align: middle;
 }
 
-.bvrs-badge-standard {
+.bvra-badge-standard {
     display: inline-block;
     background-color: #ffc845;
     color: #18181b;
@@ -141,7 +141,7 @@
     vertical-align: middle;
 }
 
-.bvrs-risk-desc {
+.bvra-risk-desc {
     font-size: 7.8pt;
     color: #3f3f46;
     line-height: 1.45;
@@ -151,12 +151,12 @@
 }
 
 /* ── 4. Boîte Recommandations ────────────────────────────────────────────── */
-.bvrs-recs-box {
+.bvra-recs-box {
     margin-left: 20pt;
     margin-top: 4pt;
 }
 
-.bvrs-recs-title {
+.bvra-recs-title {
     font-size: 6.8pt;
     font-weight: 700;
     text-transform: uppercase;
@@ -165,17 +165,17 @@
     margin-bottom: 3pt;
 }
 
-.bvrs-recs-table {
+.bvra-recs-table {
     width: 100%;
     border-collapse: collapse;
 }
 
-.bvrs-rec-row {
+.bvra-rec-row {
     border: none;
     page-break-inside: avoid;
 }
 
-.bvrs-rec-check {
+.bvra-rec-check {
     width: 14pt;
     font-weight: 700;
     font-size: 8pt;
@@ -183,7 +183,7 @@
     padding: 1pt 0;
 }
 
-.bvrs-rec-text {
+.bvra-rec-text {
     font-size: 7.6pt;
     color: #18181b;
     line-height: 1.35;
@@ -192,12 +192,12 @@
 }
 
 /* ── 5. Sauts de Page ────────────────────────────────────────────────────── */
-.bvrs-page-break {
+.bvra-page-break {
     page-break-after: always;
 }
 
 /* ── 6. Encarts d'Avertissement & Sécurité Routière ─────────────────────── */
-.bvrs-road-legal-card {
+.bvra-road-legal-card {
     border: 1px solid #E2E2E2;
     border-left: 3.5pt solid #dc2626;
     /* background-color: #fdf2f2; */
@@ -208,32 +208,32 @@
     box-sizing: border-box;
 }
 
-.bvrs-road-legal-header {
+.bvra-road-legal-header {
     display: table;
     width: 100%;
     margin-bottom: 5pt;
 }
 
-.bvrs-road-legal-title-cell {
+.bvra-road-legal-title-cell {
     display: table-cell;
     vertical-align: middle;
 }
 
-.bvrs-road-legal-icon-wrap {
+.bvra-road-legal-icon-wrap {
     display: inline-block;
     vertical-align: middle;
     margin-right: 5pt;
     line-height: 1;
 }
 
-.bvrs-road-legal-icon-svg {
+.bvra-road-legal-icon-svg {
     display: inline-block;
     vertical-align: middle;
     width: 15px;
     height: 15px;
 }
 
-.bvrs-road-legal-title {
+.bvra-road-legal-title {
     text-transform: uppercase;
     color: #18181b;
     font-size: 8.5pt;
@@ -242,7 +242,7 @@
     letter-spacing: 0.2px;
 }
 
-.bvrs-road-legal-badge {
+.bvra-road-legal-badge {
     display: inline-block;
     background-color: #dc2626;
     color: #ffffff;
@@ -256,26 +256,26 @@
     vertical-align: middle;
 }
 
-.bvrs-road-legal-desc {
+.bvra-road-legal-desc {
     font-size: 7.6pt;
     color: #1f2937;
     line-height: 1.45;
 }
 
-.bvrs-road-legal-desc p {
+.bvra-road-legal-desc p {
     margin: 0 0 5pt 0;
 }
 
-.bvrs-road-legal-desc p:last-child {
+.bvra-road-legal-desc p:last-child {
     margin-bottom: 0;
 }
 
-.bvrs-road-legal-highlight {
+.bvra-road-legal-highlight {
     color: #18181b;
 }
 
 /* Encart combiné Règles de sécurité & Informations (Bordure gauche jaune BV, 2 rangées) */
-.bvrs-notice-card {
+.bvra-notice-card {
     border-left: 3.5pt solid #ffc845;
     background-color: #f1f5f9;
     margin-top: 6pt;
@@ -287,16 +287,16 @@
     border-collapse: collapse;
 }
 
-.bvrs-notice-row {
+.bvra-notice-row {
     display: table-row;
 }
 
-.bvrs-notice-row--bordered .bvrs-notice-label,
-.bvrs-notice-row--bordered .bvrs-notice-text {
+.bvra-notice-row--bordered .bvra-notice-label,
+.bvra-notice-row--bordered .bvra-notice-text {
     border-bottom: 1px solid #e2e8f0;
 }
 
-.bvrs-notice-label {
+.bvra-notice-label {
     display: table-cell;
     width: 75pt;
     padding: 7pt 10pt;
@@ -309,7 +309,7 @@
     box-sizing: border-box;
 }
 
-.bvrs-notice-text {
+.bvra-notice-text {
     display: table-cell;
     padding: 7pt 12pt;
     font-size: 7.6pt;
@@ -319,12 +319,12 @@
     box-sizing: border-box;
 }
 
-.bvrs-notice-text p {
+.bvra-notice-text p {
     margin: 0;
 }
 
 /* Callouts historiques / repli */
-.bvrs-callout-card {
+.bvra-callout-card {
     background-color: #f3f4f6;
     padding: 6pt 9pt;
     margin-bottom: 6pt;
@@ -335,18 +335,18 @@
     box-sizing: border-box;
 }
 
-.bvrs-callout-card--red {
+.bvra-callout-card--red {
     border-left: 3pt solid #dc2626;
 }
 
-.bvrs-callout-card--amber {
+.bvra-callout-card--amber {
     border-left: 3pt solid #f59e0b;
 }
 
-.bvrs-callout-card--blue {
+.bvra-callout-card--blue {
     border-left: 3pt solid var(--status-info);
 }
 
-.bvrs-callout-card p {
+.bvra-callout-card p {
     margin: 0;
 }

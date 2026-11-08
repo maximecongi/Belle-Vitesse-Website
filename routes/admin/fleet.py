@@ -362,7 +362,7 @@ def admin_safety_rules_protocol_preview():
 )
 @require_roles("administrator", "manager")
 def admin_risk_assessment_config():
-    """Vue d'ensemble et catalogue complet de l'Analyse des Risques (BVRS)."""
+    """Vue d'ensemble et catalogue complet de l'Analyse des Risques (BVRA)."""
     import json
     from services.admin.risk_assessment_config import (
         get_all_vehicle_risk_assessment_catalog,

@@ -42,7 +42,7 @@ def resolve_waiver(
 ) -> Optional[Union[Waiver, CglWaiver, SafetyRulesWaiver]]:
     """
     Résout une décharge (Waiver, CglWaiver ou SafetyRulesWaiver) soit par son ID numérique,
-    soit par sa référence métier unique (ex: 'BVRA-...', 'BVSR-...').
+    soit par sa référence métier unique (ex: 'BVTC-...', 'BVSR-...').
     Peut être appelée sous la forme resolve_waiver(identifier) ou resolve_waiver(model, identifier).
     """
     if identifier is None and not (isinstance(model_or_identifier, type) and issubclass(model_or_identifier, db.Model)):
@@ -65,7 +65,7 @@ def resolve_waiver(
 
 
 def resolve_cgl(identifier: Union[int, str, None]) -> Optional[CglWaiver]:
-    """Résout des CGL (BVRA) par leur ID ou code BVRA-*."""
+    """Résout des CGL (BVTC) par leur ID ou code BVTC-*."""
     return resolve_waiver(CglWaiver, identifier)
 
 
@@ -80,7 +80,7 @@ def resolve_pilot_waiver(identifier: Union[int, str, None]) -> Optional[PilotWai
 
 
 def resolve_risk_assessment_waiver(identifier: Union[int, str, None]) -> Optional[RiskAssessmentWaiver]:
-    """Résout une Analyse des Risques (BVRS) par son ID ou code BVRS-*."""
+    """Résout une Analyse des Risques (BVRA) par son ID ou code BVRA-*."""
     return resolve_waiver(RiskAssessmentWaiver, identifier)
 
 

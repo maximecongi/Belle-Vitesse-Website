@@ -1,8 +1,8 @@
 {% extends "admin/admin_base.html" %}
 {% from "admin/macros.html" import list_header_actions %}
 
-{% block title %}Catalogue Analyse des Risques (BVRS){% endblock %}
-{% block page_title %}Catalogue Analyse des Risques (BVRS){% endblock %}
+{% block title %}Catalogue Analyse des Risques (BVRA){% endblock %}
+{% block page_title %}Catalogue Analyse des Risques (BVRA){% endblock %}
 
 {% block header_actions %}
 {{ list_header_actions('Rechercher un risque...') }}
@@ -30,7 +30,7 @@
 
 {# Compteurs (véhicules si fournis) / majeurs / standards / total #}
 {% macro risk_stats(stats) %}
-<div class="bvrs-chips">
+<div class="bvra-chips">
     {% if stats.vehicles is defined %}
     <span class="badge-pill" data-val="neutral">{{ plural(stats.vehicles, 'véhicule') }}</span>
     {% endif %}
@@ -46,13 +46,13 @@
 
 {# En-tête de section (Risques Généraux / Risques Spécifiques) #}
 {% macro section_head(icon, title, desc, stats, edit_url=None) %}
-<div class="bvrs-card__head">
-    <span class="badge-pill bvrs-card__icon" data-val="danger" aria-hidden="true">
+<div class="bvra-card__head">
+    <span class="badge-pill bvra-card__icon" data-val="danger" aria-hidden="true">
         <i class="u-m-0" data-lucide="{{ icon }}"></i>
     </span>
-    <div class="bvrs-card__body">
-        <h2 class="bvrs-card__title">{{ title }}</h2>
-        <p class="bvrs-card__desc">{{ desc }}</p>
+    <div class="bvra-card__body">
+        <h2 class="bvra-card__title">{{ title }}</h2>
+        <p class="bvra-card__desc">{{ desc }}</p>
         {{ risk_stats(stats) }}
     </div>
     {% if edit_url %}
@@ -66,28 +66,28 @@
 {# Ligne de risque (cliquable → éditeur, ancrée sur le risque) #}
 {% macro risk_row(r, edit_url, cat_name, extra_search='') %}
 {% set recs_fr = r.recommendations_fr or r.recommendations or [] %}
-<a class="bvrs-row {{ 'bvrs-row--major' if r.level == 'major' }}"
+<a class="bvra-row {{ 'bvra-row--major' if r.level == 'major' }}"
    href="{{ edit_url }}#risk-{{ r.id }}"
    data-search-text="{{ [r.title_fr or r.title, r.title_en, r.description_fr or r.description, recs_fr|join(' '), cat_name, extra_search]|select|join(' ')|lower }}">
     {{ level_badge(r.level) }}
-    <span class="bvrs-row__title">{{ r.title_fr or r.title }}</span>
+    <span class="bvra-row__title">{{ r.title_fr or r.title }}</span>
     {% if not r._translation_status.is_complete %}
     <span class="badge-pill badge-pill-xs" data-val="neutral" title="{{ r._translation_status.missing_count }} champ(s) EN manquant(s)">EN</span>
     {% endif %}
-    <span class="bvrs-row__count">{{ plural(recs_fr|length, 'recommandation') }}</span>
+    <span class="bvra-row__count">{{ plural(recs_fr|length, 'recommandation') }}</span>
 </a>
 {% endmacro %}
 
 {# Groupe de catégorie repliable #}
 {% macro risk_group(cat, edit_url, expanded, extra_class='', extra_search='') %}
-<div class="bvrs-group-wrapper {{ extra_class }}">
-    <button type="button" class="bvrs-group" aria-expanded="{{ 'true' if expanded else 'false' }}">
-        <span class="bvrs-group__label">{{ cat.display_name or cat.name }}</span>
-        <span class="bvrs-group__count">
+<div class="bvra-group-wrapper {{ extra_class }}">
+    <button type="button" class="bvra-group" aria-expanded="{{ 'true' if expanded else 'false' }}">
+        <span class="bvra-group__label">{{ cat.display_name or cat.name }}</span>
+        <span class="bvra-group__count">
             {{- plural(cat.count, 'risque') }}{% if cat.major_count %} · dont {{ plural(cat.major_count, 'majeur') }}{% endif -%}
         </span>
     </button>
-    <div class="bvrs-group__content {{ 'u-d-none' if not expanded }}">
+    <div class="bvra-group__content {{ 'u-d-none' if not expanded }}">
         {% for r in cat.risks %}
         {{ risk_row(r, edit_url, cat.name, extra_search) }}
         {% endfor %}
@@ -96,11 +96,11 @@
 {% endmacro %}
 
 {% block content %}
-<div class="bvrs-page">
+<div class="bvra-page">
 
     <!-- 1. Risques Généraux -->
     {% set general_edit_url = url_for('admin_fleet.admin_risk_assessment_edit_general') %}
-    <section class="admin-card bvrs-card" id="section-general-risks">
+    <section class="admin-card bvra-card" id="section-general-risks">
         {{ section_head('shield-alert', 'Risques Généraux',
             "Véhicules Travelling — Analyse des risques commune appliquée systématiquement à l'ensemble des tournages Belle Vitesse.",
             general_stats, general_edit_url) }}
@@ -110,12 +110,12 @@
     </section>
 
     <!-- 2. Risques Spécifiques par Véhicules -->
-    <section class="admin-card bvrs-card" id="section-vehicle-risks">
+    <section class="admin-card bvra-card" id="section-vehicle-risks">
         {{ section_head('car-front', 'Risques Spécifiques par Véhicules',
             'Analyse de risques spécifiques associées à chaque véhicule de la flotte.',
             vehicles_stats) }}
 
-        <div class="bvrs-vehicle-list">
+        <div class="bvra-vehicle-list">
             {% set state = namespace(first_expanded=false) %}
             {% for v in vehicles %}
             {% set v_data = v.data %}
@@ -127,7 +127,7 @@
             {% set show_preview = v_stats.total > 0 and not state.first_expanded %}
             {% if show_preview %}{% set state.first_expanded = true %}{% endif %}
 
-            <article class="bvrs-vehicle-card">
+            <article class="bvra-vehicle-card">
                 {# En-tête identique au catalogue des règles de sécurité (safety_rules_catalog.html) #}
                 <div class="u-flex u-justify-between u-align-start u-mb-3">
                     <div class="u-flex u-align-center u-gap-3">
@@ -136,7 +136,7 @@
                                 class="bvsr-vehicle-img" loading="lazy">
                         </div>
                         <div>
-                            <h3 class="u-text-lg u-font-bold u-m-0 bvrs-vehicle__name">{{ v_name }}</h3>
+                            <h3 class="u-text-lg u-font-bold u-m-0 bvra-vehicle__name">{{ v_name }}</h3>
                             {% if v_data.label and v_data.label != v_name %}
                             <span class="u-text-xs u-text-muted u-d-block u-mt-1">{{ v_data.label }}</span>
                             {% endif %}
@@ -149,26 +149,26 @@
                 </div>
 
                 {% if v_stats.total == 0 %}
-                <div class="empty-state bvrs-empty">
+                <div class="empty-state bvra-empty">
                     <div class="empty-state-desc">Aucun risque spécifique configuré pour ce véhicule.</div>
                 </div>
 
                 {% elif show_preview %}
                 {% for cat in v_cats %}
-                {{ risk_group(cat, v_edit_url, true, 'bvrs-extra-cat u-d-none' if loop.index > 3 else '', v_name) }}
+                {{ risk_group(cat, v_edit_url, true, 'bvra-extra-cat u-d-none' if loop.index > 3 else '', v_name) }}
                 {% endfor %}
                 {% if v_cats|length > 3 %}
                 {% set extra_count = v_stats.total - (v_cats[:3]|sum(attribute='count')) %}
-                <button type="button" class="bvrs-more" data-action="extra" aria-expanded="false"
+                <button type="button" class="bvra-more" data-action="extra" aria-expanded="false"
                     data-label-show="Afficher les {{ plural(extra_count, 'autre risque', 'autres risques') }}"
                     data-label-hide="Masquer les autres risques">Afficher les {{ plural(extra_count, 'autre risque', 'autres risques') }}</button>
                 {% endif %}
 
                 {% else %}
-                <button type="button" class="bvrs-more" data-action="vehicle" aria-expanded="false"
+                <button type="button" class="bvra-more" data-action="vehicle" aria-expanded="false"
                     data-label-show="Voir les {{ plural(v_stats.total, 'risque') }}"
                     data-label-hide="Masquer les {{ plural(v_stats.total, 'risque') }}">Voir les {{ plural(v_stats.total, 'risque') }}</button>
-                <div class="bvrs-vehicle-collapsible-content u-d-none">
+                <div class="bvra-vehicle-collapsible-content u-d-none">
                     {% for cat in v_cats %}
                     {{ risk_group(cat, v_edit_url, true, '', v_name) }}
                     {% endfor %}

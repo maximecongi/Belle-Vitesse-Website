@@ -449,9 +449,9 @@ def _build_waiver_email_context(
         doc_title = "Attestation d'information et d'engagement du pilote (Annexe 3)"
         is_prod = False
     elif waiver_type == "risk_assessment":
-        type_title = "Analyse des Risques (BVRS)"
-        type_label = "de votre Analyse des Risques (BVRS)"
-        doc_title = "Analyse des Risques (BVRS)"
+        type_title = "Analyse des Risques (BVRA)"
+        type_label = "de votre Analyse des Risques (BVRA)"
+        doc_title = "Analyse des Risques (BVRA)"
         is_prod = False
     else:
         type_title = "Règles de Sécurité (BVSR)"
@@ -499,9 +499,9 @@ def _send_waiver_invitation_email(
         subject_type = "de l'Attestation Pilote (Annexe 3)"
         doc_desc = "votre Attestation d'information et d'engagement du pilote (Annexe 3)"
     elif waiver_type == "risk_assessment":
-        type_label = "Analyse des Risques (BVRS)"
-        subject_type = "de l'Analyse des Risques (BVRS)"
-        doc_desc = "votre Analyse des Risques (BVRS)"
+        type_label = "Analyse des Risques (BVRA)"
+        subject_type = "de l'Analyse des Risques (BVRA)"
+        doc_desc = "votre Analyse des Risques (BVRA)"
     else:
         type_label = "Règles de Sécurité BVSR"
         subject_type = "des Règles de Sécurité"
@@ -591,7 +591,7 @@ def send_pilot_waiver_invitation_email(to_email, recipient_name, project_name, s
 
 
 def send_risk_assessment_invitation_email(to_email, recipient_name, project_name, signature_link, is_reminder=False, production_name=None):
-    """Envoie une invitation (ou un rappel) à un intervenant pour signer son Analyse des Risques (BVRS)."""
+    """Envoie une invitation (ou un rappel) à un intervenant pour signer son Analyse des Risques (BVRA)."""
     return _send_waiver_invitation_email(
         waiver_type="risk_assessment",
         to_email=to_email,
@@ -617,9 +617,9 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         subject_desc = "Attestation Pilote (Annexe 3) signée"
         doc_title = "Attestation d'information et d'engagement du pilote (Annexe 3)"
     elif waiver_type == "risk_assessment":
-        doc_desc = "l'Analyse des Risques (BVRS) signée"
-        subject_desc = "Analyse des Risques (BVRS) signée"
-        doc_title = "Analyse des Risques (BVRS)"
+        doc_desc = "l'Analyse des Risques (BVRA) signée"
+        subject_desc = "Analyse des Risques (BVRA) signée"
+        doc_title = "Analyse des Risques (BVRA)"
     else:
         doc_desc = "les Règles de Sécurité signées"
         subject_desc = "Règles de Sécurité (BVSR) signées"

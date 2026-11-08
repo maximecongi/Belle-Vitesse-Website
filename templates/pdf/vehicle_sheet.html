@@ -1,0 +1,116 @@
+{# ══════════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — FICHE TECHNIQUE VÉHICULE (PDF A4 WeasyPrint)
+   Hérite du socle commun des documents ERP (en-tête officiel pdf_header).
+   Rendu monolingue (fr = True | False, fourni par la route), sans tarif.
+   ══════════════════════════════════════════════════════════════════════════════ #}
+{% extends "pdf/base_pdf.html" %}
+{% from "pdf/vehicle_doc_macros.html" import vs_hero, vs_contact %}
+
+{% block title %}{{ 'Fiche Technique' if fr else 'Technical Sheet' }} — {{ vehicle.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/pdf/vehicle-sheet-pdf.css') }}">
+{% endblock %}
+
+{% block body_class %}vs-pdf{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title=('Fiche Technique' if fr else 'Technical Sheet'),
+    doc_id=vehicle.unique_id or vehicle.slug,
+    date_str=doc_date_str,
+    company_name=company_name
+) }}
+{% endblock %}
+
+{% block content %}
+
+{# ── Hero ── #}
+{{ vs_hero(vehicle, hero_image, fr, tagline_fr if fr else tagline_en) }}
+
+{# ── Présentation ── #}
+{% set paragraphs = description_fr_paragraphs if fr else description_en_paragraphs %}
+{% if paragraphs %}
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">{{ 'Présentation' if fr else 'Overview' }}</h2>
+    <div class="vs-description">
+        {% for p in paragraphs %}<p>{{ p }}</p>{% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{# ── Caractéristiques techniques ── #}
+{% if specs %}
+<section class="pdf-section vs-avoid-break">
+    <h2 class="pdf-section-title dot-before">{{ 'Caractéristiques techniques' if fr else 'Technical specifications' }}</h2>
+    <table class="vs-specs">
+        {% for row in specs | batch(2) %}
+        <tr>
+            {% for spec in row %}
+            <td class="vs-spec-label">{{ spec.label_fr if fr else spec.label_en }}</td>
+            <td class="vs-spec-value">{{ spec.value }}</td>
+            {% endfor %}
+            {% if row | length == 1 %}<td class="vs-spec-label"></td><td class="vs-spec-value"></td>{% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</section>
+{% endif %}
+
+{# ── Setups caméra (icônes du site public) ── #}
+{% if setups %}
+<section class="pdf-section vs-avoid-break">
+    <h2 class="pdf-section-title dot-before">{{ 'Setups caméra compatibles' if fr else 'Compatible camera setups' }}</h2>
+    <table class="vs-setups">
+        {% for row in setups | batch(6) %}
+        <tr>
+            {% for setup in row %}
+            <td class="vs-setup">
+                <div class="vs-setup-box">
+                    {% if setup.icon_url %}<img src="{{ setup.icon_url }}" alt="" class="vs-setup-icon">{% endif %}
+                    <div class="vs-setup-name">{{ setup.name }}</div>
+                </div>
+            </td>
+            {% endfor %}
+            {% for _ in range(6 - row | length) %}<td class="vs-setup"></td>{% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</section>
+{% endif %}
+
+{# ── Configurations ── #}
+{% if config_groups %}
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Configurations</h2>
+    {% for group in config_groups %}
+    <div class="vs-config-group">
+        <div class="vs-config-banner">{{ group.label_fr if fr else group.label_en }}</div>
+        <table class="vs-config-grid">
+            {% for row in group['items'] | batch(3) %}
+            <tr>
+                {% for item in row %}
+                <td class="vs-config-cell">
+                    {% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}
+                    <div class="vs-config-name">{{ item.name_fr if fr else item.name_en }}</div>
+                </td>
+                {% endfor %}
+                {% for _ in range(3 - row | length) %}<td class="vs-config-cell vs-config-empty"></td>{% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
+{# ── Contact & QR ── #}
+{{ vs_contact(
+    ('Contact'),
+    ('Fiche consultable en ligne et règles de sécurité du véhicule :' if fr else 'Online sheet and vehicle safety rules:'),
+    sheet_url, qr_base64, company_name, company_phone, company_email
+) }}
+
+{% endblock %}
+
+{% block pdf_footer %}{% endblock %}

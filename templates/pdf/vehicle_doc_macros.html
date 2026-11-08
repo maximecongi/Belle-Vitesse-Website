@@ -1,0 +1,73 @@
+{# ══════════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — MACROS COMMUNES DES PDF VÉHICULE (WeasyPrint)
+   Fiche technique et règles de sécurité. Styles : css/pdf/vehicle-sheet-pdf.css
+   ══════════════════════════════════════════════════════════════════════════════ #}
+
+
+{# ── Hero véhicule : visuel, nom, marque/modèle, accroche optionnelle, KPIs ── #}
+{% macro vs_hero(vehicle, image_url, fr, tagline=None) %}
+<table class="vs-hero">
+    <tr>
+        {% if image_url %}
+        <td class="vs-hero-media">
+            <img src="{{ image_url }}" alt="{{ vehicle.name }}">
+        </td>
+        {% endif %}
+        <td class="vs-hero-body">
+            <h1 class="vs-title">{{ vehicle.name }}</h1>
+            {% if vehicle.brand or vehicle.model %}
+            <div class="vs-subtitle">{{ vehicle.brand }} {{ vehicle.model }}</div>
+            {% endif %}
+            {% if tagline %}<div class="vs-tagline">{{ tagline }}</div>{% endif %}
+
+            <table class="vs-kpis">
+                <tr>
+                    {% if vehicle.max_speed %}
+                    <td class="vs-kpi">
+                        <div class="vs-kpi-value">{{ vehicle.max_speed }} <small>km/h</small></div>
+                        <div class="vs-kpi-label">{{ 'Vitesse max' if fr else 'Max speed' }}</div>
+                    </td>
+                    {% endif %}
+                    {% if vehicle.passengers %}
+                    <td class="vs-kpi">
+                        <div class="vs-kpi-value">{{ vehicle.passengers }}</div>
+                        <div class="vs-kpi-label">{{ 'Passagers' if fr else 'Passengers' }}</div>
+                    </td>
+                    {% endif %}
+                    {% if vehicle.battery_life %}
+                    <td class="vs-kpi">
+                        <div class="vs-kpi-value">{{ vehicle.battery_life }} <small>h</small></div>
+                        <div class="vs-kpi-label">{{ 'Autonomie' if fr else 'Battery life' }}</div>
+                    </td>
+                    {% endif %}
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+{% endmacro %}
+
+
+{# ── Bloc contact + QR vers la version en ligne ── #}
+{% macro vs_contact(title, note, url, qr_base64=None, company_name=None, company_phone=None, company_email=None) %}
+<table class="vs-contact vs-avoid-break">
+    <tr>
+        <td class="vs-contact-body">
+            <div class="vs-contact-title">{{ title }}</div>
+            <div>{{ company_name or 'Belle Vitesse SAS' }} — 39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine</div>
+            <div>
+                {% if company_phone %}{{ company_phone }} · {% endif %}{{ company_email or 'contact@bellevitesse.com' }} · bellevitesse.com
+            </div>
+            <div class="vs-contact-note">
+                {{ note }}
+                <br><span class="vs-url">{{ url }}</span>
+            </div>
+        </td>
+        {% if qr_base64 %}
+        <td class="vs-contact-qr">
+            <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR">
+        </td>
+        {% endif %}
+    </tr>
+</table>
+{% endmacro %}

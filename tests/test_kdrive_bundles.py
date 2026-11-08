@@ -9,10 +9,10 @@ from services.common.kdrive.bundles import extract_bundle_file_specs, resolve_en
 
 class DummyCglWaiver:
     def __init__(self):
-        self.waiver_id = "BVRA-PROD87654321"
+        self.waiver_id = "BVTC-PROD87654321"
         self.project_id = 10
         self.waiver_type = "cgl"
-        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/3_CONTRATS_CGL/BVRA-PROD87654321/doc.pdf"
+        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/3_CONTRATS_CGL/BVTC-PROD87654321/doc.pdf"
         self.production_insurance_path = "uploads/prod_insurance.pdf"
 
 
@@ -50,7 +50,7 @@ class KDriveBundlesTestCase(unittest.TestCase):
         self.assertEqual(resolve_entity_info(sr, "safety_rules"), ("safety_rules", "BVSR-TEST12345678", 42))
 
         cgl = DummyCglWaiver()
-        self.assertEqual(resolve_entity_info(cgl, "cgl"), ("cgl", "BVRA-PROD87654321", 10))
+        self.assertEqual(resolve_entity_info(cgl, "cgl"), ("cgl", "BVTC-PROD87654321", 10))
 
         co = DummyInspection("BVCO")
         self.assertEqual(resolve_entity_info(co, "checkout"), ("checkout", "BVCO-INSP99999999", 15))

@@ -86,7 +86,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
         """Vérifie que la table d'audit signature_events est en append-only strict."""
         with self.app.app_context():
             event = SignatureEvent(
-                document_id="BVRA-2026-TEST1",
+                document_id="BVTC-2026-TEST1",
                 mode="cgl",
                 event_type="document_signed",
                 ip="192.168.1.50",
@@ -118,14 +118,14 @@ class SignatureSecurityHardeningTest(BaseTestCase):
 
         with self.app.app_context():
             # Succès avec un PNG valide
-            rel_path = save_signature_image(valid_b64, "waivers", "BVRA-TEST-SEC-1")
+            rel_path = save_signature_image(valid_b64, "waivers", "BVTC-TEST-SEC-1")
             full_path = os.path.join(self.temp_dir, rel_path)
             self.assertTrue(os.path.exists(full_path))
 
             # Échec : Faux PNG (octets magiques non conformes)
             corrupted_b64 = "data:image/jpeg;base64," + base64.b64encode(b"NOT_A_PNG_HEADER_DATA").decode("utf-8")
             with self.assertRaises(ValueError) as ctx_svg:
-                save_signature_image(corrupted_b64, "waivers", "BVRA-TEST-SEC-2")
+                save_signature_image(corrupted_b64, "waivers", "BVTC-TEST-SEC-2")
             self.assertIn("format", str(ctx_svg.exception).lower())
             self.assertIn("invalide", str(ctx_svg.exception).lower())
 
@@ -133,21 +133,21 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             fake_png_bytes = b"NOT_A_PNG_HEADER_DATA"
             fake_b64 = f"data:image/png;base64,{base64.b64encode(fake_png_bytes).decode('utf-8')}"
             with self.assertRaises(ValueError) as ctx_fake:
-                save_signature_image(fake_b64, "waivers", "BVRA-TEST-SEC-3")
+                save_signature_image(fake_b64, "waivers", "BVTC-TEST-SEC-3")
             self.assertIn("format", str(ctx_fake.exception).lower())
 
             # Échec : Signature trop volumineuse (> 500 KB)
             large_bytes = b"\x89PNG\r\n\x1a\n" + (b"0" * (505 * 1024))
             large_b64 = f"data:image/png;base64,{base64.b64encode(large_bytes).decode('utf-8')}"
             with self.assertRaises(ValueError) as ctx_large:
-                save_signature_image(large_b64, "waivers", "BVRA-TEST-SEC-4")
+                save_signature_image(large_b64, "waivers", "BVTC-TEST-SEC-4")
             self.assertIn("trop volumineuse", str(ctx_large.exception))
 
     def test_canonical_seal_determinism_and_tampering(self):
         """Vérifie le caractère déterministe du sceau canonique et la sensibilité aux modifications."""
         payload_1 = {
             "version": "2.0",
-            "document_id": "BVRA-2026-999",
+            "document_id": "BVTC-2026-999",
             "signer": "Jean Dupont",
             "role": "Directeur de Production",
             "details": {"amount": 5000, "currency": "EUR"},
@@ -157,7 +157,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             "details": {"currency": "EUR", "amount": 5000},
             "role": "Directeur de Production",
             "signer": "Jean Dupont",
-            "document_id": "BVRA-2026-999",
+            "document_id": "BVTC-2026-999",
             "version": "2.0",
         }
 
@@ -460,7 +460,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
         """Vérifie le chaînage cryptographique SHA-256 entre événements d'audit successifs."""
         with self.app.app_context():
             from services.common.signatures import log_signature_event
-            doc_id = "BVRA-CHAIN-TEST-1"
+            doc_id = "BVTC-CHAIN-TEST-1"
             ev1 = log_signature_event(doc_id, "cgl", "link_generated", {"token": "tok1"})
             ev2 = log_signature_event(doc_id, "cgl", "link_opened", {"ip": "1.2.3.4"})
             ev3 = log_signature_event(doc_id, "cgl", "document_signed", {"signer": "Test Signer"})
@@ -872,7 +872,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
         """Vérifie que la falsification d'un événement d'audit fait échouer verify_signature_events_chain."""
         from services.common.signatures import verify_signature_events_chain, log_signature_event
         with self.app.app_context():
-            doc_id = "BVRA-CHAIN-TEST-001"
+            doc_id = "BVTC-CHAIN-TEST-001"
             log_signature_event(doc_id, "cgl", "link_generated", {"admin": "test"})
             log_signature_event(doc_id, "cgl", "link_opened", {})
             log_signature_event(doc_id, "cgl", "document_signed", {"hash": "abc"})
@@ -1072,7 +1072,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
         with self.app.app_context():
             # 1. Tenter de passer un chemin pour contourner le Base64 doit échouer
             with self.assertRaises(ValueError):
-                save_signature_image("signatures/waivers/malicious.png", "waivers", "BVRA-BYPASS")
+                save_signature_image("signatures/waivers/malicious.png", "waivers", "BVTC-BYPASS")
 
             # 2. validate_stored_signature_file sur fichier inexistant
             with self.assertRaises(ValueError) as ctx_missing:
@@ -1090,12 +1090,12 @@ class SignatureSecurityHardeningTest(BaseTestCase):
 
         with self.app.app_context():
             # Sans require_events: valide par défaut
-            res_default = verify_signature_events_chain("BVRA-EMPTY-CHAIN", require_events=False)
+            res_default = verify_signature_events_chain("BVTC-EMPTY-CHAIN", require_events=False)
             self.assertTrue(res_default["valid"])
             self.assertEqual(res_default["count"], 0)
 
             # Avec require_events=True: invalide car aucun audit pour document scellé
-            res_strict = verify_signature_events_chain("BVRA-EMPTY-CHAIN", require_events=True)
+            res_strict = verify_signature_events_chain("BVTC-EMPTY-CHAIN", require_events=True)
             self.assertFalse(res_strict["valid"])
             self.assertIn("Aucun événement d'audit", res_strict["error"])
 
@@ -1196,11 +1196,11 @@ class SignatureSecurityHardeningTest(BaseTestCase):
 
             expected_sha = compute_file_sha256(full_ins_path)
             sig_png = _generate_valid_png_base64()
-            sig_rel_path = save_signature_image(sig_png, "waivers", "BVRA-INS-TEST")
+            sig_rel_path = save_signature_image(sig_png, "waivers", "BVTC-INS-TEST")
             sig_full = os.path.join(output_dir, sig_rel_path)
             sig_sha = compute_file_sha256(sig_full)
 
-            doc_id = "BVRA-INS-TEST"
+            doc_id = "BVTC-INS-TEST"
             snapshot = {
                 "insurance_file_sha256": expected_sha,
                 "production_insurance_path": ins_rel_path,
@@ -1246,7 +1246,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
                 "signed_model": WaiverSignedDocument,
                 "template_verify": "public/cgl/cgl_verify.html",
                 "route_base": "cgl",
-                "seal_prefix": "BVRA",
+                "seal_prefix": "BVTC",
                 "get_seal_args": lambda data, doc: []
             }
             verification_token = generate_document_verification_token(
@@ -1346,12 +1346,12 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.commit()
 
             cgl = CglWaiver(
-                waiver_id="BVRA-CGL-RESET-TEST",
+                waiver_id="BVTC-CGL-RESET-TEST",
                 project_id=proj.id,
                 status="signed",
             )
             signed_doc = WaiverSignedDocument(
-                waiver_id="BVRA-CGL-RESET-TEST",
+                waiver_id="BVTC-CGL-RESET-TEST",
                 hash="seal_reset_hash",
                 pdf_file_hash="",
                 data_snapshot={},
@@ -1362,7 +1362,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.add_all([cgl, signed_doc])
             db.session.commit()
 
-            success, msg = reset_waiver("BVRA-CGL-RESET-TEST", waiver_type="cgl")
+            success, msg = reset_waiver("BVTC-CGL-RESET-TEST", waiver_type="cgl")
             self.assertFalse(success)
             self.assertIn("Impossible de réinitialiser un document déjà signé", msg)
 
@@ -1379,12 +1379,12 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.commit()
 
             cgl = CglWaiver(
-                waiver_id="BVRA-CGL-DEL-TEST",
+                waiver_id="BVTC-CGL-DEL-TEST",
                 project_id=proj.id,
                 status="signed",
             )
             signed_doc = WaiverSignedDocument(
-                waiver_id="BVRA-CGL-DEL-TEST",
+                waiver_id="BVTC-CGL-DEL-TEST",
                 hash="seal_del_hash",
                 pdf_file_hash="pdf_del_hash",
                 data_snapshot={},
@@ -1394,30 +1394,30 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             )
             token = WaiverToken(
                 token="active-token-to-revoke",
-                waiver_id="BVRA-CGL-DEL-TEST",
+                waiver_id="BVTC-CGL-DEL-TEST",
             )
             db.session.add_all([cgl, signed_doc, token])
             db.session.commit()
 
-            success, msg = delete_waiver("BVRA-CGL-DEL-TEST", waiver_type="cgl")
+            success, msg = delete_waiver("BVTC-CGL-DEL-TEST", waiver_type="cgl")
             self.assertTrue(success)
 
             # 1. Vérifier soft-delete
-            reloaded_cgl = CglWaiver.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").first()
+            reloaded_cgl = CglWaiver.query.filter_by(waiver_id="BVTC-CGL-DEL-TEST").first()
             self.assertIsNotNone(reloaded_cgl.deleted_at)
 
             # 2. Vérifier préservation absolue de l'archive WaiverSignedDocument
-            reloaded_doc = WaiverSignedDocument.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").first()
+            reloaded_doc = WaiverSignedDocument.query.filter_by(waiver_id="BVTC-CGL-DEL-TEST").first()
             self.assertIsNotNone(reloaded_doc)
             self.assertEqual(reloaded_doc.hash, "seal_del_hash")
 
             # 3. Vérifier révocation / suppression des jetons actifs
-            tokens_left = WaiverToken.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").all()
+            tokens_left = WaiverToken.query.filter_by(waiver_id="BVTC-CGL-DEL-TEST").all()
             self.assertEqual(len(tokens_left), 0)
 
             # 4. Vérifier journal d'audit
             events = SignatureEvent.query.filter_by(
-                document_id="BVRA-CGL-DEL-TEST",
+                document_id="BVTC-CGL-DEL-TEST",
                 event_type="waiver_archived_or_retired"
             ).all()
             self.assertGreaterEqual(len(events), 1)
@@ -1526,13 +1526,13 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.commit()
 
             cgl = CglWaiver(
-                waiver_id="BVRA-CGL-FIELD-TEST",
+                waiver_id="BVTC-CGL-FIELD-TEST",
                 project_id=proj.id,
                 status="to_sign",
             )
             tok = WaiverToken(
                 token="tok-field-len-test",
-                waiver_id="BVRA-CGL-FIELD-TEST",
+                waiver_id="BVTC-CGL-FIELD-TEST",
             )
             db.session.add_all([cgl, tok])
             db.session.commit()
@@ -1985,7 +1985,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
 
             waiver = CglWaiver(
                 project_id=p.id,
-                waiver_id="BVRA-NOHASH-TEST",
+                waiver_id="BVTC-NOHASH-TEST",
                 status="signed",
                 signature_data=sig_rel,
                 signer_ip="127.0.0.1"
@@ -1994,7 +1994,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.flush()
 
             # Enregistrer l'événement d'audit requis pour la chaîne v2
-            log_signature_event("BVRA-NOHASH-TEST", "cgl", "document_signed", {"signer": "Test"})
+            log_signature_event("BVTC-NOHASH-TEST", "cgl", "document_signed", {"signer": "Test"})
 
             # Créer un faux PDF physique sur disque
             pdf_rel = "documents/cgl/test_nohash.pdf"
@@ -2007,16 +2007,16 @@ class SignatureSecurityHardeningTest(BaseTestCase):
                 "version": "2.0",
                 "_seal_kid": "v1",
                 "mode": "cgl",
-                "document_id": "BVRA-NOHASH-TEST",
+                "document_id": "BVTC-NOHASH-TEST",
                 "signed_at": datetime.now(timezone.utc).isoformat(),
                 "signer_ip": "127.0.0.1",
                 "signature_sha256": sig_sha256,
-                "snapshot": {"mode": "cgl", "waiver_id": "BVRA-NOHASH-TEST", "representative_name": "Test Representative"}
+                "snapshot": {"mode": "cgl", "waiver_id": "BVTC-NOHASH-TEST", "representative_name": "Test Representative"}
             }
             seal_hash = compute_canonical_seal(canonical_payload)
 
             signed_doc = WaiverSignedDocument(
-                waiver_id="BVRA-NOHASH-TEST",
+                waiver_id="BVTC-NOHASH-TEST",
                 version=1,
                 hash=seal_hash,
                 pdf_file_hash="",  # ABSENT !
@@ -2029,7 +2029,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.commit()
 
             # Appel de la route de vérification
-            verify_url = self._verification_url("cgl", "cgl", "BVRA-NOHASH-TEST", signed_doc)
+            verify_url = self._verification_url("cgl", "cgl", "BVTC-NOHASH-TEST", signed_doc)
             res = self.client.get(verify_url)
             self.assertEqual(res.status_code, 200)
             html = res.get_data(as_text=True)
@@ -2047,7 +2047,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
                 os.remove(full_pdf_path)
             if os.path.exists(full_sig_path):
                 os.remove(full_sig_path)
-            WaiverSignedDocument.query.filter_by(waiver_id="BVRA-NOHASH-TEST").delete()
+            WaiverSignedDocument.query.filter_by(waiver_id="BVTC-NOHASH-TEST").delete()
             db.session.delete(waiver)
             db.session.delete(p)
             db.session.delete(prod)
@@ -2078,7 +2078,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
 
             waiver = CglWaiver(
                 project_id=p.id,
-                waiver_id="BVRA-CORRUPT-TEST",
+                waiver_id="BVTC-CORRUPT-TEST",
                 status="signed",
                 signature_data=sig_rel,
                 signer_ip="127.0.0.1"
@@ -2087,7 +2087,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.flush()
 
             # Enregistrer l'événement d'audit requis pour la chaîne v2
-            log_signature_event("BVRA-CORRUPT-TEST", "cgl", "document_signed", {"signer": "Test"})
+            log_signature_event("BVTC-CORRUPT-TEST", "cgl", "document_signed", {"signer": "Test"})
 
             pdf_rel = "documents/cgl/test_corrupt.pdf"
             full_pdf_path = os.path.join(out_folder, pdf_rel)
@@ -2101,16 +2101,16 @@ class SignatureSecurityHardeningTest(BaseTestCase):
                 "version": "2.0",
                 "_seal_kid": "v1",
                 "mode": "cgl",
-                "document_id": "BVRA-CORRUPT-TEST",
+                "document_id": "BVTC-CORRUPT-TEST",
                 "signed_at": datetime.now(timezone.utc).isoformat(),
                 "signer_ip": "127.0.0.1",
                 "signature_sha256": sig_sha256,
-                "snapshot": {"mode": "cgl", "waiver_id": "BVRA-CORRUPT-TEST", "representative_name": "Test Representative"}
+                "snapshot": {"mode": "cgl", "waiver_id": "BVTC-CORRUPT-TEST", "representative_name": "Test Representative"}
             }
             seal_hash = compute_canonical_seal(canonical_payload)
 
             signed_doc = WaiverSignedDocument(
-                waiver_id="BVRA-CORRUPT-TEST",
+                waiver_id="BVTC-CORRUPT-TEST",
                 version=1,
                 hash=seal_hash,
                 pdf_file_hash=pdf_hash,
@@ -2123,7 +2123,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             db.session.commit()
 
             # Cas 1 : PDF intact
-            verify_url = self._verification_url("cgl", "cgl", "BVRA-CORRUPT-TEST", signed_doc)
+            verify_url = self._verification_url("cgl", "cgl", "BVTC-CORRUPT-TEST", signed_doc)
             res_intact = self.client.get(verify_url)
             self.assertEqual(res_intact.status_code, 200)
             html_intact = res_intact.get_data(as_text=True)
@@ -2148,7 +2148,7 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             # Nettoyage
             if os.path.exists(full_sig_path):
                 os.remove(full_sig_path)
-            WaiverSignedDocument.query.filter_by(waiver_id="BVRA-CORRUPT-TEST").delete()
+            WaiverSignedDocument.query.filter_by(waiver_id="BVTC-CORRUPT-TEST").delete()
             db.session.delete(waiver)
             db.session.delete(p)
             db.session.delete(prod)

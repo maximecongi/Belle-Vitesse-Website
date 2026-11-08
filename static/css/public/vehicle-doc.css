@@ -1,0 +1,311 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — COMPOSANTS COMMUNS DES DOCUMENTS PUBLICS VÉHICULE
+   Partagés par la fiche technique (/vehicle-sheet) et les règles de sécurité
+   (/safety-rules) : en-tête officiel ERP, barre d'outils, hero, lien croisé,
+   impression navigateur A4. Mobile-first, bilingue FR/EN.
+   Macros associées : templates/public/vehicle_doc_macros.html
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── En-tête officiel ERP (macro pdf_header) — rendu écran ── */
+.vdoc .pdf-header-title-row {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--grey-1, #111827);
+}
+
+.vdoc .pdf-header-ref-row {
+    margin-top: 3px;
+}
+
+.vdoc .pdf-header-date-row {
+    font-size: 11px;
+    color: var(--grey-2, #6B7280);
+    margin-top: 2px;
+}
+
+/* ── Barre d'outils (Imprimer / PDF / Langue) ── */
+.vdoc-toolbar {
+    justify-content: space-between;
+}
+
+.vdoc-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.vdoc-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid var(--border-color, #E2E8F0);
+    background: #FFFFFF;
+    color: var(--grey-1, #111827);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    line-height: 1.2;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.vdoc-action:hover {
+    background: var(--white-2, #F8F9FA);
+    border-color: #CBD5E1;
+}
+
+.vdoc-action .lucide {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── Hero véhicule ── */
+.vdoc-hero {
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.vdoc-hero-media {
+    background: #F4F4F4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    aspect-ratio: 16 / 10;
+    max-height: 360px;
+    width: 100%;
+}
+
+.vdoc-hero-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.vdoc-hero-body {
+    padding: 16px 20px 20px;
+}
+
+.vdoc-title {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 10px 0 2px;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+}
+
+.vdoc-subtitle {
+    font-size: 14px;
+    color: var(--grey-2, #6B7280);
+    margin: 0 0 8px;
+}
+
+.vdoc-tagline {
+    font-size: 15px;
+    font-style: italic;
+    color: var(--grey-1, #111827);
+    margin: 0 0 16px;
+}
+
+.vdoc-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.vdoc-kpi {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    background: var(--white-2, #F8F9FA);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.vdoc-kpi .lucide {
+    width: 16px;
+    height: 16px;
+    color: var(--grey-2, #6B7280);
+    margin-bottom: 2px;
+}
+
+.vdoc-kpi-value {
+    font-size: 20px;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1.1;
+}
+
+.vdoc-kpi-value small {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--grey-2, #6B7280);
+}
+
+.vdoc-kpi-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--grey-2, #6B7280);
+}
+
+/* ── Lien croisé entre documents (fiche ⇄ sécurité) ── */
+.vdoc-crosslink {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color, #E2E8F0);
+    background: var(--white-2, #F8F9FA);
+    border-radius: 8px;
+    color: #18181b;
+    text-decoration: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.vdoc-crosslink:hover {
+    border-color: #18181b;
+}
+
+.vdoc-crosslink>.lucide:first-child {
+    width: 22px;
+    height: 22px;
+    color: #18181b;
+    flex-shrink: 0;
+}
+
+/* Variante sécurité (rouge bordeaux BVSR) */
+.vdoc-crosslink--safety {
+    border-color: #fecaca;
+    background: #FEF2F2;
+}
+
+.vdoc-crosslink--safety:hover {
+    border-color: #991b1b;
+}
+
+.vdoc-crosslink--safety>.lucide:first-child {
+    color: #991b1b;
+}
+
+.vdoc-crosslink-text {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.vdoc-crosslink-text strong {
+    font-size: 14px;
+}
+
+.vdoc-crosslink-text small {
+    font-size: 12px;
+    color: var(--grey-2, #6B7280);
+}
+
+.vdoc-crosslink-chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--grey-2, #6B7280);
+    flex-shrink: 0;
+}
+
+/* ── Bilingue : conteneurs de bloc (complète vehicle-safety-rules.css) ── */
+body.lang-en div[data-lang="en"],
+body.lang-en dl[data-lang="en"] {
+    display: block !important;
+}
+
+/* ── Petit mobile ── */
+@media (max-width: 400px) {
+    .vdoc-title {
+        font-size: 24px;
+    }
+
+    .vdoc-kpi {
+        padding: 8px;
+    }
+
+    .vdoc-kpi-value {
+        font-size: 17px;
+    }
+
+    .vdoc-kpi-label {
+        font-size: 9.5px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   IMPRESSION NAVIGATEUR (A4) — socle commun
+   ══════════════════════════════════════════════════════════════════════════ */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm 12mm 14mm 12mm;
+    }
+
+    html,
+    body.vdoc-page {
+        background: #FFFFFF !important;
+        font-size: 11px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .vdoc-page .public-doc {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        border-radius: 0;
+    }
+
+    .vdoc-toolbar,
+    .vdoc-no-print {
+        display: none !important;
+    }
+
+    .vdoc-page .public-doc-header {
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+    }
+
+    .vdoc-page .public-doc-section {
+        margin-bottom: 16px;
+    }
+
+    .vdoc-hero {
+        display: grid;
+        grid-template-columns: 45% 1fr;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+
+    .vdoc-hero-media {
+        aspect-ratio: auto;
+        max-height: 70mm;
+    }
+
+    .vdoc-title {
+        font-size: 22px;
+    }
+
+    .vdoc-page .public-doc-footer {
+        break-inside: avoid;
+    }
+
+    a.bvsr-contact-link {
+        text-decoration: none;
+    }
+}

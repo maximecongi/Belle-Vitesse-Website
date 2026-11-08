@@ -88,7 +88,7 @@ class ShootingLocationsTestCase(BaseTestCase):
         # Création CGL
         cgl = CglWaiver(
             project_id=project.id,
-            waiver_id="BVRA-TESTNOLOC",
+            waiver_id="BVTC-TESTNOLOC",
             status="to_sign",
             production_name=self.prod.name,
             production_representative="Jean Dupont",
@@ -140,7 +140,7 @@ class ShootingLocationsTestCase(BaseTestCase):
 
         cgl = CglWaiver(
             project_id=project.id,
-            waiver_id="BVRA-IMMUTABLE01",
+            waiver_id="BVTC-IMMUTABLE01",
             status="to_sign",
             production_name=self.prod.name,
             production_representative="Sophie Martin",

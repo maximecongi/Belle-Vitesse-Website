@@ -1010,3 +1010,83 @@ a.public-doc-vehicle-card:hover {
     outline: none;
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.35);
 }
+/* ── Lecteur Analyse des Risques (BVRA) ──────────────────────────────────── */
+.cgl-reader-container h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-2, #6B7280);
+    margin: 1.25rem 0 0.6rem;
+}
+
+.bvra-reader-risk {
+    background: var(--white-1, #FFFFFF);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-left: 4px solid #FFC845;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.bvra-reader-risk--major {
+    border-left-color: #DC2626;
+}
+
+.bvra-reader-risk-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.bvra-reader-risk-title {
+    font-weight: 600;
+    font-size: 0.925rem;
+    color: var(--grey-1, #111827);
+}
+
+.bvra-reader-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.bvra-reader-badge--major {
+    background: #DC2626;
+    color: #FFFFFF;
+}
+
+.bvra-reader-badge--standard {
+    background: #FFC845;
+    color: #18181B;
+}
+
+.bvra-reader-risk-desc {
+    font-size: 0.875rem;
+    color: var(--grey-2, #374151);
+    margin: 0.4rem 0 0;
+}
+
+.bvra-reader-recs-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--grey-2, #6B7280);
+    margin: 0.65rem 0 0.3rem;
+}
+
+.cgl-reader-container ul.bvra-reader-recs {
+    margin: 0 0 0 1.25rem;
+    font-size: 0.875rem;
+}
+
+.cgl-reader-container ul.bvra-reader-recs li {
+    margin-bottom: 0.25rem;
+}

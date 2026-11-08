@@ -115,6 +115,7 @@ PUBLIC_JS_FILES: List[str] = [
     "js/src/public/document-verifier.js",
     "js/src/public/newsletter.js",
     "js/src/public/vehicle-safety-rules.js",
+    "js/src/public/vehicle-sheet.js",
 ]
 
 

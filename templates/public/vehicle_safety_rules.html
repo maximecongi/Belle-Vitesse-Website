@@ -1,3 +1,4 @@
+{% from "public/vehicle_doc_macros.html" import vdoc_header, vdoc_toolbar, vdoc_hero, vdoc_crosslink, vdoc_contact %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -16,81 +17,21 @@
     <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/public/public-doc.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/public/vehicle-safety-rules.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/public/vehicle-doc.css') }}">
 </head>
 
-<body class="public-doc-container">
+<body class="public-doc-container vdoc-page vehicle-safety-page">
 
-    <div class="public-doc">
+    <div class="public-doc vdoc">
 
-        <!-- ═══════════ EN-TÊTE OFFICIEL BELLE VITESSE ═══════════ -->
-        <header class="public-doc-header">
-            <div class="public-doc-header-logo">
-                <a href="/" title="Belle Vitesse">
-                    <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                        alt="Belle Vitesse">
-                </a>
-            </div>
-            <div class="public-doc-header-meta">
-                <strong class="dot-before">
-                    <span data-lang="fr">Règles de Sécurité</span>
-                    <span data-lang="en">Safety Rules</span>
-                </strong><br>
-                <span class="checkout-doc-id">{{ vehicle.unique_id or vehicle.slug }}</span>
-            </div>
-        </header>
+        <!-- ═══════════ EN-TÊTE OFFICIEL (macro commune des documents ERP) ═══════════ -->
+        {{ vdoc_header('Règles de Sécurité', 'Safety Rules', vehicle.unique_id or vehicle.slug, doc_date_str, company_name) }}
 
-        <!-- ═══════════ BARRE DE COMMUTATION DE LANGUE ═══════════ -->
-        <div class="public-doc-lang-bar">
-            <div class="safety-lang-switcher" role="group" aria-label="Langue">
-                <button type="button" class="safety-lang-btn active" data-set-lang="fr">FR</button>
-                <button type="button" class="safety-lang-btn" data-set-lang="en">EN</button>
-            </div>
-        </div>
+        <!-- ═══════════ BARRE D'ACTIONS : IMPRESSION / PDF / LANGUE ═══════════ -->
+        {{ vdoc_toolbar(pdf_url=pdf_url) }}
 
-        <!-- ═══════════ 1. VÉHICULE CONCERNÉ (CARTE HERO) ═══════════ -->
-        <section class="public-doc-section">
-            <h2 class="public-doc-section-title dot-before">
-                <span data-lang="fr">Véhicule</span>
-                <span data-lang="en">Vehicle</span>
-            </h2>
-
-            <div class="public-doc-vehicle-hero-card">
-                {% if vehicle.image_url %}
-                <div class="public-doc-vehicle-hero-media">
-                    <img src="{{ vehicle.image_url }}" alt="{{ vehicle.name }}" class="public-doc-vehicle-hero-img" loading="eager">
-                </div>
-                {% endif %}
-
-                <div class="public-doc-vehicle-hero-body">
-                    <div class="public-doc-vehicle-hero-topline">
-                        <span class="sticker-vehicle-badge">{{ vehicle.unique_id or vehicle.slug }}</span>
-                    </div>
-
-                    <h1 class="public-doc-vehicle-hero-title">{{ vehicle.name }}</h1>
-                    <p class="public-doc-vehicle-hero-subtitle">
-                        {{ vehicle.brand }} {{ vehicle.model }}
-                    </p>
-
-                    <div class="public-doc-specs-grid">
-                        {% if vehicle.max_speed %}
-                        <span class="public-doc-spec-pill">
-                            <i data-lucide="gauge"></i>
-                            <span data-lang="fr">Vmax : <strong>{{ vehicle.max_speed }} km/h</strong></span>
-                            <span data-lang="en">Max speed: <strong>{{ vehicle.max_speed }} km/h</strong></span>
-                        </span>
-                        {% endif %}
-
-                        {% if vehicle.passengers %}
-                        <span class="public-doc-spec-pill">
-                            <i data-lucide="users"></i>
-                            <span data-lang="fr">Capacité : <strong>{{ vehicle.passengers }} passagers</strong></span>
-                            <span data-lang="en">Capacity: <strong>{{ vehicle.passengers }} passengers</strong></span>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </section>
+        <!-- ═══════════ 1. HERO VÉHICULE (commun avec la fiche technique) ═══════════ -->
+        {{ vdoc_hero(vehicle, hero_image) }}
 
         <!-- ═══════════ 2. RÈGLES DE SÉCURITÉ VÉHICULES (BVSR) ═══════════ -->
         <section class="public-doc-section bvsr-section">
@@ -194,57 +135,15 @@
             </div>
         </section>
 
-        <!-- ═══════════ 3. CONTACT & ASSISTANCE PLATEAU ═══════════ -->
-        <section class="public-doc-section">
-            <h2 class="public-doc-section-title dot-before">
-                <span data-lang="fr">Contact &amp; Assistance Plateau</span>
-                <span data-lang="en">On-Set Contact &amp; Assistance</span>
-            </h2>
+        <!-- ═══════════ LIEN CROISÉ : FICHE TECHNIQUE ═══════════ -->
+        {{ vdoc_crosslink(url_for('public_vehicle_sheet.view_vehicle_sheet', vehicle_id=vehicle.slug or vehicle.id),
+            'file-text',
+            'Fiche technique du véhicule', 'Vehicle technical sheet',
+            'Caractéristiques, setups caméra et configurations',
+            'Specifications, camera setups and configurations') }}
 
-            <div class="public-doc-info-grid">
-                <div class="public-doc-info-item">
-                    <span class="public-doc-info-label">
-                        <span data-lang="fr">Prestataire</span>
-                        <span data-lang="en">Service Provider</span>
-                    </span>
-                    <span class="public-doc-info-value">{{ company_name or 'Belle Vitesse SAS' }}</span>
-                </div>
-
-                <div class="public-doc-info-item">
-                    <span class="public-doc-info-label">
-                        <span data-lang="fr">Urgence Plateau</span>
-                        <span data-lang="en">On-Set Emergency</span>
-                    </span>
-                    <span class="public-doc-info-value">
-                        {% if company_phone %}
-                        <a href="tel:{{ company_phone }}" class="bvsr-contact-link">{{ company_phone }}</a>
-                        {% endif %}
-                    </span>
-                </div>
-
-                <div class="public-doc-info-item">
-                    <span class="public-doc-info-label">
-                        <span data-lang="fr">E-mail Assistance</span>
-                        <span data-lang="en">Support E-mail</span>
-                    </span>
-                    <span class="public-doc-info-value">
-                        {% if company_email %}
-                        <a href="mailto:{{ company_email }}" class="bvsr-contact-link">{{ company_email }}</a>
-                        {% else %}
-                        contact@bellevitesse.com
-                        {% endif %}
-                    </span>
-                </div>
-
-                <div class="public-doc-info-item bvsr-contact-address">
-                    <span class="public-doc-info-label">
-                        <span data-lang="fr">Adresse du Siège &amp; Atelier</span>
-                        <span data-lang="en">Headquarters &amp; Workshop</span>
-                    </span>
-                    <span class="public-doc-info-value">{{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</span>
-                </div>
-            </div>
-        </section>
+        <!-- ═══════════ 3. CONTACT & ASSISTANCE PLATEAU (bloc commun avec la fiche technique) ═══════════ -->
+        {{ vdoc_contact('Contact', 'Contact', company_phone, company_email) }}
 
         <!-- ═══════════ PIED DE PAGE OFFICIEL (CONFORME CGL, BVSR, BVPA) ═══════════ -->
         {% with footer_subtitle = '<span data-lang="fr">Régles officielles de sécurité du véhicule</span><span data-lang="en">Official vehicle safety guidelines &amp; on-set shooting rules</span>'|safe %}

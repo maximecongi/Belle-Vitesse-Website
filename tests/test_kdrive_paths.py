@@ -108,8 +108,8 @@ class KDrivePathsTestCase(unittest.TestCase):
         self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "pdf"), "4_SÉCURITÉ/5_CHECKINS/BVCI-2222")
         self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "photo"), "4_SÉCURITÉ/5_CHECKINS/BVCI-2222/PHOTOS")
         # CGL
-        self.assertEqual(build_document_directory_path(p, "cgl", "BVRA-3333", "pdf"), "4_SÉCURITÉ/3_CGL/BVRA-3333/1_CGL")
-        self.assertEqual(build_document_directory_path(p, "cgl", "BVRA-3333", "insurance"), "4_SÉCURITÉ/3_CGL/BVRA-3333/2_ATTESTATION_ASSURANCE")
+        self.assertEqual(build_document_directory_path(p, "cgl", "BVTC-3333", "pdf"), "4_SÉCURITÉ/3_CGL/BVTC-3333/1_CGL")
+        self.assertEqual(build_document_directory_path(p, "cgl", "BVTC-3333", "insurance"), "4_SÉCURITÉ/3_CGL/BVTC-3333/2_ATTESTATION_ASSURANCE")
         # Safety rules
         self.assertEqual(build_document_directory_path(p, "safety_rules", "BVSR-4444", "pdf"), "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ/BVSR-4444")
         # Pilot waiver

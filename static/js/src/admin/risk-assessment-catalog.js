@@ -1,5 +1,5 @@
 /**
- * risk-assessment-catalog.js — Contrôleur d'interface d'administration pour l'Analyse des Risques (BVRS).
+ * risk-assessment-catalog.js — Contrôleur d'interface d'administration pour l'Analyse des Risques (BVRA).
  *
  * 1. Vue d'ensemble du Catalogue (/admin/fleet/risk-assessment) :
  *    - Recherche textuelle instantanée (titres, catégories, descriptions, consignes)
@@ -106,23 +106,23 @@
     // 1. VUE D'ENSEMBLE DU CATALOGUE
     // ══════════════════════════════════════════════════════════════════════════
     function initCatalogOverview() {
-        const page = document.querySelector('.bvrs-page');
+        const page = document.querySelector('.bvra-page');
         if (!page) return;
 
         // Champ de recherche standard de l'ERP (macro list_header_actions → #searchInput)
         const searchInput = document.getElementById('searchInput');
         const searchForm = searchInput ? searchInput.closest('form') : null;
         const btnToggleAll = document.getElementById('btn-toggle-all-accordions');
-        const riskRows = page.querySelectorAll('.bvrs-row');
-        const groupWrappers = page.querySelectorAll('.bvrs-group-wrapper');
-        const groupButtons = page.querySelectorAll('.bvrs-group');
-        const vehicleCards = page.querySelectorAll('.bvrs-vehicle-card');
-        const moreButtons = page.querySelectorAll('.bvrs-more');
+        const riskRows = page.querySelectorAll('.bvra-row');
+        const groupWrappers = page.querySelectorAll('.bvra-group-wrapper');
+        const groupButtons = page.querySelectorAll('.bvra-group');
+        const vehicleCards = page.querySelectorAll('.bvra-vehicle-card');
+        const moreButtons = page.querySelectorAll('.bvra-more');
 
         function setGroupExpanded(btn, expanded) {
             btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            const wrapper = btn.closest('.bvrs-group-wrapper');
-            const content = wrapper ? wrapper.querySelector('.bvrs-group__content') : null;
+            const wrapper = btn.closest('.bvra-group-wrapper');
+            const content = wrapper ? wrapper.querySelector('.bvra-group__content') : null;
             if (content) content.classList.toggle('u-d-none', !expanded);
         }
 
@@ -131,43 +131,43 @@
          * « Afficher les X autres risques » (data-action="extra").
          */
         function setMoreExpanded(btn, expanded) {
-            const card = btn.closest('.bvrs-vehicle-card');
+            const card = btn.closest('.bvra-vehicle-card');
             if (card) {
                 const targets = btn.dataset.action === 'extra'
-                    ? card.querySelectorAll('.bvrs-extra-cat')
-                    : card.querySelectorAll('.bvrs-vehicle-collapsible-content');
+                    ? card.querySelectorAll('.bvra-extra-cat')
+                    : card.querySelectorAll('.bvra-vehicle-collapsible-content');
                 targets.forEach(function (el) { el.classList.toggle('u-d-none', !expanded); });
             }
             btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
             btn.textContent = expanded ? btn.dataset.labelHide : btn.dataset.labelShow;
         }
 
-        // Le filtrage utilise une classe dédiée (bvrs-filtered-out) pour ne jamais
+        // Le filtrage utilise une classe dédiée (bvra-filtered-out) pour ne jamais
         // interférer avec l'état replié/déplié (u-d-none) des groupes et véhicules.
         function applySearch() {
             const q = (searchInput ? searchInput.value : '').trim().toLowerCase();
 
             riskRows.forEach(function (row) {
-                row.classList.toggle('bvrs-filtered-out', !!q && !(row.dataset.searchText || '').includes(q));
+                row.classList.toggle('bvra-filtered-out', !!q && !(row.dataset.searchText || '').includes(q));
             });
 
             groupWrappers.forEach(function (wrapper) {
-                const hasVisible = !!wrapper.querySelector('.bvrs-row:not(.bvrs-filtered-out)');
-                wrapper.classList.toggle('bvrs-filtered-out', !hasVisible);
+                const hasVisible = !!wrapper.querySelector('.bvra-row:not(.bvra-filtered-out)');
+                wrapper.classList.toggle('bvra-filtered-out', !hasVisible);
                 // Recherche active : déplier les groupes contenant des résultats
                 if (q && hasVisible) {
-                    const btn = wrapper.querySelector('.bvrs-group');
+                    const btn = wrapper.querySelector('.bvra-group');
                     if (btn) setGroupExpanded(btn, true);
                 }
             });
 
             vehicleCards.forEach(function (card) {
-                const hasVisible = !!card.querySelector('.bvrs-row:not(.bvrs-filtered-out)');
-                const vName = (card.querySelector('.bvrs-vehicle__name')?.textContent || '').toLowerCase();
-                card.classList.toggle('bvrs-filtered-out', !!q && !hasVisible && !vName.includes(q));
+                const hasVisible = !!card.querySelector('.bvra-row:not(.bvra-filtered-out)');
+                const vName = (card.querySelector('.bvra-vehicle__name')?.textContent || '').toLowerCase();
+                card.classList.toggle('bvra-filtered-out', !!q && !hasVisible && !vName.includes(q));
 
                 if (q && hasVisible) {
-                    card.querySelectorAll('.bvrs-more').forEach(function (btn) { setMoreExpanded(btn, true); });
+                    card.querySelectorAll('.bvra-more').forEach(function (btn) { setMoreExpanded(btn, true); });
                 }
             });
         }
@@ -217,7 +217,7 @@
     // 2. ÉDITEUR MASTER-DETAIL (GÉNÉRAL & VÉHICULE)
     // ══════════════════════════════════════════════════════════════════════════
     function initMasterDetailEditor() {
-        const page = document.querySelector('.bvrs-edit-page');
+        const page = document.querySelector('.bvra-edit-page');
         if (!page) return;
 
         function readJson(id, fallback) {
@@ -226,9 +226,9 @@
             try { return JSON.parse(el.textContent || ''); } catch (e) { return fallback; }
         }
 
-        const scope = readJson('bvrs-scope-data', 'general');
-        const vehicleKey = readJson('bvrs-vehicle-key-data', '');
-        const csrfToken = readJson('bvrs-csrf-token', '');
+        const scope = readJson('bvra-scope-data', 'general');
+        const vehicleKey = readJson('bvra-vehicle-key-data', '');
+        const csrfToken = readJson('bvra-csrf-token', '');
         const urls = {
             save: page.dataset.urlSave,
             del: page.dataset.urlDelete,
@@ -236,9 +236,9 @@
         };
 
         // Liste « serveur » : ne change qu'après un enregistrement / suppression réussi.
-        let risksList = readJson('bvrs-risks-data', []).map(normalizeRisk);
+        let risksList = readJson('bvra-risks-data', []).map(normalizeRisk);
         // Catégories communes (risques généraux + tous les véhicules) : [{fr, en}]
-        const sharedCategories = readJson('bvrs-categories-data', [])
+        const sharedCategories = readJson('bvra-categories-data', [])
             .filter(function (c) { return c && c.fr; })
             .map(function (c) { return { fr: String(c.fr).trim().toUpperCase(), en: String(c.en || '').trim() }; });
 
@@ -248,7 +248,7 @@
         const sidebarList = $('sidebar-risks-list');
         const sidebarCount = $('sidebar-risks-count');
         const sidebarSearchInput = $('sidebar-search-input');
-        const sidebarFilterBtns = page.querySelectorAll('.bvrs-filter-pills .filter-pill');
+        const sidebarFilterBtns = page.querySelectorAll('.bvra-filter-pills .filter-pill');
         const btnAddRisk = $('btn-add-risk');
 
         // En-tête & onglets
@@ -287,11 +287,11 @@
         const pdfPreviewSheet = $('pdf-preview-sheet');
 
         // Barre inférieure & modale
-        const bottomBar = $('bvrs-bottom-bar');
+        const bottomBar = $('bvra-bottom-bar');
         const btnCancelRisk = $('btn-cancel-risk');
         const btnSaveRisk = $('btn-save-risk');
         const btnSaveRiskLabel = $('btn-save-risk-label');
-        const unsavedModal = $('bvrs-unsaved-modal');
+        const unsavedModal = $('bvra-unsaved-modal');
         const btnModalDiscard = $('btn-modal-discard');
         const btnModalSave = $('btn-modal-save');
 
@@ -380,7 +380,7 @@
                 visibleTotal += visible.length;
 
                 const groupEl = document.createElement('div');
-                groupEl.className = 'bvrs-side-grp';
+                groupEl.className = 'bvra-side-grp';
                 groupEl.innerHTML = '<span>' + escapeHtml(name) + '</span><span>' + visible.length + '</span>';
                 sidebarList.appendChild(groupEl);
 
@@ -407,15 +407,15 @@
             const status = computeTranslationStatus(risk);
             const item = document.createElement('button');
             item.type = 'button';
-            item.className = 'bvrs-side-it' + (isMajor ? ' bvrs-side-it--major' : '') + (risk.id === activeRiskId ? ' is-selected' : '');
+            item.className = 'bvra-side-it' + (isMajor ? ' bvra-side-it--major' : '') + (risk.id === activeRiskId ? ' is-selected' : '');
             item.dataset.riskId = risk.id;
             item.dataset.category = catKey(risk);
             item.draggable = !(draftNewRisk && risk.id === draftNewRisk.id);
             item.innerHTML =
-                '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
-                '<span class="bvrs-side-it__title">' + escapeHtml(risk.title_fr || 'Sans titre') + '</span>' +
-                (status.is_complete ? '' : '<span class="badge-pill badge-pill-xs bvrs-en-tag" data-val="neutral" title="Traduction EN incomplète">EN</span>') +
-                levelBadgeHtml(risk.level).replace('class="badge-pill badge-pill-xs"', 'class="badge-pill badge-pill-xs bvrs-level-tag"');
+                '<span class="bvra-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
+                '<span class="bvra-side-it__title">' + escapeHtml(risk.title_fr || 'Sans titre') + '</span>' +
+                (status.is_complete ? '' : '<span class="badge-pill badge-pill-xs bvra-en-tag" data-val="neutral" title="Traduction EN incomplète">EN</span>') +
+                levelBadgeHtml(risk.level).replace('class="badge-pill badge-pill-xs"', 'class="badge-pill badge-pill-xs bvra-level-tag"');
             if (risk.id === activeRiskId) item.setAttribute('aria-current', 'true');
 
             item.addEventListener('click', function () {
@@ -428,22 +428,22 @@
 
         function updateActiveSidebarItem(data) {
             if (!sidebarList) return;
-            const item = sidebarList.querySelector('.bvrs-side-it[data-risk-id="' + CSS.escape(String(activeRiskId)) + '"]');
+            const item = sidebarList.querySelector('.bvra-side-it[data-risk-id="' + CSS.escape(String(activeRiskId)) + '"]');
             if (!item) return;
             const isMajor = data.level === 'major';
-            item.classList.toggle('bvrs-side-it--major', isMajor);
-            const titleEl = item.querySelector('.bvrs-side-it__title');
+            item.classList.toggle('bvra-side-it--major', isMajor);
+            const titleEl = item.querySelector('.bvra-side-it__title');
             if (titleEl) titleEl.textContent = data.title_fr || 'Sans titre';
-            const badge = item.querySelector('.bvrs-level-tag');
+            const badge = item.querySelector('.bvra-level-tag');
             if (badge) {
                 badge.textContent = isMajor ? 'Majeur' : 'Standard';
                 badge.dataset.val = isMajor ? 'danger' : 'warning';
             }
             const complete = computeTranslationStatus(data).is_complete;
-            let enTag = item.querySelector('.bvrs-en-tag');
+            let enTag = item.querySelector('.bvra-en-tag');
             if (!complete && !enTag) {
                 enTag = document.createElement('span');
-                enTag.className = 'badge-pill badge-pill-xs bvrs-en-tag';
+                enTag.className = 'badge-pill badge-pill-xs bvra-en-tag';
                 enTag.dataset.val = 'neutral';
                 enTag.title = 'Traduction EN incomplète';
                 enTag.textContent = 'EN';
@@ -464,21 +464,21 @@
             el.addEventListener('dragend', function () {
                 draggedRiskId = null;
                 el.classList.remove('is-dragging');
-                sidebarList.querySelectorAll('.bvrs-drag-over').forEach(function (i) { i.classList.remove('bvrs-drag-over'); });
+                sidebarList.querySelectorAll('.bvra-drag-over').forEach(function (i) { i.classList.remove('bvra-drag-over'); });
             });
             el.addEventListener('dragover', function (e) {
                 const dragged = draggedRiskId ? findRisk(draggedRiskId) : null;
                 if (!dragged || catKey(dragged) !== el.dataset.category) return;
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
-                el.classList.add('bvrs-drag-over');
+                el.classList.add('bvra-drag-over');
             });
             el.addEventListener('dragleave', function () {
-                el.classList.remove('bvrs-drag-over');
+                el.classList.remove('bvra-drag-over');
             });
             el.addEventListener('drop', function (e) {
                 e.preventDefault();
-                el.classList.remove('bvrs-drag-over');
+                el.classList.remove('bvra-drag-over');
                 const targetId = el.dataset.riskId;
                 if (!draggedRiskId || draggedRiskId === targetId) return;
                 const fromIdx = risksList.findIndex(function (r) { return r.id === draggedRiskId; });
@@ -627,7 +627,7 @@
             toggleMissing(fieldTitleEn, badgeTitleEnStatus);
             toggleMissing(fieldDescEn, badgeDescEnStatus);
             if (recsList) {
-                recsList.querySelectorAll('.bvrs-rec-input-en').forEach(function (ta) { toggleMissing(ta); });
+                recsList.querySelectorAll('.bvra-rec-input-en').forEach(function (ta) { toggleMissing(ta); });
             }
         }
 
@@ -727,28 +727,28 @@
         function addRecommendationRow(frVal, enVal) {
             if (!recsList) return null;
             const row = document.createElement('div');
-            row.className = 'bvrs-recrow';
+            row.className = 'bvra-recrow';
             row.innerHTML =
-                '<span class="bvrs-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
-                '<textarea class="form-input bvrs-rec-input-fr" rows="2" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
-                '<textarea class="form-input bvrs-rec-input-en" rows="2" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
-                '<button type="button" class="bvrs-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
+                '<span class="bvra-hd" title="Glisser pour réorganiser" aria-hidden="true"></span>' +
+                '<textarea class="form-input bvra-rec-input-fr" rows="2" placeholder="Recommandation en français" aria-label="Recommandation (FR)"></textarea>' +
+                '<textarea class="form-input bvra-rec-input-en" rows="2" placeholder="Traduction manquante" aria-label="Recommendation (EN)"></textarea>' +
+                '<button type="button" class="bvra-rec-btn-remove" title="Supprimer cette recommandation" aria-label="Supprimer cette recommandation">' +
                 '<i data-lucide="x" aria-hidden="true"></i></button>';
 
-            const frArea = row.querySelector('.bvrs-rec-input-fr');
-            const enArea = row.querySelector('.bvrs-rec-input-en');
+            const frArea = row.querySelector('.bvra-rec-input-fr');
+            const enArea = row.querySelector('.bvra-rec-input-en');
             frArea.value = frVal || '';
             enArea.value = enVal || '';
             toggleMissing(enArea);
 
-            row.querySelector('.bvrs-rec-btn-remove').addEventListener('click', function () {
+            row.querySelector('.bvra-rec-btn-remove').addEventListener('click', function () {
                 row.remove();
                 updateRecsCount();
                 onFormChange();
             });
 
             // Glisser uniquement depuis la poignée (sinon la sélection de texte devient impossible)
-            const handle = row.querySelector('.bvrs-hd');
+            const handle = row.querySelector('.bvra-hd');
             handle.addEventListener('mousedown', function () { row.draggable = true; });
             row.addEventListener('dragstart', function (e) {
                 draggedRecRow = row;
@@ -759,17 +759,17 @@
                 row.draggable = false;
                 draggedRecRow = null;
                 row.classList.remove('is-dragging');
-                recsList.querySelectorAll('.bvrs-drag-over').forEach(function (r) { r.classList.remove('bvrs-drag-over'); });
+                recsList.querySelectorAll('.bvra-drag-over').forEach(function (r) { r.classList.remove('bvra-drag-over'); });
             });
             row.addEventListener('dragover', function (e) {
                 if (!draggedRecRow || draggedRecRow === row) return;
                 e.preventDefault();
-                row.classList.add('bvrs-drag-over');
+                row.classList.add('bvra-drag-over');
             });
-            row.addEventListener('dragleave', function () { row.classList.remove('bvrs-drag-over'); });
+            row.addEventListener('dragleave', function () { row.classList.remove('bvra-drag-over'); });
             row.addEventListener('drop', function (e) {
                 e.preventDefault();
-                row.classList.remove('bvrs-drag-over');
+                row.classList.remove('bvra-drag-over');
                 if (!draggedRecRow || draggedRecRow === row) return;
                 const rows = Array.from(recsList.children);
                 const before = rows.indexOf(draggedRecRow) > rows.indexOf(row);
@@ -783,7 +783,7 @@
 
         function updateRecsCount() {
             if (recsCountElem && recsList) {
-                recsCountElem.textContent = recsList.querySelectorAll('.bvrs-recrow').length;
+                recsCountElem.textContent = recsList.querySelectorAll('.bvra-recrow').length;
             }
         }
 
@@ -796,9 +796,9 @@
             const recsFr = [];
             const recsEn = [];
             if (recsList) {
-                recsList.querySelectorAll('.bvrs-recrow').forEach(function (row) {
-                    const fr = row.querySelector('.bvrs-rec-input-fr').value.trim();
-                    const en = row.querySelector('.bvrs-rec-input-en').value.trim();
+                recsList.querySelectorAll('.bvra-recrow').forEach(function (row) {
+                    const fr = row.querySelector('.bvra-rec-input-fr').value.trim();
+                    const en = row.querySelector('.bvra-rec-input-en').value.trim();
                     if (fr || en) {
                         recsFr.push(fr);
                         recsEn.push(en);
@@ -951,8 +951,8 @@
         }
 
         // ── Aperçu PDF : même balisage que templates/pdf/risk_assessment.html ──
-        const ICON_MAJOR = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>';
-        const ICON_STANDARD = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvrs-risk-icon-svg bvrs-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>';
+        const ICON_MAJOR = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-major"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" fill="#DC2626" stroke="#DC2626"/><line x1="12" x2="12" y1="8" y2="12" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#FFFFFF"/></svg>';
+        const ICON_STANDARD = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="bvra-risk-icon-svg bvra-icon-standard"><circle cx="12" cy="12" r="10" fill="#FFC845" stroke="#FFC845"/><line x1="12" x2="12" y1="8" y2="12" stroke="#18181B" stroke-width="2.5" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="#18181B"/></svg>';
 
         function riskCardHtml(risk, isEn, extraClass) {
             const isMajor = risk.level === 'major';
@@ -962,25 +962,25 @@
                 ? risk.recommendations_fr.map(function (fr, i) { return risk.recommendations_en[i] || fr; })
                 : risk.recommendations_fr;
             const badge = isMajor
-                ? '<span class="bvrs-badge-major">' + (isEn ? 'HIGH RISK' : 'RISQUE MAJEUR') + '</span>'
-                : '<span class="bvrs-badge-standard">' + (isEn ? 'RISK' : 'RISQUE') + '</span>';
+                ? '<span class="bvra-badge-major">' + (isEn ? 'HIGH RISK' : 'RISQUE MAJEUR') + '</span>'
+                : '<span class="bvra-badge-standard">' + (isEn ? 'RISK' : 'RISQUE') + '</span>';
 
             const recsHtml = recs.length ? (
-                '<div class="bvrs-recs-box">' +
-                '<div class="bvrs-recs-title">' + (isEn ? 'Recommendations' : 'Recommandations') + '</div>' +
-                '<table class="bvrs-recs-table"><tbody>' +
+                '<div class="bvra-recs-box">' +
+                '<div class="bvra-recs-title">' + (isEn ? 'Recommendations' : 'Recommandations') + '</div>' +
+                '<table class="bvra-recs-table"><tbody>' +
                 recs.map(function (r) {
-                    return '<tr class="bvrs-rec-row"><td class="bvrs-rec-check">✓</td><td class="bvrs-rec-text">' + escapeHtml(r) + '</td></tr>';
+                    return '<tr class="bvra-rec-row"><td class="bvra-rec-check">✓</td><td class="bvra-rec-text">' + escapeHtml(r) + '</td></tr>';
                 }).join('') +
                 '</tbody></table></div>'
             ) : '';
 
-            return '<div class="bvrs-risk-card ' + (isMajor ? 'bvrs-risk-card--major' : 'bvrs-risk-card--standard') + (extraClass ? ' ' + extraClass : '') + '">' +
-                '<div class="bvrs-risk-header">' +
-                '<div class="bvrs-risk-header-cell bvrs-risk-icon-cell">' + (isMajor ? ICON_MAJOR : ICON_STANDARD) + '</div>' +
-                '<div class="bvrs-risk-header-cell"><span class="bvrs-risk-title">' + escapeHtml(title || 'Sans titre') + '</span> ' + badge + '</div>' +
+            return '<div class="bvra-risk-card ' + (isMajor ? 'bvra-risk-card--major' : 'bvra-risk-card--standard') + (extraClass ? ' ' + extraClass : '') + '">' +
+                '<div class="bvra-risk-header">' +
+                '<div class="bvra-risk-header-cell bvra-risk-icon-cell">' + (isMajor ? ICON_MAJOR : ICON_STANDARD) + '</div>' +
+                '<div class="bvra-risk-header-cell"><span class="bvra-risk-title">' + escapeHtml(title || 'Sans titre') + '</span> ' + badge + '</div>' +
                 '</div>' +
-                '<div class="bvrs-risk-desc">' + escapeHtml(desc) + '</div>' +
+                '<div class="bvra-risk-desc">' + escapeHtml(desc) + '</div>' +
                 recsHtml +
                 '</div>';
         }
@@ -997,9 +997,9 @@
             const neighbour = pos >= 0 ? (sameCat[pos + 1] || sameCat[pos - 1]) : sameCat[0];
 
             pdfPreviewSheet.innerHTML =
-                '<div class="bvrs-category-banner">' + escapeHtml(banner) + '</div>' +
+                '<div class="bvra-category-banner">' + escapeHtml(banner) + '</div>' +
                 riskCardHtml(current, isEn) +
-                (neighbour && neighbour.id !== current.id ? riskCardHtml(neighbour, isEn, 'bvrs-card-dimmed') : '');
+                (neighbour && neighbour.id !== current.id ? riskCardHtml(neighbour, isEn, 'bvra-card-dimmed') : '');
         }
 
         // ── Événements ──
@@ -1151,7 +1151,7 @@
                 onFormChange();
                 if (row) {
                     autosizeAll(row);
-                    row.querySelector('.bvrs-rec-input-fr').focus();
+                    row.querySelector('.bvra-rec-input-fr').focus();
                 }
             });
         }
@@ -1215,7 +1215,7 @@
 
         if (initialId) {
             selectRisk(initialId);
-            const activeItem = sidebarList && sidebarList.querySelector('.bvrs-side-it.is-selected');
+            const activeItem = sidebarList && sidebarList.querySelector('.bvra-side-it.is-selected');
             if (activeItem && activeItem.scrollIntoView) activeItem.scrollIntoView({ block: 'nearest' });
         } else {
             showEmptyState();

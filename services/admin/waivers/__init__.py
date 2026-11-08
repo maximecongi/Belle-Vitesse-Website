@@ -3,7 +3,7 @@ Package d'administration des décharges et documents légaux Belle Vitesse.
 Architecture modulaire :
 - common.py : Utilitaires partagés (dates, URLs de signature, tokens, suppression d'actifs)
 - core.py : Gestion du cycle de vie unifié (création, génération, envoi, reset, suppression)
-- cgl.py : Spécificités des Conditions Générales de Location (CGL - BVRA)
+- cgl.py : Spécificités des Conditions Générales de Location (CGL - BVTC)
 - safety_rules.py : Spécificités des Règles de Sécurité et contreseing
 - reminders.py : Relances automatiques par e-mail
 """
@@ -104,7 +104,7 @@ __all__ = [
     "send_pilot_waiver",
     # Reminders
     "auto_remind_pending_waivers",
-    # Risk Assessment (BVRS)
+    # Risk Assessment (BVRA)
     "create_risk_assessment_waiver",
     "delete_risk_assessment_waiver",
     "generate_risk_assessment_waiver",

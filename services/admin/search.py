@@ -446,7 +446,7 @@ def search_checkins(query_lower: str) -> list[dict]:
 
 
 def search_waivers(query_lower: str) -> list[dict]:
-    """Recherche dans les décharges légales (CGL BVRA, Règles BVSR, Pilotes BVPA)."""
+    """Recherche dans les décharges légales (CGL BVTC, Règles BVSR, Pilotes BVPA)."""
     try:
         from models.waiver import Waiver
         from models.project import Project

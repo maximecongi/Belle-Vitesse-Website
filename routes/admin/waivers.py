@@ -46,7 +46,7 @@ from utils.decorators import require_roles, require_preview_access
 waivers_bp = Blueprint("admin_waivers", __name__, url_prefix="/admin")
 
 
-# ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVRA) ────────────────────
+# ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVTC) ────────────────────
 
 
 @waivers_bp.route(
@@ -866,7 +866,7 @@ def admin_pilot_waivers_preview(waiver_id=None):
     return html_content
 
 
-# ── ANALYSE DES RISQUES (BVRS / RISK ASSESSMENT) ─────────────────────
+# ── ANALYSE DES RISQUES (BVRA / RISK ASSESSMENT) ─────────────────────
 
 
 @waivers_bp.route(
@@ -876,7 +876,7 @@ def admin_pilot_waivers_preview(waiver_id=None):
 )
 @require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_create(project_id):
-    """Création d'une nouvelle analyse des risques (BVRS) pour un signataire."""
+    """Création d'une nouvelle analyse des risques (BVRA) pour un signataire."""
     signer_role = request.form.get("signer_role", "production").strip()
     signer_role_custom = request.form.get("signer_role_custom", "").strip()
     signer_first_name = request.form.get("signer_first_name", "").strip()
@@ -1035,7 +1035,7 @@ def admin_risk_assessment_list():
 @require_preview_access
 def admin_risk_assessment_preview(waiver_id=None):
     """
-    Prévisualisation directe du PDF d'Analyse des Risques (BVRS / Risk Assessment)
+    Prévisualisation directe du PDF d'Analyse des Risques (BVRA / Risk Assessment)
     pour ajustement du design/CSS en direct.
     Si waiver_id est absent ou introuvable, injecte un mock représentatif complet.
     Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.

@@ -90,7 +90,7 @@ class MaintenanceMixin:
         """
         Supprime le dossier complet d'un document ou d'un incident (<document_id>) sur kDrive.
         Supprime également toutes les entrées associées dans kdrive_objects.
-        Garantit que le dossier du document (ex: BVRA-XXXX, BVSR-XXXX, BVCO-XXXX, BVCI-XXXX, BVIC-XXXX) est lui-même supprimé et ne reste pas vide.
+        Garantit que le dossier du document (ex: BVTC-XXXX, BVSR-XXXX, BVCO-XXXX, BVCI-XXXX, BVIC-XXXX) est lui-même supprimé et ne reste pas vide.
         """
         canonical_type = entity_type
         if entity_type in ("cgl", "cgl_waiver"):
@@ -112,7 +112,7 @@ class MaintenanceMixin:
             try:
                 meta = self.client.get_file(obj.kdrive_dir_id)
                 folder_name = meta.get("name")
-                # Si le dossier est déjà le dossier de l'entité (ex: BVRA-XXX, BVSR-XXX, BVCO-XXX, BVIC-XXX)
+                # Si le dossier est déjà le dossier de l'entité (ex: BVTC-XXX, BVSR-XXX, BVCO-XXX, BVIC-XXX)
                 if folder_name == entity_id:
                     entity_folder_ids.add(obj.kdrive_dir_id)
                 else:

@@ -93,7 +93,7 @@ components:
       type: object
       properties:
         id: { type: integer }
-        waiver_id: { type: string, example: "BVRA-XXXX" }
+        waiver_id: { type: string, example: "BVTC-XXXX" }
         project_id: { type: integer }
         status:
           type: string
@@ -410,7 +410,7 @@ paths:
 
   /cgl:
     get:
-      summary: Liste des contrats CGL (BVRA)
+      summary: Liste des contrats CGL (BVTC)
       tags: [CGL]
       responses:
         200:

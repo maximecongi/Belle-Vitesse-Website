@@ -1,8 +1,8 @@
 # services/admin/risk_assessment_config.py
 """
-Gestion du catalogue d'Analyse des Risques (Risk Assessment - BVRS)
+Gestion du catalogue d'Analyse des Risques (Risk Assessment - BVRA)
 Fournit les risques par défaut (Travelling et véhicules spécifiques) et les fonctions CRUD
-pour l'administration de la Flotte et la génération des documents BVRS.
+pour l'administration de la Flotte et la génération des documents BVRA.
 """
 
 import json

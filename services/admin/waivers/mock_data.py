@@ -45,7 +45,7 @@ class MockProject:
 
 class MockCglWaiver:
     id = 999
-    waiver_id = "BVRA-DEMO-2026"
+    waiver_id = "BVTC-DEMO-2026"
     waiver_type = "cgl"
     status = "signed"
     created_at = datetime(2026, 10, 20, 10, 0)
@@ -297,9 +297,9 @@ class MockPilotWaiver:
 
 
 class MockRiskAssessmentWaiver:
-    """Mock représentatif fidèle d'une Analyse des Risques (Risk Assessment - BVRS)."""
+    """Mock représentatif fidèle d'une Analyse des Risques (Risk Assessment - BVRA)."""
     id = 996
-    waiver_id = "BVRS-DEMO-2026"
+    waiver_id = "BVRA-DEMO-2026"
     waiver_type = "risk_assessment"
     status = "signed"
     created_at = datetime(2026, 10, 20, 10, 0)

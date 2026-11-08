@@ -338,7 +338,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 </div>
 
 <!-- ═══════════ 3. OPÉRATIONS & FLOTTE (MATÉRIEL & DOCUMENTS) ═══════════ -->
-<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3">
+<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3 project-hub-row-docs">
     <!-- COLONNE PRINCIPALE (2/3 : MATÉRIEL ENGAGÉ) -->
     <div class="admin-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
@@ -361,7 +361,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
             {% for v in vehicles %}
             <div class="project-equipment-card">
-                <div class="u-flex u-align-center u-justify-between u-gap-2">
+                <div class="u-flex u-align-center u-justify-between u-gap-2 u-flex-wrap">
                     <div class="u-flex u-align-center u-gap-2">
                         {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
                         v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
@@ -456,7 +456,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
     </div>
 
     <!-- COLONNE LATÉRALE (1/3 : DOCUMENTS & CONFORMITÉ) -->
-    <div class="admin-card">
+    <div class="admin-card project-docs-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
             <div class="u-flex u-align-center u-gap-2">
                 <h2 class="admin-card-title u-m-0">Documents & Décharges</h2>
@@ -472,9 +472,10 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             CGL & Sécurité Plateau
         </h3>
 
+        <div class="project-docs-groups">
         <!-- 1. CONDITIONS GÉNÉRALES DE LOCATION (CGL) -->
-        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
+        <div class="project-doc-item project-doc-group u-border-left-waiver">
+            <div class="project-doc-group-header">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="project-doc-title u-font-semibold u-text-xs">
                         <i data-lucide="file-signature" class="u-text-waiver"></i> Conditions Générales de Location
@@ -498,7 +499,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
             {% if cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num %}
             <div
-                class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                class="project-signer-card">
                 <div>
                     <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                         <strong class="u-text-xs">{{ cgl_waiver.production_name or (project.production_company.name if
@@ -579,8 +580,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
 
         <!-- 2. RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR) -->
-        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
+        <div class="project-doc-item project-doc-group u-border-left-waiver">
+            <div class="project-doc-group-header">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="project-doc-title u-font-semibold u-text-xs">
                         <i data-lucide="shield-check" class="u-text-waiver"></i> Règles de Sécurité
@@ -599,7 +600,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <div class="u-flex u-flex-column u-gap-2 u-mt-2">
                 {% for sr in safety_rules_waivers %}
                 <div
-                    class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    class="project-signer-card">
                     <div>
                         <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                             <strong class="u-text-xs">{{ sr.signer_name }}</strong>
@@ -675,8 +676,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
 
         <!-- 3. ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL) -->
-        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
+        <div class="project-doc-item project-doc-group u-border-left-waiver">
+            <div class="project-doc-group-header">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="project-doc-title u-font-semibold u-text-xs">
                         <i data-lucide="file-signature" class="u-text-waiver"></i> Attestations Pilotes (Annexe 3)
@@ -695,7 +696,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <div class="u-flex u-flex-column u-gap-2 u-mt-2">
                 {% for pw in pilot_waivers %}
                 <div
-                    class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    class="project-signer-card">
                     <div>
                         <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                             <strong class="u-text-xs">{{ pw.signer_name }}</strong>
@@ -777,12 +778,12 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% endif %}
         </div>
 
-        <!-- 4. ANALYSE DES RISQUES (BVRS) -->
-        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-danger">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
+        <!-- 4. ANALYSE DES RISQUES (BVRA) -->
+        <div class="project-doc-item project-doc-group u-border-left-danger">
+            <div class="project-doc-group-header">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="shield-alert" class="u-text-danger"></i> Analyse des Risques (BVRS)
+                        <i data-lucide="shield-alert" class="u-text-danger"></i> Analyse des Risques (BVRA)
                     </span>
                     <span class="badge-pill u-bg-danger-light u-text-danger u-text-2xs">
                         {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
@@ -798,7 +799,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <div class="u-flex u-flex-column u-gap-2 u-mt-2">
                 {% for ra in risk_assessment_waivers %}
                 <div
-                    class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    class="project-signer-card">
                     <div>
                         <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                             <strong class="u-text-xs">{{ ra.signer_name }}</strong>
@@ -878,6 +879,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </p>
             </div>
             {% endif %}
+        </div>
         </div>
 
 
@@ -1399,7 +1401,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
     </div>
 </div>
 
-<!-- Modal d'invitation d'un signataire (Analyse des Risques - BVRS) -->
+<!-- Modal d'invitation d'un signataire (Analyse des Risques - BVRA) -->
 <div id="addRiskSignerModal" class="admin-modal-overlay js-risk-signer-modal u-d-none" role="dialog" aria-modal="true"
     aria-labelledby="riskSignerModalTitle">
     <div class="admin-modal-container admin-modal-container--md">
@@ -1407,7 +1409,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <div class="u-flex u-align-center u-gap-2">
                 <i data-lucide="shield-alert" class="u-text-danger"></i>
                 <h3 id="riskSignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
-                    Inviter un signataire à l'Analyse des Risques (BVRS)
+                    Inviter un signataire à l'Analyse des Risques (BVRA)
                 </h3>
             </div>
             <button type="button" class="admin-modal-close js-close-risk-signer-modal"
@@ -1490,7 +1492,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </button>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     <i data-lucide="send" class="u-mr-1"></i>
-                    Créer l'invitation BVRS
+                    Créer l'invitation BVRA
                 </button>
             </div>
         </form>

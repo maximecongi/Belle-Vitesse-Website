@@ -177,7 +177,7 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
     elif waiver_type == "pilot_waiver":
         msg = f"Attestation Pilote (Annexe 3) créée avec succès pour {waiver.signer_name}."
     elif waiver_type == "risk_assessment":
-        msg = f"Analyse des risques (BVRS) créée avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
+        msg = f"Analyse des risques (BVRA) créée avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     else:
         msg = f"Règles de sécurité BVSR créées avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     return True, msg
@@ -238,7 +238,7 @@ def generate_waiver(waiver_id, waiver_type: str = None):
     elif mode == "pilot_waiver":
         msg = "Attestation Pilote (Annexe 3) générée avec succès."
     elif mode == "risk_assessment":
-        msg = "Analyse des risques (BVRS) générée avec succès."
+        msg = "Analyse des risques (BVRA) générée avec succès."
     else:
         msg = "Règles de sécurité BVSR générées avec succès."
     return True, msg
@@ -383,7 +383,7 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     elif mode == "pilot_waiver":
         msg_type = "Attestation Pilote (Annexe 3) envoyée"
     elif mode == "risk_assessment":
-        msg_type = "Analyse des risques (BVRS) envoyée"
+        msg_type = "Analyse des risques (BVRA) envoyée"
     else:
         msg_type = "Conditions Générales de Location (CGL) envoyées"
 

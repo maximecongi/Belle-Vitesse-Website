@@ -93,7 +93,7 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
     """
     Récupère le détail exhaustif d'un contrat CGL ou engagement BVSR par son identifiant.
     - mode: 'cgl', 'safety_rules' ou 'all'
-    - waiver_id: ID UUID ou numérique (ex: 'BVRA-xxx' ou 'BVSR-xxx')
+    - waiver_id: ID UUID ou numérique (ex: 'BVTC-xxx' ou 'BVSR-xxx')
     """
     from services.admin.waivers import list_cgl, list_safety_rules_waivers
     from utils.entity_resolvers import resolve_cgl, resolve_safety_rules_waiver, resolve_waiver
@@ -101,7 +101,7 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
 
     if waiver_id is None and mode is not None:
         candidate = str(mode).strip()
-        if candidate.upper().startswith(("BVSR-", "BVRA-")) or candidate.isdigit():
+        if candidate.upper().startswith(("BVSR-", "BVTC-")) or candidate.isdigit():
             waiver_id = candidate
             mode = None
 
@@ -117,7 +117,7 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
     if not mode_clean or mode_clean == "all":
         if wid_str.upper().startswith("BVSR-"):
             mode_clean = "safety_rules"
-        elif wid_str.upper().startswith("BVRA-"):
+        elif wid_str.upper().startswith("BVTC-"):
             mode_clean = "cgl"
         else:
             mode_clean = "all"

@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
     <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
-    <title>Signature Analyse des Risques (BVRS) — Belle Vitesse</title>
+    <title>Signature Analyse des Risques (BVRA) — Belle Vitesse</title>
 
     {% if config.FLASK_ENV == 'production' %}
     <link rel="stylesheet"
@@ -34,7 +34,7 @@
                     alt="Belle Vitesse">
             </div>
             <div class="public-doc-header-meta">
-                <strong class="dot-before">Analyse des Risques (BVRS)</strong><br>
+                <strong class="dot-before">Analyse des Risques (BVRA)</strong><br>
                 <span class="checkout-doc-id">{{ waiver.waiver_id }}</span>
             </div>
         </header>
@@ -70,7 +70,46 @@
         </section>
 
         {% else %}
-        <!-- ── Formulaire de signature BVRS ─────────────────────────── -->
+        <!-- ── Formulaire de signature BVRA ─────────────────────────── -->
+        {% macro risk_card(r) %}
+        <div class="bvra-reader-risk {{ 'bvra-reader-risk--major' if r.level == 'major' else 'bvra-reader-risk--standard' }}">
+            <div class="bvra-reader-risk-header">
+                <span class="bvra-reader-risk-title">{{ r.title_fr or r.title }}</span>
+                {% if r.level == 'major' %}
+                <span class="bvra-reader-badge bvra-reader-badge--major">RISQUE MAJEUR</span>
+                {% else %}
+                <span class="bvra-reader-badge bvra-reader-badge--standard">RISQUE</span>
+                {% endif %}
+            </div>
+            {% if r.description_fr or r.description %}
+            <p class="bvra-reader-risk-desc">{{ r.description_fr or r.description }}</p>
+            {% endif %}
+            {% set recs = r.recommendations_fr or r.recommendations %}
+            {% if recs and recs|length > 0 %}
+            <div class="bvra-reader-recs-title">Recommandations</div>
+            <ul class="bvra-reader-recs">
+                {% for rec in recs %}
+                <li>{{ rec }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        {% endmacro %}
+
+        {% macro risks_by_category(risks) %}
+        {% set cat_list = [] %}
+        {% for r in risks %}
+        {% set c_name = r.category_fr or r.category or '' %}
+        {% if c_name not in cat_list %}{% set _ = cat_list.append(c_name) %}{% endif %}
+        {% endfor %}
+        {% for cat in cat_list %}
+        {% if cat %}<h3>{{ cat }}</h3>{% endif %}
+        {% for r in risks if (r.category_fr or r.category or '') == cat %}
+        {{ risk_card(r) }}
+        {% endfor %}
+        {% endfor %}
+        {% endmacro %}
+
         <form id="risk-assessment-form" novalidate>
             <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 
@@ -92,157 +131,214 @@
                     </div>
                     <div class="public-doc-info-item u-grid-colspan-2">
                         <span class="public-doc-info-label">Lieu(x) de tournage</span>
-                        {% if waiver.display_shooting_locations_list and waiver.display_shooting_locations_list|length > 0 %}
+                        {% if waiver.display_shooting_locations_list and waiver.display_shooting_locations_list|length >
+                        0 %}
                         <div class="public-doc-locations-list">
                             {% for loc in waiver.display_shooting_locations_list %}
-                            <span class="public-doc-location-pill" {% if loc.address %}title="{{ loc.address }}" {% endif %}>
-                                {{ loc.name or loc.address }}
+                            <span class="public-doc-location-pill" {% if loc.address %}title="{{ loc.address }}" {%
+                                endif %}>
+                                <i data-lucide="map-pin" aria-hidden="true"></i>
+                                <span>{{ loc.name or loc.address }}</span>
                             </span>
                             {% endfor %}
                         </div>
-                        {% else %}
+                        {% elif waiver.display_shooting_locations %}
                         <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_locations }}</span>
+                        {% else %}
+                        <span class="public-doc-info-value u-text-sm">—</span>
                         {% endif %}
                     </div>
-                </div>
-
-                {% if waiver.vehicles_details %}
-                <div class="public-doc-vehicles-grid u-mt-3">
-                    {% for v in waiver.vehicles_details %}
-                    <div class="public-doc-vehicle-card">
-                        <div class="public-doc-vehicle-name">{{ v.name if v is mapping else v }}</div>
+                    {% if waiver.display_safety_technicians %}
+                    <div class="public-doc-info-item u-grid-colspan-2">
+                        <div class="u-flex u-align-center u-gap-1 u-mb-1">
+                            <span class="public-doc-info-label u-mb-0">Référent(s) Plateau BelleVitesse</span>
+                        </div>
+                        <div class="public-doc-technicians-list">
+                            {% for tech in waiver.display_safety_technicians_list %}
+                            <span class="public-doc-technician-pill">
+                                <i data-lucide="user" aria-hidden="true"></i>
+                                <span>{{ tech.name }}</span>
+                            </span>
+                            {% endfor %}
+                        </div>
                     </div>
-                    {% endfor %}
+                    {% endif %}
                 </div>
-                {% endif %}
+                <div class="public-doc-info-grid u-mt-3">
+                    <span class="public-doc-info-label u-grid-colspan-2">Véhicule(s) de prise de vue
+                        réservé(s)</span>
+                    <div class="public-doc-info-item public-doc-info-vehicles u-col-span-full">
+                        {% if waiver.vehicles_details %}
+                        <div class="public-doc-vehicles-list">
+                            {% for v in waiver.vehicles_details %}
+                            {% set v_name = v.name if v is mapping else v %}
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-thumb-wrapper">
+                                    {% if v is mapping and v.thumbnail %}
+                                    <img src="{{ v.thumbnail }}" alt="{{ v_name }}" class="public-doc-vehicle-thumb"
+                                        loading="lazy">
+                                    {% else %}
+                                    <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                            <circle cx="7" cy="17" r="2" />
+                                            <path d="M9 17h6" />
+                                            <circle cx="17" cy="17" r="2" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v_name }}</span>
+                                    {% if v is mapping and v.unique_id %}
+                                    <div class="public-doc-vehicle-ids">
+                                        <span class="checkout-doc-id">{{ v.unique_id }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif waiver.vehicles %}
+                        <div class="public-doc-vehicles-list">
+                            {% for v in waiver.vehicles.split(',') %}
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v.strip() }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}—{% endif %}
+                    </div>
+                </div>
             </section>
 
-            <!-- 2. Identification du signataire -->
+            <!-- 2. Informations de l'Intervenant -->
             <section class="public-doc-section">
-                <h2 class="public-doc-section-title dot-before">Identification de l'Intervenant Signataire</h2>
-
-                <div class="radio-group-container u-mb-3">
-                    <label class="radio-label">
-                        <input type="radio" name="entity_type" id="risk_entity_type_freelance" value="freelance"
-                            {% if not waiver.signer_company %}checked{% endif %}>
-                        <span>Personne physique / Technicien individuel</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="entity_type" id="risk_entity_type_company" value="company"
-                            {% if waiver.signer_company %}checked{% endif %}>
-                        <span>Représentant d'une société (Production / Sous-traitant)</span>
-                    </label>
-                </div>
-
-                <div id="risk_company_fields_group" class="form-grid u-mb-3 {% if not waiver.signer_company %}u-d-none{% endif %}">
+                <h2 class="public-doc-section-title dot-before">Identité & Rôle de l'Intervenant</h2>
+                <p class="u-text-sm u-text-muted u-mb-3">
+                    Veuillez confirmer ou compléter vos coordonnées et votre fonction sur le plateau.
+                </p>
+                {% set is_company = (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') %}
+                <div class="public-doc-form-grid">
                     <div class="form-group">
-                        <label for="risk_company_name" class="form-label">Raison sociale de la société <span class="u-text-danger">*</span></label>
-                        <input type="text" id="risk_company_name" name="company_name" class="form-input"
-                            value="{{ waiver.signer_company or waiver.display_production_name }}" placeholder="Ex: Les Films du Roulage SAS">
-                    </div>
-                    <div class="form-group">
-                        <label for="risk_company_address" class="form-label">Adresse du siège social</label>
-                        <input type="text" id="risk_company_address" name="company_address" class="form-input"
-                            value="{{ waiver.production_address or '' }}" placeholder="Ex: 10 rue de la Paix, 75002 Paris">
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="risk_signer_first_name" class="form-label">Prénom <span class="u-text-danger">*</span></label>
-                        <input type="text" id="risk_signer_first_name" name="first_name" class="form-input"
-                            value="{{ waiver.signer_first_name or '' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="risk_signer_last_name" class="form-label">Nom <span class="u-text-danger">*</span></label>
-                        <input type="text" id="risk_signer_last_name" name="last_name" class="form-input"
-                            value="{{ waiver.signer_last_name or (waiver.signer_name if waiver.signer_name != '—' else '') }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="risk_signer_email" class="form-label">Adresse e-mail <span class="u-text-danger">*</span></label>
-                        <input type="email" id="risk_signer_email" name="email" class="form-input"
-                            value="{{ waiver.signer_email or '' }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="risk_signer_phone" class="form-label">Téléphone portable</label>
-                        <input type="tel" id="risk_signer_phone" name="phone" class="form-input"
-                            value="{{ waiver.signer_phone or '' }}">
+                        <label for="risk_first_name">Prénom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="risk_first_name" name="first_name"
+                            value="{{ waiver.signer_first_name or '' }}" required autocomplete="given-name">
                     </div>
 
                     <div class="form-group">
-                        <label for="risk_signer_role" class="form-label">Rôle sur le plateau <span class="u-text-danger">*</span></label>
-                        <select id="risk_signer_role" name="role" class="form-select" required>
-                            <option value="production" {% if waiver.signer_role == 'production' %}selected{% endif %}>Directeur de production</option>
-                            <option value="stunt_coordinator" {% if waiver.signer_role == 'stunt_coordinator' or waiver.signer_role == 'stunt' %}selected{% endif %}>Coordinateur Cascades</option>
-                            <option value="key_grip" {% if waiver.signer_role == 'key_grip' %}selected{% endif %}>Chef Machiniste</option>
-                            <option value="location_manager" {% if waiver.signer_role == 'location_manager' %}selected{% endif %}>Régisseur Général</option>
-                            <option value="pilot" {% if waiver.signer_role == 'pilot' %}selected{% endif %}>Pilote</option>
-                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator'] %}selected{% endif %}>Cadreur</option>
-                            <option value="first_ad" {% if waiver.signer_role == 'first_ad' %}selected{% endif %}>1er Assistant Réalisateur</option>
-                            <option value="other" {% if waiver.signer_role == 'other' %}selected{% endif %}>Autre fonction...</option>
+                        <label for="risk_last_name">Nom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="risk_last_name" name="last_name"
+                            value="{{ waiver.signer_last_name or '' }}" required autocomplete="family-name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="risk_signer_role">Votre rôle sur le tournage <span
+                                class="u-text-danger">*</span></label>
+                        <select id="risk_signer_role" name="signer_role" class="form-select">
+                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>
+                                Directeur de production</option>
+                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er
+                                Assistant Réalisateur</option>
+                            <option value="location_manager" {% if waiver.signer_role=='location_manager' %}selected{%
+                                endif %}>Régisseur Général</option>
+                            <option value="stunt_coordinator" {% if waiver.signer_role in ['stunt_coordinator', 'stunt'
+                                ] %}selected{% endif %}>Coordinateur Cascades</option>
+                            <option value="key_grip" {% if waiver.signer_role=='key_grip' %}selected{% endif %}>Chef
+                                Machiniste</option>
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote
+                            </option>
+                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator' ]
+                                %}selected{% endif %}>Cadreur</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre
+                                fonction...</option>
                         </select>
                     </div>
 
-                    <div id="risk_role_custom_group" class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}">
-                        <label for="risk_signer_role_custom" class="form-label">Préciser la fonction <span class="u-text-danger">*</span></label>
-                        <input type="text" id="risk_signer_role_custom" name="role_custom" class="form-input"
-                            value="{{ waiver.signer_role_custom or '' }}" placeholder="Ex: Machiniste, Électricien...">
+                    <div class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}"
+                        id="risk_role_custom_group">
+                        <label for="risk_role_custom">Précisez votre fonction <span
+                                class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="risk_role_custom" name="role_custom"
+                            value="{{ waiver.signer_role_custom or '' }}"
+                            placeholder="Ex: Machiniste, Électricien...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="risk_email">Adresse e-mail <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="email" id="risk_email" name="email"
+                            value="{{ waiver.signer_email or '' }}" placeholder="nom@exemple.com" required
+                            autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="risk_phone">Téléphone portable</label>
+                        <input class="form-input" type="tel" id="risk_phone" name="phone"
+                            value="{{ waiver.signer_phone or '' }}" placeholder="+33 6 ..." autocomplete="tel">
+                    </div>
+
+                    <div class="form-group u-col-span-full">
+                        <label class="form-label u-font-semibold">Statut juridique</label>
+                        <div class="u-flex u-gap-4 u-mt-1">
+                            <label class="u-flex u-align-center u-gap-2 u-cursor-pointer">
+                                <input type="radio" name="signer_entity_type" id="risk_entity_type_freelance"
+                                    value="freelance" {% if not is_company %}checked{% endif %}>
+                                <span>Intermittent / Freelance</span>
+                            </label>
+                            <label class="u-flex u-align-center u-gap-2 u-cursor-pointer">
+                                <input type="radio" name="signer_entity_type" id="risk_entity_type_company"
+                                    value="company" {% if is_company %}checked{% endif %}>
+                                <span>Société</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group u-col-span-full {% if not is_company %}u-d-none{% endif %}"
+                        id="risk_company_fields_group">
+                        <div class="public-doc-form-grid">
+                            <div class="form-group">
+                                <label for="risk_company_name">Raison sociale <span
+                                        class="u-text-danger">*</span></label>
+                                <input class="form-input" type="text" id="risk_company_name" name="company_name"
+                                    value="{{ (waiver.sign_data and waiver.sign_data.get('company_name')) or waiver.signer_company or '' }}"
+                                    placeholder="Ex: Société de production / Stunt Pro SAS"
+                                    autocomplete="organization">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="risk_company_address">Adresse du siège social <span
+                                        class="u-text-danger">*</span></label>
+                                <input class="form-input" type="text" id="risk_company_address"
+                                    name="company_address"
+                                    value="{{ (waiver.sign_data and waiver.sign_data.get('company_address')) or '' }}"
+                                    placeholder="Ex: 12 rue de la Paix, 75002 Paris" autocomplete="street-address">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <!-- 3. Contenu de l'Analyse des Risques -->
+            <!-- 3. Analyse des Risques -->
             <section class="public-doc-section">
-                <h2 class="public-doc-section-title dot-before">Analyse des Risques &amp; Recommandations de Sécurité</h2>
+                <h2 class="public-doc-section-title dot-before">Analyse des Risques</h2>
 
-                <div class="public-doc-rules-viewer">
-                    <h3>RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</h3>
-                    {% for r in general_risks %}
-                    <div class="admin-card u-p-3 u-mb-3 {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
-                        <div class="u-flex u-align-center u-gap-2">
-                            {% if r.level == 'major' %}
-                            <span class="badge-pill u-bg-danger u-text-white u-text-2xs u-font-bold">RISQUE MAJEUR</span>
-                            {% else %}
-                            <span class="badge-pill u-bg-warning u-text-neutral u-text-2xs u-font-bold">RISQUE</span>
-                            {% endif %}
-                            <strong class="u-text-sm">{{ r.title_fr or r.title }}</strong>
-                        </div>
-                        <p class="u-text-xs u-text-muted u-mt-1 u-mb-2">{{ r.description_fr or r.description }}</p>
-                        {% set recs = r.recommendations_fr or r.recommendations %}
-                        {% if recs and recs|length > 0 %}
-                        <ul class="u-text-xs u-pl-4 u-m-0">
-                            {% for rec in recs %}
-                            <li>{{ rec }}</li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                <div class="cgl-reader-container">
+                    <h1>ANALYSE DES RISQUES DE TOURNAGE</h1>
+                    <p class="u-text-semibold">BELLE VITESSE SAS — ANALYSE DES RISQUES &amp; RECOMMANDATIONS (BVRA)</p>
+                    <hr>
+
+                    <h2>RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</h2>
+                    {{ risks_by_category(general_risks or []) }}
 
                     {% if vehicle_sections %}
                     {% for vsec in vehicle_sections %}
-                    <h3 class="u-mt-4">RISQUES SPÉCIFIQUES — {{ vsec.label }}</h3>
-                    {% for r in vsec.risks %}
-                    <div class="admin-card u-p-3 u-mb-3 {{ 'u-border-left-danger' if r.level == 'major' else 'u-border-left-warning' }}">
-                        <div class="u-flex u-align-center u-gap-2">
-                            {% if r.level == 'major' %}
-                            <span class="badge-pill u-bg-danger u-text-white u-text-2xs u-font-bold">RISQUE MAJEUR</span>
-                            {% else %}
-                            <span class="badge-pill u-bg-warning u-text-neutral u-text-2xs u-font-bold">RISQUE</span>
-                            {% endif %}
-                            <strong class="u-text-sm">{{ r.title_fr or r.title }}</strong>
-                        </div>
-                        <p class="u-text-xs u-text-muted u-mt-1 u-mb-2">{{ r.description_fr or r.description }}</p>
-                        {% set recs = r.recommendations_fr or r.recommendations %}
-                        {% if recs and recs|length > 0 %}
-                        <ul class="u-text-xs u-pl-4 u-m-0">
-                            {% for rec in recs %}
-                            <li>{{ rec }}</li>
-                            {% endfor %}
-                        </ul>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
+                    <h2>RISQUES SPÉCIFIQUES — {{ vsec.label }}</h2>
+                    {{ risks_by_category(vsec.risks or []) }}
                     {% endfor %}
                     {% endif %}
                 </div>
@@ -253,10 +349,11 @@
                 <div class="checkbox-container u-text-xs u-mb-3">
                     <input type="checkbox" id="ack_risk_assessment" name="ack_risk_assessment" required>
                     <label for="ack_risk_assessment">
-                        <strong>Je certifie avoir pris connaissance de l'Analyse des Risques (BVRS) et des
-                            recommandations de sécurité ci-dessus, et je m'engage à les respecter et les faire respecter
-                            scrupuleusement.</strong><br>
-                        Je certifie l'exactitude des informations fournies sur mon rôle et mes coordonnées.
+                        <strong>Je certifie avoir pris connaissance de l'Analyse des Risques (BVRA) et des
+                            recommandations de sécurité ci-dessus, et je m'engage à les respecter et à les faire
+                            respecter scrupuleusement.</strong><br>
+                        Je certifie l'exactitude des informations fournies sur mon rôle et mes coordonnées sur le
+                        plateau.
                     </label>
                 </div>
 

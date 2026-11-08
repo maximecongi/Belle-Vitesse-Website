@@ -153,7 +153,7 @@ class Project(db.Model):
     # Décharges associées au projet
     waivers = db.relationship(
         "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
-    # Contrat Cadre / CGL (Rental Agreement - BVRA) associé (unique actif pour le projet)
+    # Contrat Cadre / CGL (Terms & Conditions - BVTC) associé (unique actif pour le projet)
     cgl = db.relationship(
         "CglWaiver",
         primaryjoin="and_(Project.id == foreign(CglWaiver.project_id), CglWaiver.deleted_at.is_(None))",
@@ -168,7 +168,7 @@ class Project(db.Model):
     # Attestations d'information et d'engagement du pilote (Annexe 3 aux CGL - BVPA)
     pilot_waivers = db.relationship(
         "PilotWaiver", lazy=True, order_by="PilotWaiver.id", overlaps="project,waivers")
-    # Analyses des risques associées (Risk Assessment - BVRS)
+    # Analyses des risques associées (Risk Assessment - BVRA)
     risk_assessments = db.relationship(
         "RiskAssessmentWaiver", lazy=True, order_by="RiskAssessmentWaiver.id", overlaps="project,waivers")
     # Utilisateur ayant effectué la dernière action
@@ -314,7 +314,7 @@ class Project(db.Model):
 
     @property
     def active_cgl(self):
-        """Retourne le contrat CGL / Rental Agreement (BVRA) si il existe et n'a pas été supprimé."""
+        """Retourne le contrat CGL / Terms & Conditions (BVTC) si il existe et n'a pas été supprimé."""
         if hasattr(self, "_memo_active_cgl"):
             memo = self._memo_active_cgl
             if memo is None or getattr(memo, "deleted_at", None) is None:
@@ -371,7 +371,7 @@ class Project(db.Model):
 
     @property
     def active_risk_assessments(self):
-        """Retourne la liste des analyses de risques (BVRS) actives pour ce projet."""
+        """Retourne la liste des analyses de risques (BVRA) actives pour ce projet."""
         if hasattr(self, "_memo_active_risk_assessments"):
             return self._memo_active_risk_assessments
         if "waivers" in self.__dict__:
