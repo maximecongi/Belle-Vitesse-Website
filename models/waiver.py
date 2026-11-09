@@ -548,6 +548,13 @@ class CglWaiver(Waiver):
         "polymorphic_identity": "cgl",
     }
 
+    @property
+    def display_contract_production_name(self):
+        """Raison sociale du Locataire telle que saisie au formulaire CGL (à défaut, celle du projet)."""
+        if self.production_name and self.production_name.strip():
+            return self.production_name.strip()
+        return self.display_production_name
+
     def __repr__(self):
         return f"<CglWaiver {self.waiver_id} - {self.status}>"
 

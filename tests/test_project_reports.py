@@ -4,6 +4,7 @@ from datetime import date
 
 from models import db, Project, Production, User, ProjectReport
 from services.admin.project_reports import (
+    ReportNotFoundError,
     add_project_report,
     delete_project_report,
     list_project_reports,
@@ -407,6 +408,162 @@ class ProjectReportsTest(BaseTestCase):
             )
             self.assertEqual(updated.title, "Correction admin")
             self.assertEqual(updated.content, "Mise à jour par l'administrateur")
+
+    # ── Soft-delete & appartenance au projet ────────────────────
+
+    def _set_mcp_admin(self):
+        from mcp_server.context import CURRENT_MCP_USER
+        from mcp_auth.auth import McpUserContext
+        CURRENT_MCP_USER.set(McpUserContext(
+            user_id=self.admin_id, mail="admin@bellevitesse.com", firstname="Maxime",
+            lastname="Admin", role="super administrator", scope="admin", token_id=1,
+        ))
+
+    def _other_project_id(self):
+        other = Project(name="Autre tournage", production_id=db.session.get(Project, self.project_id).production_id)
+        db.session.add(other)
+        db.session.commit()
+        return other.id
+
+    def test_delete_is_soft_and_hidden_everywhere(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id, user_id=self.tech_id, title="À supprimer", content="Contenu caméra"
+            )
+            delete_project_report(report.id, current_user_id=self.tech_id, is_admin=False)
+
+            row = db.session.get(ProjectReport, report.id)
+            self.assertIsNotNone(row, "La ligne doit être conservée (soft-delete)")
+            self.assertIsNotNone(row.deleted_at)
+
+            self.assertEqual(list_project_reports(self.project_id), [])
+            ctx = get_project_detail_context(self.project_id, current_user_id=self.tech_id)
+            self.assertEqual(ctx["reports_count"], 0)
+            self._set_mcp_admin()
+            self.assertEqual(search_project_reports(query="caméra").get("total"), 0)
+
+            # Un rapport supprimé ne peut plus être modifié ni re-supprimé
+            with self.assertRaises(ReportNotFoundError):
+                update_project_report(report.id, current_user_id=self.admin_id,
+                                      title="x", content="y", is_admin=True)
+            with self.assertRaises(ReportNotFoundError):
+                delete_project_report(report.id, current_user_id=self.admin_id, is_admin=True)
+
+    def test_project_mismatch_is_rejected(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id, user_id=self.tech_id, title="Titre", content="Contenu"
+            )
+            other_id = self._other_project_id()
+            with self.assertRaises(ReportNotFoundError):
+                update_project_report(report.id, current_user_id=self.admin_id, title="x",
+                                      content="y", is_admin=True, project_id=other_id)
+            with self.assertRaises(ReportNotFoundError):
+                delete_project_report(report.id, current_user_id=self.admin_id,
+                                      is_admin=True, project_id=other_id)
+            # Le bon projet fonctionne
+            updated = update_project_report(report.id, current_user_id=self.tech_id, title="Ok",
+                                            content="Ok", project_id=self.project_id)
+            self.assertEqual(updated.title, "Ok")
+
+    def test_http_routes_project_mismatch_and_not_found(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id, user_id=self.tech_id, title="Titre", content="Contenu"
+            )
+            report_id = report.id
+            other_id = self._other_project_id()
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = self.admin_id
+            sess["admin_user_role"] = "Administrator"  # casse/langue normalisées
+
+        xhr = {"X-Requested-With": "XMLHttpRequest"}
+        resp = self.client.post(
+            f"/admin/projects/{other_id}/reports/{report_id}/edit",
+            json={"title": "x", "content": "y"}, headers=xhr,
+        )
+        self.assertEqual(resp.status_code, 404)
+        resp = self.client.post(f"/admin/projects/{other_id}/reports/{report_id}/delete", headers=xhr)
+        self.assertEqual(resp.status_code, 404)
+
+        # Rôle admin reconnu → modification d'un rapport d'autrui autorisée
+        resp = self.client.post(
+            f"/admin/projects/{self.project_id}/reports/{report_id}/edit",
+            json={"title": "Corrigé", "content": "Corrigé"}, headers=xhr,
+        )
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.client.post(f"/admin/projects/{self.project_id}/reports/999999/delete", headers=xhr)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_http_non_author_forbidden(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id, user_id=self.admin_id, title="Admin", content="Note admin"
+            )
+            report_id = report.id
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = self.tech_id
+            sess["admin_user_role"] = "technicien"
+
+        resp = self.client.post(
+            f"/admin/projects/{self.project_id}/reports/{report_id}/delete",
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        self.assertEqual(resp.status_code, 403)
+
+    def test_detail_page_renders_rich_editor_for_edit(self):
+        with self.app.app_context():
+            add_project_report(
+                self.project_id, user_id=self.tech_id, title="Avec markdown",
+                content="## Section\n- **point** important"
+            )
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = self.tech_id
+            sess["admin_user_role"] = "technicien"
+
+        html = self.client.get(f"/admin/projects/{self.project_id}").get_data(as_text=True)
+        self.assertIn('id="notionEditorWrapper-new"', html)
+        self.assertIn('id="notionEditorWrapper-report-', html)
+        self.assertNotIn("project-report-edit-textarea", html)
+        # Contenu pré-rendu en HTML dans l'éditeur d'édition
+        self.assertIn("<strong>point</strong>", html)
+
+    def test_mcp_author_override_single_service_call(self):
+        with self.app.app_context():
+            self._set_mcp_admin()
+            res = mcp_add_project_report(
+                project_id=self.project_id, title="Note IA", content="Contenu IA",
+                author_name="Agent Météo", author_job="Prévisionniste",
+            )
+            self.assertEqual(res["status"], "success")
+            self.assertEqual(res["report"]["author_name"], "Agent Météo")
+            self.assertEqual(res["report"]["author_role"], "Prévisionniste")
+
+            # Utilisateur lié : le nom vient du compte, le poste fourni est conservé
+            res = mcp_add_project_report(
+                project_id=self.project_id, title="Note liée", content="Contenu",
+                user_id=self.tech_id, author_job="Chef d'atelier",
+            )
+            self.assertEqual(res["report"]["author_name"], "Lucas Technicien")
+            self.assertEqual(res["report"]["author_role"], "Chef d'atelier")
+
+            # Sans poste : valeur par défaut « Assistant MCP »
+            res = mcp_add_project_report(project_id=self.project_id, title="T", content="C")
+            self.assertEqual(res["report"]["author_name"], "Assistant IA")
+            self.assertEqual(res["report"]["author_role"], "Assistant MCP")
+
+    def test_is_admin_role_helper(self):
+        from utils.decorators import is_admin_role
+        for role in ("administrateur", "Administrator", "SUPER ADMINISTRATEUR", "super administrator"):
+            self.assertTrue(is_admin_role(role), role)
+        for role in ("technicien", "manager", "commercial", None, ""):
+            self.assertFalse(is_admin_role(role), role)
 
 
 if __name__ == '__main__':

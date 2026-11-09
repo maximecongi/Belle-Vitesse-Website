@@ -4,6 +4,23 @@ Bibliothèque de macros Jinja pour l'ensemble des documents PDF et aperçus écr
 Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
 #}
 
+{# ── 0. Champ issu du formulaire de signature (aperçu live) ───────────────
+   Hors aperçu (form_preview absent) : rend simplement `value` (ou `default` si vide),
+   le PDF scellé final est donc strictement inchangé.
+   En aperçu : enveloppe la valeur dans un lien surligné jaune BV pointant vers le champ
+   `field` (nom POST du formulaire) ; WeasyPrint en fait une annotation PDF cliquable.
+   Si la saisie brute du champ est vide, affiche le placeholder « [placeholder] ». #}
+{% macro pf(field, value, placeholder='', default='') -%}
+{%- if form_preview -%}
+{%- set raw = (form_values or {}).get(field) if form_values is defined else none -%}
+{%- set is_empty = (raw is not none and raw == '') or not value or value == '—' -%}
+<a class="pf-mark{{ ' pf-mark--empty' if is_empty }}" href="https://preview.invalid/field/{{ field }}">{{ ('[' ~ placeholder ~ ']') if is_empty else value }}</a>
+{%- else -%}
+{{ value if value else default }}
+{%- endif -%}
+{%- endmacro %}
+
+
 {# ── 1. Barre de Prévisualisation Écran (Toolbar A4 CGL) ─────────────────── #}
 {% macro pdf_preview_toolbar(doc_title, doc_id=None, format_pdf_url="?format=pdf", show_print=True) %}
 <div class="pdf-preview-toolbar">
@@ -421,15 +438,8 @@ company_address=None, siret=None, email=None, phone=None, extra_class="") %}
             {% if v.thumbnail %}
             <img src="{{ v.thumbnail }}" alt="{{ v.name or 'Véhicule' }}" class="public-doc-vehicle-thumb" loading="lazy">
             {% else %}
-            <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
-                <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                    <circle cx="7" cy="17" r="2" />
-                    <path d="M9 17h6" />
-                    <circle cx="17" cy="17" r="2" />
-                </svg>
-            </div>
+            <img src="/static/imgs/placeholders/vehicle.png" alt="{{ v.name or 'Véhicule' }}"
+                class="public-doc-vehicle-thumb public-doc-vehicle-thumb--placeholder">
             {% endif %}
         </div>
         <div class="public-doc-vehicle-info">

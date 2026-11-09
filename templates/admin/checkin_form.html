@@ -127,7 +127,7 @@
                             </div>
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
-                            {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
+                            {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else url_for('static', filename='imgs/placeholders/vehicle.svg') %}
                             {% set checkout_signed = (vf.get('_checkout_status') == 'Signé' or
                             vf.get('_checkout_status') == 'Validé') %}
                             <button type="button"
@@ -139,11 +139,7 @@
 
                                 <div class="u-flex u-align-center u-justify-between u-w-100">
                                     <div class="u-flex u-align-center u-gap-2">
-                                        {% if thumb_url %}
-                                        <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">
-                                        {% else %}
-                                        <div class="vehicle-med-thumbnail u-bg-gray-light"></div>
-                                        {% endif %}
+                                        <img src="{{ thumb_url }}" class="vehicle-med-thumbnail" alt="">
                                         <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
                                     </div>
                                     <div class="vehicle-option-status-slot"></div>

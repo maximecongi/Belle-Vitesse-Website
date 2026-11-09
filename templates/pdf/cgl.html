@@ -50,29 +50,29 @@ company_name=company_name
         <!-- LA PRODUCTION -->
         <div class="cgl-party-card">
             <div class="cgl-party-role">Production :</div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ cgl.display_production_name }}</span></div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme Juridique :</span> <span class="pdf-party-field-value"></span>{% if cgl.display_legal_form %} {{ cgl.display_legal_form }}{% endif %}</span></div>
-            {% if cgl.display_legal_country|lower == 'france' or cgl.production_siret %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ pf('production_name', cgl.display_contract_production_name, 'Raison sociale') }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme Juridique :</span> <span class="pdf-party-field-value"></span>{% if form_preview %} {{ pf('legal_form', cgl.display_legal_form, 'Forme juridique') }}{% elif cgl.display_legal_form %} {{ cgl.display_legal_form }}{% endif %}</span></div>
+            {% if form_preview or cgl.display_legal_country|lower == 'france' or cgl.production_siret %}
             <div class="pdf-party-field-line"><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> <span class="pdf-party-field-value">{{
-                cgl.production_siret or '—' }}{% if cgl.production_vat %} — <span class="cgl-party-field-label">TVA :</span> {{ cgl.production_vat }}{% endif %}</span></div>
+                pf('siret', cgl.production_siret, cgl.display_legal_identifier_label or 'SIRET', '—') }}{% if form_preview or cgl.production_vat %} — <span class="cgl-party-field-label">TVA :</span> {{ pf('vat_number', cgl.production_vat, 'N° TVA') }}{% endif %}</span></div>
             {% endif %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Représentant :</span> <span class="pdf-party-field-value">{{ cgl.production_representative or '—' }}{%
-                if cgl.display_representative_role %}, {{ cgl.display_representative_role }}{% endif %}</span></div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Adresse :</span> <span class="pdf-party-field-value">{{ cgl.production_address or '—' }}</span></div>
-            {% if cgl.signer_email or cgl.signer_phone %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ cgl.signer_email or '—' }}{% if
-                cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Représentant :</span> <span class="pdf-party-field-value">{{ pf('representative', cgl.production_representative, 'Représentant légal', '—') }}{%
+                if form_preview or cgl.display_representative_role %}, {{ pf('representative_role', cgl.display_representative_role, 'Fonction') }}{% endif %}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Adresse :</span> <span class="pdf-party-field-value">{{ pf('address', cgl.production_address, 'Adresse du siège social', '—') }}</span></div>
+            {% if form_preview or cgl.signer_email or cgl.signer_phone %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ pf('email', cgl.signer_email, 'E-mail', '—') }}{% if
+                form_preview or cgl.signer_phone %} — {{ pf('phone', cgl.signer_phone, 'Téléphone') }}{% endif %}</span></div>
             {% endif %}
-            {% if cgl.production_insurance_company %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Assurance :</span> <span class="pdf-party-field-value">{{ cgl.production_insurance_company }}{% if
-                cgl.production_insurance_policy %} (Police : {{ cgl.production_insurance_policy }}){% endif %}</span></div>
+            {% if form_preview or cgl.production_insurance_company %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Assurance :</span> <span class="pdf-party-field-value">{{ pf('insurance_company', cgl.production_insurance_company, "Compagnie d'assurance") }}{% if
+                form_preview or cgl.production_insurance_policy %} (Police : {{ pf('insurance_policy', cgl.production_insurance_policy, 'N° de police') }}){% endif %}</span></div>
             {% endif %}
         </div>
     </div>
 </section>
 
 <!-- ═══════════ OBJET DE LA PRESTATION ═══════════ -->
-{% set cgl_scope_text = "Le présent contrat a pour objet la mise à disposition des véhicules techniques spéciaux ci-après désignés par Belle Vitesse SAS auprès de la Production " ~ cgl.display_production_name ~ ", dans le cadre exclusif du tournage de « " ~ cgl.display_project_name ~ " ». La Production s'engage à en informer toute son équipe." %}
+{% set cgl_scope_text = "Le présent contrat a pour objet la mise à disposition des véhicules techniques spéciaux ci-après désignés par Belle Vitesse SAS auprès de la Production " ~ pf('production_name', cgl.display_contract_production_name, 'Raison sociale') ~ ", dans le cadre exclusif du tournage de « " ~ cgl.display_project_name ~ " ». La Production s'engage à en informer toute son équipe." %}
 {{ pdf_mission_scope(
     text=cgl_scope_text,
     project_name=cgl.display_project_name,
@@ -189,28 +189,31 @@ company_name=company_name
     <div class="pdf-parties-grid">
         <div class="cgl-party-card">
             <div class="cgl-party-role">Locataire Déclarant :</div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ cgl.display_production_name }}</span></div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme :</span> <span class="pdf-party-field-value">{{ cgl.display_legal_form or '—' }}</span></div>
-            {% if cgl.production_siret %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> <span class="pdf-party-field-value">{{ cgl.production_siret }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Société :</span> <span class="pdf-party-field-value">{{ pf('production_name', cgl.display_contract_production_name, 'Raison sociale') }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Forme :</span> <span class="pdf-party-field-value">{{ pf('legal_form', cgl.display_legal_form, 'Forme juridique', '—') }}</span></div>
+            {% if form_preview or cgl.production_siret %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> <span class="pdf-party-field-value">{{ pf('siret', cgl.production_siret, cgl.display_legal_identifier_label or 'SIRET') }}</span></div>
             {% endif %}
-            {% if cgl.production_vat %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">TVA :</span> <span class="pdf-party-field-value">{{ cgl.production_vat }}</span></div>
+            {% if form_preview or cgl.production_vat %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">TVA :</span> <span class="pdf-party-field-value">{{ pf('vat_number', cgl.production_vat, 'N° TVA') }}</span></div>
+            {% endif %}
+            {% if form_preview or cgl.display_order_ref %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Réf. commande :</span> <span class="pdf-party-field-value">{{ pf('order_ref', cgl.display_order_ref, 'Réf. bon de commande') }}</span></div>
             {% endif %}
         </div>
         <div class="cgl-party-card">
             <div class="cgl-party-role">Représentant Légal / Mandataire :</div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Nom :</span> <span class="pdf-party-field-value">{{ cgl.production_representative or '—' }}</span></div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Fonction :</span> <span class="pdf-party-field-value">{{ cgl.display_representative_role }}</span></div>
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Siège social :</span> <span class="pdf-party-field-value">{{ cgl.production_address or '—' }}</span></div>
-            {% if cgl.signer_email or cgl.signer_phone %}
-            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ cgl.signer_email or '—' }}{% if cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Nom :</span> <span class="pdf-party-field-value">{{ pf('representative', cgl.production_representative, 'Représentant légal', '—') }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Fonction :</span> <span class="pdf-party-field-value">{{ pf('representative_role', cgl.display_representative_role, 'Fonction') }}</span></div>
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Siège social :</span> <span class="pdf-party-field-value">{{ pf('address', cgl.production_address, 'Adresse du siège social', '—') }}</span></div>
+            {% if form_preview or cgl.signer_email or cgl.signer_phone %}
+            <div class="pdf-party-field-line"><span class="cgl-party-field-label">Contact :</span> <span class="pdf-party-field-value">{{ pf('email', cgl.signer_email, 'E-mail', '—') }}{% if form_preview or cgl.signer_phone %} — {{ pf('phone', cgl.signer_phone, 'Téléphone') }}{% endif %}</span></div>
             {% endif %}
         </div>
     </div>
 
     <!-- Objet et Cadre du Tournage (Bloc Épuré Signature Belle Vitesse) -->
-    {% set annexe2_scope_text = "Je soussigné(e), dûment habilité(e) à représenter la société " ~ cgl.display_production_name ~ " (le « Locataire »), atteste avoir pris pleine connaissance des Conditions Générales de Location de Belle Vitesse SAS (le « Loueur »), ainsi que des conditions d’utilisation, consignes opérationnelles et restrictions liées aux véhicules modifiés loués pour le tournage de « " ~ cgl.display_project_name ~ " »." %}
+    {% set annexe2_scope_text = "Je soussigné(e), dûment habilité(e) à représenter la société " ~ pf('production_name', cgl.display_contract_production_name, 'Raison sociale') ~ " (le « Locataire »), atteste avoir pris pleine connaissance des Conditions Générales de Location de Belle Vitesse SAS (le « Loueur »), ainsi que des conditions d’utilisation, consignes opérationnelles et restrictions liées aux véhicules modifiés loués pour le tournage de « " ~ cgl.display_project_name ~ " »." %}
     {{ pdf_mission_scope(
         text=annexe2_scope_text,
         project_name=cgl.display_project_name,
@@ -283,7 +286,7 @@ company_name=company_name
 
         {% set effective_date = signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else now.strftime('%d/%m/%Y')) %}
         <div class="cgl-annexe2-date-place">
-            Fait à {{ cgl.display_signature_city or 'Paris' }}, le {{ effective_date }}
+            Fait à {{ pf('city', cgl.display_signature_city, 'Ville de signature', 'Paris') }}, le {{ effective_date }}
         </div>
     </div>
 </section>
@@ -292,15 +295,14 @@ company_name=company_name
 {% block pdf_signatures %}
 {% set target_url = verification_url or ((base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url
 else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id))) %}
-{% set legal_mention = "« Le signataire (" ~ (cgl.production_representative if cgl.production_representative else "le
-représentant désigné") ~ ", agissant en qualité de " ~ (cgl.display_representative_role if
-cgl.display_representative_role else "représentant habilité") ~ ") atteste expressément sur l'honneur avoir la capacité
-juridique et le pouvoir d'engager la société Locataire (" ~ cgl.display_production_name ~ "), confirme avoir pris
+{% set legal_mention = "« Le signataire (" ~ pf('representative', cgl.production_representative, 'Représentant légal', "le
+représentant désigné") ~ ", agissant en qualité de " ~ pf('representative_role', cgl.display_representative_role, 'Fonction', "représentant habilité") ~ ") atteste expressément sur l'honneur avoir la capacité
+juridique et le pouvoir d'engager la société Locataire (" ~ pf('production_name', cgl.display_contract_production_name, 'Raison sociale') ~ "), confirme avoir pris
 connaissance de l'intégralité des 22 articles des Conditions Générales de Location et de leurs Annexes, et déclare les
 accepter expressément et sans réserve. »" %}
 {{ pdf_signature_and_seal(
 doc_id=cgl.waiver_id,
-signer_name=cgl.production_representative or 'Représentant Légal',
+signer_name=pf('representative', cgl.production_representative, 'Représentant légal', 'Représentant Légal'),
 signer_role="Pour le Locataire (Bon pour accord)",
 signed_at=signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y à %H:%M') if cgl.signed_at else None),
 ip=signed_ip or cgl.signer_ip,
@@ -312,7 +314,7 @@ verification_url=target_url,
 seal_title="Acceptation sans réserve & Scellement Électronique",
 legal_mention=legal_mention,
 custom_meta_lines=[
-("Locataire", cgl.display_production_name)
+("Locataire", pf('production_name', cgl.display_contract_production_name, 'Raison sociale'))
 ]
 ) }}
 {% endblock %}

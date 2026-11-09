@@ -67,6 +67,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/calendar.js",
     "js/src/admin/admin-booking.js",
     "js/src/admin/admin-pricing.js",
+    "js/src/admin/notion-editor.js",
     "js/src/admin/project.js",
     "js/src/admin/cmdk.js",
     "js/src/admin/draft-store.js",
@@ -101,6 +102,7 @@ ADMIN_JS_FILES: List[str] = [
 PUBLIC_JS_FILES: List[str] = [
     "js/src/common/image-compressor.js",
     "js/src/common/signature-pad-controller.js",
+    "js/src/common/pdf-form-preview.js",
     "js/src/ui-utils.js",
     "js/src/initialization.js",
     "js/src/splide.js",

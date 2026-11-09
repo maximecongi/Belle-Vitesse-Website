@@ -225,6 +225,7 @@ def create_app(config_name=None):
             "font-src 'self' data: https://fonts.gstatic.com; "
             "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "
             "frame-src 'self'; "
+            "worker-src 'self' blob: https://cdnjs.cloudflare.com; "
             "object-src 'none';"
         )
         response.headers["Content-Security-Policy"] = csp

@@ -84,6 +84,10 @@ class MockCglWaiver:
         return self.production_name
 
     @property
+    def display_contract_production_name(self):
+        return self.production_name
+
+    @property
     def display_legal_form_only(self):
         return "SL"
 

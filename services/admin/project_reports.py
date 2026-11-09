@@ -46,39 +46,90 @@ def _format_waiver_data(waiver, beneficiary_name: str, doc_type: str) -> dict:
     }
 
 
-@handle_admin_service_error
-def add_project_report(project_id, user_id, content, title=None):
-    """
-    Ajoute un rapport / commentaire libre à un projet.
-    Associe l'auteur (utilisateur connecté) et conserve un snapshot du nom et rôle.
-    Le titre et le contenu sont obligatoires.
-    """
+class ReportNotFoundError(ValueError):
+    """Rapport inexistant, supprimé ou n'appartenant pas au projet indiqué."""
+
+
+def _validate_report_fields(title, content):
+    """Nettoie et valide le titre et le contenu (tous deux obligatoires)."""
     title = (title or "").strip()
     content = (content or "").strip()
     if not title:
         raise ValueError("L'intitulé / titre du rapport est obligatoire.")
     if not content:
         raise ValueError("Le contenu du rapport ne peut pas être vide.")
+    return title, content
+
+
+def _get_active_report(report_id, project_id=None):
+    """
+    Charge un rapport actif. Si `project_id` est fourni (ID ou code BVPR),
+    vérifie que le rapport appartient bien à ce projet.
+    """
+    report = db.session.get(ProjectReport, report_id)
+    if not report or report.deleted_at is not None:
+        raise ReportNotFoundError("Rapport introuvable.")
+    if project_id is not None:
+        project = resolve_project(project_id)
+        if not project or project.id != report.project_id:
+            raise ReportNotFoundError("Rapport introuvable pour ce projet.")
+    return report
+
+
+def serialize_report(report, current_user_id=None, is_admin=False, now=None, with_permissions=False):
+    """
+    Sérialisation unique d'un rapport pour les vues (fiche projet, MCP).
+    `with_permissions=True` ajoute can_edit / can_delete pour l'utilisateur courant.
+    """
+    data = {
+        "id": report.id,
+        "project_id": report.project_id,
+        "user_id": report.user_id,
+        "title": report.title,
+        "author_name": report.display_author_name,
+        "author_role": report.display_author_role,
+        "author_job": report.author_job,
+        "content": report.content,
+        "created_at": report.created_at,
+        "created_at_fr": _format_datetime_fr(report.created_at),
+        "updated_at": report.updated_at,
+        "is_edited": report.is_edited,
+    }
+    if with_permissions:
+        data["can_edit"] = report.can_be_edited_by(current_user_id, is_admin, now)
+        data["can_delete"] = report.can_be_deleted_by(current_user_id, is_admin)
+    return data
+
+
+@handle_admin_service_error
+def add_project_report(project_id, user_id, content, title=None, author_name=None, author_role=None):
+    """
+    Ajoute un rapport / commentaire libre à un projet.
+    Associe l'auteur (utilisateur connecté) et conserve un snapshot du nom et rôle.
+    `author_name` / `author_role` permettent de surcharger ce snapshot (ex : agent MCP).
+    Le titre et le contenu sont obligatoires.
+    """
+    title, content = _validate_report_fields(title, content)
 
     project = resolve_project(project_id)
     if not project or project.deleted_at is not None:
         raise ValueError("Projet introuvable.")
 
-    author_name = "Collaborateur"
-    author_role = "Équipe"
+    snapshot_name = "Collaborateur"
+    snapshot_role = "Équipe"
 
     if user_id:
         user = db.session.get(User, user_id)
         if user:
-            author_name = f"{user.firstname} {user.lastname}".strip()
-            author_role = user.job or user.role_display
+            snapshot_name = f"{user.firstname} {user.lastname}".strip()
+            snapshot_role = user.job or user.role_display
 
     report = ProjectReport(
         project_id=project.id,
         user_id=user_id,
         title=title,
-        author_name=author_name,
-        author_role=author_role,
+        author_name=author_name or snapshot_name,
+        author_role=author_role or snapshot_role,
         content=content,
     )
     db.session.add(report)
@@ -86,43 +137,22 @@ def add_project_report(project_id, user_id, content, title=None):
     return report
 
 
-REPORT_EDIT_WINDOW_SECONDS = 3 * 3600  # 3 heures
-
-
 @handle_admin_service_error
-def update_project_report(report_id, current_user_id, content, title=None, is_admin=False):
+def update_project_report(report_id, current_user_id, content, title=None, is_admin=False, project_id=None):
     """
     Met à jour un rapport d'équipe existant (titre et contenu).
     Seul l'auteur dans les 3 heures suivant la publication ou un administrateur peut modifier.
     Le titre et le contenu sont obligatoires.
     """
-    report = db.session.get(ProjectReport, report_id)
-    if not report:
-        raise ValueError("Rapport introuvable.")
+    report = _get_active_report(report_id, project_id)
 
-    is_author = (current_user_id is not None and report.user_id ==
-                 current_user_id)
-    created_at = report.created_at
-    if created_at.tzinfo is None:
-        created_at = created_at.replace(tzinfo=timezone.utc)
-    now = datetime.now(timezone.utc)
-    diff_seconds = (now - created_at).total_seconds()
-    within_window = diff_seconds <= REPORT_EDIT_WINDOW_SECONDS
+    if not report.can_be_edited_by(current_user_id, is_admin):
+        if not report.is_authored_by(current_user_id):
+            raise PermissionError("Vous n'êtes pas autorisé à modifier ce rapport.")
+        raise PermissionError(
+            "La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
 
-    if not is_admin:
-        if not is_author:
-            raise PermissionError(
-                "Vous n'êtes pas autorisé à modifier ce rapport.")
-        if not within_window:
-            raise PermissionError(
-                "La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
-
-    title = (title or "").strip()
-    content = (content or "").strip()
-    if not title:
-        raise ValueError("L'intitulé / titre du rapport est obligatoire.")
-    if not content:
-        raise ValueError("Le contenu du rapport ne peut pas être vide.")
+    title, content = _validate_report_fields(title, content)
 
     report.content = content
     report.title = title
@@ -132,48 +162,29 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
 
 
 @handle_admin_service_error
-def delete_project_report(report_id, current_user_id, is_admin=False):
+def delete_project_report(report_id, current_user_id, is_admin=False, project_id=None):
     """
-    Supprime un rapport / commentaire.
+    Supprime (soft-delete) un rapport / commentaire.
     Seul l'auteur ou un administrateur est autorisé à supprimer.
     """
-    report = db.session.get(ProjectReport, report_id)
-    if not report:
-        raise ValueError("Commentaire introuvable.")
+    report = _get_active_report(report_id, project_id)
 
-    # Vérification des droits : auteur ou administrateur
-    is_author = (current_user_id is not None and report.user_id ==
-                 current_user_id)
-    if not is_author and not is_admin:
-        raise PermissionError(
-            "Vous n'êtes pas autorisé à supprimer ce commentaire.")
+    if not report.can_be_deleted_by(current_user_id, is_admin):
+        raise PermissionError("Vous n'êtes pas autorisé à supprimer ce commentaire.")
 
-    db.session.delete(report)
+    report.deleted_at = _utcnow()
     db.session.commit()
     return True
 
 
 def list_project_reports(project_id):
     """
-    Retourne la liste ordonnée chronologiquement des rapports d'un projet avec métadonnées formatées.
+    Retourne la liste antéchronologique des rapports actifs d'un projet avec métadonnées formatées.
     """
-    reports = ProjectReport.query.filter_by(project_id=project_id).order_by(
+    reports = ProjectReport.active().filter_by(project_id=project_id).order_by(
         ProjectReport.created_at.desc()
     ).all()
-
-    return [{
-        "id": r.id,
-        "project_id": r.project_id,
-        "user_id": r.user_id,
-        "title": r.title,
-        "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
-        "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
-        "author_job": (r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")),
-        "content": r.content,
-        "created_at": r.created_at,
-        "created_at_fr": _format_datetime_fr(r.created_at),
-        "updated_at": r.updated_at,
-    } for r in reports]
+    return [serialize_report(r) for r in reports]
 
 
 def get_project_detail_context(project_id, current_user_id=None, is_admin=False):
@@ -315,46 +326,12 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         shoot_status_color = "var(--status-info, #0284C7)"
         shoot_dates_summary = "Dates à confirmer"
 
-    # Formattage des rapports avec permissions de modification et suppression
+    # Rapports actifs avec permissions de modification et suppression
     now = datetime.now(timezone.utc)
-    formatted_reports = []
-    for r in sorted(project.reports, key=lambda x: x.created_at, reverse=True):
-        is_author = (current_user_id is not None and r.user_id ==
-                     current_user_id)
-        can_delete = is_author or is_admin
-
-        created_at = r.created_at
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        diff_seconds = (now - created_at).total_seconds()
-        within_edit_window = diff_seconds <= REPORT_EDIT_WINDOW_SECONDS
-        can_edit = is_admin or (is_author and within_edit_window)
-
-        is_edited = False
-        if r.updated_at and r.created_at:
-            up_at = r.updated_at.replace(
-                tzinfo=timezone.utc) if r.updated_at.tzinfo is None else r.updated_at
-            if (up_at - created_at).total_seconds() > 2:
-                is_edited = True
-
-        job = r.user.job if (r.user and r.user.job) else (
-            r.author_role or "Équipe")
-        formatted_reports.append({
-            "id": r.id,
-            "project_id": r.project_id,
-            "user_id": r.user_id,
-            "title": r.title,
-            "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
-            "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
-            "author_job": job,
-            "content": r.content,
-            "created_at": r.created_at,
-            "created_at_fr": _format_datetime_fr(r.created_at),
-            "updated_at": r.updated_at,
-            "can_delete": can_delete,
-            "can_edit": can_edit,
-            "is_edited": is_edited,
-        })
+    formatted_reports = [
+        serialize_report(r, current_user_id, is_admin, now=now, with_permissions=True)
+        for r in sorted(project.active_reports, key=lambda x: x.created_at, reverse=True)
+    ]
 
     # Contacts enrichis
     def _format_contact(c, role_title):

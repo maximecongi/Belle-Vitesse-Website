@@ -216,12 +216,6 @@ a.public-doc-vehicle-card:hover {
     display: block;
 }
 
-.public-doc-vehicle-placeholder-icon {
-    width: 22px;
-    height: 22px;
-    color: var(--grey-2, #6B7280);
-}
-
 .public-doc-vehicle-info {
     display: flex;
     flex-direction: column;
@@ -266,7 +260,8 @@ a.public-doc-vehicle-card:hover {
     background-color: var(--white-2, #F8F9FA);
     padding: 1.75rem;
     border-left: 4px solid var(--yellow-1);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     font-size: 0.925rem;
     line-height: 1.65;
     color: var(--grey-1, #111827);
@@ -1011,6 +1006,7 @@ a.public-doc-vehicle-card:hover {
     outline: none;
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.35);
 }
+
 /* ── Lecteur Analyse des Risques (BVRA) ──────────────────────────────────── */
 .cgl-reader-container h3 {
     font-size: 0.8rem;
@@ -1025,14 +1021,16 @@ a.public-doc-vehicle-card:hover {
     background: var(--white-1, #FFFFFF);
     border: 1px solid var(--border-color, #E2E8F0);
     border-left: 4px solid #FFC845;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     padding: 0.85rem 1rem;
     margin-bottom: 0.75rem;
 }
 
 .bvra-reader-risk--major {
     border-left-color: #DC2626;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .bvra-reader-risk-header {
@@ -1091,4 +1089,137 @@ a.public-doc-vehicle-card:hover {
 
 .cgl-reader-container ul.bvra-reader-recs li {
     margin-bottom: 0.25rem;
+}
+
+/* ==========================================================================
+   Aperçu PDF live des formulaires de signature (CGL, BVSR, BVPA, BVRA)
+   ========================================================================== */
+.pdf-form-preview {
+    position: relative;
+    border-radius: 0;
+    background: #e9e9e9;
+}
+
+.pdf-form-preview-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.25rem;
+    padding: 0.4rem 0.75rem;
+    background: #f5f5f5;
+    border-bottom: 1px solid #dcdcdc;
+    font-size: 0.75rem;
+}
+
+.pdf-form-preview-status {
+    color: #6b6b6b;
+}
+
+.pdf-form-preview.has-error .pdf-form-preview-status {
+    color: #b42318;
+}
+
+.pdf-form-preview-open {
+    margin-left: auto;
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.pdf-form-preview-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #c8c8c8;
+    border-top-color: var(--yellow-1);
+    border-radius: 50%;
+    visibility: hidden;
+}
+
+.pdf-form-preview.is-loading .pdf-form-preview-spinner {
+    visibility: visible;
+    animation: pdf-form-preview-spin 0.8s linear infinite;
+}
+
+@keyframes pdf-form-preview-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pdf-form-preview-pages {
+    height: 70vh;
+    min-height: 420px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: opacity 0.2s ease;
+}
+
+.pdf-form-preview.is-loading .pdf-form-preview-pages {
+    opacity: 0.85;
+}
+
+.pdf-form-preview-page {
+    position: relative;
+    flex: 0 0 auto;
+    max-width: 100%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-form-preview-page canvas {
+    display: block;
+}
+
+/* Zones cliquables posées sur les valeurs surlignées du PDF */
+.pdf-form-preview-hit {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.pdf-form-preview-hit:hover,
+.pdf-form-preview-hit:focus-visible {
+    outline: 2px solid #d99a00;
+    outline-offset: 1px;
+    background: rgba(255, 200, 69, 0.25);
+}
+
+.pdf-form-preview-legend {
+    background: var(--yellow-1);
+    color: inherit;
+    padding: 0 2px;
+    border-radius: 0;
+}
+
+/* Pulsation du champ ciblé depuis l'aperçu */
+.pf-field-pulse {
+    animation: pf-field-pulse 1.6s ease-out;
+}
+
+@keyframes pf-field-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 200, 69, 0.9);
+        background-color: rgba(255, 200, 69, 0.25);
+    }
+
+    100% {
+        box-shadow: 0 0 0 12px rgba(255, 200, 69, 0);
+        background-color: transparent;
+    }
+}
+
+@media (max-width: 600px) {
+    .pdf-form-preview-pages {
+        height: 60vh;
+        padding: 6px;
+    }
 }

@@ -207,8 +207,9 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         res_get = self.client.get(f"/sign/risk-assessment/{token_obj.token}")
         self.assertEqual(res_get.status_code, 200)
         self.assertIn(b"Analyse des Risques (BVRA)", res_get.data)
-        self.assertIn(b"RISQUE MAJEUR", res_get.data)
-        self.assertIn(b"RISQUE", res_get.data)
+        # Le texte du document est désormais affiché via l'aperçu PDF live
+        self.assertIn(b'id="risk-assessment-pdf-preview"', res_get.data)
+        self.assertIn(f"/sign/risk-assessment/{token_obj.token}/preview".encode(), res_get.data)
 
         # 2. POST signature
         fake_png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="

@@ -36,6 +36,18 @@ show_print=True
 <section class="pdf-section">
     <h2 class="pdf-section-title dot-before">IDENTIFICATION DU SIGNATAIRE</h2>
     <div class="pdf-parties-grid">
+        {% if form_preview %}
+        {% set role_pv = waiver.pilot_function_label if waiver.signer_role else '' %}
+        {{ pdf_party_card(
+        role="Pilote / Opérateur Déclarant",
+        fields=[
+        ("Nom complet", pf('first_name', waiver.signer_first_name, 'Prénom') ~ ' ' ~ pf('last_name', waiver.signer_last_name, 'Nom')),
+        ("Qualité", pf(('role_custom' if waiver.signer_role == 'other' else 'signer_role'), role_pv, 'Fonction')),
+        ("Employeur (société de production)", pf('company', waiver.signer_company, 'Société de production')),
+        ("Contact", pf('email', waiver.signer_email, 'E-mail') ~ ' — ' ~ pf('phone', waiver.signer_phone, 'Téléphone'))
+        ]
+        ) }}
+        {% else %}
         {{ pdf_party_card(
         role="Pilote / Opérateur Déclarant",
         fields=[
@@ -45,6 +57,7 @@ show_print=True
         ("Contact", (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else ''))
         ]
         ) }}
+        {% endif %}
     </div>
 </section>
 
@@ -140,8 +153,8 @@ show_print=True
 ('/pilot-attestation/verify/' ~ waiver.waiver_id)) %}
 {{ pdf_signature_and_seal(
 doc_id=waiver.waiver_id,
-signer_name=waiver.signer_name,
-signer_role=(waiver.pilot_function_label or 'Pilote Déclarant') ~ ' (Lu et approuvé)',
+signer_name=(pf('first_name', waiver.signer_first_name, 'Prénom') ~ ' ' ~ pf('last_name', waiver.signer_last_name, 'Nom')) if form_preview else waiver.signer_name,
+signer_role=(pf(('role_custom' if waiver.signer_role == 'other' else 'signer_role'), (waiver.pilot_function_label if waiver.signer_role else ''), 'Fonction') if form_preview else (waiver.pilot_function_label or 'Pilote Déclarant')) ~ ' (Lu et approuvé)',
 signed_at=signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else None),
 ip=signed_ip or waiver.signer_ip,
 signature_img=signature or waiver.signature_data_uri,

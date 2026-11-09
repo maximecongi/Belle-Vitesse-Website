@@ -732,20 +732,6 @@ body.pdf-body {
     display: block;
 }
 
-.public-doc-vehicle-thumb-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.public-doc-vehicle-placeholder-icon {
-    width: 18pt;
-    height: 18pt;
-    color: #94a3b8;
-}
-
 .public-doc-vehicle-info {
     display: flex;
     flex-direction: column;

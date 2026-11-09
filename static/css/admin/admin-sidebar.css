@@ -302,6 +302,10 @@
     height: 16px;
     flex-shrink: 0;
     stroke-width: 1.5px;
+    background: var(--neutral-color);
+    color: var(--admin-bg);
+    padding: 6px;
+    border-radius: 8px;
 }
 
 .admin-nav-external {

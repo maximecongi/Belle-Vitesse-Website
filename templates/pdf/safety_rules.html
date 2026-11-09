@@ -42,6 +42,21 @@ company_name=company_name
         ]
         ) }}
 
+        {% if form_preview %}
+        {# Aperçu live : chaque valeur issue du formulaire est surlignée et cliquable #}
+        {% set is_company_pv = (form_values.get('signer_entity_type') or (waiver.sign_data or {}).get('entity_type')) == 'company' %}
+        {% set role_pv = (waiver.signer_role_custom if waiver.signer_role == 'other' else waiver.signer_role_label) if waiver.signer_role else '' %}
+        {% set name_pv = pf('first_name', waiver.signer_first_name, 'Prénom') ~ ' ' ~ pf('last_name', waiver.signer_last_name, 'Nom') ~ ', ' ~ pf(('role_custom' if waiver.signer_role == 'other' else 'signer_role'), role_pv, 'Fonction') %}
+        {% set sign_fields = [] %}
+        {% if is_company_pv %}
+            {% set _ = sign_fields.append(("Société", pf('company_name', (waiver.sign_data or {}).get('company_name'), 'Raison sociale'))) %}
+            {% set _ = sign_fields.append(("Représentant", name_pv)) %}
+            {% set _ = sign_fields.append(("Adresse", pf('company_address', (waiver.sign_data or {}).get('company_address'), 'Adresse de la société'))) %}
+        {% else %}
+            {% set _ = sign_fields.append(("Signataire", name_pv)) %}
+        {% endif %}
+        {% set _ = sign_fields.append(("Contact", pf('email', waiver.signer_email, 'E-mail') ~ ' — ' ~ pf('phone', waiver.signer_phone, 'Téléphone'))) %}
+        {% else %}
         {% set is_company = (waiver.sign_data and waiver.sign_data.get('entity_type') == 'company') or (waiver.signer_company and waiver.signer_company.strip()) %}
         {% set rep_role = waiver.signer_role_custom or waiver.signer_role_label or '—' %}
         {% set rep_display = (waiver.signer_name ~ (', ' ~ rep_role if rep_role and rep_role != '—' else '')) if waiver.signer_name and waiver.signer_name != '—' else (waiver.display_production_representative or '—') %}
@@ -60,6 +75,8 @@ company_name=company_name
         {% endif %}
         {% if waiver.signer_email or waiver.signer_phone %}
             {% set _ = sign_fields.append(("Contact", contact_display)) %}
+        {% endif %}
+
         {% endif %}
 
         {{ pdf_party_card(
@@ -227,8 +244,8 @@ company_name=company_name
 ('/safety-rules/verify/' ~ waiver.waiver_id)) %}
 {{ pdf_signature_and_seal(
 doc_id=waiver.waiver_id,
-signer_name=waiver.signer_name,
-signer_role=(waiver.signer_role_label or 'Signataire') ~ ' (Lu et approuvé)',
+signer_name=(pf('first_name', waiver.signer_first_name, 'Prénom') ~ ' ' ~ pf('last_name', waiver.signer_last_name, 'Nom')) if form_preview else waiver.signer_name,
+signer_role=(pf(('role_custom' if waiver.signer_role == 'other' else 'signer_role'), ((waiver.signer_role_custom if waiver.signer_role == 'other' else waiver.signer_role_label) if waiver.signer_role else ''), 'Fonction') if form_preview else (waiver.signer_role_label or 'Signataire')) ~ ' (Lu et approuvé)',
 signed_at=signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else None),
 ip=signed_ip or waiver.signer_ip,
 signature_img=signature or waiver.signature_data_uri,

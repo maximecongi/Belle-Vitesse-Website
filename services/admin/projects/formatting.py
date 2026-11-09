@@ -179,7 +179,15 @@ def _format_project_admin(p, vehicle_map, heads_map):
                 for pw in p.active_pilot_waivers
             ],
         },
-        "reports_count": len(p.reports) if hasattr(p, 'reports') and p.reports else 0,
+        "risk_assessments": {
+            "count": len(p.active_risk_assessments),
+            "signed_count": sum(1 for ra in p.active_risk_assessments if ra.status == "signed"),
+            "has_pending": any(ra.status in ("to_send", "to_sign") for ra in p.active_risk_assessments),
+            "single_pdf_path": _get_secured_document_url(
+                p.active_risk_assessments[0].signed_pdf_path, "risk-assessment"
+            ) if (len(p.active_risk_assessments) == 1 and p.active_risk_assessments[0].status == "signed") else None,
+        },
+        "reports_count": len(p.active_reports),
         "incidents": [
             {
                 "id": inc.id,

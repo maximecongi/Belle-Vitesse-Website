@@ -1,5 +1,9 @@
 import hashlib
 import os
+import re
+import threading
+import time
+from collections import OrderedDict
 from datetime import datetime, timezone
 
 from flask import Blueprint, abort, current_app, jsonify, render_template, request
@@ -88,6 +92,265 @@ def _get_waiver_route_config(mode):
     }
 
 
+class SignFormError(ValueError):
+    """Erreur de validation d'un formulaire public de signature (message destiné au signataire)."""
+
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _apply_sign_form(mode, waiver, data, *, strict, user_agent="", output_base=None):
+    """
+    Applique les valeurs saisies dans le formulaire public de signature sur l'objet waiver.
+
+    - strict=True  : signature réelle. Consentements, champs requis et formats sont contrôlés
+                     (SignFormError levée), la pièce jointe d'assurance CGL est enregistrée.
+    - strict=False : aperçu PDF live. Aucun contrôle bloquant, valeurs tronquées à la longueur
+                     maximale, aucun fichier écrit. L'appelant doit annuler la transaction.
+
+    Retourne (rep_name, rep_role) pour la journalisation du consentement.
+    """
+
+    def require(condition, message):
+        if strict and not condition:
+            raise SignFormError(message)
+
+    def clip(value, max_len, message):
+        value = str(value or "").strip()
+        if len(value) > max_len:
+            if strict:
+                raise SignFormError(message)
+            value = value[:max_len]
+        return value
+
+    def email_value(raw):
+        email = clip(raw, 120, "L'adresse e-mail renseignée est invalide.")
+        if email and not _EMAIL_RE.match(email):
+            require(False, "L'adresse e-mail renseignée est invalide.")
+        return email
+
+    rep_role = None
+    now_iso = datetime.now(timezone.utc).isoformat()
+
+    if mode in ("safety_rules", "pilot_waiver", "risk_assessment"):
+        ack_key = {
+            "safety_rules": "ack_rules",
+            "pilot_waiver": "ack_pilot_engagement",
+            "risk_assessment": "ack_risk_assessment",
+        }[mode]
+        ack_message = {
+            "safety_rules": "La prise de connaissance et le respect des Règles de Sécurité sont obligatoires.",
+            "pilot_waiver": "La déclaration sur l'honneur et le respect des consignes de sécurité de l'Annexe 3 sont obligatoires.",
+            "risk_assessment": "La prise de connaissance et le respect de l'Analyse des Risques sont obligatoires.",
+        }[mode]
+        require(str(data.get(ack_key, "")).lower() in ("1", "on", "true"), ack_message)
+
+        if data.get("first_name"):
+            waiver.signer_first_name = clip(data.get("first_name"), 100, "Le prénom ne peut dépasser 100 caractères.")
+        if data.get("last_name"):
+            waiver.signer_last_name = clip(data.get("last_name"), 100, "Le nom ne peut dépasser 100 caractères.")
+        if data.get("email"):
+            waiver.signer_email = email_value(data.get("email"))
+        if data.get("phone"):
+            waiver.signer_phone = clip(data.get("phone"), 50, "Le numéro de téléphone ne peut dépasser 50 caractères.")
+
+        entity_type = None
+        comp_name = comp_addr = ""
+        if mode == "pilot_waiver":
+            if data.get("company"):
+                waiver.signer_company = clip(data.get("company"), 150, "La société ne peut dépasser 150 caractères.")
+        else:
+            entity_type = str(data.get("signer_entity_type") or data.get("entity_type") or "freelance").strip().lower()
+            if entity_type == "company":
+                comp_name = str(data.get("company_name") or data.get("company") or "").strip()
+                comp_addr = str(data.get("company_address") or "").strip()
+                waiver.signer_company = comp_name
+                waiver.production_name = comp_name
+                waiver.production_address = comp_addr
+            else:
+                entity_type = "freelance"
+                if mode == "safety_rules":
+                    waiver.signer_company = None
+                    waiver.production_name = None
+                    waiver.production_address = None
+                elif data.get("company"):
+                    waiver.signer_company = str(data.get("company")).strip()
+
+        role_raw = data.get("signer_role") or (data.get("role") if mode == "risk_assessment" else None)
+        if role_raw:
+            waiver.signer_role = clip(role_raw, 100, "La fonction ne peut dépasser 100 caractères.")
+        if data.get("role_custom"):
+            waiver.signer_role_custom = clip(data.get("role_custom"), 100, "Le rôle personnalisé ne peut dépasser 100 caractères.")
+
+        rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
+
+        sign_data = dict(waiver.sign_data or {})
+        if entity_type:
+            sign_data["entity_type"] = entity_type
+            if entity_type == "company":
+                sign_data["company_name"] = comp_name
+                sign_data["company_address"] = comp_addr
+        sign_data[ack_key] = True
+        sign_data["accepted_at"] = now_iso
+        if mode == "pilot_waiver":
+            sign_data["authority_declaration_text"] = (
+                "Je déclare être sous l'autorité exclusive de la production (l'Employeur), "
+                "sans aucun lien de subordination juridique avec Belle Vitesse, et m'engage à appliquer "
+                "rigoureusement l'ensemble des règles opérationnelles et de sécurité de l'Annexe 3."
+            )
+        sign_data["shooting_locations"] = waiver.display_shooting_locations_list
+        waiver.sign_data = sign_data
+        return rep_name, rep_role
+
+    # ── CGL ──────────────────────────────────────────────────────
+    # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
+    require(data.get("accepted_terms") == "1",
+            "L'acceptation expresse des Conditions Générales de Location est obligatoire.")
+    require(data.get("has_signing_authority") == "1",
+            "La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire.")
+
+    prod_name = (data.get("production_name") or waiver.production_name or "").strip()
+    require(prod_name and len(prod_name) <= 150,
+            "La raison sociale de la production est obligatoire (max 150 caractères).")
+    prod_name = prod_name[:150]
+
+    rep_name = (data.get("representative") or waiver.production_representative or "").strip()
+    rep_role = (data.get("representative_role") or waiver.signer_role_custom or "").strip()
+    require(rep_name and rep_role,
+            "Le nom du signataire et sa fonction au sein de la société sont obligatoires.")
+    rep_name = clip(rep_name, 150, "Le nom du signataire ne peut dépasser 150 caractères.")
+    rep_role = clip(rep_role, 100, "La fonction du signataire ne peut dépasser 100 caractères.")
+
+    address = clip(data.get("address") or waiver.production_address or "", 255,
+                   "L'adresse du siège social ne peut dépasser 255 caractères.")
+
+    email = (data.get("email") or waiver.signer_email or "").strip()
+    if email:
+        email = email_value(email)
+
+    siret_value = data.get("siret") if "siret" in data else waiver.production_siret
+    siret = (siret_value or "").strip()
+    legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
+    if legal_country in ("FR", "FRANCE"):
+        require(siret, "Le numéro SIRET est obligatoire pour une société dont le siège est en France.")
+        siret_clean = re.sub(r"\s+", "", siret)
+        if strict:
+            require(siret_clean.isdigit() and len(siret_clean) == 14,
+                    "Le numéro SIRET doit comporter exactement 14 chiffres pour une société française.")
+            siret = siret_clean
+    else:
+        siret = clip(siret, 100, "Le numéro d’immatriculation ne peut dépasser 100 caractères.")
+
+    waiver.production_name = prod_name
+    waiver.production_representative = rep_name
+    if address:
+        waiver.production_address = address
+    waiver.production_siret = siret
+    if data.get("vat_number"):
+        waiver.production_vat = clip(data.get("vat_number"), 100,
+                                     "Le numéro de TVA intracommunautaire ne peut dépasser 100 caractères.")
+    if data.get("phone"):
+        waiver.signer_phone = clip(data.get("phone"), 50, "Le numéro de téléphone ne peut dépasser 50 caractères.")
+    if email:
+        waiver.signer_email = email
+    waiver.signer_role_custom = rep_role
+    if data.get("insurance_company"):
+        waiver.production_insurance_company = clip(
+            data.get("insurance_company"), 255, "Le nom de la compagnie d'assurance ne peut dépasser 255 caractères.")
+    if data.get("insurance_policy"):
+        waiver.production_insurance_policy = clip(
+            data.get("insurance_policy"), 255, "Le numéro de police d'assurance ne peut dépasser 255 caractères.")
+    if data.get("location_of_use"):
+        waiver.location_of_use = clip(data.get("location_of_use"), 255,
+                                      "Le lieu d'utilisation ne peut dépasser 255 caractères.")
+    elif data.get("city") and not waiver.location_of_use:
+        waiver.location_of_use = clip(data.get("city"), 255, "La ville ne peut dépasser 255 caractères.")
+
+    # Calcul de l'empreinte du partial des articles CGL (termes acceptés immuables)
+    terms_fingerprint = ""
+    if strict:
+        try:
+            template_source, _, _ = current_app.jinja_env.loader.get_source(
+                current_app.jinja_env, "public/cgl/_cgl_articles.html")
+            terms_fingerprint = hashlib.sha256(template_source.encode("utf-8")).hexdigest()
+        except Exception:
+            pass
+
+    # Snapshot structuré JSON
+    s_data = dict(waiver.sign_data or {})
+    s_data["cgl_version"] = CGL_VERSION
+    s_data["accepted_terms"] = True
+    s_data["accepted_at"] = now_iso
+    s_data["has_signing_authority"] = True
+    s_data["authority_declaration_text"] = (
+        "Je certifie sur l'honneur être dûment habilité(e) et disposer de tous les pouvoirs "
+        "et délégations nécessaires pour représenter, engager juridiquement et obliger financièrement "
+        "la société preneuse pour le présent contrat de location et l'ensemble de ses suites."
+    )
+    s_data["representative_name"] = rep_name
+    s_data["representative_role"] = rep_role
+    s_data["terms_fingerprint"] = terms_fingerprint
+    s_data["user_agent"] = user_agent
+
+    if data.get("legal_form"):
+        s_data["legal_form"] = data.get("legal_form").strip()
+    if data.get("legal_country"):
+        s_data["legal_country"] = data.get("legal_country").strip()
+    if rep_role:
+        s_data["representative_role"] = rep_role
+    if data.get("city"):
+        s_data["signature_city"] = data.get("city").strip()
+    if data.get("order_ref"):
+        s_data["order_ref"] = data.get("order_ref").strip()
+    # Stocker la liste des lieux au moment de la signature
+    s_data["shooting_locations"] = waiver.display_shooting_locations_list
+    if data.get("insurance_company"):
+        s_data["insurance_company"] = data.get("insurance_company").strip()
+    if data.get("insurance_policy"):
+        s_data["insurance_policy"] = data.get("insurance_policy").strip()
+
+    # Pièce jointe assurance production (CGL) avec validation stricte — jamais en aperçu
+    if strict:
+        insurance_file_sha256 = ""
+        insurance_upload_sha256 = ""
+        file = request.files.get('production_insurance')
+        if file and file.filename:
+            ext = os.path.splitext(file.filename)[1].lower()
+            allowed_exts = {'.pdf', '.png', '.jpg', '.jpeg', '.heic', '.heif'}
+            if ext not in allowed_exts:
+                raise SignFormError("Format d'attestation d'assurance non autorisé (PDF ou image requis).")
+
+            file_bytes = file.read()
+            if len(file_bytes) > 10 * 1024 * 1024:
+                raise SignFormError("L'attestation d'assurance dépasse la taille maximale autorisée (10 Mo).")
+
+            if not _is_valid_magic_bytes(file_bytes, ext):
+                raise SignFormError("Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue).")
+
+            insurance_upload_sha256 = hashlib.sha256(file_bytes).hexdigest()
+            file.seek(0)
+
+            upload_dir = ensure_dir(get_cgl_attachments_path(waiver.project, 'insurance'))
+            stem = os.path.splitext(secure_filename(file.filename))[0]
+            if ext in ('.heic', '.heif'):
+                ext = '.jpg'
+            fname = f"prod_insurance_{int(datetime.now().timestamp())}_{stem}{ext}"
+            file_path = os.path.join(upload_dir, fname)
+            if ext in IMAGE_EXTENSIONS or ext == '.jpg':
+                optimize_and_save_image(file, file_path)
+            else:
+                file.save(file_path)
+            waiver.production_insurance_path = os.path.relpath(file_path, output_base)
+
+            # Point 10: Calcul du SHA-256 physique du fichier stocké post-optimisation
+            insurance_file_sha256 = compute_file_sha256(file_path)
+
+        s_data["insurance_file_sha256"] = insurance_file_sha256
+        s_data["insurance_upload_sha256"] = insurance_upload_sha256
+    waiver.sign_data = s_data
+    return rep_name, rep_role
+
+
 public_waivers_bp = Blueprint("public_waivers", __name__)
 
 
@@ -112,6 +375,160 @@ def sign_pilot_waiver(token):
 @limiter.limit("20 per minute")
 def sign_risk_assessment(token):
     return _handle_sign_waiver("risk_assessment", token)
+
+# ── Aperçu PDF live des formulaires de signature ────────────
+#
+# Protection de la charge serveur (un rendu WeasyPrint ≈ 1 à 2,5 s de CPU, GIL compris) :
+# - côté client, une seule requête d'aperçu en vol par onglet (cf. pdf-form-preview.js) ;
+# - cache LRU par processus des PDF déjà rendus, indexé sur l'empreinte du HTML final
+#   (toute modification du formulaire, des données admin ou des templates l'invalide) ;
+# - au plus _PREVIEW_MAX_CONCURRENT rendus simultanés par worker : au-delà, réponse 429
+#   et le navigateur réessaie en conservant le dernier aperçu affiché ;
+# - rate limit par jeton de signature (et non par IP partagée d'une production).
+
+_PREVIEW_RATE_LIMIT = "30 per minute"
+_PREVIEW_MAX_CONCURRENT = 1
+_PREVIEW_ACQUIRE_TIMEOUT_S = 0.5
+_PREVIEW_RETRY_AFTER_S = 2
+_PREVIEW_CACHE_MAX_ENTRIES = 32
+_PREVIEW_CACHE_TTL_S = 15 * 60
+
+_preview_render_slots = threading.BoundedSemaphore(_PREVIEW_MAX_CONCURRENT)
+_preview_cache = OrderedDict()
+_preview_cache_lock = threading.Lock()
+
+
+def _preview_rate_key():
+    token = (request.view_args or {}).get("token")
+    return f"sign-preview:{token}" if token else get_client_ip()
+
+
+def _preview_cache_get(key):
+    with _preview_cache_lock:
+        entry = _preview_cache.get(key)
+        if not entry:
+            return None
+        created_at, pdf_bytes = entry
+        if time.monotonic() - created_at > _PREVIEW_CACHE_TTL_S:
+            _preview_cache.pop(key, None)
+            return None
+        _preview_cache.move_to_end(key)
+        return pdf_bytes
+
+
+def _preview_cache_set(key, pdf_bytes):
+    with _preview_cache_lock:
+        _preview_cache[key] = (time.monotonic(), pdf_bytes)
+        _preview_cache.move_to_end(key)
+        while len(_preview_cache) > _PREVIEW_CACHE_MAX_ENTRIES:
+            _preview_cache.popitem(last=False)
+
+
+def _preview_pdf_response(pdf_bytes, waiver_id, cache_status):
+    response = current_app.response_class(pdf_bytes, mimetype="application/pdf")
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Content-Disposition"] = f'inline; filename="{waiver_id}_apercu.pdf"'
+    response.headers["X-Preview-Cache"] = cache_status
+    return response
+
+@public_waivers_bp.route("/sign/cgl/<token>/preview", methods=["POST"])
+@limiter.limit(_PREVIEW_RATE_LIMIT, key_func=_preview_rate_key)
+def preview_cgl(token):
+    return _handle_sign_preview("cgl", token)
+
+@public_waivers_bp.route("/sign/safety-rules/<token>/preview", methods=["POST"])
+@limiter.limit(_PREVIEW_RATE_LIMIT, key_func=_preview_rate_key)
+def preview_safety_rules(token):
+    return _handle_sign_preview("safety_rules", token)
+
+@public_waivers_bp.route("/sign/pilot-attestation/<token>/preview", methods=["POST"])
+@limiter.limit(_PREVIEW_RATE_LIMIT, key_func=_preview_rate_key)
+def preview_pilot_waiver(token):
+    return _handle_sign_preview("pilot_waiver", token)
+
+@public_waivers_bp.route("/sign/risk-assessment/<token>/preview", methods=["POST"])
+@limiter.limit(_PREVIEW_RATE_LIMIT, key_func=_preview_rate_key)
+def preview_risk_assessment(token):
+    return _handle_sign_preview("risk_assessment", token)
+
+
+def _handle_sign_preview(mode, token):
+    """
+    Rend le PDF réel du document (même template WeasyPrint que l'archive scellée) à partir des
+    valeurs en cours de saisie, avec les zones issues du formulaire surlignées et cliquables.
+    Rien n'est persisté : les modifications appliquées au waiver sont annulées après rendu.
+    """
+    from services.common.signatures import FLOW_CONFIG, build_document_render_context
+    from utils.document_utils import render_pdf_from_template
+    from utils.request_utils import resolve_base_url
+
+    config = _get_waiver_route_config(mode)
+    if request.content_length and request.content_length > 1024 * 1024:
+        return jsonify({"success": False, "error": "Requête trop volumineuse."}), 413
+
+    token_rec = config["token_model"].query.filter_by(token=token).first()
+    if not token_rec:
+        return jsonify({"success": False, "error": "Jeton invalide."}), 404
+    waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+    if not waiver:
+        return jsonify({"success": False, "error": "Document introuvable."}), 404
+    if waiver.status in ("signed", "completed") or token_rec.signature:
+        return jsonify({"success": False, "error": "Ce document a déjà été signé."}), 409
+    if token_rec.expires_at:
+        exp = token_rec.expires_at
+        now_utc = datetime.now(timezone.utc)
+        if exp < (now_utc if exp.tzinfo is not None else now_utc.replace(tzinfo=None)):
+            return jsonify({"success": False, "error": "Ce lien de signature a expiré."}), 410
+
+    data = request.form
+    flow = FLOW_CONFIG[mode]
+    base_url = resolve_base_url()
+    try:
+        with db.session.no_autoflush:
+            _apply_sign_form(mode, waiver, data, strict=False)
+            ctx = build_document_render_context(mode, waiver)
+            html_content = render_template(
+                flow["template"],
+                **ctx,
+                base_url=base_url,
+                form_preview=True,
+                form_values={k: (v or "").strip() for k, v in data.items() if k != "csrf_token"},
+            )
+    except Exception as e:
+        current_app.logger.error(f"Erreur d'aperçu {mode} ({waiver.waiver_id}) : {e}")
+        return jsonify({"success": False, "error": "Aperçu indisponible."}), 500
+    finally:
+        # Aucune donnée de l'aperçu ne doit être persistée
+        db.session.rollback()
+
+    cache_key = hashlib.sha256(f"{mode}|{token}|".encode("utf-8") + html_content.encode("utf-8")).hexdigest()
+    cached_pdf = _preview_cache_get(cache_key)
+    if cached_pdf is not None:
+        return _preview_pdf_response(cached_pdf, waiver.waiver_id, "hit")
+
+    # Plafond de rendus simultanés : protège le reste du site (admin, pages publiques)
+    if not _preview_render_slots.acquire(timeout=_PREVIEW_ACQUIRE_TIMEOUT_S):
+        busy = jsonify({"success": False, "error": "Aperçu momentanément indisponible, nouvel essai en cours."})
+        busy.status_code = 429
+        busy.headers["Retry-After"] = str(_PREVIEW_RETRY_AFTER_S)
+        return busy
+    try:
+        pdf_bytes = render_pdf_from_template(
+            html_content,
+            base_url=base_url,
+            stylesheets=flow["stylesheets"],
+            compress=False,
+            filename=f"{waiver.waiver_id}_apercu.pdf",
+        )
+    except Exception as e:
+        current_app.logger.error(f"Erreur de compilation de l'aperçu {mode} : {e}")
+        return jsonify({"success": False, "error": "Aperçu indisponible."}), 500
+    finally:
+        _preview_render_slots.release()
+
+    _preview_cache_set(cache_key, pdf_bytes)
+    return _preview_pdf_response(pdf_bytes, waiver.waiver_id, "miss")
+
 
 def _handle_sign_waiver(mode, token):
     config = _get_waiver_route_config(mode)
@@ -256,358 +673,11 @@ def _handle_sign_waiver(mode, token):
         if not getattr(waiver, "has_shooting_locations", False):
             return _fail("Impossible de signer ce document : aucun lieu de tournage n'a été renseigné sur la fiche projet. Veuillez contacter l'administrateur afin qu'il complète les lieux sur le projet.")
 
-        if mode == "safety_rules":
-            if data.get("ack_rules") not in ("1", "on", "true"):
-                return _fail("La prise de connaissance et le respect des Règles de Sécurité sont obligatoires.")
-
-            if data.get("first_name"):
-                fn = data.get("first_name").strip()
-                if len(fn) > 100:
-                    return _fail("Le prénom ne peut dépasser 100 caractères.")
-                waiver.signer_first_name = fn
-            if data.get("last_name"):
-                ln = data.get("last_name").strip()
-                if len(ln) > 100:
-                    return _fail("Le nom ne peut dépasser 100 caractères.")
-                waiver.signer_last_name = ln
-            if data.get("email"):
-                em = data.get("email").strip()
-                import re
-                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
-                    return _fail("L'adresse e-mail renseignée est invalide.")
-                waiver.signer_email = em
-            if data.get("phone"):
-                ph = data.get("phone").strip()
-                if len(ph) > 50:
-                    return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
-                waiver.signer_phone = ph
-            entity_type = data.get("signer_entity_type", "freelance").strip().lower()
-            if entity_type == "company":
-                comp_name = (data.get("company_name") or data.get("company") or "").strip()
-                comp_addr = (data.get("company_address") or "").strip()
-                waiver.signer_company = comp_name
-                waiver.production_name = comp_name
-                waiver.production_address = comp_addr
-            else:
-                entity_type = "freelance"
-                waiver.signer_company = None
-                waiver.production_name = None
-                waiver.production_address = None
-
-            if data.get("signer_role"):
-                ro = data.get("signer_role").strip()
-                if len(ro) > 100:
-                    return _fail("La fonction ne peut dépasser 100 caractères.")
-                waiver.signer_role = ro
-            if data.get("role_custom"):
-                rc = data.get("role_custom").strip()
-                if len(rc) > 100:
-                    return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
-                waiver.signer_role_custom = rc
-            rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip(
-            )
-
-            bvsr_sign_data = dict(waiver.sign_data or {})
-            bvsr_sign_data["entity_type"] = entity_type
-            if entity_type == "company":
-                bvsr_sign_data["company_name"] = comp_name
-                bvsr_sign_data["company_address"] = comp_addr
-            bvsr_sign_data["ack_rules"] = True
-            bvsr_sign_data["accepted_at"] = datetime.now(
-                timezone.utc).isoformat()
-            bvsr_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
-            waiver.sign_data = bvsr_sign_data
-        elif mode == "pilot_waiver":
-            if data.get("ack_pilot_engagement") not in ("1", "on", "true"):
-                return _fail("La déclaration sur l'honneur et le respect des consignes de sécurité de l'Annexe 3 sont obligatoires.")
-
-            if data.get("first_name"):
-                fn = data.get("first_name").strip()
-                if len(fn) > 100:
-                    return _fail("Le prénom ne peut dépasser 100 caractères.")
-                waiver.signer_first_name = fn
-            if data.get("last_name"):
-                ln = data.get("last_name").strip()
-                if len(ln) > 100:
-                    return _fail("Le nom ne peut dépasser 100 caractères.")
-                waiver.signer_last_name = ln
-            if data.get("email"):
-                em = data.get("email").strip()
-                import re
-                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
-                    return _fail("L'adresse e-mail renseignée est invalide.")
-                waiver.signer_email = em
-            if data.get("phone"):
-                ph = data.get("phone").strip()
-                if len(ph) > 50:
-                    return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
-                waiver.signer_phone = ph
-            if data.get("company"):
-                co = data.get("company").strip()
-                if len(co) > 150:
-                    return _fail("La société ne peut dépasser 150 caractères.")
-                waiver.signer_company = co
-            if data.get("signer_role"):
-                ro = data.get("signer_role").strip()
-                if len(ro) > 100:
-                    return _fail("La fonction ne peut dépasser 100 caractères.")
-                waiver.signer_role = ro
-            if data.get("role_custom"):
-                rc = data.get("role_custom").strip()
-                if len(rc) > 100:
-                    return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
-                waiver.signer_role_custom = rc
-            rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip(
-            )
-
-            pilot_sign_data = dict(waiver.sign_data or {})
-            pilot_sign_data["ack_pilot_engagement"] = True
-            pilot_sign_data["accepted_at"] = datetime.now(
-                timezone.utc).isoformat()
-            pilot_sign_data["authority_declaration_text"] = (
-                "Je déclare être sous l'autorité exclusive de la production (l'Employeur), "
-                "sans aucun lien de subordination juridique avec Belle Vitesse, et m'engage à appliquer "
-                "rigoureusement l'ensemble des règles opérationnelles et de sécurité de l'Annexe 3."
-            )
-            pilot_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
-            waiver.sign_data = pilot_sign_data
-        elif mode == "risk_assessment":
-            if str(data.get("ack_risk_assessment", "")).lower() not in ("1", "on", "true"):
-                return _fail("La prise de connaissance et le respect de l'Analyse des Risques sont obligatoires.")
-
-            if data.get("first_name"):
-                fn = str(data.get("first_name")).strip()
-                if len(fn) > 100:
-                    return _fail("Le prénom ne peut dépasser 100 caractères.")
-                waiver.signer_first_name = fn
-            if data.get("last_name"):
-                ln = str(data.get("last_name")).strip()
-                if len(ln) > 100:
-                    return _fail("Le nom ne peut dépasser 100 caractères.")
-                waiver.signer_last_name = ln
-            if data.get("email"):
-                em = str(data.get("email")).strip()
-                import re
-                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
-                    return _fail("L'adresse e-mail renseignée est invalide.")
-                waiver.signer_email = em
-            if data.get("phone"):
-                ph = str(data.get("phone")).strip()
-                if len(ph) > 50:
-                    return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
-                waiver.signer_phone = ph
-
-            entity_type = str(data.get("signer_entity_type") or data.get("entity_type") or "freelance").strip().lower()
-            if entity_type == "company":
-                comp_name = str(data.get("company_name") or data.get("company") or "").strip()
-                comp_addr = str(data.get("company_address") or "").strip()
-                waiver.signer_company = comp_name
-                waiver.production_name = comp_name
-                waiver.production_address = comp_addr
-            else:
-                entity_type = "freelance"
-                if data.get("company"):
-                    waiver.signer_company = str(data.get("company")).strip()
-
-            if data.get("signer_role") or data.get("role"):
-                ro = str(data.get("signer_role") or data.get("role")).strip()
-                if len(ro) > 100:
-                    return _fail("La fonction ne peut dépasser 100 caractères.")
-                waiver.signer_role = ro
-            if data.get("role_custom"):
-                rc = str(data.get("role_custom")).strip()
-                if len(rc) > 100:
-                    return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
-                waiver.signer_role_custom = rc
-
-            rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
-
-            bvra_sign_data = dict(waiver.sign_data or {})
-            bvra_sign_data["entity_type"] = entity_type
-            if entity_type == "company":
-                bvra_sign_data["company_name"] = comp_name
-                bvra_sign_data["company_address"] = comp_addr
-            bvra_sign_data["ack_risk_assessment"] = True
-            bvra_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
-            bvra_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
-            waiver.sign_data = bvra_sign_data
-        else:
-            # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
-            if data.get("accepted_terms") != "1":
-                return _fail("L'acceptation expresse des Conditions Générales de Location est obligatoire.")
-
-            if data.get("has_signing_authority") != "1":
-                return _fail("La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire.")
-
-            prod_name = (data.get("production_name")
-                         or waiver.production_name or "").strip()
-            if not prod_name or len(prod_name) > 150:
-                return _fail("La raison sociale de la production est obligatoire (max 150 caractères).")
-
-            rep_name = (data.get("representative")
-                        or waiver.production_representative or "").strip()
-            rep_role = (data.get("representative_role")
-                        or waiver.signer_role_custom or "").strip()
-            if not rep_name or not rep_role:
-                return _fail("Le nom du signataire et sa fonction au sein de la société sont obligatoires.")
-            if len(rep_name) > 150:
-                return _fail("Le nom du signataire ne peut dépasser 150 caractères.")
-            if len(rep_role) > 100:
-                return _fail("La fonction du signataire ne peut dépasser 100 caractères.")
-
-            address = (data.get("address")
-                       or waiver.production_address or "").strip()
-            if address and len(address) > 255:
-                return _fail("L'adresse du siège social ne peut dépasser 255 caractères.")
-
-            email = (data.get("email") or waiver.signer_email or "").strip()
-            if email:
-                import re
-                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or len(email) > 120:
-                    return _fail("L'adresse e-mail renseignée est invalide.")
-
-            siret_value = data.get(
-                "siret") if "siret" in data else waiver.production_siret
-            siret = (siret_value or "").strip()
-            legal_country = (data.get("legal_country") or (
-                waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
-            if legal_country in ("FR", "FRANCE"):
-                if not siret:
-                    return _fail("Le numéro SIRET est obligatoire pour une société dont le siège est en France.")
-                import re
-                siret_clean = re.sub(r"\s+", "", siret)
-                if not siret_clean.isdigit() or len(siret_clean) != 14:
-                    return _fail("Le numéro SIRET doit comporter exactement 14 chiffres pour une société française.")
-                siret = siret_clean
-            elif len(siret) > 100:
-                return _fail("Le numéro d’immatriculation ne peut dépasser 100 caractères.")
-
-            waiver.production_name = prod_name
-            waiver.production_representative = rep_name
-            if address:
-                waiver.production_address = address
-            waiver.production_siret = siret
-            if data.get("vat_number"):
-                vat = data.get("vat_number").strip()
-                if len(vat) > 100:
-                    return _fail("Le numéro de TVA intracommunautaire ne peut dépasser 100 caractères.")
-                waiver.production_vat = vat
-            if data.get("phone"):
-                ph = data.get("phone").strip()
-                if len(ph) > 50:
-                    return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
-                waiver.signer_phone = ph
-            if email:
-                waiver.signer_email = email
-            waiver.signer_role_custom = rep_role
-            if data.get("insurance_company"):
-                ic = data.get("insurance_company").strip()
-                if len(ic) > 255:
-                    return _fail("Le nom de la compagnie d'assurance ne peut dépasser 255 caractères.")
-                waiver.production_insurance_company = ic
-            if data.get("insurance_policy"):
-                ip = data.get("insurance_policy").strip()
-                if len(ip) > 255:
-                    return _fail("Le numéro de police d'assurance ne peut dépasser 255 caractères.")
-                waiver.production_insurance_policy = ip
-            if data.get("location_of_use"):
-                loc = data.get("location_of_use").strip()
-                if len(loc) > 255:
-                    return _fail("Le lieu d'utilisation ne peut dépasser 255 caractères.")
-                waiver.location_of_use = loc
-            elif data.get("city") and not waiver.location_of_use:
-                city = data.get("city").strip()
-                if len(city) > 255:
-                    return _fail("La ville ne peut dépasser 255 caractères.")
-                waiver.location_of_use = city
-
-            # Calcul de l'empreinte du partial des articles CGL (termes acceptés immuables)
-            terms_fingerprint = ""
-            try:
-                template_source, _, _ = current_app.jinja_env.loader.get_source(
-                    current_app.jinja_env, "public/cgl/_cgl_articles.html")
-                terms_fingerprint = hashlib.sha256(
-                    template_source.encode("utf-8")).hexdigest()
-            except Exception:
-                pass
-
-            # Snapshot structuré JSON
-            s_data = dict(waiver.sign_data or {})
-            s_data["cgl_version"] = CGL_VERSION
-            s_data["accepted_terms"] = True
-            s_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
-            s_data["has_signing_authority"] = True
-            s_data["authority_declaration_text"] = (
-                "Je certifie sur l'honneur être dûment habilité(e) et disposer de tous les pouvoirs "
-                "et délégations nécessaires pour représenter, engager juridiquement et obliger financièrement "
-                "la société preneuse pour le présent contrat de location et l'ensemble de ses suites."
-            )
-            s_data["representative_name"] = rep_name
-            s_data["representative_role"] = rep_role
-            s_data["terms_fingerprint"] = terms_fingerprint
-            s_data["user_agent"] = user_agent
-
-            if data.get("legal_form"):
-                s_data["legal_form"] = data.get("legal_form").strip()
-            if data.get("legal_country"):
-                s_data["legal_country"] = data.get("legal_country").strip()
-            if rep_role:
-                s_data["representative_role"] = rep_role
-            if data.get("city"):
-                s_data["signature_city"] = data.get("city").strip()
-            if data.get("order_ref"):
-                s_data["order_ref"] = data.get("order_ref").strip()
-            # Stocker la liste des lieux au moment de la signature
-            s_data["shooting_locations"] = waiver.display_shooting_locations_list
-            if data.get("insurance_company"):
-                s_data["insurance_company"] = data.get(
-                    "insurance_company").strip()
-            if data.get("insurance_policy"):
-                s_data["insurance_policy"] = data.get(
-                    "insurance_policy").strip()
-
-            # Pièce jointe assurance production (CGL) avec validation stricte
-            insurance_file_sha256 = ""
-            insurance_upload_sha256 = ""
-            file = request.files.get('production_insurance')
-            if file and file.filename:
-                ext = os.path.splitext(file.filename)[1].lower()
-                allowed_exts = {'.pdf', '.png',
-                                '.jpg', '.jpeg', '.heic', '.heif'}
-                if ext not in allowed_exts:
-                    return _fail("Format d'attestation d'assurance non autorisé (PDF ou image requis).")
-
-                file_bytes = file.read()
-                if len(file_bytes) > 10 * 1024 * 1024:
-                    return _fail("L'attestation d'assurance dépasse la taille maximale autorisée (10 Mo).")
-
-                if not _is_valid_magic_bytes(file_bytes, ext):
-                    return _fail("Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue).")
-
-                insurance_upload_sha256 = hashlib.sha256(
-                    file_bytes).hexdigest()
-                file.seek(0)
-
-                upload_dir = ensure_dir(
-                    get_cgl_attachments_path(waiver.project, 'insurance'))
-                stem = os.path.splitext(secure_filename(file.filename))[0]
-                if ext in ('.heic', '.heif'):
-                    ext = '.jpg'
-                fname = f"prod_insurance_{int(datetime.now().timestamp())}_{stem}{ext}"
-                file_path = os.path.join(upload_dir, fname)
-                if ext in IMAGE_EXTENSIONS or ext == '.jpg':
-                    optimize_and_save_image(file, file_path)
-                else:
-                    file.save(file_path)
-                waiver.production_insurance_path = os.path.relpath(
-                    file_path, output_base)
-
-                # Point 10: Calcul du SHA-256 physique du fichier stocké post-optimisation
-                insurance_file_sha256 = compute_file_sha256(file_path)
-
-            s_data["insurance_file_sha256"] = insurance_file_sha256
-            s_data["insurance_upload_sha256"] = insurance_upload_sha256
-            waiver.sign_data = s_data
+        try:
+            rep_name, rep_role = _apply_sign_form(
+                mode, waiver, data, strict=True, user_agent=user_agent, output_base=output_base)
+        except SignFormError as form_err:
+            return _fail(str(form_err))
 
         waiver.signer_ip = signer_ip
         db.session.commit()

@@ -124,17 +124,8 @@
                                     <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="public-doc-vehicle-thumb"
                                         loading="lazy">
                                     {% else %}
-                                    <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
-                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path
-                                                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                                            <circle cx="7" cy="17" r="2" />
-                                            <path d="M9 17h6" />
-                                            <circle cx="17" cy="17" r="2" />
-                                        </svg>
-                                    </div>
+                                    <img src="{{ url_for('static', filename='imgs/placeholders/vehicle.svg') }}" alt="{{ v.name }}"
+                                        class="public-doc-vehicle-thumb public-doc-vehicle-thumb--placeholder" loading="lazy">
                                     {% endif %}
                                 </div>
                                 <div class="public-doc-vehicle-info">
@@ -174,13 +165,13 @@
                     <div class="form-group">
                         <label for="cgl_production_name">Raison sociale du Locataire <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_production_name" name="cgl_production_name"
+                        <input class="form-input" type="text" id="cgl_production_name" data-pf-field="production_name" name="cgl_production_name"
                             value="{{ waiver.production_name or '' }}" required autocomplete="organization">
                     </div>
 
                     <div class="form-group">
                         <label for="cgl_legal_form">Forme juridique <span class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_legal_form" name="cgl_legal_form"
+                        <input class="form-input" type="text" id="cgl_legal_form" data-pf-field="legal_form" name="cgl_legal_form"
                             value="{{ waiver.display_legal_form_only or '' }}" required
                             placeholder="Ex: SAS, SARL, SA, LLC...">
                     </div>
@@ -198,7 +189,7 @@
                             <span id="cgl_siret_required"
                                 class="u-text-danger{% if not is_french_company %} u-d-none{% endif %}">{% if
                                 is_french_company %}*{% endif %}</span></label>
-                        <input class="form-input" type="text" id="cgl_siret" name="cgl_siret"
+                        <input class="form-input" type="text" id="cgl_siret" data-pf-field="siret" name="cgl_siret"
                             value="{{ waiver.production_siret or '' }}" maxlength="100" {% if is_french_company
                             %}required{% endif %}
                             placeholder="{% if is_french_company %}14 chiffres{% else %}Facultatif{% endif %}">
@@ -206,13 +197,13 @@
 
                     <div class="form-group">
                         <label for="cgl_vat_number">N° TVA Intracommunautaire</label>
-                        <input class="form-input" type="text" id="cgl_vat_number" name="cgl_vat_number"
+                        <input class="form-input" type="text" id="cgl_vat_number" data-pf-field="vat_number" name="cgl_vat_number"
                             value="{{ waiver.production_vat or '' }}" placeholder="FR...">
                     </div>
 
                     <div class="form-group u-col-span-full">
                         <label for="cgl_address">Adresse du siège social <span class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_address" name="cgl_address" required
+                        <input class="form-input" type="text" id="cgl_address" data-pf-field="address" name="cgl_address" required
                             autocomplete="off" value="{{ waiver.production_address or '' }}">
                         <div id="cgl_address_suggestions" class="address-suggestions u-d-none"></div>
                     </div>
@@ -220,27 +211,27 @@
                     <div class="form-group">
                         <label for="cgl_representative">Représentant légal (Prénom &amp; Nom) <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_representative" name="cgl_representative"
+                        <input class="form-input" type="text" id="cgl_representative" data-pf-field="representative" name="cgl_representative"
                             value="{{ waiver.production_representative or '' }}" required autocomplete="name">
                     </div>
 
                     <div class="form-group">
                         <label for="cgl_representative_role">Fonction / Qualité du signataire <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_representative_role"
+                        <input class="form-input" type="text" id="cgl_representative_role" data-pf-field="representative_role"
                             name="cgl_representative_role" value="{{ waiver.display_representative_role }}" required
                             placeholder="Ex: Gérant, Directeur de Production...">
                     </div>
 
                     <div class="form-group">
                         <label for="cgl_phone">Téléphone portable <span class="u-text-danger">*</span></label>
-                        <input class="form-input" type="tel" id="cgl_phone" name="cgl_phone"
+                        <input class="form-input" type="tel" id="cgl_phone" data-pf-field="phone" name="cgl_phone"
                             value="{{ waiver.signer_phone or '' }}" required placeholder="+33 6 ..." autocomplete="tel">
                     </div>
 
                     <div class="form-group">
                         <label for="cgl_email">Adresse e-mail <span class="u-text-danger">*</span></label>
-                        <input class="form-input" type="email" id="cgl_email" name="cgl_email"
+                        <input class="form-input" type="email" id="cgl_email" data-pf-field="email" name="cgl_email"
                             value="{{ waiver.signer_email or '' }}" required placeholder="nom@production.fr"
                             autocomplete="email">
                     </div>
@@ -248,14 +239,14 @@
                     <div class="form-group">
                         <label for="cgl_city">Ville de signature (« Fait à ») <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_city" name="cgl_city"
+                        <input class="form-input" type="text" id="cgl_city" data-pf-field="city" name="cgl_city"
                             value="{{ waiver.display_signature_city }}" required placeholder="Ex: Paris, Lyon...">
                     </div>
 
                     <div class="form-group">
                         <label for="cgl_order_ref">Référence du bon de commande <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_order_ref" name="cgl_order_ref"
+                        <input class="form-input" type="text" id="cgl_order_ref" data-pf-field="order_ref" name="cgl_order_ref"
                             value="{{ waiver.display_order_ref }}" required placeholder="Ex: BVBC-XXXXXXXXXX">
                     </div>
                 </div>
@@ -266,7 +257,7 @@
                     <div class="form-group">
                         <label for="cgl_insurance_company">Compagnie d'assurance <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_insurance_company" name="cgl_insurance_company"
+                        <input class="form-input" type="text" id="cgl_insurance_company" data-pf-field="insurance_company" name="cgl_insurance_company"
                             value="{{ waiver.production_insurance_company or '' }}" required
                             placeholder="Ex: Rubini & Associés, Hiscox, Allianz...">
                     </div>
@@ -274,7 +265,7 @@
                     <div class="form-group">
                         <label for="cgl_insurance_policy">Numéro de police d'assurance <span
                                 class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_insurance_policy" name="cgl_insurance_policy"
+                        <input class="form-input" type="text" id="cgl_insurance_policy" data-pf-field="insurance_policy" name="cgl_insurance_policy"
                             value="{{ waiver.production_insurance_policy or '' }}" required
                             placeholder="Ex: POL-12345678">
                     </div>
@@ -290,313 +281,21 @@
                 </div>
             </section>
 
-            <!-- Lecteur des Conditions Générales de Location -->
+            <!-- Aperçu PDF du contrat (CGL + Annexes) -->
             <section class="public-doc-section">
-                <h2 class="public-doc-section-title dot-before">Texte Intégral des Conditions Générales de Location
-                </h2>
-                <div class="cgl-reader-container">
-                    <!-- Spans pour synchronisation JS sans altérer le texte officiel -->
-                    <span id="cgl_text_production_name" class="u-d-none"></span>
-                    <span id="cgl_text_representative" class="u-d-none"></span>
-                    <span id="cgl_text_address" class="u-d-none"></span>
-                    <span id="cgl_text_siret" class="u-d-none"></span>
-                    <span id="cgl_text_vat" class="u-d-none"></span>
-
-                    <h1>CONDITIONS GÉNÉRALES DE LOCATION</h1>
-                    <h2>VÉHICULES TECHNIQUES DE TOURNAGE</h2>
-                    <p class="u-text-muted">Version 2026.1 en vigueur au {{ waiver.signed_at.strftime('%d/%m/%Y') if
-                        waiver.signed_at else waiver.generated_at.strftime('%d/%m/%Y') if waiver.generated_at else '[●]'
-                        }}</p>
-                    <hr>
-
-                    <p>
-                        <strong>BELLE VITESSE</strong>, société par actions simplifiée au capital de {{ company_capital
-                        or '[●]' }} euros, dont le siège social est situé {{ company_address or '[●]' }}, immatriculée
-                        au registre du commerce et des sociétés de {{ company_rcs or '[●]' }} sous le numéro {{
-                        company_siret or '[●]' }}, représentée par {{ company_representative or '[●]' }}, en sa qualité
-                        de Président(e)<br>
-                        <em>ci-après le « Loueur »</em>
-                    </p>
-
-                    {% include "public/cgl/_cgl_articles.html" %}
-                    <hr>
-
-                    <h2>Annexe 1 – Véhicules, statut réglementaire, charges maximales et Valeurs de Référence</h2>
-                    <p>Les valeurs et tarifs ci-dessous sont exprimés hors taxes, à la date de version des CGL. Ils sont
-                        revalorisés annuellement par le Loueur. Le prix applicable est celui du Bon de Commande. [Note
-                        de travail : à compléter et valider par le client avant diffusion.]</p>
-
-                    <div class="cgl-table-wrapper">
-                        <table class="cgl-contract-table">
-                            <thead>
-                                <tr>
-                                    <th>Véhicule</th>
-                                    <th>Description / statut réglementaire</th>
-                                    <th>Voie publique ouverte</th>
-                                    <th>Pilotage</th>
-                                    <th>Charge max.</th>
-                                    <th>Valeur de Référence HT</th>
-                                    <th>Tarif indicatif HT / jour</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>ECAR</strong></td>
-                                    <td>Renault Twizy 80 modifiée (quadricycle lourd L7e d’origine) : châssis renforcé,
-                                        débridée, plateformes et cadre de grue. Véhicule terrestre à moteur non conforme
-                                        à sa réception.</td>
-                                    <td>Non</td>
-                                    <td>Pilote assigné par le Loueur</td>
-                                    <td>PTAC d’origine 690 kg – [configuration à préciser]</td>
-                                    <td class="cgl-cell-num">17 303 €</td>
-                                    <td class="cgl-cell-num">1 000 € (+ options)</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>ERIDER</strong></td>
-                                    <td>Moto électrique Stark Varg EX 80 ch tout-terrain modifiée (châssis renforcé,
-                                        départs de tubes). Véhicule terrestre à moteur non homologué route.</td>
-                                    <td>Non</td>
-                                    <td>Pilote assigné par le Loueur</td>
-                                    <td>[à préciser]</td>
-                                    <td class="cgl-cell-num">14 281 €</td>
-                                    <td class="cgl-cell-num">1 000 € (+ options)</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>ETRIKE 360</strong></td>
-                                    <td>Tricycle à pédalage assisté (250 W, 25 km/h), plaques taraudées, option
-                                        rickshaw.</td>
-                                    <td>Non (sauf Conditions Particulières)</td>
-                                    <td>Pilote assigné par le Loueur</td>
-                                    <td>300 kg</td>
-                                    <td class="cgl-cell-num">16 750 €</td>
-                                    <td class="cgl-cell-num">500 €</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>ETRIKE</strong></td>
-                                    <td>Tricycle à pédalage assisté (250 W, 25 km/h), siège arrière, fixation tube 50
-                                        mm, option rickshaw.</td>
-                                    <td>Non (sauf Conditions Particulières)</td>
-                                    <td>Pilote assigné ou Pilote du Locataire agréé + Règles de Sécurité</td>
-                                    <td>160 kg</td>
-                                    <td class="cgl-cell-num">4 373 €</td>
-                                    <td class="cgl-cell-num">400 €</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>SEGWAY I2</strong></td>
-                                    <td>Gyropode modifié « mains libres » (contrôle genoux), roues route. Engin de
-                                        déplacement personnel motorisé.</td>
-                                    <td>Non</td>
-                                    <td>Opérateur qualifié agréé + Règles de Sécurité</td>
-                                    <td>117 kg</td>
-                                    <td class="cgl-cell-num">4 758 €</td>
-                                    <td class="cgl-cell-num">300 €</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>SEGWAY X2</strong></td>
-                                    <td>Gyropode modifié « mains libres » (contrôle genoux), roues turf, fixation
-                                        Steadicam hardmount.</td>
-                                    <td>Non</td>
-                                    <td>Opérateur qualifié agréé + Règles de Sécurité</td>
-                                    <td>117 kg</td>
-                                    <td class="cgl-cell-num">7 690 €</td>
-                                    <td class="cgl-cell-num">350 €</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>JACKAL RICKSHAW</strong></td>
-                                    <td>Remorque / rickshaw porte-opérateur (Accessoire).</td>
-                                    <td>Non</td>
-                                    <td>—</td>
-                                    <td>[à préciser]</td>
-                                    <td class="cgl-cell-num">[●] €</td>
-                                    <td class="cgl-cell-num">[●] €</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <h2 class="public-doc-section-title dot-before">Aperçu du Contrat — Conditions Générales de Location</h2>
+                <p class="u-text-xs u-text-muted u-mb-2">
+                    Aperçu fidèle du document PDF qui sera scellé. Les informations issues du formulaire sont
+                    <mark class="pdf-form-preview-legend">surlignées en jaune</mark> : cliquez dessus pour modifier le champ correspondant.
+                </p>
+                <div class="pdf-form-preview" id="cgl-pdf-preview"
+                    data-preview-url="{{ url_for('public_waivers.preview_cgl', token=request.view_args.token) }}">
+                    <div class="pdf-form-preview-toolbar">
+                        <span class="pdf-form-preview-spinner" aria-hidden="true"></span>
+                        <span class="pdf-form-preview-status" role="status" aria-live="polite" hidden></span>
+                        <a class="pdf-form-preview-open" href="#" target="_blank" rel="noopener" hidden>Ouvrir le PDF</a>
                     </div>
-
-                    <hr>
-                    <h2>Annexe 2 aux Conditions Générales de Location de Belle Vitesse<br>Engagement de Sécurité du
-                        Locataire</h2>
-
-                    <p>Je soussigné(e), dûment habilité(e) à représenter la société de production désignée ci-dessous
-                        (le « Locataire ») :</p>
-
-                    <div class="public-doc-info-grid u-mb-3">
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Nom (dénomination sociale) de la société :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_production_name">{{
-                                waiver.display_production_name }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Forme, n° d’immatriculation et pays :</span>
-                            <span class="public-doc-info-value"><span id="cgl_text_annexe2_legal_form">{{
-                                    waiver.display_legal_form or '—' }}</span>{% if waiver.production_siret %}, <span
-                                    id="cgl_text_annexe2_identifier_label">{{ waiver.display_legal_identifier_label
-                                    }}</span> :
-                                <span id="cgl_text_annexe2_siret">{{ waiver.production_siret }}</span>{% endif %}{% if
-                                waiver.production_vat %} (TVA : <span id="cgl_text_annexe2_vat">{{ waiver.production_vat
-                                    }}</span>){% endif %}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Nom du représentant :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_representative">{{
-                                waiver.production_representative or '—' }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Fonction :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_role">{{
-                                waiver.display_representative_role }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Siège social :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_address">{{
-                                waiver.production_address or '—' }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Téléphone :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_phone">{{ waiver.signer_phone or
-                                '—' }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">E-mail :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_email">{{ waiver.signer_email or
-                                '—' }}</span>
-                        </div>
-                    </div>
-
-                    <p>Atteste avoir pris connaissance des Conditions Générales de Location de la société Belle Vitesse
-                        (le « Loueur »), ainsi que des conditions d’utilisation, consignes de sécurité et restrictions
-                        liées aux véhicules modifiés loués par le Loueur dans le cadre du tournage suivant :</p>
-
-                    <div class="public-doc-info-grid u-mb-3">
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Nom de la production :</span>
-                            <span class="public-doc-info-value">{{ waiver.display_project_name }}</span>
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Date(s) de tournage :</span>
-                            <span class="public-doc-info-value">{{ waiver.display_shooting_dates }}</span>
-                        </div>
-                        <div class="public-doc-info-item u-col-span-full">
-                            <span class="public-doc-info-label">Lieu(x) de tournage :</span>
-                            {% if waiver.display_shooting_locations_list and waiver.display_shooting_locations_list|length > 0 %}
-                            <ul class="cgl-annexe2-locations-list">
-                                {% for loc in waiver.display_shooting_locations_list %}
-                                <li>
-                                    <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} — <span class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% elif waiver.display_shooting_locations %}
-                            <span class="public-doc-info-value">{{ waiver.display_shooting_locations }}</span>
-                            {% else %}
-                            <span class="public-doc-info-value">—</span>
-                            {% endif %}
-                        </div>
-                        <div class="public-doc-info-item u-col-span-full">
-                            <span class="public-doc-info-label">Véhicule(s) loué(s) :</span>
-                            {% if waiver.vehicles_details and waiver.vehicles_details|length > 0 %}
-                            <ul class="cgl-annexe2-vehicles-list">
-                                {% for v in waiver.vehicles_details %}
-                                <li>
-                                    <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% elif waiver.vehicles %}
-                            <ul class="cgl-annexe2-vehicles-list">
-                                {% for v in waiver.vehicles.split(',') %}
-                                <li>
-                                    <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <span class="public-doc-info-value">—</span>
-                            {% endif %}
-                        </div>
-                        <div class="public-doc-info-item">
-                            <span class="public-doc-info-label">Référence du Bon de Commande :</span>
-                            <span class="public-doc-info-value" id="cgl_text_annexe2_order_ref">{{
-                                waiver.display_order_ref or '—' }}</span>
-                        </div>
-                    </div>
-
-                    <p>Le Locataire reconnaît, accepte et s’engage à respecter ce qui suit, en complément des Conditions
-                        Générales de Location :</p>
-                    <ul class="cgl-annexe2-list">
-                        <li>Les véhicules sont exclusivement destinés à un usage sur voie fermée à la circulation
-                            publique par décision de l’autorité compétente, terrain sécurisé ou espace privatisé ;
-                            aucune circulation sur une voie ouverte à la circulation publique n’est autorisée, sauf
-                            stipulation expresse des Conditions Particulières.</li>
-                        <li>La conduite est réservée à un pilote qualifié, agréé par le Loueur, engagé et rémunéré par
-                            le Locataire, qui en est le seul employeur et sous l’autorité duquel il exerce ses
-                            fonctions. Chaque pilote signe, avant toute utilisation, l’engagement aux Règles de
-                            Sécurité.</li>
-                        <li>Lorsque les Conditions Particulières le prévoient, le Locataire engage un ou plusieurs
-                            techniciens référents formés par le Loueur ; ils sont ses salariés et placés sous sa seule
-                            autorité.</li>
-                        <li>Le Locataire est seul responsable de l’obtention des autorisations administratives et de la
-                            sécurisation des lieux de tournage, et notamment :
-                            <ul class="cgl-annexe2-sublist">
-                                <li>Obtention et transmission au Loueur, au moins soixante-douze (72) heures avant la
-                                    date de départ, de l’arrêté ou de l’autorisation de fermeture de voie, du plan de
-                                    circulation et du plan de sécurité ;</li>
-                                <li>Désignation d’un responsable sécurité et, le cas échéant, d’un coordinateur des
-                                    cascades, et mise en place des moyens de secours adaptés ;</li>
-                                <li>Balisage clair de la trajectoire (barrières, signalétique, agents de sécurité) ;
-                                </li>
-                                <li>Présence interdite de figurants ou techniciens non indispensables à la prise de vues
-                                    dans la zone de roulage pendant l’utilisation ;</li>
-                                <li>Validation du terrain de roulage par le Locataire (propre, sec, adapté au véhicule)
-                                    avant chaque prise.</li>
-                            </ul>
-                        </li>
-                        <li>Le pilote, le technicien référent et le Loueur peuvent suspendre ou refuser tout roulage en
-                            cas de doute sur la sécurité, notamment en cas de :
-                            <ul class="cgl-annexe2-sublist">
-                                <li>Conditions météo défavorables (pluie, vent, boue, mauvaise visibilité) ;</li>
-                                <li>Configuration instable, surcharge ou terrain dégradé ;</li>
-                                <li>Défaut de communication radio ou personnel non évacué.</li>
-                            </ul>
-                            <p class="cgl-annexe2-subtext">Une telle suspension n’engage pas la responsabilité du Loueur
-                                et ne donne lieu à aucune réduction du prix.</p>
-                        </li>
-                        <li>Toute utilisation non conforme aux Conditions Générales de Location ou aux consignes
-                            transmises (configuration non validée, surpoids, terrain non sécurisé) est placée sous la
-                            responsabilité exclusive du Locataire, qui garantit le Loueur de toutes ses conséquences.
-                        </li>
-                        <li>Toute détérioration, perte ou vol d’un véhicule ou de ses accessoires survenu pendant la
-                            période de location, hors usure normale, est à la charge du Locataire dans les conditions de
-                            l’article 11 des Conditions Générales de Location ; toute modification d’un véhicule est
-                            interdite.</li>
-                        <li>Les caméras, optiques, têtes, grues, matériels son et tous équipements installés sur les
-                            véhicules, quelle qu’en soit la provenance, sont placés sous la seule garde et
-                            responsabilité du Locataire ; leur installation et leur fixation sont réalisées sous son
-                            autorité. Le Loueur n’est pas responsable des dommages qu’ils subissent (article 8 des
-                            Conditions Générales de Location).</li>
-                        <li>Le Locataire a souscrit et maintient en vigueur les assurances prévues à l’article 12 des
-                            Conditions Générales de Location et en a remis les attestations au Loueur avant la date de
-                            départ.</li>
-                        <li>Une check-list « bon pour roulage » est remise par le Loueur et doit être validée et signée
-                            par le Locataire avant chaque journée de tournage.</li>
-                    </ul>
-
-                    <p class="cgl-annexe2-closing">Le Locataire s’engage à faire respecter ces conditions par l’ensemble
-                        de ses préposés, prestataires et intervenants, et à collaborer avec le Loueur pour garantir un
-                        environnement de travail sécurisé. Le présent engagement fait partie intégrante du contrat de
-                        location.</p>
-
-                    <div class="cgl-annexe2-closing-sign">
-                        <p><strong>Fait à :</strong> <span id="cgl_text_annexe2_city">{{ waiver.display_signature_city
-                                }}</span></p>
-                        <p><strong>Le :</strong> {{ waiver.signed_at.strftime('%d/%m/%Y') if waiver.signed_at else
-                            waiver.generated_at.strftime('%d/%m/%Y') if waiver.generated_at else 'Date de signature' }}
-                        </p>
-                        <p><strong>Signature du représentant de la production (nom, qualité et cachet) :</strong></p>
-                        <p><strong>Nom :</strong> <span id="cgl_text_annexe2_sign_name">{{ waiver.signer_name }}</span>
-                            (<span id="cgl_text_annexe2_sign_role">{{ waiver.display_representative_role }}</span>)</p>
-                    </div>
+                    <div class="pdf-form-preview-pages" aria-label="Aperçu du document PDF"></div>
                 </div>
             </section>
 
@@ -648,6 +347,7 @@
     <!-- Scripts externes modulaires (sans aucun JS inline) -->
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="{{ asset_url('js/public.bundle.js') }}"></script>
 </body>
 

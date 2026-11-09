@@ -370,6 +370,11 @@ class Project(db.Model):
         return res
 
     @property
+    def active_reports(self):
+        """Rapports d'équipe non supprimés (soft-delete exclu)."""
+        return [r for r in (self.reports or []) if r.deleted_at is None]
+
+    @property
     def active_risk_assessments(self):
         """Retourne la liste des analyses de risques (BVRA) actives pour ce projet."""
         if hasattr(self, "_memo_active_risk_assessments"):

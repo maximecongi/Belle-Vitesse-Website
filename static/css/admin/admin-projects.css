@@ -1072,6 +1072,62 @@
     content: none !important;
 }
 
+/* Menu « / » sur écran étroit : pleine largeur, hauteur adaptée au contenu */
+.notion-slash-menu.is-compact {
+    width: 100%;
+    height: auto;
+    max-height: min(40vh, 320px);
+    box-sizing: border-box;
+}
+
+.notion-slash-menu {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+.notion-slash-item {
+    touch-action: manipulation;
+}
+
+/* Écrans tactiles : cibles plus grandes, pas de zoom iOS à la saisie (≥ 16px),
+   pas de défilement imbriqué dans l'éditeur, raccourcis clavier masqués */
+@media (pointer: coarse) {
+    .notion-live-editor,
+    .project-report-title-input,
+    .project-report-edit-title-input {
+        font-size: 16px;
+    }
+
+    .notion-live-editor {
+        max-height: none;
+        overflow-y: visible;
+        min-height: 140px;
+        padding: 0.85rem 0.9rem;
+    }
+
+    .notion-slash-item {
+        min-height: 44px;
+        padding: 0.5rem 0.6rem;
+    }
+
+    .notion-slash-title {
+        font-size: 0.9rem;
+    }
+
+    .notion-slash-desc {
+        font-size: 0.75rem;
+    }
+
+    .notion-slash-hint {
+        display: none;
+    }
+
+    .project-report-action-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+}
+
 
 .notion-live-editor h2 {
     font-size: 1.15rem;
@@ -1210,28 +1266,6 @@
 }
 
 .project-report-edit-title-input:focus {
-    border-color: var(--admin-accent, #FFC845);
-    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
-    outline: none;
-}
-
-.project-report-edit-textarea {
-    width: 100%;
-    min-height: 90px;
-    border: 1px solid var(--white-3, #cbd5e1);
-    border-radius: 6px;
-    padding: 0.65rem 0.85rem;
-    font-size: 0.83rem;
-    line-height: 1.6;
-    font-family: inherit;
-    resize: vertical;
-    box-sizing: border-box;
-    background: #ffffff;
-    color: #0f172a;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.project-report-edit-textarea:focus {
     border-color: var(--admin-accent, #FFC845);
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
     outline: none;
@@ -1784,7 +1818,8 @@
 }
 
 .projects-waiver-label {
-    min-width: 50px;
+    min-width: 100px;
+    white-space: nowrap;
 }
 
 /* Vue Impression / Print */

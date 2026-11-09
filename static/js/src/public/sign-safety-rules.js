@@ -28,6 +28,12 @@ function initSafetyRulesSign() {
     const form = document.getElementById('safety-rules-form');
     if (!form) return;
 
+    // ── Aperçu PDF live (vrai PDF, zones saisies surlignées et cliquables) ─────
+    const previewRoot = document.getElementById('safety-rules-pdf-preview');
+    if (previewRoot && typeof BelleVitessePdfFormPreview !== 'undefined') {
+        BelleVitessePdfFormPreview.init({ container: previewRoot, form: form });
+    }
+
     // ── 1. Initialisation du SignaturePad ──────────────────────────────────
     let signaturePad = null;
     if (typeof BelleVitesseSignaturePad !== 'undefined') {

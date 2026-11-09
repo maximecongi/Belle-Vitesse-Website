@@ -682,7 +682,7 @@ class BvsrComprehensiveTest(BaseTestCase):
             self.assertEqual(compiled["rules_fr"], ["Casques jet 6 unités", "Harnais de maintien", "Élingues de sécurité"])
             self.assertEqual(compiled["rules_en"], ["Jet helmets 6 units", "Safety harness", "Safety tethers"])
 
-            # 4. Test de rendu du template de signature public avec test_request_context
+            # 4. Rendu du template PDF (affiché tel quel dans l'aperçu live du formulaire public)
             from services.admin.waivers.mock_data import MockSafetyRulesWaiver
             waiver = MockSafetyRulesWaiver()
             waiver.waiver_id = "BVSR-TEST-EQ"
@@ -691,22 +691,23 @@ class BvsrComprehensiveTest(BaseTestCase):
             waiver.vehicles_details = vehicles_test
             v_rules = get_safety_rules_for_vehicles(vehicles_test, catalog=catalog)
 
-            with self.app.test_request_context("/safety-rules/sign/dummy"):
+            with self.app.test_request_context("/"):
                 from flask import render_template
                 html = render_template(
-                    "public/waivers/sign_safety_rules.html",
+                    "pdf/safety_rules.html",
                     waiver=waiver,
+                    safety_rules=waiver,
                     vehicle_rules=v_rules,
                     safety_equipment=compiled,
-                    csrf_token=lambda: "dummy_csrf",
-                    config={"FLASK_ENV": "testing"},
-                    asset_version=lambda x: "1",
+                    general_rules={"rules_fr": [], "rules_en": []},
+                    form_preview=True,
+                    form_values={},
                 )
             # Vérifier que les règles véhicules sont rendues bilingues
-            self.assertIn("CONSIGNES SPÉCIFIQUES PAR VÉHICULE RÉSERVÉ", html)
+            self.assertIn("Vehicle Safety Rules", html)
             self.assertIn("Helmet mandatory for anyone outside.", html)
-            # Vérifier que les équipements sont rendus
-            self.assertIn("ÉQUIPEMENTS DE PROTECTION ET DE SÉCURITÉ MIS À DISPOSITION", html)
+            # Vérifier que les équipements sont rendus (FR / EN)
+            self.assertIn("Équipements mis à disposition", html)
             self.assertIn("Casques jet 6 unités", html)
             self.assertIn("Jet helmets 6 units", html)
             self.assertIn("Élingues de sécurité", html)

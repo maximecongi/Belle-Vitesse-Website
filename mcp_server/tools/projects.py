@@ -762,17 +762,17 @@ def add_project_report(
 
     from services.admin.project_reports import add_project_report as _add_report
     try:
-        report = _add_report(p.id, user_id=user_id,
-                             content=content, title=title)
-        if author_name and not user_id:
-            report.author_name = author_name
-            report.author_role = author_job or "Assistant MCP"
-            from models.db import db
-            db.session.commit()
-        elif author_job:
-            report.author_role = author_job
-            from models.db import db
-            db.session.commit()
+        # Sans utilisateur lié, le nom fourni (ou « Assistant IA ») devient l'auteur affiché.
+        override_name = author_name if (author_name and not user_id) else None
+        override_role = author_job or ("Assistant MCP" if override_name else None)
+        report = _add_report(
+            p.id,
+            user_id=user_id,
+            content=content,
+            title=title,
+            author_name=override_name,
+            author_role=override_role,
+        )
 
         return {
             "status": "success",
@@ -798,7 +798,7 @@ def delete_project_report(
     from services.admin.project_reports import delete_project_report as _delete_report
 
     report = db.session.get(ProjectReport, report_id)
-    if not report:
+    if not report or report.deleted_at is not None:
         return {"status": "error", "message": f"Rapport #{report_id} introuvable."}
 
     if not confirm:
@@ -806,7 +806,7 @@ def delete_project_report(
             "status": "requires_confirmation",
             "report_id": report_id,
             "project_id": report.project_id,
-            "author_name": report.author_name or (f"{report.user.firstname} {report.user.lastname}" if report.user else "Collaborateur"),
+            "author_name": report.display_author_name,
             "content_preview": (report.content or "")[:80] + "...",
             "message": f"Confirmation requise : relancez avec confirm=True pour supprimer définitivement le rapport #{report_id}."
         }
@@ -844,7 +844,7 @@ def search_project_reports(
     """
     from models import ProjectReport, Project
 
-    query_filter = ProjectReport.query.join(
+    query_filter = ProjectReport.active().join(
         Project).filter(Project.deleted_at.is_(None))
 
     if project_id is not None:
@@ -867,16 +867,14 @@ def search_project_reports(
 
     formatted_results = []
     for r in results:
-        job = r.user.job if (r.user and r.user.job) else (
-            r.author_role or "Équipe")
         formatted_results.append({
             "report_id": r.id,
             "project_id": r.project_id,
             "project_code": r.project.project_id if r.project else "",
             "project_name": r.project.name if r.project else "Projet",
             "title": r.title,
-            "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
-            "author_job": job,
+            "author_name": r.display_author_name,
+            "author_job": r.author_job,
             "created_at": r.created_at.isoformat() if r.created_at else None,
             "content": r.content,
         })

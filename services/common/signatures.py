@@ -376,6 +376,61 @@ def resume_inspection_signature(token_str, mode):
     return True
 
 
+# ── Contexte de rendu des documents ──────────────────────────────
+
+
+def _company_render_context():
+    """Coordonnées de Belle Vitesse (AppSetting) injectées dans tous les PDF."""
+    return {
+        "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
+        "company_representative": AppSetting.get("company_representative", ""),
+        "company_siret": AppSetting.get("company_siret", ""),
+        "company_vat": AppSetting.get("company_vat", ""),
+        "company_address": AppSetting.get("company_address", ""),
+        "company_phone": AppSetting.get("company_phone", ""),
+        "company_email": AppSetting.get("company_email", ""),
+        "company_capital": AppSetting.get("company_capital", "1 000 €"),
+        "company_rcs": AppSetting.get("company_rcs", ""),
+        "bank_iban": AppSetting.get("bank_iban", ""),
+        "bank_bic": AppSetting.get("bank_bic", ""),
+    }
+
+
+def build_document_render_context(mode, record):
+    """
+    Contexte Jinja commun (hors sceau / signature) pour le rendu d'un document de décharge.
+    Partagé entre le PDF scellé final et l'aperçu PDF live des formulaires de signature.
+    """
+    ctx = _company_render_context()
+    ctx["waiver"] = record
+    if mode == "cgl":
+        ctx["cgl"] = record
+    elif mode == "safety_rules":
+        from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
+        ctx["safety_rules"] = record
+        tech_names = getattr(record, "display_safety_technicians", getattr(record, "safety_technicians", "")) or ""
+        ctx["general_rules"] = get_merged_general_safety_rules(tech_names)
+        ctx["vehicle_rules"] = get_safety_rules_for_vehicles(record.vehicles_details)
+        ctx["safety_equipment"] = get_safety_equipment_for_vehicles(record.vehicles_details)
+        ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
+        ctx["safety_technicians"] = tech_names
+        ctx["bv_signature"] = record.bv_signature_data_uri
+    elif mode == "pilot_waiver":
+        ctx["pilot_waiver"] = record
+        ctx["vehicles_details"] = getattr(record, "vehicles_details", [])
+        ctx["pilot_signature"] = record.signature_data_uri
+    elif mode == "risk_assessment":
+        from services.admin.risk_assessment_config import (
+            get_general_risk_assessment,
+            get_risk_assessment_for_vehicles,
+        )
+        ctx["risk_assessment"] = record
+        ctx["general_risks"] = get_general_risk_assessment()
+        ctx["vehicle_sections"] = get_risk_assessment_for_vehicles(record.vehicles_details)
+        ctx["signer_signature"] = getattr(record, "signature_data_uri", None)
+    return ctx
+
+
 # ── Moteur de Traitement des Signatures ──────────────────────────
 
 def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None, user_agent=None, token_entry=None):
@@ -528,53 +583,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "verification_url": verification_url,
             "signed_at_str": signed_at.strftime("%d/%m/%Y %H:%M"),
             "signed_ip": signed_ip,
-            # Données de l'entreprise tirées de la DB
-            "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
-            "company_representative": AppSetting.get("company_representative", ""),
-            "company_siret": AppSetting.get("company_siret", ""),
-            "company_vat": AppSetting.get("company_vat", ""),
-            "company_address": AppSetting.get("company_address", ""),
-            "company_phone": AppSetting.get("company_phone", ""),
-            "company_email": AppSetting.get("company_email", ""),
-            "company_capital": AppSetting.get("company_capital", "1 000 €"),
-            "company_rcs": AppSetting.get("company_rcs", ""),
-            "bank_iban": AppSetting.get("bank_iban", ""),
-            "bank_bic": AppSetting.get("bank_bic", ""),
         }
-        # Ajout des données spécifiques au flux
         if mode in ["checkout", "checkin"]:
+            render_ctx.update(_company_render_context())
             render_ctx["data"] = snapshot
-        elif mode == "cgl":
-            render_ctx["cgl"] = record
-            render_ctx["waiver"] = record
-        elif mode == "safety_rules":
-            render_ctx["safety_rules"] = record
-            render_ctx["waiver"] = record
-            tech_names = getattr(record, "display_safety_technicians", getattr(record, "safety_technicians", "")) or ""
-            render_ctx["general_rules"] = get_merged_general_safety_rules(tech_names)
-            render_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(record.vehicles_details)
-            from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
-            render_ctx["safety_equipment"] = get_safety_equipment_for_vehicles(record.vehicles_details)
-            render_ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
-            render_ctx["safety_technicians"] = tech_names
-            render_ctx["bv_signature"] = record.bv_signature_data_uri
-        elif mode == "pilot_waiver":
-            render_ctx["pilot_waiver"] = record
-            render_ctx["waiver"] = record
-            render_ctx["vehicles_details"] = getattr(record, "vehicles_details", [])
-            render_ctx["pilot_signature"] = record.signature_data_uri
-        elif mode == "risk_assessment":
-            render_ctx["risk_assessment"] = record
-            render_ctx["waiver"] = record
-            from services.admin.risk_assessment_config import (
-                get_general_risk_assessment,
-                get_risk_assessment_for_vehicles,
-            )
-            render_ctx["general_risks"] = get_general_risk_assessment()
-            render_ctx["vehicle_sections"] = get_risk_assessment_for_vehicles(record.vehicles_details)
-            render_ctx["signer_signature"] = getattr(record, "signature_data_uri", None)
         else:
-            render_ctx["waiver"] = record
+            render_ctx.update(build_document_render_context(mode, record))
 
         project_obj = getattr(record, "project", None)
         pdf_dir = ensure_dir(config["storage_func"](project_obj))

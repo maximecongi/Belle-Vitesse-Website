@@ -2,6 +2,7 @@
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
 initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
+{% from "admin/_notion_editor.html" import notion_report_editor %}
 
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Projet {{ project.project_id }}{% endblock %}
@@ -352,69 +353,14 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
             <div class="project-report-field-group u-mb-3">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label for="reportContentEditor" class="project-report-field-label u-m-0">
+                    <label for="reportContentEditor-new" class="project-report-field-label u-m-0">
                         Observation & Compte-rendu <span class="u-text-danger">*</span>
                     </label>
                     <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en
                         direct</span>
                 </div>
 
-                <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
-                <textarea name="content" id="reportContentInput" class="u-d-none"></textarea>
-
-                <div class="notion-wysiwyg-wrapper" id="notionEditorWrapper">
-                    <div class="notion-slash-container">
-                        <div class="notion-slash-menu" id="notionSlashMenu" role="listbox" aria-label="Commandes Markdown">
-                        </div>
-                        <!-- Menu contextuel personnalisé au clic droit -->
-                        <div class="notion-context-menu" id="notionContextMenu" role="menu" aria-label="Menu de formatage">
-                            <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
-                                <span class="notion-context-icon"><i data-lucide="eraser"></i></span>
-                                <span class="notion-context-label">Supprimer la mise en forme</span>
-                                <span class="notion-context-hint">Normal</span>
-                            </div>
-                            <div class="notion-context-divider"></div>
-                            <div class="notion-context-header">TRANSFORMER LE BLOC</div>
-                            <div class="notion-context-item" data-action="bullet" role="menuitem">
-                                <span class="notion-context-icon">•</span>
-                                <span class="notion-context-label">Liste à puces</span>
-                            </div>
-                            <div class="notion-context-item" data-action="numbered" role="menuitem">
-                                <span class="notion-context-icon">1.</span>
-                                <span class="notion-context-label">Liste numérotée</span>
-                            </div>
-                            <div class="notion-context-item" data-action="h2" role="menuitem">
-                                <span class="notion-context-icon"><i data-lucide="heading-2"></i></span>
-                                <span class="notion-context-label">Titre de section</span>
-                            </div>
-                            <div class="notion-context-item" data-action="h3" role="menuitem">
-                                <span class="notion-context-icon"><i data-lucide="heading-3"></i></span>
-                                <span class="notion-context-label">Sous-titre</span>
-                            </div>
-                            <div class="notion-context-item" data-action="quote" role="menuitem">
-                                <span class="notion-context-icon"><i data-lucide="quote"></i></span>
-                                <span class="notion-context-label">Citation / Observation</span>
-                            </div>
-                            <div class="notion-context-divider"></div>
-                            <div class="notion-context-header">STYLE DU TEXTE</div>
-                            <div class="notion-context-item" data-action="bold" role="menuitem">
-                                <span class="notion-context-icon">𝐁</span>
-                                <span class="notion-context-label">Mettre en gras</span>
-                                <span class="notion-context-hint">⌘B</span>
-                            </div>
-                            <div class="notion-context-item" data-action="italic" role="menuitem">
-                                <span class="notion-context-icon">𝐼</span>
-                                <span class="notion-context-label">Mettre en italique</span>
-                                <span class="notion-context-hint">⌘I</span>
-                            </div>
-                        </div>
-
-                        <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
-                            contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" data-empty="true"
-                            data-placeholder="Rédigez votre observation ou compte-rendu...">
-                        </div>
-                    </div>
-                </div>
+                {{ notion_report_editor("new", textarea_id="reportContentInput") }}
             </div>
 
             <!-- 3. Actions -->
@@ -534,8 +480,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                                     autocomplete="off" required>
                             </div>
                             <div class="u-mb-2">
-                                <textarea name="content" class="project-report-edit-textarea" rows="4"
-                                    required>{{ report.content }}</textarea>
+                                {{ notion_report_editor("report-" ~ report.id, content_html=(report.content | markdown)) }}
                             </div>
                             <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
                                 <span class="u-text-2xs u-text-muted">Modification autorisée pendant 3h après
@@ -1348,14 +1293,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     {% set v_img = v.image or (vf.thumbnail[0].thumbnails.small.url if vf.get('thumbnail') else '') %}
                     <label class="project-checkbox-card selected" data-item-id="{{ v.id }}" data-item-type="vehicle">
                         <input type="checkbox" name="selected_vehicles" value="{{ v_name }}" checked class="u-d-none">
-                        {% if v_img %}
-                        <img src="{{ v_img }}" alt="{{ v_name }}" class="project-checkbox-card-img">
-                        {% else %}
-                        <div
-                            class="project-checkbox-card-img u-bg-neutral-light u-flex u-align-center u-justify-center">
-                            <i data-lucide="car" class="u-text-muted"></i>
-                        </div>
-                        {% endif %}
+                        {{ vehicle_avatar(v_img, v_name, class="project-checkbox-card-img") }}
                         <div>
                             <span class="u-text-medium u-text-xs">{{ v_name }}</span>
                             {% if vf.get('unique_id') %}

@@ -71,45 +71,6 @@
 
         {% else %}
         <!-- ── Formulaire de signature BVRA ─────────────────────────── -->
-        {% macro risk_card(r) %}
-        <div class="bvra-reader-risk {{ 'bvra-reader-risk--major' if r.level == 'major' else 'bvra-reader-risk--standard' }}">
-            <div class="bvra-reader-risk-header">
-                <span class="bvra-reader-risk-title">{{ r.title_fr or r.title }}</span>
-                {% if r.level == 'major' %}
-                <span class="bvra-reader-badge bvra-reader-badge--major">RISQUE MAJEUR</span>
-                {% else %}
-                <span class="bvra-reader-badge bvra-reader-badge--standard">RISQUE</span>
-                {% endif %}
-            </div>
-            {% if r.description_fr or r.description %}
-            <p class="bvra-reader-risk-desc">{{ r.description_fr or r.description }}</p>
-            {% endif %}
-            {% set recs = r.recommendations_fr or r.recommendations %}
-            {% if recs and recs|length > 0 %}
-            <div class="bvra-reader-recs-title">Recommandations</div>
-            <ul class="bvra-reader-recs">
-                {% for rec in recs %}
-                <li>{{ rec }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-        </div>
-        {% endmacro %}
-
-        {% macro risks_by_category(risks) %}
-        {% set cat_list = [] %}
-        {% for r in risks %}
-        {% set c_name = r.category_fr or r.category or '' %}
-        {% if c_name not in cat_list %}{% set _ = cat_list.append(c_name) %}{% endif %}
-        {% endfor %}
-        {% for cat in cat_list %}
-        {% if cat %}<h3>{{ cat }}</h3>{% endif %}
-        {% for r in risks if (r.category_fr or r.category or '') == cat %}
-        {{ risk_card(r) }}
-        {% endfor %}
-        {% endfor %}
-        {% endmacro %}
-
         <form id="risk-assessment-form" novalidate>
             <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 
@@ -178,17 +139,8 @@
                                     <img src="{{ v.thumbnail }}" alt="{{ v_name }}" class="public-doc-vehicle-thumb"
                                         loading="lazy">
                                     {% else %}
-                                    <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
-                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-                                            stroke-linejoin="round">
-                                            <path
-                                                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                                            <circle cx="7" cy="17" r="2" />
-                                            <path d="M9 17h6" />
-                                            <circle cx="17" cy="17" r="2" />
-                                        </svg>
-                                    </div>
+                                    <img src="{{ url_for('static', filename='imgs/placeholders/vehicle.svg') }}" alt="{{ v.name }}"
+                                        class="public-doc-vehicle-thumb public-doc-vehicle-thumb--placeholder" loading="lazy">
                                     {% endif %}
                                 </div>
                                 <div class="public-doc-vehicle-info">
@@ -323,24 +275,21 @@
                 </div>
             </section>
 
-            <!-- 3. Analyse des Risques -->
+            <!-- 3. Aperçu PDF de l'Analyse des Risques -->
             <section class="public-doc-section">
-                <h2 class="public-doc-section-title dot-before">Analyse des Risques</h2>
-
-                <div class="cgl-reader-container">
-                    <h1>ANALYSE DES RISQUES DE TOURNAGE</h1>
-                    <p class="u-text-semibold">BELLE VITESSE SAS — ANALYSE DES RISQUES &amp; RECOMMANDATIONS (BVRA)</p>
-                    <hr>
-
-                    <h2>RISQUES GÉNÉRAUX — VÉHICULES TRAVELLING</h2>
-                    {{ risks_by_category(general_risks or []) }}
-
-                    {% if vehicle_sections %}
-                    {% for vsec in vehicle_sections %}
-                    <h2>RISQUES SPÉCIFIQUES — {{ vsec.label }}</h2>
-                    {{ risks_by_category(vsec.risks or []) }}
-                    {% endfor %}
-                    {% endif %}
+                <h2 class="public-doc-section-title dot-before">Aperçu du Document — Analyse des Risques</h2>
+                <p class="u-text-xs u-text-muted u-mb-2">
+                    Aperçu fidèle du document PDF qui sera scellé. Les informations issues du formulaire sont
+                    <mark class="pdf-form-preview-legend">surlignées en jaune</mark> : cliquez dessus pour modifier le champ correspondant.
+                </p>
+                <div class="pdf-form-preview" id="risk-assessment-pdf-preview"
+                    data-preview-url="{{ url_for('public_waivers.preview_risk_assessment', token=request.view_args.token) }}">
+                    <div class="pdf-form-preview-toolbar">
+                        <span class="pdf-form-preview-spinner" aria-hidden="true"></span>
+                        <span class="pdf-form-preview-status" role="status" aria-live="polite" hidden></span>
+                        <a class="pdf-form-preview-open" href="#" target="_blank" rel="noopener" hidden>Ouvrir le PDF</a>
+                    </div>
+                    <div class="pdf-form-preview-pages" aria-label="Aperçu du document PDF"></div>
                 </div>
             </section>
 
@@ -382,6 +331,7 @@
     <!-- Scripts externes modulaires (sans aucun JS inline) -->
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="{{ asset_url('js/public.bundle.js') }}"></script>
 </body>
 

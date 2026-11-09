@@ -28,6 +28,12 @@ function initPilotWaiver() {
     const form = document.getElementById('pilot-waiver-form');
     if (!form) return;
 
+    // ── Aperçu PDF live (vrai PDF, zones saisies surlignées et cliquables) ─────
+    const previewRoot = document.getElementById('pilot-waiver-pdf-preview');
+    if (previewRoot && typeof BelleVitessePdfFormPreview !== 'undefined') {
+        BelleVitessePdfFormPreview.init({ container: previewRoot, form: form });
+    }
+
     // ── 1. Initialisation du SignaturePad ──────────────────────────────────
     let signaturePad = null;
     if (typeof BelleVitesseSignaturePad !== 'undefined') {

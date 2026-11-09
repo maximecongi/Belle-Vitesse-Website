@@ -1,0 +1,70 @@
+{#
+    Éditeur WYSIWYG Notion-style (menu « / », clic droit, ⌘Z, collage nettoyé, liens ⌘K, Tab dans les listes).
+    Initialisé côté JS par initNotionEditor(wrapper) — voir static/js/src/admin/notion-editor.js.
+    - uid          : suffixe unique des identifiants (ex : "new", "report-42")
+    - content_html : HTML initial (Markdown déjà rendu et assaini via le filtre `markdown`)
+    - textarea_id  : id optionnel du champ masqué synchronisé (name="content")
+#}
+{% macro notion_report_editor(uid, content_html='', placeholder="Rédigez votre observation ou compte-rendu...", textarea_id=none) %}
+<div class="notion-wysiwyg-wrapper" id="notionEditorWrapper-{{ uid }}">
+    <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
+    <textarea name="content" {% if textarea_id %}id="{{ textarea_id }}"{% endif %} class="u-d-none"></textarea>
+
+    <div class="notion-slash-container">
+        <div class="notion-slash-menu" role="listbox" aria-label="Commandes Markdown"></div>
+        <!-- Menu contextuel personnalisé au clic droit -->
+        <div class="notion-context-menu" role="menu" aria-label="Menu de formatage">
+            <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
+                <span class="notion-context-icon"><i data-lucide="eraser"></i></span>
+                <span class="notion-context-label">Supprimer la mise en forme</span>
+                <span class="notion-context-hint">Normal</span>
+            </div>
+            <div class="notion-context-divider"></div>
+            <div class="notion-context-header">TRANSFORMER LE BLOC</div>
+            <div class="notion-context-item" data-action="bullet" role="menuitem">
+                <span class="notion-context-icon">•</span>
+                <span class="notion-context-label">Liste à puces</span>
+            </div>
+            <div class="notion-context-item" data-action="numbered" role="menuitem">
+                <span class="notion-context-icon">1.</span>
+                <span class="notion-context-label">Liste numérotée</span>
+            </div>
+            <div class="notion-context-item" data-action="h2" role="menuitem">
+                <span class="notion-context-icon"><i data-lucide="heading-2"></i></span>
+                <span class="notion-context-label">Titre de section</span>
+            </div>
+            <div class="notion-context-item" data-action="h3" role="menuitem">
+                <span class="notion-context-icon"><i data-lucide="heading-3"></i></span>
+                <span class="notion-context-label">Sous-titre</span>
+            </div>
+            <div class="notion-context-item" data-action="quote" role="menuitem">
+                <span class="notion-context-icon"><i data-lucide="quote"></i></span>
+                <span class="notion-context-label">Citation / Observation</span>
+            </div>
+            <div class="notion-context-divider"></div>
+            <div class="notion-context-header">STYLE DU TEXTE</div>
+            <div class="notion-context-item" data-action="bold" role="menuitem">
+                <span class="notion-context-icon">𝐁</span>
+                <span class="notion-context-label">Mettre en gras</span>
+                <span class="notion-context-hint">⌘B</span>
+            </div>
+            <div class="notion-context-item" data-action="italic" role="menuitem">
+                <span class="notion-context-icon">𝐼</span>
+                <span class="notion-context-label">Mettre en italique</span>
+                <span class="notion-context-hint">⌘I</span>
+            </div>
+            <div class="notion-context-item" data-action="link" role="menuitem">
+                <span class="notion-context-icon"><i data-lucide="link"></i></span>
+                <span class="notion-context-label">Ajouter un lien</span>
+                <span class="notion-context-hint">⌘K</span>
+            </div>
+        </div>
+
+        <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor-{{ uid }}"
+            contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"
+            autocapitalize="sentences" autocorrect="on" enterkeyhint="enter"
+            data-empty="{{ 'false' if content_html else 'true' }}"
+            data-placeholder="{{ placeholder }}">{{ content_html }}</div>
+    </div>
+</div>
+{% endmacro %}

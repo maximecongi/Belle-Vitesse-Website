@@ -232,6 +232,76 @@ def validate_waiver_pdf_access_token(filename, token):
 
 # ── WeasyPrint Fetcher ──────────────────────────────────────────
 
+# Cache mémoire (par processus) des ressources distantes immuables utilisées par les PDF :
+# les polices Google Fonts étaient re-téléchargées à chaque rendu (~0,2 s par fichier,
+# soit ~10 s par document), ce qui rendait l'aperçu PDF live inutilisable.
+_REMOTE_CACHEABLE_HOSTS = {"fonts.googleapis.com", "fonts.gstatic.com"}
+_REMOTE_CACHE_MAX_ENTRIES = 256
+_remote_resource_cache = {}
+
+
+def _remote_disk_cache_path(url):
+    import tempfile
+    digest = hashlib.sha256(url.encode("utf-8")).hexdigest()
+    return Path(tempfile.gettempdir()) / "bv-weasyprint-remote-cache" / digest
+
+
+def _read_remote_disk_cache(url):
+    """Cache disque partagé entre workers : évite le premier rendu lent de chaque processus."""
+    try:
+        path = _remote_disk_cache_path(url)
+        meta = json.loads(path.with_suffix(".json").read_text(encoding="utf-8"))
+        return (meta["url"], path.read_bytes(), meta.get("content_type"), 200)
+    except Exception:
+        return None
+
+
+def _write_remote_disk_cache(url, cached):
+    try:
+        final_url, body, content_type, _ = cached
+        path = _remote_disk_cache_path(url)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_bytes(body)
+        os.replace(tmp, path)
+        path.with_suffix(".json").write_text(
+            json.dumps({"url": final_url, "content_type": content_type}), encoding="utf-8")
+    except Exception as exc:
+        logger.debug(f"Cache disque des ressources PDF indisponible : {exc}")
+
+
+def _fetch_with_remote_cache(url, base_fetcher):
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.hostname not in _REMOTE_CACHEABLE_HOSTS:
+        return base_fetcher(url)
+
+    cached = _remote_resource_cache.get(url) or _read_remote_disk_cache(url)
+    if cached is None:
+        resource = base_fetcher(url)
+        if isinstance(resource, dict):
+            return resource
+        try:
+            body = resource.read()
+            content_type = resource.headers.get("Content-Type") if resource.headers else None
+            final_url = resource.url
+            status = getattr(resource, "status", 200)
+        finally:
+            resource.close()
+        cached = (final_url, body, content_type, status)
+        if status == 200:
+            if len(_remote_resource_cache) >= _REMOTE_CACHE_MAX_ENTRIES:
+                _remote_resource_cache.pop(next(iter(_remote_resource_cache)))
+            _remote_resource_cache[url] = cached
+            _write_remote_disk_cache(url, cached)
+    else:
+        _remote_resource_cache.setdefault(url, cached)
+
+    from weasyprint.urls import URLFetcherResponse
+    final_url, body, content_type, status = cached
+    headers = {"Content-Type": content_type} if content_type else None
+    return URLFetcherResponse(final_url, body=body, headers=headers, status=status)
+
+
 def make_url_fetcher(app):
     """Générateur de fetcher d'URL personnalisé pour WeasyPrint (gestion des préfixes /static/ et /files/)."""
     from weasyprint import default_url_fetcher
@@ -262,7 +332,7 @@ def make_url_fetcher(app):
                 if full_path.exists():
                     return default_url_fetcher(full_path.as_uri())
 
-        return default_url_fetcher(url)
+        return _fetch_with_remote_cache(url, default_url_fetcher)
     return fetcher
 
 

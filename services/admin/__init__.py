@@ -43,6 +43,7 @@ from .projects import (
     update_project_notes,
 )
 from .project_reports import (
+    ReportNotFoundError,
     add_project_report,
     delete_project_report,
     get_project_detail_context,
