@@ -1,5 +1,6 @@
 from flask import (
     Blueprint,
+    Response,
     abort,
     current_app,
     flash,
@@ -27,8 +28,16 @@ from services.admin import (
     update_project_notes,
     update_project_report,
 )
+from models import ProjectReport
 from models.db import db
-from utils.decorators import require_roles, session_is_admin
+from models.project_report import REPORT_CATEGORIES
+from services.admin.project_reports import (
+    generate_project_reports_pdf,
+    report_item_context,
+    restore_project_report,
+    search_reports,
+)
+from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
 
 
@@ -230,7 +239,8 @@ def admin_project_detail(record_id):
         is_admin = session_is_admin()
 
         context = get_project_detail_context(
-            record_id, current_user_id=current_user_id, is_admin=is_admin
+            record_id, current_user_id=current_user_id, is_admin=is_admin,
+            is_super_admin=session_is_super_admin(),
         )
         if not context:
             abort(404)
@@ -348,19 +358,38 @@ def admin_project_vehicle_toggle_road_legal(record_id, vehicle_id):
 
 # ── Rapports d'équipe ──────────────────────────────────────────
 
+_REPORT_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
+
 
 def _wants_json():
     return request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
 
+def _report_payload():
+    """Champs du formulaire de rapport (JSON, formulaire classique ou multipart)."""
+    if request.is_json:
+        return request.get_json(silent=True) or {}
+    return request.form
+
+
+def _render_report_item(report):
+    """HTML d'une carte de rapport, identique au rendu de la fiche projet (réponses AJAX)."""
+    ctx = report_item_context(
+        report, current_user_id=session.get("admin_user_id"), is_admin=session_is_admin()
+    )
+    return render_template("admin/_report_item.html", **ctx)
+
+
+def _active_reports_count(record_id):
+    return ProjectReport.active().filter_by(project_id=record_id).count()
+
+
 def _report_response(record_id, anchor, *, message, category="success", status=200, payload=None):
     """Réponse unifiée des routes de rapports : JSON (XHR) ou flash + redirection."""
     if _wants_json():
-        body = {"status": "success" if category == "success" else "error"}
+        body = {"status": "success" if category == "success" else "error", "message": message}
         if category == "success":
             body.update(payload or {})
-        else:
-            body["message"] = message
         return jsonify(body), status
     flash(message, category)
     return redirect(
@@ -369,19 +398,26 @@ def _report_response(record_id, anchor, *, message, category="success", status=2
 
 
 @projects_bp.route("/projects/<int:record_id>/reports", methods=["POST"])
-@require_roles("administrator", "manager", "commercial", "user", "technicien")
+@require_roles(*_REPORT_ROLES)
 def admin_project_reports_add(record_id):
-    payload = request.get_json(silent=True) or request.form or {}
+    payload = _report_payload()
     try:
         report = add_project_report(
             record_id,
             user_id=session.get("admin_user_id"),
             content=payload.get("content", ""),
             title=payload.get("title", ""),
+            category=payload.get("category"),
+            shoot_day=payload.get("shoot_day") or None,
+            photos=request.files.getlist("photos"),
         )
         return _report_response(
-            record_id, f"report-{report.id}", status=201,
-            message="Rapport publié.", payload={"report": report.to_dict()},
+            record_id, f"report-{report.id}", status=201, message="Rapport publié.",
+            payload={
+                "report": report.to_dict(),
+                "html": _render_report_item(report),
+                "count": _active_reports_count(record_id),
+            },
         )
     except ValueError as ve:
         return _report_response(record_id, "reports", message=str(ve), category="error", status=400)
@@ -396,16 +432,28 @@ def admin_project_reports_add(record_id):
 @projects_bp.route(
     "/projects/<int:record_id>/reports/<int:report_id>/delete", methods=["POST"]
 )
-@require_roles("administrator", "manager", "commercial", "user", "technicien")
+@require_roles(*_REPORT_ROLES)
 def admin_project_report_delete(record_id, report_id):
     try:
+        current_user_id = session.get("admin_user_id")
         delete_project_report(
             report_id,
-            current_user_id=session.get("admin_user_id"),
+            current_user_id=current_user_id,
             is_admin=session_is_admin(),
             project_id=record_id,
         )
-        return _report_response(record_id, "reports", message="Rapport supprimé.")
+        # « Annuler » n'est proposé qu'à qui pourra effectivement restaurer le rapport
+        report = db.session.get(ProjectReport, report_id)
+        can_restore = report is not None and report.can_be_restored_by(current_user_id, session_is_super_admin())
+        return _report_response(
+            record_id, "reports", message="Rapport supprimé.",
+            payload={
+                "count": _active_reports_count(record_id),
+                "restore_url": url_for(
+                    "admin_projects.admin_project_report_restore", record_id=record_id, report_id=report_id
+                ) if can_restore else None,
+            },
+        )
     except ReportNotFoundError as nf:
         return _report_response(record_id, "reports", message=str(nf), category="error", status=404)
     except PermissionError as pe:
@@ -419,12 +467,50 @@ def admin_project_report_delete(record_id, report_id):
 
 
 @projects_bp.route(
+    "/projects/<int:record_id>/reports/<int:report_id>/restore", methods=["POST"]
+)
+@require_roles(*_REPORT_ROLES)
+def admin_project_report_restore(record_id, report_id):
+    try:
+        report = restore_project_report(
+            report_id,
+            current_user_id=session.get("admin_user_id"),
+            is_super_admin=session_is_super_admin(),
+            project_id=record_id,
+        )
+        return _report_response(
+            record_id, f"report-{report.id}", message="Rapport restauré.",
+            payload={
+                "report": report.to_dict(),
+                "html": _render_report_item(report),
+                "count": _active_reports_count(record_id),
+            },
+        )
+    except ReportNotFoundError as nf:
+        return _report_response(record_id, "reports", message=str(nf), category="error", status=404)
+    except PermissionError as pe:
+        return _report_response(record_id, "reports", message=str(pe), category="error", status=403)
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur restauration rapport projet : {e}")
+        return _report_response(
+            record_id, "reports", message="Erreur lors de la restauration.",
+            category="error", status=500,
+        )
+
+
+@projects_bp.route(
     "/projects/<int:record_id>/reports/<int:report_id>/edit", methods=["POST"]
 )
-@require_roles("administrator", "manager", "commercial", "user", "technicien")
+@require_roles(*_REPORT_ROLES)
 def admin_project_report_edit(record_id, report_id):
-    payload = request.get_json(silent=True) or request.form or {}
+    payload = _report_payload()
     anchor = f"report-{report_id}"
+    remove = payload.getlist("remove_photos") if hasattr(payload, "getlist") else payload.get("remove_photos", [])
+    fields = {}
+    if "category" in payload:
+        fields["category"] = payload.get("category")
+    if "shoot_day" in payload:
+        fields["shoot_day"] = payload.get("shoot_day") or None
     try:
         report = update_project_report(
             report_id,
@@ -433,10 +519,13 @@ def admin_project_report_edit(record_id, report_id):
             title=payload.get("title", ""),
             is_admin=session_is_admin(),
             project_id=record_id,
+            new_photos=request.files.getlist("photos"),
+            remove_photos=remove,
+            **fields,
         )
         return _report_response(
             record_id, anchor, message="Rapport modifié avec succès.",
-            payload={"report": report.to_dict()},
+            payload={"report": report.to_dict(), "html": _render_report_item(report)},
         )
     except ReportNotFoundError as nf:
         return _report_response(record_id, "reports", message=str(nf), category="error", status=404)
@@ -452,6 +541,52 @@ def admin_project_report_edit(record_id, report_id):
         )
 
 
+@projects_bp.route("/projects/<int:record_id>/reports/export", methods=["GET"])
+@require_roles(*_REPORT_ROLES)
+def admin_project_reports_export(record_id):
+    """Journal de bord du projet en PDF (filtres optionnels : ?category=…&day=AAAA-MM-JJ)."""
+    try:
+        pdf, filename = generate_project_reports_pdf(
+            record_id,
+            category=request.args.get("category"),
+            shoot_day=request.args.get("day") or None,
+            base_url=request.url_root,
+        )
+    except ValueError as ve:
+        flash(str(ve), "error")
+        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#reports")
+    if pdf is None:
+        abort(404)
+    return Response(
+        pdf,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
+
+
+@projects_bp.route("/reports", methods=["GET"])
+@require_roles(*_REPORT_ROLES)
+def admin_reports_search():
+    """Recherche transversale dans les rapports d'équipe de tous les projets."""
+    filters = {
+        "q": (request.args.get("q") or "").strip(),
+        "category": (request.args.get("category") or "").strip(),
+    }
+    pagination = search_reports(
+        query=filters["q"],
+        category=filters["category"],
+        page=request.args.get("page", 1, type=int),
+        per_page=20,
+    )
+    return render_template(
+        "admin/reports_search.html",
+        pagination=pagination,
+        reports=pagination.items,
+        filters=filters,
+        report_categories=[(k, label) for k, label, _ in REPORT_CATEGORIES],
+    )
+
+
 @projects_bp.route("/projects/<int:record_id>/print", methods=["GET"])
 @require_roles("administrator", "manager", "commercial", "user", "technicien")
 def admin_project_print(record_id):
@@ -460,7 +595,8 @@ def admin_project_print(record_id):
         is_admin = session_is_admin()
 
         context = get_project_detail_context(
-            record_id, current_user_id=current_user_id, is_admin=is_admin
+            record_id, current_user_id=current_user_id, is_admin=is_admin,
+            is_super_admin=session_is_super_admin(),
         )
         if not context:
             abort(404)

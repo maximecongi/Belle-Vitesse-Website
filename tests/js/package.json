@@ -1,0 +1,11 @@
+{
+  "name": "bv-admin-js-tests",
+  "private": true,
+  "description": "Tests jsdom des modules JS de l'admin (éditeur des rapports d'équipe). Isolé de la racine pour ne pas affecter le déploiement.",
+  "scripts": {
+    "test": "node run.js"
+  },
+  "devDependencies": {
+    "jsdom": "24.1.0"
+  }
+}

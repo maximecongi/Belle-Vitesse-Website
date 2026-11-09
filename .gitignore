@@ -320,3 +320,6 @@ AUDIT_CORRECTIONS_SIGNATURES_CGL_ERP.md
 static/js/admin/admin.bundle.js
 static/js/public.bundle.js
 Claude outputs/
+
+# Tests jsdom (tests/js) : dépendances installées localement
+tests/js/node_modules/

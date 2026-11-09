@@ -746,6 +746,8 @@ def add_project_report(
     author_name: Optional[str] = "Assistant IA",
     author_job: Optional[str] = None,
     user_id: Optional[int] = None,
+    category: Optional[str] = None,
+    shoot_day: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Ajoute un rapport ou une note d'observation d'équipe sur un projet (supporte le Markdown enrichi).
@@ -755,6 +757,8 @@ def add_project_report(
     - author_name: Nom optionnel de l'auteur (défaut: 'Assistant IA')
     - author_job: Poste / fonction en entreprise (ex: 'Directeur d'atelier', 'Pilote de précision')
     - user_id: Identifiant optionnel d'un utilisateur existant
+    - category: note (défaut), debrief, technique, logistique, securite ou production
+    - shoot_day: Jour de tournage concerné au format AAAA-MM-JJ (optionnel)
     """
     p = _resolve_project(project_id)
     if not p:
@@ -772,6 +776,8 @@ def add_project_report(
             title=title,
             author_name=override_name,
             author_role=override_role,
+            category=category,
+            shoot_day=shoot_day,
         )
 
         return {
@@ -835,49 +841,40 @@ def search_project_reports(
     query: str,
     project_id: Optional[Any] = None,
     limit: Optional[int] = 20,
+    category: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Recherche plein texte dans tous les rapports de projet (observations terrain, météo, incidents, réglages matériel...).
-    - query: Termes recherchés dans le texte ou l'auteur
+    - query: Termes recherchés dans le titre, le texte, l'auteur ou le nom du projet
     - project_id: Filtrer optionnellement sur un projet spécifique (ID numérique ou code BVPR)
     - limit: Nombre maximum de résultats retournés (défaut 20)
+    - category: Filtrer sur une catégorie (note, debrief, technique, logistique, securite, production)
     """
-    from models import ProjectReport, Project
+    from services.admin.project_reports import search_reports
 
-    query_filter = ProjectReport.active().join(
-        Project).filter(Project.deleted_at.is_(None))
+    if project_id is not None and not _resolve_project(project_id):
+        return {"error": f"Projet '{project_id}' introuvable.", "total": 0, "results": []}
 
-    if project_id is not None:
-        p = _resolve_project(project_id)
-        if not p:
-            return {"error": f"Projet '{project_id}' introuvable.", "total": 0, "results": []}
-        query_filter = query_filter.filter(ProjectReport.project_id == p.id)
-
-    if query:
-        search_term = f"%{query.strip()}%"
-        query_filter = query_filter.filter(
-            (ProjectReport.title.ilike(search_term)) |
-            (ProjectReport.content.ilike(search_term)) |
-            (ProjectReport.author_name.ilike(search_term)) |
-            (ProjectReport.author_role.ilike(search_term))
-        )
-
-    results = query_filter.order_by(
-        ProjectReport.created_at.desc()).limit(limit or 20).all()
-
-    formatted_results = []
-    for r in results:
-        formatted_results.append({
-            "report_id": r.id,
-            "project_id": r.project_id,
-            "project_code": r.project.project_id if r.project else "",
-            "project_name": r.project.name if r.project else "Projet",
-            "title": r.title,
-            "author_name": r.display_author_name,
-            "author_job": r.author_job,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-            "content": r.content,
-        })
+    pagination = search_reports(
+        query=query, category=category, project_id=project_id, page=1, per_page=max(1, min(int(limit or 20), 100))
+    )
+    formatted_results = [
+        {
+            "report_id": r["id"],
+            "project_id": r["project_id"],
+            "project_code": r["project_code"],
+            "project_name": r["project_name"],
+            "title": r["title"],
+            "category": r["category"],
+            "shoot_day": r["shoot_day"] or None,
+            "author_name": r["author_name"],
+            "author_job": r["author_job"],
+            "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+            "content": r["content"],
+            "photos_count": len(r["photos"]),
+        }
+        for r in pagination.items
+    ]
 
     return {
         "query": query,

@@ -76,6 +76,7 @@ DEFAULT_SETTINGS = {
 
 _NAV_TECHNICIEN = {
     "dashboard",
+    "reports",
     "checkouts",
     "checkins",
     "incidents",
@@ -88,6 +89,7 @@ _NAV_COMMERCIAL = {
     "dashboard",
     "projects",
     "archives",
+    "reports",
     "booking",
     "productions",
     "contacts",

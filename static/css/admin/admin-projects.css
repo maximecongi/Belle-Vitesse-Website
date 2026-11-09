@@ -134,7 +134,8 @@
     color: #777;
     font-style: italic;
     border-left: 2px solid #e5e7eb;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     padding-left: 0.5rem;
     max-width: 250px;
     line-height: 1.3;
@@ -563,16 +564,20 @@
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 3.5px solid #cbd5e1;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     padding: 0.95rem 1.15rem;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
+/* Survol : la bordure gauche (couleur de catégorie) reste inchangée */
 .project-report-item:hover .project-report-card {
-    border-color: #cbd5e1;
-    border-left-color: var(--admin-accent, #FFC845);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-top-color: #cbd5e1;
+    border-right-color: #cbd5e1;
+    border-bottom-color: #cbd5e1;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
@@ -689,7 +694,8 @@
     padding: 0.45rem 0.8rem;
     background: #f8fafc;
     border-left: 3px solid var(--admin-accent, #ffc845);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     color: #475569;
     font-size: 0.80rem;
     font-style: italic;
@@ -1092,6 +1098,7 @@
 /* Écrans tactiles : cibles plus grandes, pas de zoom iOS à la saisie (≥ 16px),
    pas de défilement imbriqué dans l'éditeur, raccourcis clavier masqués */
 @media (pointer: coarse) {
+
     .notion-live-editor,
     .project-report-title-input,
     .project-report-edit-title-input {
@@ -1148,7 +1155,8 @@
     padding: 0.5rem 0.85rem;
     background: #f8fafc;
     border-left: 3px solid var(--admin-accent, #ffc845);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     color: #475569;
 }
 
@@ -1303,7 +1311,6 @@
 /* Le badge Homologué / Route fermée ne doit jamais élargir la colonne */
 .project-equipment-card .project-road-legal-badge {
     flex-shrink: 0;
-    margin-left: auto;
 }
 
 /* ── Documents & Décharges (hub projet) ── */
@@ -1637,12 +1644,14 @@
 /* ── Hub Projet & États de tournage ── */
 .project-hub-header {
     border-left: 5px solid var(--status-info, #5299D3);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="in_progress"] {
     border-left-color: var(--entity-project, #F59E0B) !important;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="standby"],
@@ -1650,17 +1659,20 @@
 .project-hub-header[data-status="immobilise"],
 .project-hub-header[data-status="immobilisé"] {
     border-left-color: var(--status-warning, #F59E0B) !important;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="completed"] {
     border-left-color: var(--status-neutral, #515151) !important;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-header[data-status="upcoming"] {
     border-left-color: var(--status-info, #5299D3) !important;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-hub-id {}
@@ -1671,7 +1683,8 @@
 
 .project-doc-item--error {
     border-left: 3px solid var(--red-error, #b91c1c) !important;
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
 }
 
 .project-doc-item--error .project-doc-item {
@@ -2006,4 +2019,1050 @@
 .project-detail-location-address {
     font-size: 0.65rem;
     color: #64748b;
+}
+/* ═══════════ Rapports d'équipe : catégories, jours, photos, filtres, brouillons ═══════════ */
+
+/* Couleurs de catégorie (badge, sélecteur, liseré de carte) */
+.report-category--note { --report-cat: #64748b; --report-cat-bg: #f1f5f9; }
+.report-category--debrief { --report-cat: #0369a1; --report-cat-bg: #e0f2fe; }
+.report-category--technique { --report-cat: #6d28d9; --report-cat-bg: #ede9fe; }
+.report-category--logistique { --report-cat: #b45309; --report-cat-bg: #fef3c7; }
+.report-category--securite { --report-cat: #b91c1c; --report-cat-bg: #fee2e2; }
+.report-category--production { --report-cat: #15803d; --report-cat-bg: #dcfce7; }
+
+.report-category-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    color: var(--report-cat, #64748b);
+    background: var(--report-cat-bg, #f1f5f9);
+}
+
+.project-report-card.report-card--debrief { border-left-color: #0ea5e9; }
+.project-report-card.report-card--technique { border-left-color: #8b5cf6; }
+.project-report-card.report-card--logistique { border-left-color: #f59e0b; }
+.project-report-card.report-card--securite { border-left-color: #ef4444; }
+.project-report-card.report-card--production { border-left-color: #22c55e; }
+.project-report-card[class*="report-card--"] { border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */ }
+
+.report-day-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.66rem;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.08rem 0.45rem;
+}
+
+.report-day-badge svg,
+.project-report-date svg,
+.report-photos-add svg,
+.report-toolbar-search svg,
+.report-trash summary svg {
+    width: 12px;
+    height: 12px;
+}
+
+.project-report-actions svg {
+    width: 14px;
+    height: 14px;
+}
+
+.project-report-countdown {
+    font-size: 0.66rem;
+    color: #64748b;
+}
+
+.project-report-countdown.is-urgent {
+    color: #b45309;
+    font-weight: 600;
+}
+
+/* Sélecteurs catégorie & jour */
+.report-meta-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1.25rem;
+    margin-bottom: 0.85rem;
+}
+
+.report-category-picker {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.report-category-picker legend {
+    padding: 0;
+    margin-bottom: 0.3rem;
+}
+
+.report-category-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.report-category-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.report-category-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.report-category-option span {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    background: #ffffff;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.report-category-option input:checked + span {
+    color: var(--report-cat);
+    background: var(--report-cat-bg);
+    border-color: var(--report-cat);
+}
+
+.report-category-option input:focus-visible + span {
+    outline: 2px solid var(--admin-accent, #ffc845);
+    outline-offset: 2px;
+}
+
+.report-day-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+/* Photos */
+.report-photos-field {
+    margin-top: 0.75rem;
+}
+
+.report-photos-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.report-photos-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #334155;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    background: #f8fafc;
+}
+
+.report-photos-add:hover {
+    border-color: var(--admin-accent, #ffc845);
+}
+
+.report-photos-input:focus-visible + .report-photos-preview,
+.report-photos-field:focus-within .report-photos-add {
+    outline: 2px solid var(--admin-accent, #ffc845);
+    outline-offset: 2px;
+}
+
+.report-photos-preview,
+.report-photos-existing,
+.report-photos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.report-photos-preview:not(:empty) {
+    margin-top: 0.5rem;
+}
+
+.report-photos-existing {
+    margin-bottom: 0.5rem;
+}
+
+.report-photos-grid {
+    margin-top: 0.65rem;
+}
+
+.report-photo-thumb,
+.report-photo-preview-img {
+    display: block;
+    width: 84px;
+    height: 84px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    position: relative;
+    object-fit: cover;
+}
+
+.report-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.report-photo-remove {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.62rem;
+    color: #ffffff;
+    background: rgba(15, 23, 42, 0.7);
+    padding: 0.15rem 0.3rem;
+}
+
+.report-photo-thumb--removable:has(input:checked) img {
+    opacity: 0.35;
+}
+
+/* Barre de filtres */
+.report-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.report-toolbar[hidden] {
+    display: none;
+}
+
+.report-toolbar-search {
+    position: relative;
+    flex: 1 1 220px;
+    display: flex;
+    align-items: center;
+}
+
+.report-toolbar-search svg {
+    position: absolute;
+    left: 0.6rem;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.report-toolbar-search input {
+    width: 100%;
+    padding-left: 1.85rem;
+}
+
+.report-toolbar .admin-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.project-report-item[hidden] {
+    display: none;
+}
+
+.project-report-item.is-new .project-report-card {
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.45);
+    transition: box-shadow 0.6s ease;
+}
+
+/* Brouillon restauré & erreurs */
+.report-draft-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #854d0e;
+    background: #fefce8;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 0.45rem 0.7rem;
+    margin-bottom: 0.75rem;
+}
+
+.report-draft-discard {
+    background: none;
+    border: none;
+    color: #854d0e;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0;
+}
+
+.report-form-error {
+    font-size: 0.78rem;
+    color: #b91c1c;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 0.45rem 0.7rem;
+    margin-top: 0.75rem;
+}
+
+.report-draft-banner.is-hidden,
+.report-form-error.is-hidden {
+    display: none;
+}
+
+/* Annulation de suppression */
+.report-undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 0.82rem;
+    padding: 0.65rem 0.9rem 0.65rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    animation: notion-menu-fade-in 0.15s ease-out;
+}
+
+.report-undo-toast button {
+    background: none;
+    border: none;
+    color: var(--admin-accent, #ffc845);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.82rem;
+    padding: 0.25rem 0.35rem;
+}
+
+/* Corbeille */
+.report-trash {
+    margin-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.report-trash summary {
+    cursor: pointer;
+    color: #475569;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.report-trash-list {
+    list-style: none;
+    margin: 0.6rem 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.report-trash-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.6rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.report-trash-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Page de recherche transversale */
+.report-search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.report-search-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.report-search-link:hover {
+    border-color: var(--admin-accent, #ffc845);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.report-search-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.report-search-project {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.report-search-title {
+    font-size: 0.9rem;
+    color: #0f172a;
+}
+
+.report-search-snippet {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+@media (pointer: coarse) {
+    .report-category-option span {
+        padding: 0.45rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .report-photos-add {
+        padding: 0.6rem 0.9rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .report-toolbar > * {
+        flex: 1 1 100%;
+    }
+
+    .report-day-picker {
+        flex: 1 1 100%;
+    }
+}
+
+/* Aperçu des photos sélectionnées (liste cumulée, retrait individuel) */
+.report-photo-preview {
+    position: relative;
+}
+
+.report-photo-preview-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.75);
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (pointer: coarse) {
+    .report-photo-preview-remove {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ═══════════ Rapports d'équipe — mise en page v2 (en-tête, formulaire replié, filtres, groupes par jour) ═══════════ */
+
+.reports-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.reports-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.reports-head-actions [hidden] {
+    display: none;
+}
+
+/* Formulaire « Nouveau rapport » : bordure haute foncée, angles droits */
+.report-compose {
+    border: 1px solid #e2e8f0;
+    border-top: 3px solid var(--grey-1, #151515);
+    border-radius: 0;
+    background: #ffffff;
+    margin-bottom: 1.25rem;
+}
+
+.report-compose[hidden] {
+    display: none;
+}
+
+.report-compose-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.15rem 0;
+}
+
+.report-compose-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.report-compose-close {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 4px;
+    display: flex;
+}
+
+.report-compose-close:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.report-compose-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.report-compose-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.9rem 1.15rem 1.15rem;
+}
+
+.project-report-edit-form.report-compose-body {
+    padding: 0.9rem 0 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.project-report-edit-form.report-compose-body.is-hidden {
+    display: none;
+}
+
+.report-compose-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 200px;
+    gap: 1rem;
+}
+
+.report-compose-row:has(> .report-field:only-child) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.report-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+.report-field-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #0f172a;
+    padding: 0;
+}
+
+.report-field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.report-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 0 0.8rem;
+    font: inherit;
+    font-size: 0.84rem;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.report-input::placeholder {
+    color: #94a3b8;
+}
+
+.report-input:focus {
+    outline: none;
+    border-color: var(--admin-accent, #ffc845);
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+}
+
+.report-select {
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    cursor: pointer;
+}
+
+/* Pastilles (choix de catégorie dans le formulaire, filtres au-dessus du fil) */
+.report-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.report-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    line-height: 1.4;
+}
+
+.report-pill:hover {
+    border-color: #cbd5e1;
+}
+
+.report-pill--choice {
+    position: relative;
+    padding: 0;
+}
+
+.report-pill--choice span {
+    padding: 0.3rem 0.85rem;
+}
+
+.report-pill--choice input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.report-pill--choice:has(input:checked) {
+    color: var(--report-cat);
+    border-color: var(--report-cat);
+    box-shadow: inset 0 0 0 1px var(--report-cat);
+    font-weight: 600;
+}
+
+.report-pill--choice:has(input:focus-visible) {
+    outline: 2px solid var(--admin-accent, #ffc845);
+    outline-offset: 2px;
+}
+
+.report-pill--filter.is-active {
+    color: #ffffff;
+    background: var(--grey-1, #151515);
+    border-color: var(--grey-1, #151515);
+    font-weight: 600;
+}
+
+.report-pill-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.report-pill-count[hidden] {
+    display: none;
+}
+
+/* Pied du formulaire : photos à gauche, actions à droite */
+.report-compose-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.report-compose-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.report-photos-field {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+}
+
+.report-photos-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    height: 36px;
+    padding: 0 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.report-photos-add:hover {
+    border-color: #cbd5e1;
+}
+
+.report-photos-max {
+    font-weight: 400;
+    color: #64748b;
+}
+
+.report-photos-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.report-photos-preview:not(:empty) {
+    margin-top: 0;
+}
+
+.report-photos-field .report-photo-preview-img,
+.report-photos-field .report-photo-thumb {
+    width: 46px;
+    height: 46px;
+}
+
+.report-photos-field .report-photo-remove {
+    font-size: 0.55rem;
+    padding: 0.05rem 0.2rem;
+}
+
+.report-photo-preview-remove {
+    top: -7px;
+    right: -7px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.8rem;
+    background: #0f172a;
+    border: 2px solid #ffffff;
+}
+
+.report-photos-status {
+    font-size: 0.76rem;
+    color: #64748b;
+}
+
+.report-photos-status.is-done {
+    color: #15803d;
+}
+
+.report-photos-status:empty {
+    display: none;
+}
+
+/* Filtres */
+.report-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0;
+    border-top: none;
+    margin-bottom: 0.5rem;
+}
+
+.report-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.report-toolbar-search {
+    flex: 1 1 auto;
+}
+
+.report-toolbar-search .report-input {
+    padding-left: 2rem;
+}
+
+.report-toolbar-day {
+    width: 190px;
+    flex: 0 0 190px;
+}
+
+.report-toolbar-export {
+    height: 40px;
+    flex: 0 0 auto;
+}
+
+/* Fil regroupé par jour de tournage */
+.project-reports-timeline {
+    gap: 0;
+}
+
+.project-reports-timeline:before {
+    display: none;
+}
+
+.project-reports-timeline[hidden],
+.report-day-group[hidden] {
+    display: none;
+}
+
+.report-day-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1.1rem 0 0.75rem;
+}
+
+.report-day-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.report-day-rule {
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.report-day-count {
+    font-size: 0.72rem;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.report-day-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Carte de rapport */
+.project-report-item {
+    display: block;
+}
+
+.project-report-card {
+    padding: 1.1rem 1.25rem;
+    box-shadow: none;
+}
+
+.report-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+}
+
+.report-card-head .project-report-avatar {
+    top: 0;
+    width: 34px;
+    border: none;
+    box-shadow: none;
+    font-size: 0.66rem;
+}
+
+.report-card-who {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.report-card-who .project-report-author {
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.report-card-meta {
+    font-size: 0.74rem;
+    color: #64748b;
+}
+
+.report-card-meta > span + span::before {
+    content: " · ";
+    color: #94a3b8;
+    font-style: normal;
+}
+
+.report-card-edited {
+    font-style: italic;
+}
+
+.report-card-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.report-card-tools .report-category-badge {
+    margin-right: 0.35rem;
+}
+
+.project-report-card .project-report-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.6rem;
+}
+
+.project-report-card .report-photos-grid .report-photo-thumb {
+    width: 74px;
+    height: 56px;
+    border-radius: 2px;
+}
+
+/* Corbeille */
+.report-trash {
+    border-top: none;
+    margin-top: 1.25rem;
+    padding-top: 0;
+}
+
+.report-trash summary {
+    font-size: 0.8rem;
+    color: #0f172a;
+}
+
+.report-trash summary svg {
+    width: 14px;
+    height: 14px;
+}
+
+@media (max-width: 640px) {
+    .reports-head-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .report-compose-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .report-toolbar-row {
+        flex-wrap: wrap;
+    }
+
+    .report-toolbar-search {
+        flex: 1 1 100%;
+    }
+
+    .report-toolbar-day {
+        flex: 1 1 auto;
+        width: auto;
+    }
+
+    .report-compose-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .report-card-head {
+        flex-wrap: wrap;
+    }
+
+    .report-card-tools {
+        width: 100%;
+        justify-content: flex-start;
+        margin-left: calc(34px + 0.75rem);
+    }
+}
+
+@media (pointer: coarse) {
+    .report-input {
+        font-size: 16px;
+        height: 44px;
+    }
+
+    .report-photo-preview-remove {
+        width: 26px;
+        height: 26px;
+        top: -10px;
+        right: -10px;
+    }
+
+    .report-pill,
+    .report-pill--choice span {
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+    }
 }

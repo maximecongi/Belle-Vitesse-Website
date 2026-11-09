@@ -1,0 +1,94 @@
+/* ==========================================================================
+   BELLE VITESSE — PDF JOURNAL DE BORD (RAPPORTS D'ÉQUIPE)
+   ========================================================================== */
+
+.reports-pdf-empty {
+    font-size: 8.5pt;
+    color: #71717a;
+    margin: 14pt 0;
+}
+
+.reports-pdf-entry {
+    margin: 12pt 0 0 0;
+    padding: 0 0 0 8pt;
+    border-left: 2pt solid #d4d4d8;
+    border-radius: 0; /* bordure gauche colorée : jamais d'arrondi */
+    page-break-inside: auto;
+}
+
+.reports-pdf-entry--debrief { border-left-color: #0284c7; }
+.reports-pdf-entry--technique { border-left-color: #7c3aed; }
+.reports-pdf-entry--logistique { border-left-color: #d97706; }
+.reports-pdf-entry--securite { border-left-color: #dc2626; }
+.reports-pdf-entry--production { border-left-color: #16a34a; }
+.reports-pdf-entry--note { border-left-color: #a1a1aa; }
+
+.reports-pdf-entry-head {
+    page-break-after: avoid;
+}
+
+.reports-pdf-entry-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #18181b;
+    margin: 0 0 2pt 0;
+}
+
+.reports-pdf-entry-meta {
+    font-size: 7pt;
+    color: #71717a;
+    margin-bottom: 4pt;
+}
+
+.reports-pdf-entry-meta span + span:before {
+    content: " · ";
+    color: #a1a1aa;
+}
+
+.reports-pdf-category {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    color: #3f3f46;
+}
+
+.reports-pdf-entry-body {
+    font-size: 8pt;
+    line-height: 1.5;
+    color: #18181b;
+}
+
+.reports-pdf-entry-body p { margin: 0 0 4pt 0; }
+.reports-pdf-entry-body h2 { font-size: 8.5pt; font-weight: 700; margin: 6pt 0 3pt 0; }
+.reports-pdf-entry-body h3 { font-size: 8pt; font-weight: 700; margin: 5pt 0 2pt 0; }
+.reports-pdf-entry-body ul,
+.reports-pdf-entry-body ol { margin: 0 0 4pt 0; padding-left: 12pt; }
+.reports-pdf-entry-body li { margin-bottom: 1pt; }
+.reports-pdf-entry-body blockquote {
+    margin: 4pt 0;
+    padding: 2pt 0 2pt 6pt;
+    border-left: 1.5pt solid #ffc845;
+    border-radius: 0;
+    color: #3f3f46;
+}
+.reports-pdf-entry-body pre {
+    background: #f4f4f5;
+    padding: 4pt 6pt;
+    font-size: 7pt;
+    white-space: pre-wrap;
+}
+.reports-pdf-entry-body code { font-size: 7pt; }
+.reports-pdf-entry-body a { color: #0369a1; text-decoration: none; }
+.reports-pdf-entry-body hr { border: none; border-top: 0.5pt solid #e4e4e7; margin: 6pt 0; }
+
+.reports-pdf-photos {
+    margin-top: 5pt;
+}
+
+.reports-pdf-photos img {
+    width: 31%;
+    height: 80pt;
+    object-fit: cover;
+    margin: 0 1.5% 4pt 0;
+    page-break-inside: avoid;
+}

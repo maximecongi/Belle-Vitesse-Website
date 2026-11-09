@@ -1,0 +1,71 @@
+{#
+    Champs d'un rapport d'équipe : titre + jour, catégorie, photos.
+    Partagés entre le formulaire « Nouveau rapport » (fiche projet) et l'édition inline (_report_item.html).
+#}
+
+{% macro report_category_badge(key, label) %}
+<span class="report-category-badge report-category--{{ key }}">{{ label }}</span>
+{% endmacro %}
+
+{# Ligne « Titre du rapport * » + « Jour de tournage » #}
+{% macro report_title_day_row(uid, days, title='', selected_day='', title_id=none) %}
+<div class="report-compose-row">
+    <div class="report-field report-field--grow">
+        <label for="{{ title_id or ('reportTitle-' ~ uid) }}" class="report-field-label">Titre du rapport <span class="u-text-danger">*</span></label>
+        <input type="text" name="title" id="{{ title_id or ('reportTitle-' ~ uid) }}" class="report-input"
+            value="{{ title }}" placeholder="Ex : Débriefing J1, Point matériel…" maxlength="255" autocomplete="off"
+            required>
+    </div>
+    {% if days %}
+    <div class="report-field report-field--day">
+        <label for="reportDay-{{ uid }}" class="report-field-label">Jour de tournage</label>
+        <select name="shoot_day" id="reportDay-{{ uid }}" class="report-input report-select">
+            <option value="">Non rattaché</option>
+            {% for iso, label in days %}
+            <option value="{{ iso }}" {% if iso == selected_day %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% elif selected_day %}
+    <input type="hidden" name="shoot_day" value="{{ selected_day }}">
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro report_category_picker(categories, selected='note') %}
+<fieldset class="report-field report-category-picker">
+    <legend class="report-field-label">Catégorie</legend>
+    <div class="report-pills">
+        {% for key, label in categories %}
+        <label class="report-pill report-pill--choice report-category--{{ key }}">
+            <input type="radio" name="category" value="{{ key }}" {% if key == (selected or 'note') %}checked{% endif %}>
+            <span>{{ label }}</span>
+        </label>
+        {% endfor %}
+    </div>
+</fieldset>
+{% endmacro %}
+
+{# Bouton d'ajout + vignettes (existantes retirables, nouvelles avec ×) + état d'optimisation #}
+{% macro report_photos_input(uid, max_photos, existing=[]) %}
+<div class="report-photos-field">
+    <label class="report-photos-add" for="reportPhotos-{{ uid }}">
+        <i data-lucide="camera"></i>
+        <span data-photos-add-label>Ajouter des photos</span>
+        <span class="report-photos-max">({{ max_photos }} max.)</span>
+    </label>
+    <input type="file" name="photos" id="reportPhotos-{{ uid }}" class="report-photos-input" data-compressed="true"
+        accept="image/*" multiple data-max-photos="{{ max_photos - (existing|length) }}">
+    {% for photo in existing %}
+    <label class="report-photo-thumb report-photo-thumb--removable" title="Cocher pour retirer cette photo">
+        <img src="{{ photo.url }}" alt="Photo jointe {{ loop.index }}" loading="lazy">
+        <span class="report-photo-remove">
+            <input type="checkbox" name="remove_photos" value="{{ photo.rel_path }}">
+            Retirer
+        </span>
+    </label>
+    {% endfor %}
+    <div class="report-photos-preview" data-photos-preview></div>
+    <span class="report-photos-status" data-photos-status aria-live="polite"></span>
+</div>
+{% endmacro %}

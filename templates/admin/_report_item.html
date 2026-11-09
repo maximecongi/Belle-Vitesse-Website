@@ -1,0 +1,123 @@
+{#
+    Carte d'un rapport d'équipe (fil de la fiche projet, regroupé par jour de tournage).
+    Rendu à l'identique côté serveur et dans les réponses AJAX (création, modification, restauration).
+    Contexte : report (serialize_report avec permissions), project_id, report_categories, report_days,
+    report_max_photos.
+#}
+{% from "admin/macros.html" import initials %}
+{% from "admin/_notion_editor.html" import notion_report_editor %}
+{% from "admin/_report_fields.html" import report_category_badge, report_title_day_row, report_category_picker, report_photos_input %}
+
+<div class="project-report-item" id="report-{{ report.id }}" data-report-id="{{ report.id }}"
+    data-category="{{ report.category }}" data-day="{{ report.shoot_day }}"
+    data-day-heading="{{ report.shoot_day_heading }}"
+    data-updated-at="{{ report.updated_at.isoformat() if report.updated_at else '' }}"
+    data-created-at="{{ report.created_at.isoformat() if report.created_at else '' }}"
+    data-search="{{ (report.title ~ ' ' ~ report.content ~ ' ' ~ report.author_name ~ ' ' ~ report.author_job)|lower }}">
+    <article class="project-report-card report-card--{{ report.category }}">
+        <header class="report-card-head">
+            <div class="project-report-avatar" aria-hidden="true">{{ initials(report.author_name, '') }}</div>
+            <div class="report-card-who">
+                <strong class="project-report-author">{{ report.author_name }}</strong>
+                <span class="report-card-meta">
+                    <span>{{ report.author_job }}</span>
+                    <span title="{{ report.created_at_fr }}">{{ report.created_at_short }}</span>
+                    {% if report.is_edited %}<span class="report-card-edited" title="Rapport modifié après publication">modifié</span>{% endif %}
+                    {% if report.editable_until %}
+                    <span class="project-report-countdown" data-editable-until="{{ report.editable_until }}"
+                        title="Délai pendant lequel vous pouvez encore modifier ce rapport"></span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="report-card-tools">
+                {{ report_category_badge(report.category, report.category_label) }}
+                {% if report.can_edit %}
+                <button type="button" class="project-report-action-btn project-report-edit-btn"
+                    data-action="edit-report" data-report-id="{{ report.id }}" title="Modifier ce rapport"
+                    aria-label="Modifier ce rapport">
+                    <i data-lucide="pencil"></i>
+                </button>
+                {% endif %}
+                {% if report.can_delete %}
+                <form method="POST"
+                    action="{{ url_for('admin_projects.admin_project_report_delete', record_id=project_id, report_id=report.id) }}"
+                    class="u-m-0 project-report-delete-form" data-report-id="{{ report.id }}"
+                    data-confirm="Confirmer la suppression de ce rapport ?">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="project-report-action-btn project-report-delete-btn"
+                        title="Supprimer ce rapport" aria-label="Supprimer ce rapport">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Mode Affichage Normal -->
+        <div class="project-report-view-mode" id="reportView-{{ report.id }}">
+            {% if report.title %}
+            <h4 class="project-report-title">{{ report.title }}</h4>
+            {% endif %}
+
+            {% if report.content and report.content|length > 200 %}
+            <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
+                <div class="project-report-body markdown-rendered project-report-body-preview">
+                    {{ report.content | truncate_report(200) | markdown }}
+                </div>
+                <div class="project-report-body markdown-rendered project-report-body-full">
+                    {{ report.content | markdown }}
+                </div>
+                <div class="project-report-toggle-wrapper">
+                    <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
+                        aria-expanded="false" title="Afficher ou masquer la suite du rapport">
+                        <span class="project-report-toggle-label">Déplier</span>
+                        <span class="project-report-toggle-icon">▾</span>
+                    </button>
+                </div>
+            </div>
+            {% else %}
+            <div class="project-report-body markdown-rendered">
+                {{ report.content | markdown }}
+            </div>
+            {% endif %}
+
+            {% if report.photos %}
+            <div class="report-photos-grid">
+                {% for photo in report.photos %}
+                <a href="{{ photo.url }}" target="_blank" rel="noopener" class="report-photo-thumb"
+                    title="Ouvrir la photo en grand">
+                    <img src="{{ photo.url }}" alt="Photo jointe {{ loop.index }} — {{ report.title }}" loading="lazy">
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Mode Édition Inline -->
+        {% if report.can_edit %}
+        <form method="POST" enctype="multipart/form-data"
+            action="{{ url_for('admin_projects.admin_project_report_edit', record_id=project_id, report_id=report.id) }}"
+            class="project-report-edit-form report-compose-body is-hidden" id="reportEdit-{{ report.id }}"
+            data-report-form="edit" data-draft-key="{{ project_id }}:report:{{ report.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="report-draft-banner is-hidden" data-draft-banner></div>
+            {{ report_title_day_row('edit-' ~ report.id, report_days, report.title or '', report.shoot_day) }}
+            {{ report_category_picker(report_categories, report.category) }}
+            <div class="report-field">
+                <span class="report-field-label">Observation &amp; Compte-rendu <span class="u-text-danger">*</span></span>
+                {{ notion_report_editor("report-" ~ report.id, content_html=(report.content | markdown)) }}
+            </div>
+            <div class="report-form-error is-hidden" role="alert" data-form-error></div>
+            <div class="report-compose-footer">
+                {{ report_photos_input('edit-' ~ report.id, report_max_photos, report.photos) }}
+                <div class="report-compose-actions">
+                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm"
+                        data-action="cancel-edit" data-report-id="{{ report.id }}">Annuler</button>
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm"
+                        data-submit-label="Enregistrer">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </article>
+</div>

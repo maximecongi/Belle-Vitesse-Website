@@ -1,0 +1,61 @@
+{% extends "admin/admin_base.html" %}
+
+{% from "admin/macros.html" import filter_header, render_pagination, list_header_actions, empty_state, initials %}
+{% from "admin/_report_fields.html" import report_category_badge %}
+
+{% block title %}Rapports d'équipe{% endblock %}
+{% block page_title %}Rapports d'équipe{% endblock %}
+
+{% block header_actions %}
+{{ list_header_actions('Rechercher dans les rapports...', hidden={'category': filters.category}) }}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    {{ filter_header("Rapports trouvés", count=pagination.total, clear_url=url_for('admin_projects.admin_reports_search')) }}
+
+    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+        <form method="GET" action="{{ url_for('admin_projects.admin_reports_search') }}"
+            class="u-flex u-align-center u-gap-2 u-flex-wrap">
+            {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
+            <select name="category" class="form-input form-input-sm form-input-inline" data-autosubmit
+                aria-label="Filtrer par catégorie">
+                <option value="">Toutes catégories</option>
+                {% for key, label in report_categories %}
+                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            {% if filters.q or filters.category %}
+            <a href="{{ url_for('admin_projects.admin_reports_search') }}"
+                class="admin-btn admin-btn-secondary admin-btn-sm">✕ Réinitialiser</a>
+            {% endif %}
+        </form>
+        <div class="u-text-sm u-text-muted">{{ pagination.total }} rapport(s)</div>
+    </div>
+
+    {% if reports %}
+    <ul class="report-search-results">
+        {% for r in reports %}
+        <li class="report-search-result">
+            <a class="report-search-link"
+                href="{{ url_for('admin_projects.admin_project_detail', record_id=r.project_id) }}#report-{{ r.id }}">
+                <div class="report-search-head">
+                    <span class="report-search-project">{{ r.project_name }}</span>
+                    {{ report_category_badge(r.category, r.category_label) }}
+                    {% if r.shoot_day_label %}<span class="report-day-badge"><i data-lucide="calendar-days"></i>{{ r.shoot_day_label }}</span>{% endif %}
+                    {% if r.photos %}<span class="report-day-badge"><i data-lucide="camera"></i>{{ r.photos|length }}</span>{% endif %}
+                </div>
+                <strong class="report-search-title">{{ r.title }}</strong>
+                <p class="report-search-snippet">{{ r.snippet }}</p>
+                <span class="u-text-xs u-text-muted">{{ r.author_name }} · {{ r.author_job }} · {{ r.created_at_fr }}</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    {{ empty_state('search-x', 'Aucun rapport trouvé', "Modifiez la recherche ou retirez le filtre de catégorie.") }}
+    {% endif %}
+
+    {{ render_pagination(pagination, label_singular="rapport", label_plural="rapports") }}
+</div>
+{% endblock %}

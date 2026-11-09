@@ -128,9 +128,10 @@
 
                 {{ nav_item(url_for('admin_dashboard.admin_dashboard'), 'Tableau de bord', 'dashboard', icon='layout-dashboard') }}
 
-                {% call nav_group('Projets', 'projets', 'clapperboard', ['projects', 'archives', 'booking', 'productions', 'contacts']) %}
+                {% call nav_group('Projets', 'projets', 'clapperboard', ['projects', 'archives', 'reports', 'booking', 'productions', 'contacts']) %}
                 {{ nav_item(url_for('admin_projects.admin_projects_list'), 'Projets', 'projects') }}
                 {{ nav_item(url_for('admin_projects.admin_projects_archives'), 'Archives', 'archives') }}
+                {{ nav_item(url_for('admin_projects.admin_reports_search'), "Rapports d'équipe", 'reports') }}
                 {{ nav_item(url_for('admin_booking.admin_booking'), 'Calendrier matériel', 'booking') }}
                 {{ nav_item(url_for('admin_productions.admin_productions_list'), 'Productions', 'productions') }}
                 {{ nav_item(url_for('admin_contacts.admin_contacts_list'), 'Contacts', 'contacts') }}

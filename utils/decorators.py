@@ -30,6 +30,16 @@ def session_is_admin():
     return is_admin_role(session.get("admin_user_role"))
 
 
+def is_super_admin_role(role_name):
+    """Vrai uniquement pour le super administrateur (FR ou EN, casse libre)."""
+    return normalize_role(role_name) == "super administrateur"
+
+
+def session_is_super_admin():
+    """Vrai si l'utilisateur connecté en session est super administrateur."""
+    return is_super_admin_role(session.get("admin_user_role"))
+
+
 def require_roles(*allowed_roles):
     """
     Décorateur pour restreindre l'accès à des rôles spécifiques.

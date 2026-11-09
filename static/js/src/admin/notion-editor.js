@@ -195,6 +195,8 @@ function initNotionEditor(wrapper) {
         const textOnly = editor.textContent.replace(/\u200B/g, '').trim();
         const isEmpty = !textOnly;
         editor.setAttribute('data-empty', isEmpty ? 'true' : 'false');
+        // Notifie les modules extérieurs (brouillons…) de toute modification, y compris programmatique
+        wrapper.dispatchEvent(new CustomEvent('notion-change', { bubbles: true }));
     }
 
     function setCursorAt(node, offset = 0) {
@@ -1691,6 +1693,22 @@ function initNotionEditor(wrapper) {
         focusEnd() {
             const last = editor.lastElementChild || editor;
             setCursorAt(last);
+        },
+        // Contenu HTML courant de l'éditeur (pour les brouillons)
+        getHTML() {
+            return editor.innerHTML;
+        },
+        // Remplace le contenu (restauration de brouillon) ; inscrit dans l'historique
+        setContent(html) {
+            closeMenu();
+            recordHistory();
+            editor.innerHTML = html || '';
+            normalizeRoot();
+            syncToHidden();
+            recordHistory();
+        },
+        isEmpty() {
+            return !cleanText(editor.textContent).trim();
         },
     };
     wrapper._notionEditor = api;

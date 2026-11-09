@@ -3,6 +3,7 @@
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
 initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
 {% from "admin/_notion_editor.html" import notion_report_editor %}
+{% from "admin/_report_fields.html" import report_title_day_row, report_category_picker, report_photos_input %}
 
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Projet {{ project.project_id }}{% endblock %}
@@ -228,7 +229,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
                 {% for v in vehicles %}
                 <div class="project-equipment-card">
-                    <div class="u-flex u-align-center u-justify-between u-gap-2 u-flex-wrap">
+                    <div class="u-flex u-align-start u-flex-column u-justify-between u-gap-2 u-flex-wrap">
                         <div class="u-flex u-align-center u-gap-2">
                             {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if
                             v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
@@ -323,189 +324,148 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
 
     <!-- ═══════════ 4. COLLABORATION & SUIVI (RAPPORTS D'ÉQUIPE) ═══════════ -->
-    <div class="admin-card project-reports-container" id="reports">
-        <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+    <div class="admin-card project-reports-container" id="reports" data-reports-root
+        data-project-id="{{ project.id }}">
+        <div class="reports-head">
             <div class="project-reports-header-title">
-                <div class="u-flex u-align-center u-gap-2">
-                    <h2 class="admin-card-title u-m-0">Rapports d'Équipe</h2>
-                </div>
+                <h2 class="admin-card-title u-m-0">Rapports d'Équipe</h2>
                 <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
                     Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
                 </p>
             </div>
-            {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral') }}
+            <div class="reports-head-actions">
+                <span data-reports-count-badge>
+                    {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral') }}
+                </span>
+                <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-action="open-report-form"
+                    aria-controls="addReportForm" aria-expanded="false">+ Nouveau rapport</button>
+            </div>
         </div>
 
-        <!-- Boîte de rédaction de rapport -->
-        <form method="POST" action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
-            class="project-report-form u-mb-4" id="addReportForm">
+        <!-- Nouveau rapport : formulaire replié, ouvert au clic (ou automatiquement si un brouillon existe) -->
+        <form method="POST" enctype="multipart/form-data"
+            action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
+            class="report-compose" id="addReportForm" data-report-form="create"
+            data-draft-key="{{ project.id }}:new" hidden>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-            <!-- 1. Champ Titre autonome -->
-            <div class="project-report-field-group u-mb-3">
-                <label for="reportTitleInput" class="project-report-field-label">
-                    Titre du rapport <span class="u-text-danger">*</span>
-                </label>
-                <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
-                    placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off" required>
-            </div>
-
-            <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
-            <div class="project-report-field-group u-mb-3">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label for="reportContentEditor-new" class="project-report-field-label u-m-0">
-                        Observation & Compte-rendu <span class="u-text-danger">*</span>
-                    </label>
-                    <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en
-                        direct</span>
-                </div>
-
-                {{ notion_report_editor("new", textarea_id="reportContentInput") }}
-            </div>
-
-            <!-- 3. Actions -->
-            <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
-                <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
-                    Publier le rapport
+            <div class="report-compose-head">
+                <h3 class="report-compose-title">Nouveau rapport</h3>
+                <button type="button" class="report-compose-close" data-action="close-report-form"
+                    aria-label="Fermer (le brouillon est conservé)" title="Fermer (le brouillon est conservé)">
+                    <i data-lucide="x"></i>
                 </button>
+            </div>
+            <div class="report-compose-body">
+                <div class="report-draft-banner is-hidden" data-draft-banner></div>
+                {{ report_title_day_row('new', report_days, title_id='reportTitleInput') }}
+                {{ report_category_picker(report_categories) }}
+                <div class="report-field">
+                    <div class="report-field-label-row">
+                        <label for="reportContentEditor-new" class="report-field-label">
+                            Observation &amp; Compte-rendu <span class="u-text-danger">*</span>
+                        </label>
+                        <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en direct</span>
+                    </div>
+                    {{ notion_report_editor("new", textarea_id="reportContentInput") }}
+                </div>
+                <div class="report-form-error is-hidden" role="alert" data-form-error></div>
+                <div class="report-compose-footer">
+                    {{ report_photos_input('new', report_max_photos) }}
+                    <div class="report-compose-actions">
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm"
+                            data-action="cancel-report-form" title="Annuler et effacer le brouillon">Annuler</button>
+                        <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn"
+                            data-submit-label="Publier le rapport">Publier le rapport</button>
+                    </div>
+                </div>
             </div>
         </form>
 
-        <!-- Fil chronologique des rapports (Timeline technique BV) -->
-        <div class="project-reports-stream" id="reportsStream">
-            {% if reports and reports|length > 0 %}
-            <div class="project-reports-timeline">
-                <div class="project-report-timeline-line"></div>
-                {% for report in reports %}
-                <div class="project-report-item" id="report-{{ report.id }}">
-                    <div class="project-report-timeline-axis">
-                        <div class="project-report-avatar" title="{{ report.author_job }}">
-                            {{ initials(report.author_name, '') }}
-                        </div>
-                    </div>
-                    <div class="project-report-card">
-                        <div
-                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
-                            <div class="u-flex u-align-center u-gap-2">
-                                <strong class="project-report-author">{{ report.author_name }}</strong>
-                                <span class="project-report-role-badge">{{ report.author_job }}</span>
-                                <span class="project-report-date u-text-muted">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-clock">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="12 6 12 12 16 14" />
-                                    </svg>
-                                    {{ report.created_at_fr }}
-                                    {% if report.is_edited %}
-                                    <span class="project-report-edited-badge"
-                                        title="Rapport modifié ultérieurement">(modifié)</span>
-                                    {% endif %}
-                                </span>
-                            </div>
-                            <div class="project-report-actions u-flex u-align-center u-gap-1">
-                                {% if report.can_edit %}
-                                <button type="button" class="project-report-action-btn project-report-edit-btn"
-                                    data-action="edit-report" data-report-id="{{ report.id }}"
-                                    title="Modifier ce rapport (accessible pendant 3h)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-pencil">
-                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                        <path d="m15 5 4 4" />
-                                    </svg>
-                                </button>
-                                {% endif %}
-                                {% if report.can_delete %}
-                                <form method="POST"
-                                    action="{{ url_for('admin_projects.admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
-                                    class="u-m-0"
-                                    data-confirm="Confirmer la suppression de ce commentaire ?">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="project-report-action-btn project-report-delete-btn"
-                                        title="Supprimer ce rapport">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" class="lucide lucide-trash">
-                                            <path d="M10 11v6" />
-                                            <path d="M14 11v6" />
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                            <path d="M3 6h18" />
-                                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                        </svg>
-                                    </button>
-                                </form>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Mode Affichage Normal -->
-                        <div class="project-report-view-mode" id="reportView-{{ report.id }}">
-                            {% if report.title %}
-                            <h4 class="project-report-title">{{ report.title }}</h4>
-                            {% endif %}
-
-                            {% if report.content and report.content|length > 200 %}
-                            <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
-                                <div class="project-report-body markdown-rendered project-report-body-preview">
-                                    {{ report.content | truncate_report(200) | markdown }}
-                                </div>
-                                <div class="project-report-body markdown-rendered project-report-body-full">
-                                    {{ report.content | markdown }}
-                                </div>
-                                <div class="project-report-toggle-wrapper">
-                                    <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
-                                        aria-expanded="false" title="Afficher ou masquer la suite du rapport">
-                                        <span class="project-report-toggle-label">Déplier</span>
-                                        <span class="project-report-toggle-icon">▾</span>
-                                    </button>
-                                </div>
-                            </div>
-                            {% else %}
-                            <div class="project-report-body markdown-rendered">
-                                {{ report.content | markdown }}
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Mode Édition Inline (disponible dans les 3h) -->
-                        {% if report.can_edit %}
-                        <form method="POST"
-                            action="{{ url_for('admin_projects.admin_project_report_edit', record_id=project.id, report_id=report.id) }}"
-                            class="project-report-edit-form is-hidden" id="reportEdit-{{ report.id }}">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="u-mb-2">
-                                <input type="text" name="title" class="project-report-edit-title-input"
-                                    value="{{ report.title or '' }}" placeholder="Titre du rapport" maxlength="255"
-                                    autocomplete="off" required>
-                            </div>
-                            <div class="u-mb-2">
-                                {{ notion_report_editor("report-" ~ report.id, content_html=(report.content | markdown)) }}
-                            </div>
-                            <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
-                                <span class="u-text-2xs u-text-muted">Modification autorisée pendant 3h après
-                                    publication</span>
-                                <div class="u-flex u-align-center u-gap-2">
-                                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs"
-                                        data-action="cancel-edit" data-report-id="{{ report.id }}">
-                                        Annuler
-                                    </button>
-                                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-xs">
-                                        Enregistrer
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                        {% endif %}
-                    </div>
-                </div>
+        <!-- Filtres : catégories, recherche, jour, export -->
+        <div class="report-toolbar" data-reports-toolbar {% if not reports %}hidden{% endif %}>
+            <div class="report-pills" role="group" aria-label="Filtrer par catégorie">
+                <button type="button" class="report-pill report-pill--filter is-active" data-reports-category=""
+                    aria-pressed="true">Toutes <span class="report-pill-count" data-category-count="">{{ reports|length }}</span></button>
+                {% for key, label in report_categories %}
+                {% set n = reports|selectattr('category', 'equalto', key)|list|length %}
+                <button type="button" class="report-pill report-pill--filter report-category--{{ key }}"
+                    data-reports-category="{{ key }}" aria-pressed="false">{{ label }}
+                    <span class="report-pill-count" data-category-count="{{ key }}" {% if not n %}hidden{% endif %}>{{ n }}</span></button>
                 {% endfor %}
             </div>
-            {% else %}
-            {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de
-            tournage, point technique ou débriefing d'équipe ci-dessus.") }}
-            {% endif %}
+            <div class="report-toolbar-row">
+                <div class="report-toolbar-search">
+                    <i data-lucide="search"></i>
+                    <input type="search" class="report-input" placeholder="Rechercher dans les rapports…"
+                        data-reports-filter="q" aria-label="Rechercher dans les rapports">
+                </div>
+                {% if report_days %}
+                <select class="report-input report-select report-toolbar-day" data-reports-filter="day"
+                    aria-label="Filtrer par jour de tournage">
+                    <option value="">Tous les jours</option>
+                    {% for iso, label in report_days %}
+                    <option value="{{ iso }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <a href="{{ url_for('admin_projects.admin_project_reports_export', record_id=project.id) }}"
+                    class="admin-btn admin-btn-secondary admin-btn-sm report-toolbar-export" target="_blank"
+                    rel="noopener" data-reports-export
+                    title="Exporter le journal de bord (catégorie et jour appliqués) en PDF">Export PDF</a>
+            </div>
         </div>
+        <p class="u-text-xs u-text-muted u-mb-3 is-hidden" data-reports-filter-summary></p>
+
+        <!-- Fil des rapports, regroupé par jour de tournage -->
+        <div class="project-reports-stream" id="reportsStream">
+            {% set project_id = project.id %}
+            <div class="project-reports-timeline" data-reports-timeline {% if not reports %}hidden{% endif %}>
+                {% for group in report_groups %}
+                <section class="report-day-group" data-group-day="{{ group.day }}">
+                    <header class="report-day-header">
+                        <span class="report-day-title">{{ group.heading }}</span>
+                        <span class="report-day-rule" aria-hidden="true"></span>
+                        <span class="report-day-count" data-group-count>{{ group.reports|length }} rapport{{ 's' if group.reports|length > 1 else '' }}</span>
+                    </header>
+                    <div class="report-day-items">
+                        {% for report in group.reports %}
+                        {% include "admin/_report_item.html" %}
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+            </div>
+            <div data-reports-empty {% if reports %}hidden{% endif %}>
+                {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Cliquez sur « Nouveau rapport »
+                pour consigner une observation de tournage, un point technique ou un débriefing d'équipe.") }}
+            </div>
+        </div>
+
+        {% if deleted_reports %}
+        <!-- Corbeille : rapports que l'utilisateur peut restaurer (les siens supprimés par lui-même ; tous pour le super administrateur) -->
+        <details class="report-trash" data-reports-trash>
+            <summary>
+                <i data-lucide="trash-2"></i>
+                Rapports supprimés (<span data-trash-count>{{ deleted_reports|length }}</span>)
+            </summary>
+            <ul class="report-trash-list">
+                {% for r in deleted_reports %}
+                <li class="report-trash-item" data-trash-item="{{ r.id }}">
+                    <div class="report-trash-info">
+                        <strong>{{ r.title }}</strong>
+                        <span class="u-text-xs u-text-muted">{{ r.author_name }} · publié le {{ r.created_at_fr }} ·
+                            supprimé le {{ r.deleted_at_fr }}{% if r.deleted_by_name %} par {{ r.deleted_by_name }}{% endif %}</span>
+                    </div>
+                    <form method="POST" class="u-m-0" data-report-restore
+                        action="{{ url_for('admin_projects.admin_project_report_restore', record_id=project.id, report_id=r.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="admin-btn admin-btn-secondary admin-btn-xs">Restaurer</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </details>
+        {% endif %}
     </div>
     </div>
 

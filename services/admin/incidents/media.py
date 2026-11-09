@@ -15,17 +15,21 @@ from utils.image_utils import optimize_and_save_image
 logger = logging.getLogger(__name__)
 
 
-def _save_uploaded_files(file_list, subfolder="photos"):
+def _output_base():
+    return Path(os.getenv("OUTPUT_FOLDER", Path(current_app.root_path) / "output"))
+
+
+def _save_uploaded_files(file_list, subfolder="photos", root="incidents"):
     """
-    Sauvegarde une liste de fichiers uploadés dans output/incidents/<subfolder>/ et retourne leurs chemins relatifs.
+    Sauvegarde une liste de fichiers uploadés dans output/<root>/<subfolder>/ et retourne leurs chemins relatifs.
+    Les photos sont optimisées (redimensionnement / compression) ; `root` permet le partage avec d'autres
+    entités (ex : « reports » pour les rapports d'équipe).
     """
     if not file_list:
         return []
 
-    output_base = Path(
-        os.getenv("OUTPUT_FOLDER", Path(current_app.root_path) / "output")
-    )
-    dest_dir = output_base / "incidents" / subfolder
+    output_base = _output_base()
+    dest_dir = output_base / root / subfolder
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     saved_paths = []
@@ -59,3 +63,25 @@ def _save_uploaded_files(file_list, subfolder="photos"):
 
     return saved_paths
 
+
+
+def _delete_stored_file(rel_path, allowed_prefix):
+    """
+    Supprime physiquement un fichier stocké sous OUTPUT_FOLDER.
+    Refuse tout chemin hors du préfixe autorisé (protection contre la traversée de répertoires).
+    """
+    if not rel_path:
+        return False
+    output_base = _output_base().resolve()
+    target = (output_base / rel_path).resolve()
+    allowed_root = (output_base / allowed_prefix).resolve()
+    if allowed_root not in target.parents:
+        logger.warning(f"⚠️ Suppression refusée hors de {allowed_prefix} : {rel_path}")
+        return False
+    try:
+        if target.exists():
+            target.unlink()
+        return True
+    except OSError as err:
+        logger.error(f"Erreur lors de la suppression du fichier {rel_path} : {err}")
+        return False

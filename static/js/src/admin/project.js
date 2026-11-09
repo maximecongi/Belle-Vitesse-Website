@@ -143,19 +143,21 @@ function initProjectReportsEdit() {
         // Initialisation paresseuse : un seul éditeur riche monté par rapport réellement édité
         const api = initNotionEditor(editEl.querySelector('.notion-wysiwyg-wrapper'));
         if (api) api.focusEnd();
+        // Brouillons (project-reports.js) : restauration éventuelle d'une modification non enregistrée
+        editEl.dispatchEvent(new CustomEvent('report-edit-open', { bubbles: true }));
     }
 
     function closeEdit(reportId) {
         const viewEl = document.getElementById(`reportView-${reportId}`);
         const editEl = document.getElementById(`reportEdit-${reportId}`);
         if (!viewEl || !editEl) return;
-        // Annuler = revenir au contenu publié (titre + corps)
+        // Annuler = revenir au contenu publié (titre, catégorie, jour, photos, corps)
+        editEl.reset();
         const wrapper = editEl.querySelector('.notion-wysiwyg-wrapper');
         if (wrapper && wrapper._notionEditor) wrapper._notionEditor.reset();
-        const titleInput = editEl.querySelector('input[name="title"]');
-        if (titleInput) titleInput.value = titleInput.defaultValue;
         editEl.classList.add('is-hidden');
         viewEl.classList.remove('is-hidden');
+        editEl.dispatchEvent(new CustomEvent('report-edit-cancel', { bubbles: true }));
     }
 
     document.addEventListener('click', (e) => {
