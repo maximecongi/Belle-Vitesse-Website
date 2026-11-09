@@ -227,10 +227,9 @@ def _build_event_description(project, phase_title="🎬 Tournage", vehicle_map=N
         lines.append(project.notes.strip())
 
     # 5. Lien direct vers la fiche projet dans l'ERP
-    if base_url and getattr(project, "project_id", None):
+    if base_url and getattr(project, "id", None):
         lines.append("")
-        lines.append(
-            f"🔗 Fiche ERP : {base_url}/admin/projects?q={project.project_id}")
+        lines.append(f"🔗 Fiche ERP : {base_url}/admin/projects/{project.id}")
 
     return "\n".join(lines)
 
@@ -351,8 +350,8 @@ def calendar_feed(token=None):
 
         name = project.name or "Sans nom"
         project_url = (
-            f"{base_url}/admin/projects?q={project.project_id}"
-            if getattr(project, "project_id", None)
+            f"{base_url}/admin/projects/{project.id}"
+            if getattr(project, "id", None)
             else None
         )
         description = _build_event_description(

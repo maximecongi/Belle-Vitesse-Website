@@ -150,7 +150,9 @@ class CalendarFeedTestCase(BaseTestCase):
         self.assertIn("Roger Deakins", desc)
         self.assertIn("Prévoir pneus pluie", desc)
         self.assertIn("SuperProd Films", desc)
-        self.assertIn("PROJ-CONT-01", desc)
+        self.assertIn(f"/admin/projects/{proj_id}", desc)
+        self.assertNotIn("/admin/projects?q=", desc)
+        self.assertTrue(str(shoot_evt.get("url")).endswith(f"/admin/projects/{proj_id}"))
         self.assertIn("Départ : 10/10/2026", desc)
         self.assertIn("Retour : 15/10/2026", desc)
 
