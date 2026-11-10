@@ -142,9 +142,9 @@ _MONTHS_FULL_FR = ["janvier", "février", "mars", "avril", "mai", "juin",
 
 
 def _shoot_day_heading(project, d):
-    """Intitulé de groupe de la timeline : « J1 · mer. 25 novembre 2026 » (ou « Sans jour de tournage »)."""
+    """Intitulé de groupe de la timeline : « J1 · mer. 25 novembre 2026 » (ou « Général » pour un rapport non rattaché à un jour)."""
     if not d:
-        return "Sans jour de tournage"
+        return "Général"
     long_date = f"{_WEEKDAYS_FR[d.weekday()]} {d.day} {_MONTHS_FULL_FR[d.month - 1]} {d.year}"
     days = project_shoot_days(project)
     return f"J{days.index(d) + 1} · {long_date}" if d in days else long_date

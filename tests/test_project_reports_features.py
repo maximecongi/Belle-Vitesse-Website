@@ -393,11 +393,11 @@ class ProjectReportsFeaturesTest(BaseTestCase):
             self.assertEqual(groups[0][0], "2026-09-12")
             self.assertTrue(groups[0][1].startswith("J3 · sam. 12 septembre 2026"))
             self.assertEqual(groups[1][2], ["Jour 1 tard", "Jour 1 tôt"])
-            self.assertEqual(groups[2][:2], ("", "Sans jour de tournage"))
+            self.assertEqual(groups[2][:2], ("", "Général"))
         self._login(self.tech_id, "technicien")
         html = self.client.get(f"/admin/projects/{self.project_id}").get_data(as_text=True)
         for marker in ('data-action="open-report-form"', 'id="addReportForm"', 'data-reports-category="securite"',
-                       'data-group-day="2026-09-12"', "report-day-title", 'data-day-heading="Sans jour de tournage"'):
+                       'data-group-day="2026-09-12"', "report-day-title", 'data-day-heading="Général"'):
             self.assertIn(marker, html, marker)
         self.assertRegex(html, r'id="addReportForm"[^>]*hidden')
 

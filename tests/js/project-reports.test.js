@@ -12,7 +12,7 @@ function check(name, cond, info) { console.log((cond ? 'OK  ' : 'FAIL') + ' ' + 
 
 const item = (id, { category = 'note', day = '', search = '', created = '2026-09-10T10:00:00', until = '' } = {}) => `
 <div class="project-report-item" id="report-${id}" data-report-id="${id}" data-category="${category}" data-day="${day}"
-  data-day-heading="${day ? 'J · ' + day : 'Sans jour de tournage'}"
+  data-day-heading="${day ? 'J · ' + day : 'Général'}"
   data-updated-at="${created}" data-created-at="${created}" data-search="${search}">
   <div class="project-report-card">
     ${until ? `<span class="project-report-countdown" data-editable-until="${until}"></span>` : ''}

@@ -306,7 +306,7 @@
         return tl ? [...tl.querySelectorAll('.project-report-item')] : [];
     }
 
-    // Regroupe les cartes par jour de tournage (jours récents d'abord, « Sans jour » en dernier ;
+    // Regroupe les cartes par jour de tournage (jours récents d'abord, « Général » (sans jour) en dernier ;
     // rapports récents d'abord dans chaque jour). Même ordre que group_reports_by_day() côté serveur.
     function regroup() {
         const tl = timeline();
@@ -314,7 +314,7 @@
         const groups = new Map();
         allItems().forEach((item) => {
             const day = item.dataset.day || '';
-            if (!groups.has(day)) groups.set(day, { heading: item.dataset.dayHeading || 'Sans jour de tournage', items: [] });
+            if (!groups.has(day)) groups.set(day, { heading: item.dataset.dayHeading || 'Général', items: [] });
             groups.get(day).items.push(item);
         });
         const days = [...groups.keys()].filter(Boolean).sort().reverse();

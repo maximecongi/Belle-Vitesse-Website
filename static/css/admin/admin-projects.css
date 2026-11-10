@@ -419,6 +419,8 @@
 .project-reports-header-title {
     display: flex;
     flex-direction: column;
+    flex: 1 1 260px;
+    min-width: 0;
 }
 
 .project-reports-title-icon {
@@ -618,7 +620,7 @@
     font-weight: 600;
     color: #0f172a;
     letter-spacing: -0.01em;
-    margin: 0 0 1rem 0;
+    margin: 0 0 0.5rem 0;
     line-height: 1.35;
 }
 
@@ -1478,7 +1480,7 @@
 .project-contacts-list {
     display: flex;
     flex-direction: column;
-    max-height: 220px;
+    max-height: 18rem; /* ≈ 6 contacts visibles : plus de ligne coupée à 5 contacts, défilement au-delà */
     overflow-y: auto;
     padding-right: 2px;
 }
@@ -2071,7 +2073,8 @@
     height: 12px;
 }
 
-.project-report-actions svg {
+.project-report-actions svg,
+.report-card-tools .project-report-action-btn svg {
     width: 14px;
     height: 14px;
 }
@@ -2836,6 +2839,8 @@
 .report-toolbar {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
     gap: 0.75rem;
     padding-top: 0;
     border-top: none;
@@ -2862,7 +2867,10 @@
 }
 
 .report-toolbar-export {
+    box-sizing: border-box;
     height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
     flex: 0 0 auto;
 }
 
@@ -2885,6 +2893,11 @@
     align-items: center;
     gap: 0.75rem;
     margin: 1.1rem 0 0.75rem;
+}
+
+/* Rapports sans jour de tournage : s'il n'y a que ce groupe, l'en-tête n'apporte rien */
+.report-day-group[data-group-day=""]:only-child > .report-day-header {
+    display: none;
 }
 
 .report-day-title {
@@ -2928,7 +2941,7 @@
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    margin-bottom: 0.9rem;
+    margin-bottom: 0.65rem;
 }
 
 .report-card-head .project-report-avatar {

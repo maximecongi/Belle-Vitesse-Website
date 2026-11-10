@@ -6,7 +6,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 {% from "admin/_report_fields.html" import report_title_day_row, report_category_picker, report_photos_input %}
 
 {% block title %}{{ project.name }}{% endblock %}
-{% block page_title %}Projet {{ project.project_id }}{% endblock %}
+{% block page_title %}Détail projet{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet"
@@ -446,7 +446,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         <details class="report-trash" data-reports-trash>
             <summary>
                 <i data-lucide="trash-2"></i>
-                Rapports supprimés (<span data-trash-count>{{ deleted_reports|length }}</span>)
+                <span>Rapports supprimés (<span data-trash-count>{{ deleted_reports|length }}</span>)</span>
             </summary>
             <ul class="report-trash-list">
                 {% for r in deleted_reports %}
@@ -804,8 +804,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
-                    Aucun signataire invité pour ce projet. Cliquez sur <strong>Inviter</strong> pour faire signer les
-                    règles de sécurité à vos pilotes ou à l'équipe.
+                    Aucun signataire invité. Cliquez sur <strong>Inviter</strong>.
                 </p>
                 {% endif %}
             </div>
@@ -906,8 +905,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% else %}
                 <div class="u-flex u-justify-between u-align-center u-mt-2">
                     <p class="u-text-2xs u-text-muted u-mb-0">
-                        Aucun pilote invité pour ce projet. Cliquez sur <strong>Inviter</strong> pour faire signer
-                        l'attestation de non-subordination et de sécurité (Annexe 3).
+                        Aucun pilote invité. Cliquez sur <strong>Inviter</strong>.
                     </p>
                 </div>
                 {% endif %}
@@ -1004,7 +1002,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% else %}
                 <div class="u-flex u-justify-between u-align-center u-mt-2">
                     <p class="u-text-2xs u-text-muted u-mb-0">
-                        Aucun signataire invité pour l'analyse des risques. Cliquez sur <strong>Inviter</strong> pour associer la production, les coordinateurs ou chefs d'équipe.
+                        Aucun signataire invité. Cliquez sur <strong>Inviter</strong>.
                     </p>
                 </div>
                 {% endif %}
