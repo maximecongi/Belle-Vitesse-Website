@@ -493,7 +493,7 @@ def search_waivers(query_lower: str) -> list[dict]:
             if signer_name:
                 sub_parts.append(signer_name)
             if w.status:
-                status_lbl = "Signé" if w.status == "signed" else ("Envoyé" if w.status == "to_sign" else "À générer")
+                status_lbl = "Signé" if w.status == "signed" else ("Envoyé" if w.status == "to_sign" else "À envoyer")
                 sub_parts.append(status_lbl)
 
             results.append({

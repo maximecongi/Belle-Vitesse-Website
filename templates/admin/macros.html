@@ -1,7 +1,7 @@
 {% macro status_badge(status, status_id=None, icon=None, class_name='') %}
 {% set label_map = {
 'to_check': 'À contrôler',
-'to_generate': 'À générer',
+'to_generate': 'À envoyer',
 'to_sign': 'À signer',
 'to_send': 'À envoyer',
 'pending': 'À signer',
@@ -26,7 +26,7 @@
 'pending': 'signature',
 'à signer': 'signature',
 'a signer': 'signature',
-'to_generate': 'refresh-cw',
+'to_generate': 'send',
 'à générer': 'refresh-cw',
 'a générer': 'refresh-cw',
 'non générée': 'refresh-cw',
@@ -418,56 +418,6 @@ admin-multiselect-tag--custom
         <div class="admin-modal-content admin-modal-body">
             {{ caller() }}
         </div>
-    </div>
-</div>
-{% endmacro %}
-
-{% macro waiver_card(waiver, title, icon, beneficiary_label, beneficiary_name, list_url, new_url, send_url=None) %}
-<div class="project-doc-item u-border-left-waiver u-flex u-flex-column u-justify-between u-p-3">
-    <div class="project-doc-info">
-        <div class="project-doc-title u-font-semibold u-text-xs">
-            <i data-lucide="{{ icon }}" class="u-text-waiver"></i> {{ title }}
-        </div>
-        <div class="checkout-doc-id u-mb-1">
-            {% if waiver and waiver.waiver_num and list_url %}
-            <a href="{{ list_url }}" class="u-text-muted u-hover-underline" title="Voir dans la liste des CGL">
-                {{ waiver.waiver_num }}
-            </a>
-            {% else %}
-            {{ waiver.waiver_num or 'Non créé' }}
-            {% endif %}
-        </div>
-        {% if beneficiary_name %}
-        <div class="project-doc-beneficiary">
-            {{ beneficiary_label }} : <span class="project-doc-beneficiary-name">{{ beneficiary_name }}</span>
-        </div>
-        {% endif %}
-    </div>
-    <div class="projects-cell-item u-flex u-flex-column u-justify-between u-align-center u-mt-2">
-        {% if waiver and waiver.id and waiver.waiver_num %}
-        {% if waiver.raw_status in ['to_send', 'to_generate'] and send_url %}
-        <form action="{{ send_url }}" method="POST" class="u-m-0 u-d-inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-            <button type="submit" class="badge-pill u-pointer" data-val="to_send"
-                title="Envoyer le document par e-mail en 1 clic">
-                <i data-lucide="send"></i> À envoyer
-            </button>
-        </form>
-        {% else %}
-        <a href="{{ list_url }}" title="Voir le document">
-            {{ status_badge(waiver.status, waiver.raw_status) }}
-        </a>
-        {% endif %}
-        {{ doc_download_badge(waiver.pdf_path) }}
-        {% else %}
-        <form action="{{ new_url }}" method="POST" class="u-m-0 u-d-inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="badge-pill u-pointer" data-val="to_generate"
-                title="Créer et générer le document en 1 clic">
-                <i data-lucide="refresh-cw"></i> À générer</button>
-        </form>
-        {% endif %}
     </div>
 </div>
 {% endmacro %}

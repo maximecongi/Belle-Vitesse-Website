@@ -324,6 +324,13 @@ class RouteSmokeTest(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Tournage Urgent Aujourd&#39;hui", resp.get_data(as_text=True))
         self.assertNotIn("Aucun départ ou retour prévu aujourd&#39;hui.", resp.get_data(as_text=True))
+        html = resp.get_data(as_text=True)
+        self.assertIn("Attestations Pilote", html)
+        self.assertIn("Risk Assessment (BVRA)", html)
+        self.assertIn("invite=addPilotSignerModal", html)
+        self.assertIn("invite=addRiskSignerModal", html)
+        self.assertIn("invite=addCglSignerModal", html)
+        self.assertNotIn("Non généré", html)
 
     def test_dashboard_agenda_shoot_start_fallback(self):
         """Test that a project without explicit departure_date falls back to shoot_start_date for checkout."""

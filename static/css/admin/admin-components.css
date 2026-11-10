@@ -390,7 +390,6 @@ a.badge-pill:hover {
 
 
 /* --- Document / Waiver / Inspection Statuses --- */
-.badge-pill[data-val="to_generate"],
 .badge-pill[data-val="À générer"],
 .badge-pill[data-val="à générer"],
 .badge-pill[data-val="a générer"],
@@ -406,6 +405,8 @@ a.badge-pill:hover {
 
 
 
+/* to_generate : document créé ou réinitialisé, généré automatiquement à l'envoi → « À envoyer » */
+.badge-pill[data-val="to_generate"],
 .badge-pill[data-val="to_send"],
 .badge-pill[data-val="À envoyer"],
 .badge-pill[data-val="à envoyer"],

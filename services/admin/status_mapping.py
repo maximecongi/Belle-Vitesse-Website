@@ -7,7 +7,8 @@ Utilise des clés anglaises standardisées comme source de vérité.
 # ── Waivers Mapping ──────────────────────────────────────────────
 
 WAIVER_STATUS_MAP = {
-    "to_generate": "À générer",
+    # Document créé (ou réinitialisé) mais pas encore généré : l'envoi le génère automatiquement.
+    "to_generate": "À envoyer",
     "to_send": "À envoyer",
     "to_sign": "À signer",
     "signed": "Signé",
@@ -23,7 +24,7 @@ def format_waiver_status(status_id):
     Mappe un identifiant de statut de décharge interne vers son label français.
     """
     if not status_id:
-        return "À générer"
+        return "À envoyer"
     return WAIVER_STATUS_MAP.get(str(status_id).lower(), str(status_id).capitalize())
 
 

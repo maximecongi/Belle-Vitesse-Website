@@ -138,6 +138,11 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "status": format_waiver_status(p.active_cgl.status) if p.active_cgl else "",
             "raw_status": p.active_cgl.status if p.active_cgl else "",
             "pdf_path": _get_secured_document_url(p.active_cgl.signed_pdf_path, "cgl") if p.active_cgl else None,
+            # Vue « invitation » (1 signataire unique : le représentant de la production)
+            "signer_name": (p.active_cgl.signer_name or "") if p.active_cgl else "",
+            "count": 1 if p.active_cgl else 0,
+            "signed_count": 1 if (p.active_cgl and p.active_cgl.status == "signed") else 0,
+            "has_pending": bool(p.active_cgl and p.active_cgl.status in ("to_send", "to_sign")),
         },
         "safety_rules": {
             "count": len(p.active_safety_rules),

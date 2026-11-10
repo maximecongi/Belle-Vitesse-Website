@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
-initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
+initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
 {% from "admin/_notion_editor.html" import notion_report_editor %}
 {% from "admin/_report_fields.html" import report_title_day_row, report_category_picker, report_photos_input, report_list_row %}
 {% from "admin/_signer_invite.html" import signer_invite_modal %}
@@ -734,8 +734,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
-                    Aucune CGL générée pour ce projet. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions
-                    Générales de Location.
+                    Aucun signataire invité. Cliquez sur <strong>Inviter</strong> pour envoyer les Conditions
+                    Générales de Location au représentant de la production.
                 </p>
                 {% endif %}
             </div>

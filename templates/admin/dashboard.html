@@ -2,6 +2,57 @@
 
 {% from "admin/macros.html" import empty_state, status_badge, incident_status_badge, incident_signature_badge %}
 
+{# Ligne d'agenda d'un document sur invitation (CGL, BVSR, Annexe 3, BVRA) #}
+{% macro agenda_waiver_row(project, data, label, icon, list_url, invite_modal, invite_title, send_url=None) %}
+{% if data and data.count > 0 and send_url and data.raw_status == 'to_send' %}
+{# Invitation créée mais pas encore envoyée : envoi par e-mail en 1 clic #}
+<form action="{{ send_url }}" method="POST" class="today-row-waiver-link u-m-0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="return_to" value="{{ request.full_path }}">
+    <button type="submit" class="today-row-waiver-btn"
+        title="Envoyer l'invitation{{ ' à ' ~ data.signer_name if data.signer_name }} par e-mail en 1 clic">
+        <span class="today-row-label u-text-medium">
+            <i data-lucide="{{ icon }}"></i>
+            <span>{{ label }}</span>
+        </span>
+        <span class="badge-pill u-badge-agenda" data-val="to_send">
+            <i data-lucide="send"></i> À envoyer
+        </span>
+    </button>
+</form>
+{% elif data and data.count > 0 %}
+<a class="today-row-waiver-link" href="{{ list_url }}"
+    title="{% if data.signer_name %}{{ data.signer_name }} — {% endif %}{{ data.signed_count }}/{{ data.count }} signataire(s) validé(s)">
+    <span class="today-row-label u-text-medium">
+        <i data-lucide="{{ icon }}"></i>
+        <span>{{ label }}</span>
+    </span>
+    {% if data.signed_count == data.count %}
+    <span class="badge-pill u-badge-agenda" data-val="signed">
+        <i data-lucide="circle-check"></i> {{ data.signed_count }}/{{ data.count }} signé{{ 's' if data.count > 1 else '' }}
+    </span>
+    {% elif data.has_pending %}
+    <span class="badge-pill u-badge-agenda" data-val="to_sign">
+        <i data-lucide="clock"></i> {{ data.signed_count }}/{{ data.count }} signé{{ 's' if data.signed_count > 1 else '' }}
+    </span>
+    {% else %}
+    <span class="badge-pill u-badge-agenda" data-val="to_send">
+        <i data-lucide="send"></i> {{ data.signed_count }}/{{ data.count }} signé{{ 's' if data.signed_count > 1 else '' }}
+    </span>
+    {% endif %}
+</a>
+{% else %}
+<a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id, invite=invite_modal) }}"
+    class="today-row-waiver-link" title="{{ invite_title }}">
+    <span class="today-row-label">
+        <i data-lucide="{{ icon }}"></i>
+        <span>{{ label }}</span>
+    </span>
+    <span class="badge-pill u-badge-agenda" data-val="neutral">0 invité</span>
+</a>
+{% endif %}
+{% endmacro %}
+
 {% block title %}Tableau de bord{% endblock %}
 {% block page_title %}Tableau de bord{% endblock %}
 
@@ -103,83 +154,21 @@
                 <div class="agenda-section">
                     <div class="agenda-section-title">CGL & Sécurité</div>
                     <div class="u-flex u-flex-column u-gap-1">
-                        {% if project.cgl and project.cgl.id %}
-                        {% if project.cgl.raw_status in ['to_send', 'to_generate'] %}
-                        <form
-                            action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=project.cgl.waiver_num or project.cgl.id) }}"
-                            method="POST" class="today-row-waiver-link u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="today-row-waiver-btn"
-                                title="Envoyer les CGL par e-mail en 1 clic">
-                                <span class="today-row-label u-text-medium">
-                                    <i data-lucide="file-signature"></i>
-                                    <span>Conditions Générales (CGL)</span>
-                                </span>
-                                <span class="badge-pill u-badge-agenda" data-val="to_send">
-                                    <i data-lucide="send"></i> À envoyer</span>
-                            </button>
-                        </form>
-                        {% else %}
-                        <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_waivers.admin_cgl_list') }}?q={{ project.cgl.waiver_num|urlencode }}"
-                            title="Consulter les CGL">
-                            <span class="today-row-label u-text-medium">
-                                <i data-lucide="file-signature"></i>
-                                <span>Conditions Générales (CGL)</span>
-                            </span>
-                            {{ status_badge(project.cgl.status, project.cgl.raw_status,
-                            class_name='u-badge-agenda') }}
-                        </a>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id, invite='addCglSignerModal') }}"
-                            class="today-row-waiver-link" title="Inviter le signataire des CGL">
-                            <span class="today-row-label">
-                                <i data-lucide="file-signature"></i>
-                                <span>Conditions Générales (CGL)</span>
-                            </span>
-                            {{ status_badge('Non généré', 'to_generate', class_name='u-badge-agenda') }}
-                        </a>
-                        {% endif %}
+                        {{ agenda_waiver_row(project, project.cgl, 'Conditions Générales (CGL)', 'file-signature',
+                        url_for('admin_waivers.admin_cgl_list', q=project.cgl.waiver_num) if project.cgl else '',
+                        'addCglSignerModal', 'Inviter le représentant de la production à signer les CGL',
+                        send_url=url_for('admin_waivers.admin_cgl_send', waiver_id=project.cgl.waiver_num or project.cgl.id)
+                        if project.cgl and project.cgl.id else None) }}
 
-                        {% if project.safety_rules and project.safety_rules.count > 0 %}
-                        <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_waivers.admin_safety_rules_list', q=project.name) }}"
-                            title="{{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signataire(s) validé(s)">
-                            <span class="today-row-label u-text-medium">
-                                <i data-lucide="shield-check"></i>
-                                <span>Règles de Sécurité</span>
-                            </span>
-                            {% if project.safety_rules.signed_count == project.safety_rules.count %}
-                            <span class="badge-pill u-badge-agenda" data-val="signed">
-                                <i data-lucide="circle-check"></i> {{ project.safety_rules.signed_count }}/{{
-                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.count > 1 else '' }}
-                            </span>
-                            {% elif project.safety_rules.has_pending %}
-                            <span class="badge-pill u-badge-agenda" data-val="to_sign">
-                                <i data-lucide="clock"></i> {{ project.safety_rules.signed_count }}/{{
-                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else
-                                '' }}
-                            </span>
-                            {% else %}
-                            <span class="badge-pill u-badge-agenda" data-val="to_send">
-                                <i data-lucide="send"></i> {{ project.safety_rules.signed_count }}/{{
-                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else
-                                '' }}
-                            </span>
-                            {% endif %}
-                        </a>
-                        {% else %}
-                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}"
-                            class="today-row-waiver-link" title="Inviter des signataires aux règles de sécurité">
-                            <span class="today-row-label">
-                                <i data-lucide="shield-check"></i>
-                                <span>Règles de Sécurité</span>
-                            </span>
-                            <span class="badge-pill u-badge-agenda" data-val="neutral">0 invité</span>
-                        </a>
-                        {% endif %}
+                        {{ agenda_waiver_row(project, project.safety_rules, 'Règles de Sécurité (BVSR)', 'shield-check',
+                        url_for('admin_waivers.admin_safety_rules_list', q=project.name), 'addSafetyRulesSignerModal',
+                        'Inviter des signataires aux règles de sécurité') }}
+                        {{ agenda_waiver_row(project, project.pilot_waivers, 'Attestations Pilote', 'user-check',
+                        url_for('admin_waivers.admin_pilot_waivers_list', q=project.name), 'addPilotSignerModal',
+                        'Inviter un pilote / cascadeur (Annexe 3 aux CGL)') }}
+                        {{ agenda_waiver_row(project, project.risk_assessments, 'Risk Assessment (BVRA)', 'shield-alert',
+                        url_for('admin_waivers.admin_risk_assessment_list', q=project.name), 'addRiskSignerModal',
+                        "Inviter des signataires à l'évaluation des risques") }}
                     </div>
                 </div>
             </div>

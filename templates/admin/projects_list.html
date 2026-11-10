@@ -140,8 +140,8 @@ is_archive) }}
                             {{ doc_download_badge(project.cgl.pdf_path) }}
                             {% else %}
                             <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id, invite='addCglSignerModal') }}"
-                                title="Inviter le signataire des CGL">
-                                {{ status_badge('À générer', 'to_generate') }}
+                                title="Inviter le représentant de la production à signer les CGL">
+                                <span class="badge-pill" data-val="neutral">0 invité</span>
                             </a>
                             {% endif %}
                         </div>
