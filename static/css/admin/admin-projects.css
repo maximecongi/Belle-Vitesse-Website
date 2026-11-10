@@ -529,19 +529,22 @@
     position: relative;
     top: 6px;
     border-radius: 50%;
-    color: var(--grey-1, #151515);
-    background: var(--admin-accent, #FFC845);
+    /* Autres auteurs : gris neutre ; ses propres rapports : jaune accent (.is-mine) */
+    color: #334155;
+    background: #e2e8f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.65rem;
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
     flex-shrink: 0;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1.5px var(--neutral-bg);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
     z-index: 2;
+}
+
+.project-report-avatar.is-mine {
+    color: var(--grey-1, #151515);
+    background: var(--admin-accent, #FFC845);
 }
 
 .project-reports-timeline:before {
@@ -1480,7 +1483,8 @@
 .project-contacts-list {
     display: flex;
     flex-direction: column;
-    max-height: 18rem; /* ≈ 6 contacts visibles : plus de ligne coupée à 5 contacts, défilement au-delà */
+    max-height: 18rem;
+    /* ≈ 6 contacts visibles : plus de ligne coupée à 5 contacts, défilement au-delà */
     overflow-y: auto;
     padding-right: 2px;
 }
@@ -2022,15 +2026,39 @@
     font-size: 0.65rem;
     color: #64748b;
 }
+
 /* ═══════════ Rapports d'équipe : catégories, jours, photos, filtres, brouillons ═══════════ */
 
 /* Couleurs de catégorie (badge, sélecteur, liseré de carte) */
-.report-category--note { --report-cat: #64748b; --report-cat-bg: #f1f5f9; }
-.report-category--debrief { --report-cat: #0369a1; --report-cat-bg: #e0f2fe; }
-.report-category--technique { --report-cat: #6d28d9; --report-cat-bg: #ede9fe; }
-.report-category--logistique { --report-cat: #b45309; --report-cat-bg: #fef3c7; }
-.report-category--securite { --report-cat: #b91c1c; --report-cat-bg: #fee2e2; }
-.report-category--production { --report-cat: #15803d; --report-cat-bg: #dcfce7; }
+.report-category--note {
+    --report-cat: #64748b;
+    --report-cat-bg: #f1f5f9;
+}
+
+.report-category--debrief {
+    --report-cat: #0369a1;
+    --report-cat-bg: #e0f2fe;
+}
+
+.report-category--technique {
+    --report-cat: #6d28d9;
+    --report-cat-bg: #ede9fe;
+}
+
+.report-category--logistique {
+    --report-cat: #b45309;
+    --report-cat-bg: #fef3c7;
+}
+
+.report-category--securite {
+    --report-cat: #b91c1c;
+    --report-cat-bg: #fee2e2;
+}
+
+.report-category--production {
+    --report-cat: #15803d;
+    --report-cat-bg: #dcfce7;
+}
 
 .report-category-badge {
     display: inline-flex;
@@ -2039,18 +2067,36 @@
     font-weight: 700;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    padding: 0.12rem 0.45rem;
+    padding: 0.32rem 0.65rem;
     border-radius: 999px;
     color: var(--report-cat, #64748b);
     background: var(--report-cat-bg, #f1f5f9);
 }
 
-.project-report-card.report-card--debrief { border-left-color: #0ea5e9; }
-.project-report-card.report-card--technique { border-left-color: #8b5cf6; }
-.project-report-card.report-card--logistique { border-left-color: #f59e0b; }
-.project-report-card.report-card--securite { border-left-color: #ef4444; }
-.project-report-card.report-card--production { border-left-color: #22c55e; }
-.project-report-card[class*="report-card--"] { border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */ }
+.project-report-card.report-card--debrief {
+    border-left-color: #0ea5e9;
+}
+
+.project-report-card.report-card--technique {
+    border-left-color: #8b5cf6;
+}
+
+.project-report-card.report-card--logistique {
+    border-left-color: #f59e0b;
+}
+
+.project-report-card.report-card--securite {
+    border-left-color: #ef4444;
+}
+
+.project-report-card.report-card--production {
+    border-left-color: #22c55e;
+}
+
+.project-report-card[class*="report-card--"] {
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
+}
 
 .report-day-badge {
     display: inline-flex;
@@ -2139,13 +2185,13 @@
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.report-category-option input:checked + span {
+.report-category-option input:checked+span {
     color: var(--report-cat);
     background: var(--report-cat-bg);
     border-color: var(--report-cat);
 }
 
-.report-category-option input:focus-visible + span {
+.report-category-option input:focus-visible+span {
     outline: 2px solid var(--admin-accent, #ffc845);
     outline-offset: 2px;
 }
@@ -2187,7 +2233,7 @@
     border-color: var(--admin-accent, #ffc845);
 }
 
-.report-photos-input:focus-visible + .report-photos-preview,
+.report-photos-input:focus-visible+.report-photos-preview,
 .report-photos-field:focus-within .report-photos-add {
     outline: 2px solid var(--admin-accent, #ffc845);
     outline-offset: 2px;
@@ -2477,7 +2523,7 @@
 }
 
 @media (max-width: 640px) {
-    .report-toolbar > * {
+    .report-toolbar>* {
         flex: 1 1 100%;
     }
 
@@ -2697,29 +2743,35 @@
     border-color: #cbd5e1;
 }
 
-.report-pill--choice {
+/* Sélecteur de catégorie : mêmes badges que .report-category-badge ; non sélectionnés atténués,
+   sélectionné en pleine couleur avec un contour de la couleur de catégorie */
+.report-category-choice {
     position: relative;
-    padding: 0;
+    display: inline-flex;
+    cursor: pointer;
 }
 
-.report-pill--choice span {
-    padding: 0.3rem 0.85rem;
-}
-
-.report-pill--choice input {
+.report-category-choice input {
     position: absolute;
     opacity: 0;
     pointer-events: none;
 }
 
-.report-pill--choice:has(input:checked) {
-    color: var(--report-cat);
-    border-color: var(--report-cat);
-    box-shadow: inset 0 0 0 1px var(--report-cat);
-    font-weight: 600;
+.report-category-choice .report-category-badge {
+    opacity: 0.45;
+    transition: opacity 0.15s ease, box-shadow 0.15s ease;
 }
 
-.report-pill--choice:has(input:focus-visible) {
+.report-category-choice:hover .report-category-badge {
+    opacity: 0.8;
+}
+
+.report-category-choice:has(input:checked) .report-category-badge {
+    opacity: 1;
+    box-shadow: 0 0 0 1.5px var(--report-cat);
+}
+
+.report-category-choice:has(input:focus-visible) .report-category-badge {
     outline: 2px solid var(--admin-accent, #ffc845);
     outline-offset: 2px;
 }
@@ -2896,7 +2948,7 @@
 }
 
 /* Rapports sans jour de tournage : s'il n'y a que ce groupe, l'en-tête n'apporte rien */
-.report-day-group[data-group-day=""]:only-child > .report-day-header {
+.report-day-group[data-group-day=""]:only-child>.report-day-header {
     display: none;
 }
 
@@ -2970,7 +3022,7 @@
     color: #64748b;
 }
 
-.report-card-meta > span + span::before {
+.report-card-meta>span+span::before {
     content: " · ";
     color: #94a3b8;
     font-style: normal;
@@ -3002,6 +3054,248 @@
     width: 74px;
     height: 56px;
     border-radius: 2px;
+}
+
+/* ── Rapports : liste + lecture (hauteur fixe, scroll interne dans chaque volet) ── */
+.report-browser {
+    --report-browser-height: 560px;
+    display: grid;
+    grid-template-columns: minmax(220px, 36%) minmax(0, 1fr);
+    height: var(--report-browser-height);
+    margin-top: 0.25rem;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.report-browser[hidden] {
+    display: none;
+}
+
+.report-browser-list {
+    position: relative;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.report-browser-list .report-day-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0.45rem 0.75rem;
+    background: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.report-browser-list .report-day-title {
+    font-size: 0.66rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.report-list-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.6rem 0.75rem;
+    border: 0;
+    border-left: 3.5px solid #cbd5e1;
+    border-bottom: 1px solid #eef0f3;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
+    background: #ffffff;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.report-list-row[hidden] {
+    display: none;
+}
+
+.report-list-row:hover {
+    background: #f8fafc;
+}
+
+.report-list-row:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+}
+
+.report-list-row.is-selected {
+    background: #f1f5f9;
+    box-shadow: inset 0 0 0 1px #0f172a;
+}
+
+.report-list-row.is-new {
+    background: #fffbeb;
+}
+
+.report-list-row--debrief {
+    border-left-color: #0ea5e9;
+}
+
+.report-list-row--technique {
+    border-left-color: #8b5cf6;
+}
+
+.report-list-row--logistique {
+    border-left-color: #f59e0b;
+}
+
+.report-list-row--securite {
+    border-left-color: #ef4444;
+}
+
+.report-list-row--production {
+    border-left-color: #22c55e;
+}
+
+.report-list-row--draft {
+    border-left-color: var(--grey-1, #151515);
+}
+
+.report-list-row-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.report-list-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.report-list-row-meta>span:last-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.report-list-row-avatar.project-report-avatar {
+    top: 0;
+    width: 20px;
+    border: none;
+    box-shadow: none;
+    font-size: 0.5rem;
+    letter-spacing: 0;
+}
+
+.report-list-nomatch {
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.report-list-nomatch .empty-state {
+    margin: 0 0 0.6rem;
+}
+
+.report-browser-reader {
+    min-width: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.1rem 1.25rem;
+}
+
+.report-browser-reader .project-report-item[hidden] {
+    display: none;
+}
+
+/* Dans le volet de lecture, la carte et le formulaire n'ont plus de cadre : le volet en tient lieu */
+.report-browser-reader .project-report-card,
+.report-browser-reader .project-report-item:hover .project-report-card {
+    border: 0;
+    padding: 0;
+    box-shadow: none;
+}
+
+.report-browser-reader .report-compose {
+    border: 0;
+    margin: 0;
+}
+
+.report-browser-reader .report-compose-head {
+    padding: 0;
+}
+
+.report-browser-reader .report-compose-body {
+    padding: 0.9rem 0 0;
+}
+
+.report-reader-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.report-reader-placeholder[hidden] {
+    display: none;
+}
+
+.report-reader-placeholder .empty-state {
+    margin: 0;
+    border: 0;
+    background: transparent;
+}
+
+.report-reader-back {
+    display: none;
+}
+
+/* Mobile : « liste puis lecture » */
+@media (max-width: 768px) {
+    .report-browser {
+        grid-template-columns: minmax(0, 1fr);
+        height: min(var(--report-browser-height), 75vh);
+    }
+
+    .report-browser-list {
+        border-right: 0;
+    }
+
+    .report-browser-reader,
+    .report-browser.is-reading .report-browser-list {
+        display: none;
+    }
+
+    .report-browser.is-reading .report-browser-reader {
+        display: block;
+    }
+
+    .report-reader-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: 0.75rem;
+        padding: 0.35rem 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #0f172a;
+        cursor: pointer;
+    }
+
+    .report-reader-back svg {
+        width: 14px;
+        height: 14px;
+    }
 }
 
 /* Corbeille */
@@ -3074,7 +3368,7 @@
     }
 
     .report-pill,
-    .report-pill--choice span {
+    .report-category-choice .report-category-badge {
         padding-top: 0.45rem;
         padding-bottom: 0.45rem;
     }

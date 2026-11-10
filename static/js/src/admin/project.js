@@ -325,74 +325,10 @@ function initProjectNotesEdit() {
     });
 }
 
-function initSafetyRulesSignerModal() {
-    if (document._safetyRulesSignerModalBound) return;
-    document._safetyRulesSignerModalBound = true;
-
-    // Ouverture déléguée
-    document.addEventListener('click', (e) => {
-        const openBtn = e.target.closest('.js-open-add-safety-signer-modal');
-        if (openBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addSafetyRulesSignerModal');
-            if (modal) {
-                modal.classList.remove('u-d-none');
-                modal.classList.add('is-active');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
-                }
-            }
-            return;
-        }
-
-        // Fermeture via bouton fermer ou annuler
-        const closeBtn = e.target.closest('.js-close-safety-signer-modal');
-        if (closeBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addSafetyRulesSignerModal');
-            if (modal) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
-            return;
-        }
-
-        // Fermeture au clic sur le fond (overlay)
-        const modal = document.getElementById('addSafetyRulesSignerModal');
-        if (modal && e.target === modal) {
-            modal.classList.add('u-d-none');
-            modal.classList.remove('is-active');
-        }
-    });
-
-    // Fermeture avec la touche Échap
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key === 'Esc') {
-            const modal = document.getElementById('addSafetyRulesSignerModal');
-            if (modal && modal.classList.contains('is-active')) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
-        }
-    });
-
-    // Bascule du champ personnalisé "Autre"
-    document.addEventListener('change', (e) => {
-        if (e.target && e.target.id === 'new_signer_role') {
-            const customRoleGroup = document.getElementById('new_signer_role_custom_group');
-            if (customRoleGroup) {
-                if (e.target.value === 'other') {
-                    customRoleGroup.classList.remove('u-d-none');
-                    const customInput = customRoleGroup.querySelector('input');
-                    if (customInput) customInput.focus();
-                } else {
-                    customRoleGroup.classList.add('u-d-none');
-                }
-            }
-        }
-    });
-}
-
+/*
+ * Les modales d'invitation (CGL, BVSR, Annexe 3, BVRA) sont gérées par signer-invite.js.
+ * Seule la validation des véhicules de l'attestation pilote (Annexe 3) reste propre à ce module.
+ */
 function initPilotSignerModal() {
     if (document._pilotSignerModalBound) return;
     document._pilotSignerModalBound = true;
@@ -421,51 +357,9 @@ function initPilotSignerModal() {
         }
     }
 
-    // Ouverture déléguée
-    document.addEventListener('click', (e) => {
-        const openBtn = e.target.closest('.js-open-add-pilot-signer-modal');
-        if (openBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addPilotSignerModal');
-            if (modal) {
-                updatePilotVehicleValidation(modal);
-                modal.classList.remove('u-d-none');
-                modal.classList.add('is-active');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
-                }
-            }
-            return;
-        }
-
-        // Fermeture via bouton fermer ou annuler
-        const closeBtn = e.target.closest('.js-close-pilot-signer-modal');
-        if (closeBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addPilotSignerModal');
-            if (modal) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
-            return;
-        }
-
-        // Fermeture au clic sur le fond (overlay)
-        const modal = document.getElementById('addPilotSignerModal');
-        if (modal && e.target === modal) {
-            modal.classList.add('u-d-none');
-            modal.classList.remove('is-active');
-        }
-    });
-
-    // Fermeture avec la touche Échap
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key === 'Esc') {
-            const modal = document.getElementById('addPilotSignerModal');
-            if (modal && modal.classList.contains('is-active')) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
+    document.addEventListener('signer-modal:open', (e) => {
+        if (e.target && e.target.id === 'addPilotSignerModal') {
+            updatePilotVehicleValidation(e.target);
         }
     });
 
@@ -478,10 +372,7 @@ function initPilotSignerModal() {
                 card.classList.toggle('selected', cb.checked);
             }
             if (cb.matches('#addPilotSignerModal input[name="selected_vehicles"]')) {
-                const modal = document.getElementById('addPilotSignerModal');
-                if (modal) {
-                    updatePilotVehicleValidation(modal);
-                }
+                updatePilotVehicleValidation(document.getElementById('addPilotSignerModal'));
             }
         }
     });
@@ -509,70 +400,6 @@ function initPilotSignerModal() {
                 window.showFlash("Veuillez sélectionner au moins 1 véhicule.", "error");
             }
             return false;
-        }
-    });
-}
-
-function initRiskSignerModal() {
-    if (document._riskSignerModalBound) return;
-    document._riskSignerModalBound = true;
-
-    // Ouverture déléguée
-    document.addEventListener('click', (e) => {
-        const openBtn = e.target.closest('.js-open-add-risk-signer-modal');
-        if (openBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addRiskSignerModal');
-            if (modal) {
-                modal.classList.remove('u-d-none');
-                modal.classList.add('is-active');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
-                }
-            }
-            return;
-        }
-
-        const closeBtn = e.target.closest('.js-close-risk-signer-modal');
-        if (closeBtn) {
-            e.preventDefault();
-            const modal = document.getElementById('addRiskSignerModal');
-            if (modal) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
-            return;
-        }
-
-        const modal = document.getElementById('addRiskSignerModal');
-        if (modal && e.target === modal) {
-            modal.classList.add('u-d-none');
-            modal.classList.remove('is-active');
-        }
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' || e.key === 'Esc') {
-            const modal = document.getElementById('addRiskSignerModal');
-            if (modal && modal.classList.contains('is-active')) {
-                modal.classList.add('u-d-none');
-                modal.classList.remove('is-active');
-            }
-        }
-    });
-
-    document.addEventListener('change', (e) => {
-        if (e.target && e.target.id === 'new_risk_signer_role') {
-            const customRoleGroup = document.getElementById('new_risk_signer_role_custom_group');
-            if (customRoleGroup) {
-                if (e.target.value === 'other') {
-                    customRoleGroup.classList.remove('u-d-none');
-                    const customInput = customRoleGroup.querySelector('input');
-                    if (customInput) customInput.focus();
-                } else {
-                    customRoleGroup.classList.add('u-d-none');
-                }
-            }
         }
     });
 }
@@ -648,21 +475,15 @@ function initProjectInteractions() {
     try { initProjectReportsCollapsible(); } catch (e) { console.error('Error in initProjectReportsCollapsible', e); }
     try { initProjectReportsEdit(); } catch (e) { console.error('Error in initProjectReportsEdit', e); }
     try { initProjectNotesEdit(); } catch (e) { console.error('Error in initProjectNotesEdit', e); }
-    try { initSafetyRulesSignerModal(); } catch (e) { console.error('Error in initSafetyRulesSignerModal', e); }
     try { initPilotSignerModal(); } catch (e) { console.error('Error in initPilotSignerModal', e); }
-    try { initRiskSignerModal(); } catch (e) { console.error('Error in initRiskSignerModal', e); }
     try { initRoadLegalToggle(); } catch (e) { console.error('Error in initRoadLegalToggle', e); }
 }
 
-window.initSafetyRulesSignerModal = initSafetyRulesSignerModal;
 window.initPilotSignerModal = initPilotSignerModal;
-window.initRiskSignerModal = initRiskSignerModal;
 window.initRoadLegalToggle = initRoadLegalToggle;
 window.initProjectInteractions = initProjectInteractions;
 
 // Initialisation immédiate des écouteurs de modals dès l'évaluation du script
-initSafetyRulesSignerModal();
 initPilotSignerModal();
-initRiskSignerModal();
 initRoadLegalToggle();
 

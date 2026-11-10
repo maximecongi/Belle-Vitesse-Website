@@ -3,6 +3,8 @@
  *  - Brouillons automatiques (création et modification) conservés sur l'appareil
  *  - Publication / modification / suppression / restauration sans rechargement (AJAX)
  *  - Annulation d'une suppression, corbeille administrateur
+ *  - Liste + lecture : liste regroupée par jour à gauche, rapport sélectionné à droite (hauteur fixe),
+ *    navigation au clavier (↑ ↓), affichage « liste puis lecture » sur mobile
  *  - Filtres (texte, catégorie, jour) et lien d'export PDF synchronisé
  *  - Compte à rebours de la fenêtre de modification (3 h)
  *  - Aperçu et limite des photos jointes
@@ -266,15 +268,61 @@
             : 'Connexion impossible. Votre brouillon est conservé sur cet appareil : réessayez dès que le réseau revient.';
     }
 
-    // ── Timeline ────────────────────────────────────────────────
+    // ── Liste + lecture ─────────────────────────────────────────
 
     function root() {
         return document.querySelector('[data-reports-root]');
     }
 
-    function timeline() {
+    function find(selector) {
         const r = root();
-        return r && r.querySelector('[data-reports-timeline]');
+        return r && r.querySelector(selector);
+    }
+
+    function timeline() {
+        return find('[data-reports-timeline]');
+    }
+
+    function createForm() {
+        return find('[data-report-form="create"]');
+    }
+
+    function isComposeOpen() {
+        const form = createForm();
+        return Boolean(form && !form.hidden);
+    }
+
+    function allItems() {
+        const tl = timeline();
+        return tl ? [...tl.querySelectorAll('.project-report-item')] : [];
+    }
+
+    function rowFor(id) {
+        return find(`[data-report-row="${id}"]`);
+    }
+
+    function visibleRows() {
+        const box = find('[data-reports-groups]');
+        return box ? [...box.querySelectorAll('[data-report-row]')].filter((row) => !row.hidden) : [];
+    }
+
+    function selectedId() {
+        const r = root();
+        return (r && r._selectedId) || '';
+    }
+
+    // Bloc liste + lecture visible s'il y a des rapports (ou un rapport en cours de rédaction)
+    function updateVisibility() {
+        const r = root();
+        if (!r) return;
+        const count = allItems().length;
+        const compose = isComposeOpen();
+        const browser = r.querySelector('[data-reports-browser]');
+        const empty = r.querySelector('[data-reports-empty]');
+        const toolbar = r.querySelector('[data-reports-toolbar]');
+        if (browser) browser.hidden = count === 0 && !compose;
+        if (empty) empty.hidden = count > 0 || compose;
+        if (toolbar) toolbar.hidden = count === 0;
     }
 
     function updateCount(count) {
@@ -289,28 +337,44 @@
             if (textNode) textNode.textContent = ` ${text} `;
             else label.textContent = text;
         }
-        const tl = timeline();
-        const empty = r.querySelector('[data-reports-empty]');
-        const toolbar = r.querySelector('[data-reports-toolbar]');
-        if (tl) tl.hidden = count === 0;
-        if (empty) empty.hidden = count > 0;
-        if (toolbar) toolbar.hidden = count === 0;
+        updateVisibility();
     }
 
     function createdAt(item) {
         return item.dataset.createdAt || '';
     }
 
-    function allItems() {
-        const tl = timeline();
-        return tl ? [...tl.querySelectorAll('.project-report-item')] : [];
+    // Ligne de liste construite à partir des data-* de la carte (même balisage que report_list_row())
+    function buildRow(item) {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = `report-list-row report-list-row--${item.dataset.category || 'note'}`;
+        row.dataset.reportRow = item.dataset.reportId;
+        row.setAttribute('aria-controls', item.id);
+        row.setAttribute('aria-current', 'false');
+        const title = document.createElement('span');
+        title.className = 'report-list-row-title';
+        title.textContent = item.dataset.title || '';
+        const meta = document.createElement('span');
+        meta.className = 'report-list-row-meta';
+        const avatar = document.createElement('span');
+        avatar.className = `project-report-avatar report-list-row-avatar${item.dataset.mine === '1' ? ' is-mine' : ''}`;
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.textContent = item.dataset.initials || '';
+        const info = document.createElement('span');
+        info.textContent = [item.dataset.time, item.dataset.categoryLabel].filter(Boolean).join(' · ');
+        meta.append(avatar, info);
+        row.append(title, meta);
+        return row;
     }
 
-    // Regroupe les cartes par jour de tournage (jours récents d'abord, « Général » (sans jour) en dernier ;
-    // rapports récents d'abord dans chaque jour). Même ordre que group_reports_by_day() côté serveur.
+    // Reconstruit la liste regroupée par jour de tournage (jours récents d'abord, « Général » (sans jour)
+    // en dernier ; rapports récents d'abord dans chaque jour). Même ordre que group_reports_by_day() côté
+    // serveur. Les cartes du volet de lecture sont rangées dans le même ordre.
     function regroup() {
         const tl = timeline();
-        if (!tl) return;
+        const box = find('[data-reports-groups]');
+        if (!tl || !box) return;
         const groups = new Map();
         allItems().forEach((item) => {
             const day = item.dataset.day || '';
@@ -321,6 +385,7 @@
         if (groups.has('')) days.push('');
 
         const fragment = document.createDocumentFragment();
+        const ordered = [];
         days.forEach((day) => {
             const group = groups.get(day);
             group.items.sort((a, b) => (createdAt(a) < createdAt(b) ? 1 : createdAt(a) > createdAt(b) ? -1 : 0));
@@ -332,44 +397,113 @@
             const title = document.createElement('span');
             title.className = 'report-day-title';
             title.textContent = group.heading;
-            const rule = document.createElement('span');
-            rule.className = 'report-day-rule';
-            rule.setAttribute('aria-hidden', 'true');
             const count = document.createElement('span');
             count.className = 'report-day-count';
             count.dataset.groupCount = '';
-            header.append(title, rule, count);
-            const list = document.createElement('div');
-            list.className = 'report-day-items';
-            group.items.forEach((item) => list.appendChild(item));
-            section.append(header, list);
+            count.textContent = String(group.items.length);
+            header.append(title, count);
+            section.appendChild(header);
+            group.items.forEach((item) => {
+                section.appendChild(buildRow(item));
+                ordered.push(item);
+            });
             fragment.appendChild(section);
         });
-        tl.innerHTML = '';
-        tl.appendChild(fragment);
+        box.innerHTML = '';
+        box.appendChild(fragment);
+        ordered.forEach((item) => tl.appendChild(item));
+        markSelection();
     }
 
-    // Insère (ou remplace) une carte puis reconstruit les groupes
-    function insertItem(element) {
+    // Une seule carte visible dans le volet de lecture : celle du rapport sélectionné
+    function markSelection() {
+        const r = root();
+        if (!r) return;
+        const compose = isComposeOpen();
+        const id = compose ? '' : selectedId();
+        allItems().forEach((item) => {
+            item.hidden = item.dataset.reportId !== id;
+        });
+        r.querySelectorAll('[data-report-row]').forEach((row) => {
+            const on = row.dataset.reportRow === id;
+            row.classList.toggle('is-selected', on);
+            row.setAttribute('aria-current', on ? 'true' : 'false');
+        });
+        const draftRow = r.querySelector('[data-compose-row]');
+        if (draftRow) draftRow.hidden = !compose;
+        const anyVisible = visibleRows().length > 0;
+        r.querySelectorAll('[data-reader-placeholder]').forEach((ph) => {
+            const forNoMatch = ph.dataset.readerPlaceholder === 'nomatch';
+            ph.hidden = compose || Boolean(id) || (forNoMatch ? anyVisible : !anyVisible);
+        });
+    }
+
+    // Garde la ligne visible dans la liste (scroll interne uniquement, jamais celui de la page)
+    function keepRowVisible(row) {
+        const list = row.closest('[data-reports-list]');
+        if (!list) return;
+        const header = row.parentElement && row.parentElement.querySelector('.report-day-header');
+        const top = row.offsetTop - (header ? header.offsetHeight : 0);
+        const bottom = row.offsetTop + row.offsetHeight;
+        if (top < list.scrollTop) list.scrollTop = top;
+        else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
+    }
+
+    // Mobile : « liste puis lecture » (le volet de lecture remplace la liste)
+    function setReading(on) {
+        const browser = find('[data-reports-browser]');
+        if (browser) browser.classList.toggle('is-reading', Boolean(on));
+    }
+
+    function selectReport(id, { focus = false, reveal = false } = {}) {
+        const r = root();
+        if (!r) return;
+        if (isComposeOpen()) setComposeOpen(false, { focus: false });
+        r._selectedId = id ? String(id) : '';
+        markSelection();
+        const reader = r.querySelector('[data-reports-reader]');
+        if (reader) reader.scrollTop = 0;
+        const row = id && rowFor(id);
+        if (row) {
+            keepRowVisible(row);
+            if (focus) row.focus();
+        }
+        setReading(Boolean(id) && reveal);
+    }
+
+    // Sélection conservée si le rapport est toujours visible, sinon premier rapport visible
+    function ensureSelection() {
+        const r = root();
+        if (!r) return;
+        const row = selectedId() && rowFor(selectedId());
+        if (!row || row.hidden) {
+            const first = visibleRows()[0];
+            r._selectedId = first ? first.dataset.reportRow : '';
+        }
+        markSelection();
+    }
+
+    // Insère (ou remplace) une carte, reconstruit la liste et sélectionne le rapport
+    function insertItem(element, { select = true } = {}) {
         const tl = timeline();
         if (!tl || !element) return;
         const existing = document.getElementById(element.id);
         if (existing) existing.replaceWith(element);
         else tl.appendChild(element);
         regroup();
-        element.classList.add('is-new');
-        setTimeout(() => element.classList.remove('is-new'), 2000);
         refreshIcons();
         updateCountdowns();
         applyFilters();
+        const id = element.dataset.reportId;
+        const row = rowFor(id);
+        if (select && row && !row.hidden) selectReport(id, { reveal: true });
+        if (row) {
+            row.classList.add('is-new');
+            setTimeout(() => row.classList.remove('is-new'), 2000);
+        }
     }
 
-    // ── Formulaire « Nouveau rapport » (replié par défaut) ──────
-
-    function createForm() {
-        const r = root();
-        return r && r.querySelector('[data-report-form="create"]');
-    }
+    // ── Formulaire « Nouveau rapport » (ouvert dans le volet de lecture) ──
 
     function setComposeOpen(open, { focus = true } = {}) {
         const r = root();
@@ -381,10 +515,16 @@
             opener.hidden = open;
             opener.setAttribute('aria-expanded', open ? 'true' : 'false');
         }
-        if (open && focus) {
+        if (open) markSelection();
+        else ensureSelection();
+        updateVisibility();
+        setReading(open);
+        if (open) {
+            const reader = r.querySelector('[data-reports-reader]');
+            if (reader) reader.scrollTop = 0;
             const title = form.querySelector('input[name="title"]');
-            if (title) title.focus();
-        } else if (!open && opener) {
+            if (focus && title) title.focus();
+        } else if (focus && opener) {
             opener.focus();
         }
     }
@@ -426,7 +566,14 @@
             if (item) {
                 const editForm = item.querySelector('[data-report-form="edit"]');
                 if (editForm) clearDraft(editForm);
+                const id = item.dataset.reportId;
+                const rows = visibleRows();
+                const index = rows.findIndex((row) => row.dataset.reportRow === id);
+                const next = rows[index + 1] || rows[index - 1];
                 item.remove();
+                const r = root();
+                if (r && selectedId() === id) r._selectedId = next ? next.dataset.reportRow : '';
+                regroup();
             }
             updateCount(data.count);
             showUndoToast(data.restore_url, csrf ? csrf.value : '');
@@ -542,16 +689,22 @@
             const ok = (!category || item.dataset.category === category)
                 && (!day || item.dataset.day === day)
                 && words.every((w) => haystack.includes(w));
-            item.hidden = !ok;
+            const row = rowFor(item.dataset.reportId);
+            if (row) row.hidden = !ok;
             if (ok) visible += 1;
         });
-        // Groupes : masqués s'ils n'ont plus de rapport visible, compteur = rapports visibles
-        tl.querySelectorAll('.report-day-group').forEach((group) => {
-            const shown = [...group.querySelectorAll('.project-report-item')].filter((it) => !it.hidden).length;
+        // Groupes de la liste : masqués s'ils n'ont plus de rapport visible, compteur = rapports visibles
+        r.querySelectorAll('[data-reports-groups] .report-day-group').forEach((group) => {
+            const shown = [...group.querySelectorAll('[data-report-row]')].filter((row) => !row.hidden).length;
             group.hidden = shown === 0;
             const counter = group.querySelector('[data-group-count]');
-            if (counter) counter.textContent = `${shown} rapport${shown > 1 ? 's' : ''}`;
+            if (counter) {
+                counter.textContent = String(shown);
+                counter.title = `${shown} rapport${shown > 1 ? 's' : ''}`;
+            }
         });
+        const noMatch = r.querySelector('[data-reports-nomatch]');
+        if (noMatch) noMatch.hidden = !(items.length && !visible);
         refreshCategoryCounts(items);
 
         const summary = r.querySelector('[data-reports-filter-summary]');
@@ -573,6 +726,19 @@
             if (day) url.searchParams.set('day', day);
             exportLink.href = url.pathname + url.search;
         }
+        ensureSelection();
+    }
+
+    function resetFilters() {
+        const r = root();
+        if (!r) return;
+        r.querySelectorAll('[data-reports-filter]').forEach((el) => { el.value = ''; });
+        r.querySelectorAll('[data-reports-category]').forEach((p) => {
+            const on = !p.dataset.reportsCategory;
+            p.classList.toggle('is-active', on);
+            p.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        applyFilters();
     }
 
     // ── Compte à rebours de modification ────────────────────────
@@ -724,9 +890,23 @@
                 applyFilters();
                 return;
             }
+            const row = e.target.closest('[data-report-row]');
+            if (row && r.contains(row)) {
+                selectReport(row.dataset.reportRow, { reveal: true });
+                return;
+            }
             const action = e.target.closest('[data-action]');
             if (!action || !r.contains(action)) return;
             switch (action.dataset.action) {
+                case 'reports-back': {
+                    setReading(false);
+                    const current = selectedId() && rowFor(selectedId());
+                    if (current) current.focus();
+                    break;
+                }
+                case 'reset-report-filters':
+                    resetFilters();
+                    break;
                 case 'open-report-form':
                     setComposeOpen(true);
                     break;
@@ -783,20 +963,49 @@
             if (e.target.matches && e.target.matches('.report-photos-input')) addPhotos(e.target);
         });
 
+        // Liste : navigation au clavier (↑ ↓)
+        const list = r.querySelector('[data-reports-list]');
+        if (list) {
+            list.addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+                const rows = visibleRows();
+                if (!rows.length) return;
+                e.preventDefault();
+                const index = rows.findIndex((row) => row.dataset.reportRow === selectedId());
+                const step = e.key === 'ArrowDown' ? 1 : -1;
+                const next = index === -1 ? 0 : Math.min(rows.length - 1, Math.max(0, index + step));
+                selectReport(rows[next].dataset.reportRow, { focus: true });
+            });
+        }
+
         // Filtres
         r.querySelectorAll('[data-reports-filter]').forEach((el) => {
             el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', applyFilters);
         });
+        regroup();
         applyFilters();
+        updateVisibility();
 
         updateCountdowns();
         setInterval(updateCountdowns, 30000);
 
-        // Lien direct vers un rapport (#report-12) : on le met en évidence
-        const target = window.location.hash && document.querySelector(window.location.hash);
+        // Lien direct vers un rapport (#report-12) : on le sélectionne et on le met en évidence
+        let target = null;
+        try {
+            target = window.location.hash && document.querySelector(window.location.hash);
+        } catch (e) {
+            target = null; // ancre invalide
+        }
         if (target && target.classList.contains('project-report-item')) {
-            target.classList.add('is-new');
-            setTimeout(() => target.classList.remove('is-new'), 2500);
+            const id = target.dataset.reportId;
+            if (rowFor(id) && rowFor(id).hidden) resetFilters();
+            selectReport(id, { reveal: true });
+            const row = rowFor(id);
+            if (row) {
+                row.classList.add('is-new');
+                setTimeout(() => row.classList.remove('is-new'), 2500);
+            }
+            r.scrollIntoView({ block: 'start' });
         }
     }
 

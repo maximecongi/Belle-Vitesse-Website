@@ -2710,3 +2710,112 @@ body.has-admin-savebar .admin-content {
         justify-content: center;
     }
 }
+
+/* ── Annuaire des signataires (modales d'invitation : _signer_invite.html / signer-invite.js) ── */
+.signer-picker {
+    position: relative;
+}
+
+.signer-picker-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.signer-picker-icon {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--grey-3, #94a3b8);
+    pointer-events: none;
+}
+
+.signer-picker-input {
+    padding-left: 36px;
+}
+
+.signer-picker-results {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    max-height: 280px;
+    overflow-y: auto;
+    background: #ffffff;
+    border: 1px solid var(--grey-border, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    z-index: 60;
+}
+
+.signer-picker-group {
+    padding: 6px 12px;
+    background: var(--grey-bg, #f8f9fa);
+    border-bottom: 1px solid var(--grey-border, #e0e0e0);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+}
+
+.signer-picker-option {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.signer-picker-option:hover,
+.signer-picker-option.is-active {
+    background: var(--neutral-bg, hsl(0, 0%, 94%));
+}
+
+.signer-picker-option-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-color, #333);
+}
+
+.signer-picker-option-meta {
+    font-size: 0.72rem;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.signer-picker-tag {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--neutral-color, hsl(0, 0%, 16%));
+    background: var(--neutral-bg, hsl(0, 0%, 94%));
+    border-radius: 999px;
+    vertical-align: middle;
+}
+
+.signer-picker-empty {
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.signer-picker-linked {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: #475569;
+}
+
+.signer-picker-linked svg,
+.signer-picker-linked i {
+    width: 14px;
+    height: 14px;
+}

@@ -377,7 +377,8 @@ class ProjectReportsFeaturesTest(BaseTestCase):
         html = self.client.get(f"/admin/projects/{self.project_id}").get_data(as_text=True)
         for marker in ('data-report-form="create"', 'name="category"', 'name="shoot_day"', 'name="photos"',
                        "data-reports-filter", "data-reports-export", 'data-category="production"',
-                       'data-day="2026-09-11"', "data-editable-until", 'enctype="multipart/form-data"'):
+                       'data-day="2026-09-11"', "data-editable-until", 'enctype="multipart/form-data"',
+                       'data-mine="1"', "project-report-avatar is-mine"):
             self.assertIn(marker, html, marker)
 
     def test_timeline_grouped_by_day(self):

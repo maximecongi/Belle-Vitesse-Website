@@ -184,3 +184,22 @@ def init_contacts_routes(app):
     """Enregistre le blueprint admin_contacts (compatibilité ascendante)."""
     if "admin_contacts" not in app.blueprints:
         app.register_blueprint(contacts_bp)
+
+
+@contacts_bp.route("/api/signers/search", methods=["GET"])
+@require_roles('administrator', 'manager', 'commercial', 'user')
+def admin_api_signers_search():
+    """Autocomplétion des modales d'invitation : contacts ERP (projet → production → tous) + équipe BV."""
+    from services.admin.signers import search_signers
+
+    try:
+        results = search_signers(
+            query=request.args.get("q", ""),
+            project_id=request.args.get("project_id"),
+            limit=request.args.get("limit", 12, type=int),
+            include_team=request.args.get("team", "1") != "0",
+        )
+        return jsonify({"results": results})
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur recherche signataires : {e}")
+        return jsonify({"results": [], "error": "Recherche indisponible."}), 500

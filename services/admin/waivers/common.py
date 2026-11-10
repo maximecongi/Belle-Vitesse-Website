@@ -217,6 +217,44 @@ def _reset_waiver_fields(mode: str, waiver: Waiver):
             setattr(waiver, f, None)
 
 
+def _contact_full_name(contact):
+    if not contact:
+        return ""
+    return f"{contact.first_name or ''} {contact.last_name or ''}".strip()
+
+
+def resolve_waiver_recipient(waiver):
+    """
+    Destinataire (e-mail, nom) de l'invitation et des relances d'un document.
+
+    Le signataire enregistré sur le document fait foi ; à défaut, on se rabat sur la fiche
+    contact rattachée, puis sur le contact du projet correspondant au rôle (production pour
+    les CGL, pilote pour l'Annexe 3...).
+    """
+    p = waiver.project
+    mode = waiver.waiver_type
+
+    if mode == "cgl":
+        fallback = waiver.signer_contact or (p.production_contact if p else None)
+        stored_name = (waiver.production_representative or "").strip()
+    else:
+        fallback = waiver.signer_contact
+        if fallback is None and p:
+            if mode == "pilot_waiver" or waiver.signer_role == "pilot":
+                fallback = p.pilot_contact
+            elif waiver.signer_role == "production":
+                fallback = p.production_contact
+        stored_name = waiver.signer_name if waiver.signer_name != "—" else ""
+
+    mail = (waiver.signer_email or "").strip()
+    if mail:
+        return mail, stored_name or _contact_full_name(fallback)
+
+    if fallback is not None and (fallback.mail or "").strip():
+        return fallback.mail.strip(), _contact_full_name(fallback)
+    return None, stored_name
+
+
 @handle_admin_service_error
 def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", base_url: str = None) -> tuple:
     """

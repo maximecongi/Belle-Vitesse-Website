@@ -1,0 +1,159 @@
+{#
+  Invitation de signataires — composant unique pour CGL, BVSR, Annexe 3 (BVPA), BVRA et incidents.
+
+  - signer_picker   : champ de recherche dans l'annuaire (contacts ERP + équipe BV), piloté par signer-invite.js
+  - signer_invite_modal : modale complète (recherche + coordonnées + rôle) ; le bloc {% call %} injecte
+                          les champs propres au document (véhicules, référents...).
+
+  Côté serveur, les champs postés sont lus par routes/admin/waivers.py::_signer_form().
+#}
+
+{% macro signer_picker(uid, project_id=None, fill='full', label="Rechercher dans l'annuaire", linked=None) %}
+<div class="form-group u-mb-3 signer-picker" data-signer-picker data-fill="{{ fill }}"
+    data-search-url="{{ url_for('admin_contacts.admin_api_signers_search') }}"
+    data-project-id="{{ project_id or '' }}">
+    <label for="{{ uid }}-search" class="form-label u-font-semibold">{{ label }}</label>
+    <div class="signer-picker-box">
+        <i data-lucide="search" class="signer-picker-icon" aria-hidden="true"></i>
+        <input type="text" id="{{ uid }}-search" class="form-input signer-picker-input" data-signer-search
+            placeholder="Nom, e-mail ou fonction…" autocomplete="off" spellcheck="false" role="combobox"
+            aria-autocomplete="list" aria-expanded="false" aria-controls="{{ uid }}-results">
+    </div>
+    <div id="{{ uid }}-results" class="signer-picker-results u-d-none" role="listbox" data-signer-results></div>
+    {% if fill == 'full' %}
+    <div class="signer-picker-linked {% if not linked %}u-d-none{% endif %}" data-signer-linked>
+        <i data-lucide="link" aria-hidden="true"></i>
+        <span data-signer-linked-label>{% if linked %}Fiche contact liée : {{ linked }}{% endif %}</span>
+        <button type="button" class="admin-btn-link u-text-xs" data-signer-unlink>Délier</button>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{% macro signer_fields(
+    id, project,
+    roles=None, default_role=None, fixed_role=None,
+    job_title_label=None,
+    company_label='Société / Entité représentée', company_value=None, show_company=True,
+    prefill=None) %}
+{% set pf = prefill or {} %}
+    <input type="hidden" name="signer_contact_id" value="{{ pf.contact_id or '' }}" data-signer-field="contact_id">
+    <input type="hidden" name="signer_user_id" value="" data-signer-field="user_id">
+
+    {{ signer_picker(id, project.id if project else None, linked=pf.linked_label) }}
+
+    {% if fixed_role %}
+    <input type="hidden" name="signer_role" value="{{ fixed_role }}">
+    {% elif roles %}
+    <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+        <div class="form-group">
+            <label for="{{ id }}-role" class="form-label u-font-semibold">Rôle sur le plateau <span
+                    class="u-text-danger">*</span></label>
+            <select id="{{ id }}-role" name="signer_role" class="form-select" required data-signer-role>
+                {% for value, label in roles %}
+                <option value="{{ value }}" {% if value == default_role %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group u-d-none" data-signer-role-custom>
+            <label for="{{ id }}-role-custom" class="form-label u-font-semibold">Préciser la fonction <span
+                    class="u-text-danger">*</span></label>
+            <input type="text" id="{{ id }}-role-custom" name="signer_role_custom" class="form-input"
+                placeholder="Ex : Machiniste, Chef électricien…">
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+        <div class="form-group">
+            <label for="{{ id }}-first-name" class="form-label u-font-semibold">Prénom</label>
+            <input type="text" id="{{ id }}-first-name" name="signer_first_name" class="form-input"
+                value="{{ pf.first_name or '' }}" placeholder="Ex : Jean" data-signer-field="first_name">
+        </div>
+        <div class="form-group">
+            <label for="{{ id }}-last-name" class="form-label u-font-semibold">Nom</label>
+            <input type="text" id="{{ id }}-last-name" name="signer_last_name" class="form-input"
+                value="{{ pf.last_name or '' }}" placeholder="Ex : Dupont" data-signer-field="last_name">
+        </div>
+    </div>
+
+    <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+        <div class="form-group">
+            <label for="{{ id }}-email" class="form-label u-font-semibold">E-mail <span
+                    class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
+            <input type="email" id="{{ id }}-email" name="signer_email" class="form-input"
+                value="{{ pf.mail or '' }}" placeholder="jean.dupont@prod.com" data-signer-field="mail">
+        </div>
+        <div class="form-group">
+            <label for="{{ id }}-phone" class="form-label u-font-semibold">Téléphone mobile</label>
+            <input type="tel" id="{{ id }}-phone" name="signer_phone" class="form-input"
+                value="{{ pf.phone or '' }}" placeholder="+33 6 12 34 56 78" data-signer-field="phone">
+        </div>
+    </div>
+
+    {% if job_title_label %}
+    <div class="form-group u-mb-3">
+        <label for="{{ id }}-job" class="form-label u-font-semibold">{{ job_title_label }}</label>
+        <input type="text" id="{{ id }}-job" name="signer_role_custom" class="form-input"
+            value="{{ pf.job_title or '' }}" placeholder="Ex : Directeur de production, Gérant…"
+            data-signer-field="job_title">
+    </div>
+    {% endif %}
+
+    {% if show_company %}
+    <div class="form-group u-mb-3">
+        <label for="{{ id }}-company" class="form-label u-font-semibold">{{ company_label }}</label>
+        <input type="text" id="{{ id }}-company" name="signer_company" class="form-input"
+            value="{{ company_value if company_value is not none else (project.production.name if project and project.production else '') }}"
+            placeholder="Ex : Société de production ou Freelance" data-signer-field="company">
+    </div>
+    {% endif %}
+{% endmacro %}
+
+
+{% macro signer_invite_modal(
+    id, title, action, project,
+    intro='',
+    icon='user-plus', icon_class='u-text-waiver',
+    roles=None, default_role=None, fixed_role=None,
+    job_title_label=None,
+    company_label='Société / Entité représentée', company_value=None, show_company=True,
+    submit_label="Créer l'invitation",
+    prefill=None,
+    form_id=None) %}
+{% set pf = prefill or {} %}
+<div id="{{ id }}" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true"
+    aria-labelledby="{{ id }}-title" data-signer-modal>
+    <div class="admin-modal-container admin-modal-container--md">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
+            <div class="u-flex u-align-center u-gap-2">
+                <i data-lucide="{{ icon }}" class="{{ icon_class }}"></i>
+                <h3 id="{{ id }}-title" class="admin-modal-title u-m-0 u-text-lg u-font-bold">{{ title }}</h3>
+            </div>
+            <button type="button" class="admin-modal-close" data-signer-modal-close aria-label="Fermer">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ action }}" {% if form_id %}id="{{ form_id }}" {% endif %}
+            class="admin-modal-content u-p-4 u-overflow-y-auto" data-signer-form>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+            {% if intro %}<p class="u-text-sm u-text-muted u-mb-4">{{ intro }}</p>{% endif %}
+
+            {{ signer_fields(id, project, roles=roles, default_role=default_role, fixed_role=fixed_role,
+                job_title_label=job_title_label, company_label=company_label, company_value=company_value,
+                show_company=show_company, prefill=pf) }}
+
+            {% if caller is defined %}{{ caller() }}{% endif %}
+
+            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
+                <button type="button" class="admin-btn admin-btn-secondary" data-signer-modal-close>Annuler</button>
+                <button type="submit" class="admin-btn admin-btn-primary" data-signer-submit>
+                    <i data-lucide="send" class="u-mr-1"></i>
+                    {{ submit_label }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endmacro %}

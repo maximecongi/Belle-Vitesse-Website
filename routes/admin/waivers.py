@@ -45,6 +45,36 @@ from utils.decorators import require_roles, require_preview_access
 
 waivers_bp = Blueprint("admin_waivers", __name__, url_prefix="/admin")
 
+SIGNER_FORM_FIELDS = (
+    "signer_role",
+    "signer_role_custom",
+    "signer_first_name",
+    "signer_last_name",
+    "signer_email",
+    "signer_phone",
+    "signer_company",
+    "signer_contact_id",
+    "signer_user_id",
+)
+
+
+def _signer_form():
+    """Champs signataire postés par la modale d'invitation unifiée (macro signer_invite_modal)."""
+    return {f: request.form.get(f, "").strip() for f in SIGNER_FORM_FIELDS}
+
+
+def _redirect_back(project_id):
+    return_to = (
+        request.form.get("return_to")
+        or request.args.get("return_to")
+        or request.referrer
+    )
+    if return_to:
+        return redirect(return_to)
+    return redirect(
+        url_for("admin_projects.admin_project_detail", record_id=project_id)
+    )
+
 
 # ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVTC) ────────────────────
 
@@ -56,8 +86,8 @@ waivers_bp = Blueprint("admin_waivers", __name__, url_prefix="/admin")
 )
 @require_roles("administrator", "manager", "commercial")
 def admin_cgl_quick_create(project_id):
-    """Création en 1 clic des CGL depuis la fiche projet ou le dashboard."""
-    success, msg = create_cgl(project_id)
+    """Création des CGL : signataire issu de la modale d'invitation, sinon contact production du projet."""
+    success, msg = create_cgl(project_id, **_signer_form())
     if success:
         flash(msg, "success")
     else:
@@ -83,7 +113,7 @@ def admin_cgl_new():
         if not project_id:
             flash("Veuillez sélectionner un projet.", "error")
         else:
-            success, msg = create_cgl(project_id)
+            success, msg = create_cgl(project_id, **_signer_form())
             if success:
                 flash(msg, "success")
                 if return_to:
@@ -119,12 +149,23 @@ def admin_cgl_new():
             dates = f"Départ : {p.departure_date.strftime('%d/%m/%Y')}"
 
         search_tokens = f"{p.name} {prod_name} {contact_name} {dates}".lower()
+        pc = p.production_contact
         projects_data.append(
             {
                 "id": p.id,
                 "name": p.name,
                 "production": prod_name or "Sans production",
                 "contact": contact_name,
+                "signer": {
+                    "kind": "contact",
+                    "id": pc.id,
+                    "first_name": pc.first_name or "",
+                    "last_name": pc.last_name or "",
+                    "full_name": contact_name,
+                    "mail": pc.mail or "",
+                    "phone": pc.phone or "",
+                    "job_title": pc.job_title or "",
+                } if pc else None,
                 "dates": dates or "Dates non définies",
                 "search": search_tokens,
             }
@@ -343,41 +384,13 @@ def admin_safety_rules_list():
 @require_roles("administrator", "manager", "commercial")
 def admin_safety_rules_create(project_id):
     """Création d'un nouvel engagement aux règles de sécurité (BVSR) pour un intervenant."""
-    signer_role = request.form.get("signer_role", "pilot").strip()
-    signer_role_custom = request.form.get("signer_role_custom", "").strip()
-    signer_first_name = request.form.get("signer_first_name", "").strip()
-    signer_last_name = request.form.get("signer_last_name", "").strip()
-    signer_email = request.form.get("signer_email", "").strip()
-    signer_phone = request.form.get("signer_phone", "").strip()
-    signer_company = request.form.get("signer_company", "").strip()
-    safety_technicians = request.form.get("safety_technicians", "").strip()
-
     success, msg = create_safety_rules_waiver(
         project_id=project_id,
-        signer_role=signer_role,
-        signer_role_custom=signer_role_custom,
-        signer_first_name=signer_first_name,
-        signer_last_name=signer_last_name,
-        signer_email=signer_email,
-        signer_phone=signer_phone,
-        signer_company=signer_company,
-        safety_technicians=safety_technicians,
+        safety_technicians=request.form.get("safety_technicians", "").strip(),
+        **_signer_form(),
     )
-    if success:
-        flash(msg, "success")
-    else:
-        flash(msg, "error")
-
-    return_to = (
-        request.form.get("return_to")
-        or request.args.get("return_to")
-        or request.referrer
-    )
-    if return_to:
-        return redirect(return_to)
-    return redirect(
-        url_for("admin_projects.admin_project_detail", record_id=project_id)
-    )
+    flash(msg, "success" if success else "error")
+    return _redirect_back(project_id)
 
 
 @waivers_bp.route(
@@ -643,60 +656,25 @@ def admin_pilot_waivers_list():
 @require_roles("administrator", "manager", "commercial")
 def admin_pilot_waivers_create(project_id):
     """Création d'une nouvelle attestation d'information et d'engagement du pilote."""
-    signer_role = request.form.get("signer_role", "pilot").strip()
-    signer_role_custom = request.form.get("signer_role_custom", "").strip()
-    signer_first_name = request.form.get("signer_first_name", "").strip()
-    signer_last_name = request.form.get("signer_last_name", "").strip()
-    signer_email = request.form.get("signer_email", "").strip()
-    signer_phone = request.form.get("signer_phone", "").strip()
-    signer_company = request.form.get("signer_company", "").strip()
     selected_vehicles = [
         v.strip() for v in request.form.getlist("selected_vehicles") if v and v.strip()
     ]
-
     if not selected_vehicles:
         flash(
             "Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote.",
             "error",
         )
-        return_to = (
-            request.form.get("return_to")
-            or request.args.get("return_to")
-            or request.referrer
-        )
-        if return_to:
-            return redirect(return_to)
-        return redirect(
-            url_for("admin_projects.admin_project_detail", record_id=project_id)
-        )
+        return _redirect_back(project_id)
 
+    signer = _signer_form()
+    signer["signer_role"] = signer["signer_role"] or "pilot"
     success, msg = create_pilot_waiver(
         project_id=project_id,
-        signer_role=signer_role,
-        signer_role_custom=signer_role_custom,
-        signer_first_name=signer_first_name,
-        signer_last_name=signer_last_name,
-        signer_email=signer_email,
-        signer_phone=signer_phone,
-        signer_company=signer_company,
         selected_vehicles=selected_vehicles,
+        **signer,
     )
-    if success:
-        flash(msg, "success")
-    else:
-        flash(msg, "error")
-
-    return_to = (
-        request.form.get("return_to")
-        or request.args.get("return_to")
-        or request.referrer
-    )
-    if return_to:
-        return redirect(return_to)
-    return redirect(
-        url_for("admin_projects.admin_project_detail", record_id=project_id)
-    )
-
+    flash(msg, "success" if success else "error")
+    return _redirect_back(project_id)
 
 @waivers_bp.route(
     "/pilot-waivers/<string:waiver_id>/send",
@@ -877,40 +855,9 @@ def admin_pilot_waivers_preview(waiver_id=None):
 @require_roles("administrator", "manager", "commercial")
 def admin_risk_assessment_create(project_id):
     """Création d'une nouvelle analyse des risques (BVRA) pour un signataire."""
-    signer_role = request.form.get("signer_role", "production").strip()
-    signer_role_custom = request.form.get("signer_role_custom", "").strip()
-    signer_first_name = request.form.get("signer_first_name", "").strip()
-    signer_last_name = request.form.get("signer_last_name", "").strip()
-    signer_email = request.form.get("signer_email", "").strip()
-    signer_phone = request.form.get("signer_phone", "").strip()
-    signer_company = request.form.get("signer_company", "").strip()
-
-    success, msg = create_risk_assessment_waiver(
-        project_id=project_id,
-        signer_role=signer_role,
-        signer_role_custom=signer_role_custom,
-        signer_first_name=signer_first_name,
-        signer_last_name=signer_last_name,
-        signer_email=signer_email,
-        signer_phone=signer_phone,
-        signer_company=signer_company,
-    )
-    if success:
-        flash(msg, "success")
-    else:
-        flash(msg, "error")
-
-    return_to = (
-        request.form.get("return_to")
-        or request.args.get("return_to")
-        or request.referrer
-    )
-    if return_to:
-        return redirect(return_to)
-    return redirect(
-        url_for("admin_projects.admin_project_detail", record_id=project_id)
-    )
-
+    success, msg = create_risk_assessment_waiver(project_id=project_id, **_signer_form())
+    flash(msg, "success" if success else "error")
+    return _redirect_back(project_id)
 
 @waivers_bp.route(
     "/risk-assessment/<string:waiver_id>/send",

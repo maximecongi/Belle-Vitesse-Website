@@ -8,10 +8,53 @@
     margin: 14pt 0;
 }
 
+/* ── Bloc d'informations : réparti sur toute la largeur (gauche / centre / droite) ── */
+.reports-pdf .pdf-info-grid--3cols .pdf-info-item:nth-child(2) {
+    align-items: center;
+    text-align: center;
+}
+
+.reports-pdf .pdf-info-grid--3cols .pdf-info-item:last-child {
+    align-items: flex-end;
+    text-align: right;
+}
+
+/* ── Groupes par jour de tournage ── */
+.reports-pdf-day-head {
+    display: flex;
+    align-items: center;
+    gap: 8pt;
+    margin: 18pt 0 8pt 0;
+    page-break-after: avoid;
+    break-after: avoid;
+}
+
+.reports-pdf-day-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #18181b;
+    white-space: nowrap;
+}
+
+.reports-pdf-day-rule {
+    flex: 1;
+    height: 0;
+    border-top: 0.5pt solid #e4e4e7;
+}
+
+.reports-pdf-day-count {
+    font-size: 7.5pt;
+    color: #71717a;
+    white-space: nowrap;
+}
+
+/* ── Entrée de rapport ── */
 .reports-pdf-entry {
-    margin: 12pt 0 0 0;
-    padding: 0 0 0 8pt;
-    border-left: 2pt solid #d4d4d8;
+    margin: 0 0 10pt 0;
+    padding: 1pt 0 1pt 10pt;
+    border-left: 2.5pt solid #d4d4d8;
     border-radius: 0; /* bordure gauche colorée : jamais d'arrondi */
     page-break-inside: auto;
 }
@@ -24,20 +67,56 @@
 .reports-pdf-entry--note { border-left-color: #a1a1aa; }
 
 .reports-pdf-entry-head {
+    margin-bottom: 5pt;
     page-break-after: avoid;
+    break-after: avoid;
+}
+
+.reports-pdf-entry-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10pt;
 }
 
 .reports-pdf-entry-title {
-    font-size: 9.5pt;
+    font-size: 10.5pt;
     font-weight: 700;
     color: #18181b;
-    margin: 0 0 2pt 0;
+    margin: 0;
 }
 
+/* Badge de catégorie : mêmes couleurs que .report-category-badge de l'ERP */
+.reports-pdf-category {
+    flex: none;
+    display: inline-block;
+    font-size: 6pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3pt;
+    line-height: 1.2;
+    padding: 2pt 6pt;
+    border-radius: 999px;
+    white-space: nowrap;
+    color: #64748b;
+    background-color: #f1f5f9;
+}
+
+.reports-pdf-category--debrief { color: #0369a1; background-color: #e0f2fe; }
+.reports-pdf-category--technique { color: #6d28d9; background-color: #ede9fe; }
+.reports-pdf-category--logistique { color: #b45309; background-color: #fef3c7; }
+.reports-pdf-category--securite { color: #b91c1c; background-color: #fee2e2; }
+.reports-pdf-category--production { color: #15803d; background-color: #dcfce7; }
+
 .reports-pdf-entry-meta {
-    font-size: 7pt;
+    font-size: 7.5pt;
     color: #71717a;
-    margin-bottom: 4pt;
+    margin-top: 1.5pt;
+}
+
+.reports-pdf-entry-author {
+    font-weight: 600;
+    color: #52525b;
 }
 
 .reports-pdf-entry-meta span + span:before {
@@ -45,22 +124,15 @@
     color: #a1a1aa;
 }
 
-.reports-pdf-category {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3pt;
-    color: #3f3f46;
-}
-
 .reports-pdf-entry-body {
-    font-size: 8pt;
-    line-height: 1.5;
+    font-size: 8.5pt;
+    line-height: 1.55;
     color: #18181b;
 }
 
 .reports-pdf-entry-body p { margin: 0 0 4pt 0; }
-.reports-pdf-entry-body h2 { font-size: 8.5pt; font-weight: 700; margin: 6pt 0 3pt 0; }
-.reports-pdf-entry-body h3 { font-size: 8pt; font-weight: 700; margin: 5pt 0 2pt 0; }
+.reports-pdf-entry-body h2 { font-size: 9pt; font-weight: 700; margin: 6pt 0 3pt 0; }
+.reports-pdf-entry-body h3 { font-size: 8.5pt; font-weight: 700; margin: 5pt 0 2pt 0; }
 .reports-pdf-entry-body ul,
 .reports-pdf-entry-body ol { margin: 0 0 4pt 0; padding-left: 12pt; }
 .reports-pdf-entry-body li { margin-bottom: 1pt; }
@@ -82,7 +154,7 @@
 .reports-pdf-entry-body hr { border: none; border-top: 0.5pt solid #e4e4e7; margin: 6pt 0; }
 
 .reports-pdf-photos {
-    margin-top: 5pt;
+    margin-top: 6pt;
 }
 
 .reports-pdf-photos img {

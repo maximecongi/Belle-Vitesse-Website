@@ -14,6 +14,7 @@ from .common import (
     _format_project_shooting_dates,
     format_waiver_shooting_dates,
     get_secured_waiver_pdf_url,
+    resolve_waiver_recipient,
 )
 from .core import (
     create_waiver,
@@ -27,9 +28,12 @@ from .core import (
 logger = logging.getLogger(__name__)
 
 
-def create_cgl(project_id):
-    """Crée des CGL pour un projet s'il n'en existe pas déjà d'actives."""
-    return create_waiver(project_id, waiver_type="cgl")
+def create_cgl(project_id, **kwargs):
+    """
+    Crée des CGL pour un projet s'il n'en existe pas déjà d'actives.
+    Signataire : celui de la modale d'invitation (kwargs signer_*), sinon le contact production du projet.
+    """
+    return create_waiver(project_id, waiver_type="cgl", **kwargs)
 
 
 def delete_cgl(waiver_id):
@@ -81,9 +85,8 @@ def list_cgl():
             WaiverToken.expires_at > now_dt
         ).order_by(WaiverToken.created_at.desc()).first()
 
-        production_contact_name = "—"
-        if p and p.production_contact:
-            production_contact_name = f"{p.production_contact.first_name} {p.production_contact.last_name}"
+        recipient_mail, recipient_name = resolve_waiver_recipient(w)
+        production_contact_name = recipient_name or "—"
 
         formatted.append({
             "id": w.waiver_id,
@@ -93,6 +96,7 @@ def list_cgl():
             "project_name": p.name if p else (w.project_name or "—"),
             "production_name": ((p.production.name if p.production else None) if p else w.production_name) or w.production_name or "—",
             "production_contact_name": production_contact_name,
+            "signer_email": recipient_mail or "",
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
             "raw_status": w.status,

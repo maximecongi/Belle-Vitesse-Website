@@ -2,6 +2,7 @@
 
 {% from "admin/macros.html" import incident_severity_badge, incident_status_badge, incident_impact_badge,
 incident_signature_badge, equipment_icon, empty_state, danger_zone, back_button %}
+{% from "admin/_signer_invite.html" import signer_picker %}
 
 {% block title %}Incident {{ incident.incident_number }}{% endblock %}
 {% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
@@ -630,10 +631,13 @@ incident_signature_badge, equipment_icon, empty_state, danger_zone, back_button 
         <form action="{{ url_for('admin_incidents.admin_incident_send_token', record_id=incident.id) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
+            {{ signer_picker('incidentRecipient', incident.project_id, fill='email',
+                label="Rechercher le destinataire dans l'annuaire") }}
+
             <div class="form-group u-mb-3">
-                <label class="form-label u-text-xs u-font-semibold">Adresse Email du Destinataire *</label>
-                <input type="email" name="recipient_email" class="form-input" required
-                    placeholder="production@exemple.com" />
+                <label for="incidentRecipient-email" class="form-label u-text-xs u-font-semibold">Adresse Email du Destinataire *</label>
+                <input type="email" id="incidentRecipient-email" name="recipient_email" class="form-input" required
+                    placeholder="production@exemple.com" data-signer-field="mail" />
             </div>
 
             <div class="u-p-3 u-mb-3 incident-modal-hint">

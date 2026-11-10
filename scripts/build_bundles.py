@@ -69,6 +69,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/admin-pricing.js",
     "js/src/admin/notion-editor.js",
     "js/src/admin/project.js",
+    "js/src/admin/signer-invite.js",
     "js/src/admin/project-reports.js",
     "js/src/admin/cmdk.js",
     "js/src/admin/draft-store.js",

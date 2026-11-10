@@ -3,7 +3,8 @@
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
 initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar, danger_zone, back_button %}
 {% from "admin/_notion_editor.html" import notion_report_editor %}
-{% from "admin/_report_fields.html" import report_title_day_row, report_category_picker, report_photos_input %}
+{% from "admin/_report_fields.html" import report_title_day_row, report_category_picker, report_photos_input, report_list_row %}
+{% from "admin/_signer_invite.html" import signer_invite_modal %}
 
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Détail projet{% endblock %}
@@ -342,44 +343,6 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             </div>
         </div>
 
-        <!-- Nouveau rapport : formulaire replié, ouvert au clic (ou automatiquement si un brouillon existe) -->
-        <form method="POST" enctype="multipart/form-data"
-            action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
-            class="report-compose" id="addReportForm" data-report-form="create"
-            data-draft-key="{{ project.id }}:new" hidden>
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="report-compose-head">
-                <h3 class="report-compose-title">Nouveau rapport</h3>
-                <button type="button" class="report-compose-close" data-action="close-report-form"
-                    aria-label="Fermer (le brouillon est conservé)" title="Fermer (le brouillon est conservé)">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-            <div class="report-compose-body">
-                <div class="report-draft-banner is-hidden" data-draft-banner></div>
-                {{ report_title_day_row('new', report_days, title_id='reportTitleInput') }}
-                {{ report_category_picker(report_categories) }}
-                <div class="report-field">
-                    <div class="report-field-label-row">
-                        <label for="reportContentEditor-new" class="report-field-label">
-                            Observation &amp; Compte-rendu <span class="u-text-danger">*</span>
-                        </label>
-                        <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en direct</span>
-                    </div>
-                    {{ notion_report_editor("new", textarea_id="reportContentInput") }}
-                </div>
-                <div class="report-form-error is-hidden" role="alert" data-form-error></div>
-                <div class="report-compose-footer">
-                    {{ report_photos_input('new', report_max_photos) }}
-                    <div class="report-compose-actions">
-                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm"
-                            data-action="cancel-report-form" title="Annuler et effacer le brouillon">Annuler</button>
-                        <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn"
-                            data-submit-label="Publier le rapport">Publier le rapport</button>
-                    </div>
-                </div>
-            </div>
-        </form>
 
         <!-- Filtres : catégories, recherche, jour, export -->
         <div class="report-toolbar" data-reports-toolbar {% if not reports %}hidden{% endif %}>
@@ -416,24 +379,93 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
         <p class="u-text-xs u-text-muted u-mb-3 is-hidden" data-reports-filter-summary></p>
 
-        <!-- Fil des rapports, regroupé par jour de tournage -->
+        <!-- Rapports : liste (regroupée par jour de tournage) + lecture du rapport sélectionné, hauteur fixe -->
         <div class="project-reports-stream" id="reportsStream">
             {% set project_id = project.id %}
-            <div class="project-reports-timeline" data-reports-timeline {% if not reports %}hidden{% endif %}>
-                {% for group in report_groups %}
-                <section class="report-day-group" data-group-day="{{ group.day }}">
-                    <header class="report-day-header">
-                        <span class="report-day-title">{{ group.heading }}</span>
-                        <span class="report-day-rule" aria-hidden="true"></span>
-                        <span class="report-day-count" data-group-count>{{ group.reports|length }} rapport{{ 's' if group.reports|length > 1 else '' }}</span>
-                    </header>
-                    <div class="report-day-items">
+            <div class="report-browser" data-reports-browser {% if not reports %}hidden{% endif %}>
+                <div class="report-browser-list" data-reports-list aria-label="Liste des rapports">
+                    <button type="button" class="report-list-row report-list-row--draft is-selected" data-compose-row
+                        aria-current="true" hidden>
+                        <span class="report-list-row-title">Nouveau rapport</span>
+                        <span class="report-list-row-meta">Brouillon · non publié</span>
+                    </button>
+                    <div data-reports-groups>
+                        {% for group in report_groups %}
+                        <section class="report-day-group" data-group-day="{{ group.day }}">
+                            <header class="report-day-header">
+                                <span class="report-day-title">{{ group.heading }}</span>
+                                <span class="report-day-count" data-group-count>{{ group.reports|length }}</span>
+                            </header>
+                            {% for report in group.reports %}
+                            {{ report_list_row(report) }}
+                            {% endfor %}
+                        </section>
+                        {% endfor %}
+                    </div>
+                    <div class="report-list-nomatch" data-reports-nomatch hidden>
+                        {{ empty_state('search-x', 'Aucun rapport ne correspond', 'Modifiez la recherche ou les filtres.', 'empty-state-sm') }}
+                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs"
+                            data-action="reset-report-filters">Réinitialiser les filtres</button>
+                    </div>
+                </div>
+
+                <div class="report-browser-reader" data-reports-reader>
+                    <button type="button" class="report-reader-back" data-action="reports-back">
+                        <i data-lucide="arrow-left"></i> Liste des rapports
+                    </button>
+                    <!-- Nouveau rapport : ouvert dans le volet de lecture au clic (ou automatiquement si un brouillon existe) -->
+                    <form method="POST" enctype="multipart/form-data"
+                        action="{{ url_for('admin_projects.admin_project_reports_add', record_id=project.id) }}"
+                        class="report-compose" id="addReportForm" data-report-form="create"
+                        data-draft-key="{{ project.id }}:new" hidden>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="report-compose-head">
+                            <h3 class="report-compose-title">Nouveau rapport</h3>
+                            <button type="button" class="report-compose-close" data-action="close-report-form"
+                                aria-label="Fermer (le brouillon est conservé)" title="Fermer (le brouillon est conservé)">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="report-compose-body">
+                            <div class="report-draft-banner is-hidden" data-draft-banner></div>
+                            {{ report_title_day_row('new', report_days, title_id='reportTitleInput') }}
+                            {{ report_category_picker(report_categories) }}
+                            <div class="report-field">
+                                <div class="report-field-label-row">
+                                    <label for="reportContentEditor-new" class="report-field-label">
+                                        Observation &amp; Compte-rendu <span class="u-text-danger">*</span>
+                                    </label>
+                                    <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater en direct</span>
+                                </div>
+                                {{ notion_report_editor("new", textarea_id="reportContentInput") }}
+                            </div>
+                            <div class="report-form-error is-hidden" role="alert" data-form-error></div>
+                            <div class="report-compose-footer">
+                                {{ report_photos_input('new', report_max_photos) }}
+                                <div class="report-compose-actions">
+                                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm"
+                                        data-action="cancel-report-form" title="Annuler et effacer le brouillon">Annuler</button>
+                                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn"
+                                        data-submit-label="Publier le rapport">Publier le rapport</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="project-reports-timeline" data-reports-timeline>
+                        {% for group in report_groups %}
                         {% for report in group.reports %}
                         {% include "admin/_report_item.html" %}
                         {% endfor %}
+                        {% endfor %}
                     </div>
-                </section>
-                {% endfor %}
+                    <div class="report-reader-placeholder" data-reader-placeholder="select" hidden>
+                        {{ empty_state('mouse-pointer-click', 'Sélectionnez un rapport', 'Choisissez un rapport dans la liste pour le lire en entier (flèches ↑ ↓ pour naviguer).', 'empty-state-sm') }}
+                    </div>
+                    <div class="report-reader-placeholder" data-reader-placeholder="nomatch" hidden>
+                        {{ empty_state('search', 'Rien à afficher', 'Modifiez la recherche ou les filtres pour retrouver un rapport.', 'empty-state-sm') }}
+                    </div>
+                </div>
             </div>
             <div data-reports-empty {% if reports %}hidden{% endif %}>
                 {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Cliquez sur « Nouveau rapport »
@@ -621,14 +653,11 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                         {% endif %}
                     </div>
                     {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
-                    <form action="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
-                        method="POST" class="u-m-0">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                            title="Créer et générer les CGL">
-                            <i data-lucide="plus"></i> Créer
-                        </button>
-                    </form>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
+                        data-signer-modal-open="addCglSignerModal"
+                        title="Inviter le représentant de la production à signer les CGL">
+                        <i data-lucide="user-plus"></i> Inviter
+                    </button>
                     {% endif %}
                 </div>
 
@@ -642,13 +671,10 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">Locataire</span>
                         </div>
                         <div class="u-text-2xs u-text-muted">
-                            {% if project.production_contact and project.production_contact.mail %}
-                            {{ project.production_contact.mail }}
-                            {% elif project.production_contact and project.production_contact.full_name %}
-                            {{ project.production_contact.full_name }}
-                            {% else %}
-                            Production signataire
-                            {% endif %}
+                            {% if cgl_waiver.signer_name %}{{ cgl_waiver.signer_name }}{% endif %}
+                            {% if cgl_waiver.signer_name and cgl_waiver.signer_email %} — {% endif %}
+                            {% if cgl_waiver.signer_email %}{{ cgl_waiver.signer_email }}{% endif %}
+                            {% if not cgl_waiver.signer_name and not cgl_waiver.signer_email %}Signataire à renseigner{% endif %}
                         </div>
                     </div>
 
@@ -725,7 +751,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             {{ safety_rules_waivers|length }} signataire{{ 's' if safety_rules_waivers|length > 1 else '' }}
                         </span>
                     </div>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-safety-signer-modal"
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
+                        data-signer-modal-open="addSafetyRulesSignerModal"
                         title="Inviter un nouveau signataire aux règles de sécurité (Pilote, 1er AD, Cadreur, Régie...)">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
@@ -820,7 +847,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             {{ pilot_waivers|length }} pilote{{ 's' if pilot_waivers|length > 1 else '' }}
                         </span>
                     </div>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-pilot-signer-modal"
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
+                        data-signer-modal-open="addPilotSignerModal"
                         title="Inviter un pilote ou cascadeur à signer l'attestation Annexe 3">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
@@ -922,7 +950,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
                         </span>
                     </div>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-risk-signer-modal"
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
+                        data-signer-modal-open="addRiskSignerModal"
                         title="Inviter un signataire à l'analyse des risques (Production, Cascade, Machinerie, Régie...)">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
@@ -1046,338 +1075,126 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 </div>
 
 
-<!-- ═══════════ MODAL AJOUT SIGNATAIRE RÈGLES DE SÉCURITÉ (BVSR) ═══════════ -->
-<div id="addSafetyRulesSignerModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true"
-    aria-labelledby="safetySignerModalTitle">
-    <div class="admin-modal-container admin-modal-container--md">
-        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
-            <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="shield-check" class="u-text-waiver"></i>
-                <h3 id="safetySignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
-                    Inviter un signataire aux Règles de Sécurité (BVSR)
-                </h3>
-            </div>
-            <button type="button" class="admin-modal-close js-close-safety-signer-modal"
-                aria-label="Fermer">&times;</button>
-        </div>
+<!-- ═══════════ MODALES D'INVITATION DES SIGNATAIRES (composant unifié : admin/_signer_invite.html) ═══════════ -->
+{% set prod_contact = project.production_contact %}
+{% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
+{{ signer_invite_modal(
+    'addCglSignerModal',
+    'Inviter à signer les Conditions Générales de Location (CGL)',
+    url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id),
+    project,
+    intro="Le contrat de location est signé par le représentant légal de la production locataire. Le contact production du projet est proposé par défaut ; vous pouvez choisir un autre signataire dans l'annuaire.",
+    icon='file-signature',
+    job_title_label='Qualité du signataire',
+    show_company=False,
+    submit_label="Créer l'invitation CGL",
+    prefill={
+        'first_name': prod_contact.first_name if prod_contact else '',
+        'last_name': prod_contact.last_name if prod_contact else '',
+        'mail': prod_contact.mail if prod_contact else '',
+        'phone': prod_contact.phone if prod_contact else '',
+        'job_title': prod_contact.job_title if prod_contact else '',
+        'contact_id': prod_contact.id if prod_contact else '',
+        'linked_label': ((prod_contact.first_name ~ ' ' ~ prod_contact.last_name) if prod_contact else ''),
+    }) }}
+{% endif %}
 
-        <form method="POST" action="{{ url_for('admin_waivers.admin_safety_rules_create', project_id=project.id) }}"
-            class="admin-modal-content u-p-4 u-overflow-y-auto">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-
-            <p class="u-text-sm u-text-muted u-mb-4">
-                Générez un engagement individuel bilingue (FR/EN) sur-mesure pour cet intervenant de plateau. Le
-                document intègre automatiquement les règles spécifiques aux véhicules réservés.
-            </p>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_signer_role" class="form-label u-font-semibold">Rôle sur le plateau <span
-                            class="u-text-danger">*</span></label>
-                    <select id="new_signer_role" name="signer_role" class="form-select" required>
-                        <option value="pilot">Pilote</option>
-                        <option value="operator">Cadreur</option>
-                        <option value="stunt_coordinator">Coordinateur Cascades</option>
-                        <option value="stunt_performer">Cascadeur</option>
-                        <option value="production">Directeur de production</option>
-                        <option value="director">Réalisateur</option>
-                        <option value="first_ad">1er Assistant Réalisateur</option>
-                        <option value="other">Autre fonction...</option>
-                    </select>
-                </div>
-
-                <div id="new_signer_role_custom_group" class="form-group u-d-none">
-                    <label for="new_signer_role_custom" class="form-label u-font-semibold">Préciser la fonction <span
-                            class="u-text-danger">*</span></label>
-                    <input type="text" id="new_signer_role_custom" name="signer_role_custom" class="form-input"
-                        placeholder="Ex: Machiniste, Chef Électricien...">
-                </div>
-            </div>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_signer_first_name" class="form-label u-font-semibold">Prénom</label>
-                    <input type="text" id="new_signer_first_name" name="signer_first_name" class="form-input"
-                        placeholder="Ex: Jean">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_signer_last_name" class="form-label u-font-semibold">Nom</label>
-                    <input type="text" id="new_signer_last_name" name="signer_last_name" class="form-input"
-                        placeholder="Ex: Dupont">
-                </div>
-            </div>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_signer_email" class="form-label u-font-semibold">E-mail <span
-                            class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
-                    <input type="email" id="new_signer_email" name="signer_email" class="form-input"
-                        placeholder="jean.dupont@prod.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_signer_phone" class="form-label u-font-semibold">Téléphone mobile</label>
-                    <input type="tel" id="new_signer_phone" name="signer_phone" class="form-input"
-                        placeholder="+33 6 12 34 56 78">
-                </div>
-            </div>
-
-            <div class="form-group u-mb-3">
-                <label for="new_signer_company" class="form-label u-font-semibold">Société / Entité représentée</label>
-                <input type="text" id="new_signer_company" name="signer_company" class="form-input"
-                    value="{{ project.production_company.name if project.production_company else '' }}"
-                    placeholder="Ex: Société de production ou Freelance">
-            </div>
-
-            <div class="admin-card u-p-3 u-mb-4 u-bg-waiver-light u-border-left-waiver">
-                <div class="u-flex u-align-center u-gap-2">
-                    <i data-lucide="shield-check" class="u-text-waiver u-w-16 u-h-16"></i>
-                    <span class="u-text-xs u-font-semibold u-text-waiver">Supervision technique Belle Vitesse</span>
-                </div>
-                <p class="u-text-xs u-mt-1 u-mb-0 u-text-muted">
-                    {% if project.bv_referents_names %}
-                    Référent(s) BV associés à ce projet : <strong>{{ project.bv_referents_names }}</strong>. Ils
-                    seront automatiquement appliqués à ce protocole.
-                    {% else %}
-                    Aucun référent BV n'a été rattaché au projet pour l'instant. Vous pouvez les configurer dans
-                    l'édition du projet.
-                    {% endif %}
-                </p>
-            </div>
-
-            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
-                <button type="button" class="admin-btn admin-btn-secondary js-close-safety-signer-modal">
-                    Annuler
-                </button>
-                <button type="submit" class="admin-btn admin-btn-primary">
-                    <i data-lucide="send" class="u-mr-1"></i>
-                    Créer l'invitation BVSR
-                </button>
-            </div>
-        </form>
+{% set safety_roles = [
+    ('pilot', 'Pilote'), ('operator', 'Cadreur'), ('stunt_coordinator', 'Coordinateur Cascades'),
+    ('stunt_performer', 'Cascadeur'), ('production', 'Directeur de production'), ('director', 'Réalisateur'),
+    ('first_ad', '1er Assistant Réalisateur'), ('other', 'Autre fonction...')] %}
+{% call signer_invite_modal(
+    'addSafetyRulesSignerModal',
+    'Inviter un signataire aux Règles de Sécurité (BVSR)',
+    url_for('admin_waivers.admin_safety_rules_create', project_id=project.id),
+    project,
+    intro="Générez un engagement individuel bilingue (FR/EN) sur-mesure pour cet intervenant de plateau. Le document intègre automatiquement les règles spécifiques aux véhicules réservés.",
+    icon='shield-check',
+    roles=safety_roles, default_role='pilot',
+    submit_label="Créer l'invitation BVSR") %}
+<div class="admin-card u-p-3 u-mb-4 u-bg-waiver-light u-border-left-waiver">
+    <div class="u-flex u-align-center u-gap-2">
+        <i data-lucide="shield-check" class="u-text-waiver u-w-16 u-h-16"></i>
+        <span class="u-text-xs u-font-semibold u-text-waiver">Supervision technique Belle Vitesse</span>
     </div>
+    <p class="u-text-xs u-mt-1 u-mb-0 u-text-muted">
+        {% if project.bv_referents_names %}
+        Référent(s) BV associés à ce projet : <strong>{{ project.bv_referents_names }}</strong>. Ils
+        seront automatiquement appliqués à ce protocole.
+        {% else %}
+        Aucun référent BV n'a été rattaché au projet pour l'instant. Vous pouvez les configurer dans
+        l'édition du projet.
+        {% endif %}
+    </p>
 </div>
+{% endcall %}
 
-<!-- Modal d'invitation d'un pilote / cascadeur (Annexe 3 aux CGL - BVPA) -->
-<div id="addPilotSignerModal" class="admin-modal-overlay js-pilot-signer-modal u-d-none" role="dialog" aria-modal="true"
-    aria-labelledby="pilotSignerModalTitle">
-    <div class="admin-modal-container admin-modal-container--md">
-        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
-            <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="file-signature" class="u-text-waiver"></i>
-                <h3 id="pilotSignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
-                    Inviter (Attestation Annexe 3 aux CGL)
-                </h3>
-            </div>
-            <button type="button" class="admin-modal-close js-close-pilot-signer-modal"
-                aria-label="Fermer">&times;</button>
+{% call signer_invite_modal(
+    'addPilotSignerModal',
+    'Inviter (Attestation Annexe 3 aux CGL)',
+    url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id),
+    project,
+    intro="Générez une attestation d'information et d'engagement du pilote (Annexe 3 aux CGL). Ce document atteste de l'autorité exclusive de la production, prévient le risque de salariat déguisé et scelle les règles de sécurité avant le roulage.",
+    icon='file-signature',
+    fixed_role='pilot',
+    company_label='Employeur déclaré (Production)',
+    submit_label="Créer l'invitation Annexe 3",
+    form_id='addPilotSignerForm') %}
+<div class="form-group u-mb-4">
+    <label class="form-label u-font-semibold u-mb-1">Véhicules confiés au pilote</label>
+    <p class="u-text-2xs u-text-muted u-mb-2">
+        Tous les véhicules du tournage sont pré-cochés par défaut. Décochez ceux que ce pilote ne conduira
+        pas.
+    </p>
+
+    <div id="pilotVehiclesError"
+        class="alert-banner-danger u-mb-3 {% if vehicles and vehicles|length > 0 %}u-d-none{% endif %}"
+        role="alert">
+        <i data-lucide="alert-triangle"></i>
+        <div class="alert-banner-danger-content">
+            <span class="alert-banner-title-danger">Sélection requise</span>
+            <div class="alert-banner-desc-danger">Veuillez sélectionner au moins 1 véhicule pour créer
+                l'attestation pilote.</div>
         </div>
+    </div>
 
-        <form id="addPilotSignerForm" method="POST"
-            action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
-            class="admin-modal-content u-p-4 u-overflow-y-auto">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-
-            <p class="u-text-sm u-text-muted u-mb-4">
-                Générez une attestation d'information et d'engagement du pilote (Annexe 3 aux CGL).
-                Ce document atteste de l'autorité exclusive de la production, prévient le risque de salariat déguisé
-                et scelle les règles de sécurité avant le roulage.
-            </p>
-
-            <input type="hidden" name="signer_role" value="pilot">
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_pilot_first_name" class="form-label u-font-semibold">Prénom</label>
-                    <input type="text" id="new_pilot_first_name" name="signer_first_name" class="form-input"
-                        placeholder="Ex: Lucas">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_pilot_last_name" class="form-label u-font-semibold">Nom</label>
-                    <input type="text" id="new_pilot_last_name" name="signer_last_name" class="form-input"
-                        placeholder="Ex: Moreau">
-                </div>
-            </div>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_pilot_email" class="form-label u-font-semibold">E-mail <span
-                            class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
-                    <input type="email" id="new_pilot_email" name="signer_email" class="form-input"
-                        placeholder="lucas.moreau@email.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_pilot_phone" class="form-label u-font-semibold">Téléphone mobile</label>
-                    <input type="tel" id="new_pilot_phone" name="signer_phone" class="form-input"
-                        placeholder="+33 6 12 34 56 78">
-                </div>
-            </div>
-
-            <div class="form-group u-mb-3">
-                <label for="new_pilot_company" class="form-label u-font-semibold">Employeur déclaré (Production)</label>
-                <input type="text" id="new_pilot_company" name="signer_company" class="form-input"
-                    value="{{ project.production.name if project.production else '' }}"
-                    placeholder="Ex: Société de production employeur">
-            </div>
-
-            <div class="form-group u-mb-4">
-                <label class="form-label u-font-semibold u-mb-1">Véhicules confiés au pilote</label>
-                <p class="u-text-2xs u-text-muted u-mb-2">
-                    Tous les véhicules du tournage sont pré-cochés par défaut. Décochez ceux que ce pilote ne conduira
-                    pas.
-                </p>
-
-                <div id="pilotVehiclesError"
-                    class="alert-banner-danger u-mb-3 {% if vehicles and vehicles|length > 0 %}u-d-none{% endif %}"
-                    role="alert">
-                    <i data-lucide="alert-triangle"></i>
-                    <div class="alert-banner-danger-content">
-                        <span class="alert-banner-title-danger">Sélection requise</span>
-                        <div class="alert-banner-desc-danger">Veuillez sélectionner au moins 1 véhicule pour créer
-                            l'attestation pilote.</div>
-                    </div>
-                </div>
-
-                {% if vehicles and vehicles|length > 0 %}
-                <div class="u-flex u-flex-wrap u-gap-1">
-                    {% for v in vehicles %}
-                    {% set vf = v.fields %}
-                    {% set v_name = vf.get('name') or vf.get('Nom') or 'Véhicule' %}
-                    {% set v_img = v.image or (vf.thumbnail[0].thumbnails.small.url if vf.get('thumbnail') else '') %}
-                    <label class="project-checkbox-card selected" data-item-id="{{ v.id }}" data-item-type="vehicle">
-                        <input type="checkbox" name="selected_vehicles" value="{{ v_name }}" checked class="u-d-none">
-                        {{ vehicle_avatar(v_img, v_name, class="project-checkbox-card-img") }}
-                        <div>
-                            <span class="u-text-medium u-text-xs">{{ v_name }}</span>
-                            {% if vf.get('unique_id') %}
-                            <span class="checkout-doc-id u-text-4xs u-mt-0">{{ vf.get('unique_id') }}</span>
-                            {% endif %}
-                        </div>
-                    </label>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="u-text-2xs u-text-muted">Aucun véhicule assigné au projet.</p>
+    {% if vehicles and vehicles|length > 0 %}
+    <div class="u-flex u-flex-wrap u-gap-1">
+        {% for v in vehicles %}
+        {% set vf = v.fields %}
+        {% set v_name = vf.get('name') or vf.get('Nom') or 'Véhicule' %}
+        {% set v_img = v.image or (vf.thumbnail[0].thumbnails.small.url if vf.get('thumbnail') else '') %}
+        <label class="project-checkbox-card selected" data-item-id="{{ v.id }}" data-item-type="vehicle">
+            <input type="checkbox" name="selected_vehicles" value="{{ v_name }}" checked class="u-d-none">
+            {{ vehicle_avatar(v_img, v_name, class="project-checkbox-card-img") }}
+            <div>
+                <span class="u-text-medium u-text-xs">{{ v_name }}</span>
+                {% if vf.get('unique_id') %}
+                <span class="checkout-doc-id u-text-4xs u-mt-0">{{ vf.get('unique_id') }}</span>
                 {% endif %}
             </div>
-
-            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
-                <button type="button" class="admin-btn admin-btn-secondary js-close-pilot-signer-modal">
-                    Annuler
-                </button>
-                <button type="submit"
-                    class="admin-btn admin-btn-primary {% if not vehicles or vehicles|length == 0 %}is-disabled{% endif %}"
-                    {% if not vehicles or vehicles|length==0 %}disabled{% endif %}>
-                    <i data-lucide="send" class="u-mr-1"></i>
-                    Créer l'invitation Annexe 3
-                </button>
-            </div>
-        </form>
+        </label>
+        {% endfor %}
     </div>
+    {% else %}
+    <p class="u-text-2xs u-text-muted">Aucun véhicule assigné au projet.</p>
+    {% endif %}
 </div>
+{% endcall %}
 
-<!-- Modal d'invitation d'un signataire (Analyse des Risques - BVRA) -->
-<div id="addRiskSignerModal" class="admin-modal-overlay js-risk-signer-modal u-d-none" role="dialog" aria-modal="true"
-    aria-labelledby="riskSignerModalTitle">
-    <div class="admin-modal-container admin-modal-container--md">
-        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
-            <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="shield-alert" class="u-text-danger"></i>
-                <h3 id="riskSignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
-                    Inviter un signataire à l'Analyse des Risques (BVRA)
-                </h3>
-            </div>
-            <button type="button" class="admin-modal-close js-close-risk-signer-modal"
-                aria-label="Fermer">&times;</button>
-        </div>
-
-        <form method="POST" action="{{ url_for('admin_waivers.admin_risk_assessment_create', project_id=project.id) }}"
-            class="admin-modal-content u-p-4 u-overflow-y-auto">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-
-            <p class="u-text-sm u-text-muted u-mb-4">
-                Générez une analyse des risques bilingue (FR/EN) individuelle pour cet intervenant de plateau. Le
-                document intègre automatiquement les risques généraux et spécifiques aux véhicules réservés.
-            </p>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_risk_signer_role" class="form-label u-font-semibold">Rôle sur le plateau <span
-                            class="u-text-danger">*</span></label>
-                    <select id="new_risk_signer_role" name="signer_role" class="form-select" required>
-                        <option value="production">Directeur de production</option>
-                        <option value="stunt_coordinator">Coordinateur Cascades</option>
-                        <option value="key_grip">Chef Machiniste</option>
-                        <option value="location_manager">Régisseur Général</option>
-                        <option value="pilot">Pilote</option>
-                        <option value="operator">Cadreur</option>
-                        <option value="first_ad">1er Assistant Réalisateur</option>
-                        <option value="other">Autre fonction...</option>
-                    </select>
-                </div>
-
-                <div id="new_risk_signer_role_custom_group" class="form-group u-d-none">
-                    <label for="new_risk_signer_role_custom" class="form-label u-font-semibold">Préciser la fonction <span
-                            class="u-text-danger">*</span></label>
-                    <input type="text" id="new_risk_signer_role_custom" name="signer_role_custom" class="form-input"
-                        placeholder="Ex: Électricien, Régisseur...">
-                </div>
-            </div>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_risk_signer_first_name" class="form-label u-font-semibold">Prénom</label>
-                    <input type="text" id="new_risk_signer_first_name" name="signer_first_name" class="form-input"
-                        placeholder="Ex: Jean">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_risk_signer_last_name" class="form-label u-font-semibold">Nom</label>
-                    <input type="text" id="new_risk_signer_last_name" name="signer_last_name" class="form-input"
-                        placeholder="Ex: Dupont">
-                </div>
-            </div>
-
-            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
-                <div class="form-group">
-                    <label for="new_risk_signer_email" class="form-label u-font-semibold">E-mail <span
-                            class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
-                    <input type="email" id="new_risk_signer_email" name="signer_email" class="form-input"
-                        placeholder="jean.dupont@prod.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="new_risk_signer_phone" class="form-label u-font-semibold">Téléphone mobile</label>
-                    <input type="tel" id="new_risk_signer_phone" name="signer_phone" class="form-input"
-                        placeholder="+33 6 12 34 56 78">
-                </div>
-            </div>
-
-            <div class="form-group u-mb-3">
-                <label for="new_risk_signer_company" class="form-label u-font-semibold">Société / Entité représentée</label>
-                <input type="text" id="new_risk_signer_company" name="signer_company" class="form-input"
-                    value="{{ project.production.name if project.production else '' }}"
-                    placeholder="Ex: Société de production ou Freelance">
-            </div>
-
-            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
-                <button type="button" class="admin-btn admin-btn-secondary js-close-risk-signer-modal">
-                    Annuler
-                </button>
-                <button type="submit" class="admin-btn admin-btn-primary">
-                    <i data-lucide="send" class="u-mr-1"></i>
-                    Créer l'invitation BVRA
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+{% set risk_roles = [
+    ('production', 'Directeur de production'), ('stunt_coordinator', 'Coordinateur Cascades'),
+    ('key_grip', 'Chef Machiniste'), ('location_manager', 'Régisseur Général'), ('pilot', 'Pilote'),
+    ('operator', 'Cadreur'), ('first_ad', '1er Assistant Réalisateur'), ('other', 'Autre fonction...')] %}
+{{ signer_invite_modal(
+    'addRiskSignerModal',
+    'Inviter un signataire à l\'Analyse des Risques (BVRA)',
+    url_for('admin_waivers.admin_risk_assessment_create', project_id=project.id),
+    project,
+    intro="Générez une analyse des risques bilingue (FR/EN) individuelle pour cet intervenant de plateau. Le document intègre automatiquement les risques généraux et spécifiques aux véhicules réservés.",
+    icon='shield-alert', icon_class='u-text-danger',
+    roles=risk_roles, default_role='production',
+    submit_label="Créer l'invitation BVRA") }}
 {% if can('project_delete') %}
 {{ danger_zone(url_for('admin_projects.admin_project_delete', record_id=project.id), 'Supprimer ce projet ? Son dossier kDrive sera également supprimé. Cette action est irréversible.', 'Supprimer ce projet', desc='Supprime le projet, ses documents rattachés et son dossier kDrive.') }}
 {% endif %}

@@ -116,6 +116,12 @@ def delete_contact(record_id):
             "Veuillez réassigner ces postes sur les projets concernés avant de supprimer ce contact."
         )
 
+    # Les documents signés gardent leur copie figée des coordonnées : on détache seulement le lien.
+    from models import Waiver
+    Waiver.query.filter(Waiver.signer_contact_id == record_id).update(
+        {Waiver.signer_contact_id: None}, synchronize_session=False
+    )
+
     return generic_delete_record(Contact, record_id)
 
 

@@ -58,6 +58,24 @@ def _format_waiver_data(waiver, beneficiary_name: str, doc_type: str) -> dict:
     }
 
 
+def _format_cgl_data(project) -> dict:
+    """Données de la carte CGL de la fiche projet, avec le signataire réellement invité."""
+    cgl = project.active_cgl
+    data = _format_waiver_data(
+        cgl,
+        (cgl.production_name if (cgl and cgl.production_name)
+         else (project.production.name if project.production else "")),
+        "cgl",
+    )
+    signer_email, signer_name = (None, "")
+    if data["id"]:
+        from services.admin.waivers.common import resolve_waiver_recipient
+        signer_email, signer_name = resolve_waiver_recipient(cgl)
+    data["signer_name"] = signer_name or ""
+    data["signer_email"] = signer_email or ""
+    return data
+
+
 class ReportNotFoundError(ValueError):
     """Rapport inexistant, supprimé ou n'appartenant pas au projet indiqué."""
 
@@ -158,21 +176,22 @@ def _format_datetime_short_fr(dt):
     return f"{dt.day} {_MONTHS_FR[dt.month - 1]}{year} à {dt.strftime('%H:%M')}"
 
 
-def group_reports_by_day(reports):
+def group_reports_by_day(reports, chronological=False):
     """
     Regroupe des rapports sérialisés par jour de tournage pour la timeline :
     jours du plus récent au plus ancien, rapports non rattachés en dernier ;
     dans chaque groupe, du plus récent au plus ancien.
+    `chronological=True` (journal PDF) : jours et rapports du plus ancien au plus récent.
     """
     groups = {}
     for r in reports:
         groups.setdefault(r["shoot_day"], {"day": r["shoot_day"], "heading": r["shoot_day_heading"], "reports": []})
         groups[r["shoot_day"]]["reports"].append(r)
-    ordered = sorted((g for k, g in groups.items() if k), key=lambda g: g["day"], reverse=True)
+    ordered = sorted((g for k, g in groups.items() if k), key=lambda g: g["day"], reverse=not chronological)
     if "" in groups:
         ordered.append(groups[""])
     for g in ordered:
-        g["reports"].sort(key=lambda r: r["created_at"] or datetime.min, reverse=True)
+        g["reports"].sort(key=lambda r: r["created_at"] or datetime.min, reverse=not chronological)
     return ordered
 
 
@@ -217,7 +236,7 @@ def _save_report_photos(files, existing_count=0):
 def serialize_report(report, current_user_id=None, is_admin=False, now=None, with_permissions=False):
     """
     Sérialisation unique d'un rapport pour les vues (fiche projet, MCP, recherche, PDF).
-    `with_permissions=True` ajoute can_edit / can_delete / editable_until pour l'utilisateur courant.
+    `with_permissions=True` ajoute can_edit / can_delete / editable_until / is_mine pour l'utilisateur courant.
     """
     project = report.project
     data = {
@@ -251,6 +270,8 @@ def serialize_report(report, current_user_id=None, is_admin=False, now=None, wit
         can_edit = report.can_be_edited_by(current_user_id, is_admin, now)
         data["can_edit"] = can_edit
         data["can_delete"] = report.can_be_deleted_by(current_user_id, is_admin)
+        # Rapport rédigé par l'utilisateur courant : avatar mis en avant (jaune)
+        data["is_mine"] = current_user_id is not None and report.user_id == current_user_id
         # Compte à rebours affiché uniquement pour l'auteur non administrateur
         data["editable_until"] = (
             report.editable_until.isoformat() if (can_edit and not is_admin) else ""
@@ -506,6 +527,7 @@ def build_reports_export_context(project_id, category=None, shoot_day=None):
     return {
         "project": project,
         "reports": reports,
+        "report_groups": group_reports_by_day(reports, chronological=True),
         "filters_label": " · ".join(filters),
         "generated_at_fr": _format_datetime_fr(datetime.now(timezone.utc)),
     }
@@ -774,15 +796,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False,
         "report_days": shoot_day_choices(project),
         "report_max_photos": REPORT_MAX_PHOTOS,
         "incidents": incidents_list,
-        "cgl_waiver": _format_waiver_data(
-            project.active_cgl,
-            (
-                project.active_cgl.production_name
-                if (project.active_cgl and project.active_cgl.production_name)
-                else (project.production.name if project.production else "")
-            ),
-            "cgl",
-        ),
+        "cgl_waiver": _format_cgl_data(project),
         "safety_rules_waivers": [
             {
                 "id": sr.id,

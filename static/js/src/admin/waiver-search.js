@@ -53,9 +53,14 @@
             return div.innerHTML;
         }
 
+        function notifyProject(proj) {
+            hiddenInput.dispatchEvent(new CustomEvent('waiver:project-selected', { bubbles: true, detail: proj || null }));
+        }
+
         function selectProject(proj) {
             if (!proj) return;
             hiddenInput.value = proj.id;
+            notifyProject(proj);
             selectedName.textContent = proj.name;
             selectedProd.textContent = proj.production || 'Sans production';
 
@@ -91,6 +96,7 @@
 
         function unselectProject() {
             hiddenInput.value = '';
+            notifyProject(null);
             selectedCard.classList.add('u-d-none');
             searchContainer.classList.remove('u-d-none');
 

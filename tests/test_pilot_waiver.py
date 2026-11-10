@@ -283,8 +283,8 @@ class PilotWaiverComprehensiveTest(BaseTestCase):
 
             # Vérification de l'overlay et des classes modales
             self.assertIn('id="addPilotSignerModal"', html)
-            self.assertIn('class="admin-modal-overlay js-pilot-signer-modal u-d-none"', html)
-            self.assertIn('js-open-add-pilot-signer-modal', html)
+            self.assertIn('data-signer-modal', html)
+            self.assertIn('data-signer-modal-open="addPilotSignerModal"', html)
 
             # Vérification de l'action du formulaire et des cartes véhicules (style project_form)
             self.assertIn(f'/admin/projects/{proj.id}/pilot-waivers/create', html)

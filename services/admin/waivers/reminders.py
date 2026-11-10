@@ -17,6 +17,8 @@ from models import (
 )
 from services.admin.utils import handle_admin_service_error
 
+from .common import resolve_waiver_recipient
+
 logger = logging.getLogger(__name__)
 
 
@@ -75,8 +77,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         if cw.last_reminded_at and cw.last_reminded_at.date() == today:
             continue
 
-        contact_prod = p.production_contact
-        if not contact_prod or not contact_prod.mail:
+        recipient_mail, recipient_name = resolve_waiver_recipient(cw)
+        if not recipient_mail:
             continue
 
         try:
@@ -87,8 +89,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             sig_url = f"{base_url_str}/sign/cgl/{new_token}"
 
             sent = send_cgl_invitation_email(
-                to_email=contact_prod.mail,
-                prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
+                to_email=recipient_mail,
+                prod_contact_name=recipient_name,
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
@@ -108,7 +110,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                     "type": "cgl",
                     "waiver_id": cw.waiver_id,
                     "project_name": p.name,
-                    "recipient": contact_prod.mail,
+                    "recipient": recipient_mail,
                     "departure_date": p_start.isoformat(),
                     "reminder_count": cw.reminder_count,
                 })
@@ -144,11 +146,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         if sr.last_reminded_at and sr.last_reminded_at.date() == today:
             continue
 
-        recipient_mail = sr.signer_email
-        recipient_name = sr.signer_name
-        if not recipient_mail and sr.signer_role == "pilot" and p and p.pilot_contact:
-            recipient_mail = p.pilot_contact.mail
-            recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
+        recipient_mail, recipient_name = resolve_waiver_recipient(sr)
 
         if not recipient_mail:
             continue
@@ -218,11 +216,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         if pw.last_reminded_at and pw.last_reminded_at.date() == today:
             continue
 
-        recipient_mail = pw.signer_email
-        recipient_name = pw.signer_name
-        if not recipient_mail and p and p.pilot_contact:
-            recipient_mail = p.pilot_contact.mail
-            recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
+        recipient_mail, recipient_name = resolve_waiver_recipient(pw)
 
         if not recipient_mail:
             continue

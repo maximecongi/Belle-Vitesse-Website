@@ -133,8 +133,8 @@
                         </a>
                         {% endif %}
                         {% else %}
-                        <a href="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
-                            class="today-row-waiver-link" title="Créer les CGL en 1 clic">
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id, invite='addCglSignerModal') }}"
+                            class="today-row-waiver-link" title="Inviter le signataire des CGL">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
                                 <span>Conditions Générales (CGL)</span>

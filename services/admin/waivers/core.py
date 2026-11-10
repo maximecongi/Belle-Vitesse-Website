@@ -32,9 +32,75 @@ from .common import (
     _format_project_shooting_dates,
     _get_waiver_config,
     _reset_waiver_fields,
+    resolve_waiver_recipient,
 )
 
 logger = logging.getLogger(__name__)
+
+
+DEFAULT_SIGNER_ROLES = {
+    "cgl": "production",
+    "safety_rules": "pilot",
+    "pilot_waiver": "pilot",
+    "risk_assessment": "production",
+}
+
+
+def _apply_signer(waiver, project, waiver_type, kwargs):
+    """
+    Renseigne le signataire d'un document à partir de la modale d'invitation unifiée.
+
+    Coordonnées saisies (ou choisies dans l'annuaire) → copie figée sur le document + lien
+    vers la fiche contact ERP (créée au besoin). Sans saisie, le contact du projet
+    correspondant au rôle est repris (production pour les CGL, pilote pour l'Annexe 3...).
+    """
+    from services.admin.signers import project_default_signer, upsert_signer_contact
+
+    def val(key):
+        return (kwargs.get(key) or "").strip() if isinstance(kwargs.get(key), str) else kwargs.get(key)
+
+    first, last = val("signer_first_name") or "", val("signer_last_name") or ""
+    email, phone = val("signer_email") or "", val("signer_phone") or ""
+    company, role_custom = val("signer_company") or "", val("signer_role_custom") or ""
+    role = val("signer_role") or DEFAULT_SIGNER_ROLES.get(waiver_type)
+    if waiver_type == "cgl":
+        role = "production"
+    production_name = project.production.name if project.production else ""
+
+    contact = None
+    if first or last or email or val("signer_contact_id") or val("signer_user_id"):
+        contact = upsert_signer_contact(
+            project, first, last, mail=email, phone=phone, job_title=role_custom,
+            contact_id=val("signer_contact_id"), user_id=val("signer_user_id"),
+        )
+        if contact is not None and not (first or last):
+            first, last = contact.first_name or "", contact.last_name or ""
+            email = email or (contact.mail or "")
+            phone = phone or (contact.phone or "")
+    else:
+        contact = project_default_signer(project, role)
+        if contact is not None:
+            first, last = contact.first_name or "", contact.last_name or ""
+            email = contact.mail or ""
+            phone = contact.phone or ""
+            if waiver_type == "cgl":
+                role_custom = role_custom or (contact.job_title or "")
+
+    waiver.signer_contact_id = contact.id if contact is not None else None
+    waiver.signer_email = email or None
+    waiver.signer_phone = phone or None
+
+    if waiver_type == "cgl":
+        # Les CGL identifient le représentant légal de la production (nom complet + qualité).
+        waiver.production_representative = f"{first} {last}".strip() or None
+        waiver.signer_role_custom = role_custom or None
+        return
+
+    waiver.signer_role = role
+    waiver.signer_role_custom = role_custom or None
+    waiver.signer_first_name = first or None
+    waiver.signer_last_name = last or None
+    waiver.signer_company = company or production_name or None
 
 
 @handle_admin_service_error
@@ -72,72 +138,12 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         waiver.production_name = p.production.name
         if waiver_type == "cgl":
             waiver.production_address = p.production.address
-            if p.production_contact:
-                waiver.production_representative = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
-                waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
-                waiver.signer_email = getattr(p.production_contact, "mail", "")
-                waiver.signer_role_custom = getattr(p.production_contact, "job_title", "")
-    elif waiver_type == "cgl" and p.production_contact:
-        waiver.production_representative = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
-        waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
-        waiver.signer_email = getattr(p.production_contact, "mail", "")
-        waiver.signer_role_custom = getattr(p.production_contact, "job_title", "")
+
+    _apply_signer(waiver, p, waiver_type, kwargs)
 
     if waiver_type == "safety_rules":
-        waiver.signer_role = kwargs.get("signer_role", "pilot")
-        waiver.signer_role_custom = kwargs.get("signer_role_custom")
-        waiver.signer_first_name = kwargs.get("signer_first_name")
-        waiver.signer_last_name = kwargs.get("signer_last_name")
-        waiver.signer_email = kwargs.get("signer_email")
-        waiver.signer_phone = kwargs.get("signer_phone")
-        waiver.signer_company = kwargs.get("signer_company")
         waiver.safety_technicians = (kwargs.get("safety_technicians") or "").strip() or getattr(p, "bv_referents_names", None) or None
         waiver.helmets_inventory = kwargs.get("helmets_inventory")
-
-        # Auto-complétion si coordonnées non fournies
-        if waiver.signer_role == "pilot" and not waiver.signer_first_name and p.pilot_contact:
-            waiver.signer_first_name = p.pilot_contact.first_name
-            waiver.signer_last_name = p.pilot_contact.last_name
-            waiver.signer_email = p.pilot_contact.mail
-            waiver.signer_phone = getattr(p.pilot_contact, "tel", "")
-        elif waiver.signer_role == "production" and not waiver.signer_first_name and p.production_contact:
-            waiver.signer_first_name = p.production_contact.first_name
-            waiver.signer_last_name = p.production_contact.last_name
-            waiver.signer_email = p.production_contact.mail
-            waiver.signer_company = p.production.name if p.production else ""
-
-    elif waiver_type == "pilot_waiver":
-        waiver.signer_role = kwargs.get("signer_role", "pilot")
-        waiver.signer_role_custom = kwargs.get("signer_role_custom")
-        waiver.signer_first_name = kwargs.get("signer_first_name")
-        waiver.signer_last_name = kwargs.get("signer_last_name")
-        waiver.signer_email = kwargs.get("signer_email")
-        waiver.signer_phone = kwargs.get("signer_phone")
-        waiver.signer_company = kwargs.get("signer_company") or (p.production.name if p.production else "")
-        if not waiver.signer_first_name and p.pilot_contact:
-            waiver.signer_first_name = p.pilot_contact.first_name
-            waiver.signer_last_name = p.pilot_contact.last_name
-            waiver.signer_email = p.pilot_contact.mail
-            waiver.signer_phone = getattr(p.pilot_contact, "tel", "")
-
-    elif waiver_type == "risk_assessment":
-        waiver.signer_role = kwargs.get("signer_role", "production")
-        waiver.signer_role_custom = kwargs.get("signer_role_custom")
-        waiver.signer_first_name = kwargs.get("signer_first_name")
-        waiver.signer_last_name = kwargs.get("signer_last_name")
-        waiver.signer_email = kwargs.get("signer_email")
-        waiver.signer_phone = kwargs.get("signer_phone")
-        waiver.signer_company = kwargs.get("signer_company") or (p.production.name if p.production else "")
-        if waiver.signer_role == "production" and not waiver.signer_first_name and p.production_contact:
-            waiver.signer_first_name = p.production_contact.first_name
-            waiver.signer_last_name = p.production_contact.last_name
-            waiver.signer_email = p.production_contact.mail
-            waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
-        elif waiver.signer_role == "pilot" and not waiver.signer_first_name and p.pilot_contact:
-            waiver.signer_first_name = p.pilot_contact.first_name
-            waiver.signer_last_name = p.pilot_contact.last_name
-            waiver.signer_email = p.pilot_contact.mail
-            waiver.signer_phone = getattr(p.pilot_contact, "tel", "") or getattr(p.pilot_contact, "phone", "")
 
     waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
@@ -207,9 +213,9 @@ def generate_waiver(waiver_id, waiver_type: str = None):
     p = waiver.project
 
     if mode == "cgl":
-        contact_prod = p.production_contact if p else None
-        if not contact_prod or not contact_prod.mail:
-            return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
+        recipient_mail, _ = resolve_waiver_recipient(waiver)
+        if not recipient_mail:
+            return False, "Le signataire des CGL n'a pas d'adresse e-mail renseignée."
         if p and p.production:
             waiver.production_name = p.production.name
             waiver.production_address = p.production.address
@@ -279,30 +285,16 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         return False, "Statut invalide pour l'envoi."
 
     p = waiver.project
-    if mode in ("safety_rules", "pilot_waiver", "risk_assessment"):
-        recipient_mail = waiver.signer_email
-        recipient_name = waiver.signer_name
-        if not recipient_mail and waiver.signer_role == "pilot" and p and p.pilot_contact:
-            recipient_mail = p.pilot_contact.mail
-            recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
-        elif not recipient_mail and waiver.signer_role == "production" and p and p.production_contact:
-            recipient_mail = p.production_contact.mail
-            recipient_name = f"{p.production_contact.first_name} {p.production_contact.last_name}"
-        if not recipient_mail:
-            return False, "Le signataire n'a pas d'adresse e-mail renseignée pour l'envoi."
-        if mode == "safety_rules":
-            route_prefix = "safety-rules"
-        elif mode == "pilot_waiver":
-            route_prefix = "pilot-attestation"
-        else:
-            route_prefix = "risk-assessment"
-    else:
-        contact = p.production_contact if p else None
-        if not contact or not contact.mail:
-            return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
-        recipient_mail = contact.mail
-        recipient_name = f"{contact.first_name} {contact.last_name}"
-        route_prefix = "cgl"
+    recipient_mail, recipient_name = resolve_waiver_recipient(waiver)
+    if not recipient_mail:
+        if mode == "cgl":
+            return False, "Le signataire des CGL n'a pas d'adresse e-mail renseignée."
+        return False, "Le signataire n'a pas d'adresse e-mail renseignée pour l'envoi."
+    route_prefix = {
+        "safety_rules": "safety-rules",
+        "pilot_waiver": "pilot-attestation",
+        "risk_assessment": "risk-assessment",
+    }.get(mode, "cgl")
 
     new_token = str(uuid.uuid4())
     token_rec = WaiverToken(token=new_token, waiver_id=waiver.waiver_id)

@@ -3,6 +3,19 @@
     Partagés entre le formulaire « Nouveau rapport » (fiche projet) et l'édition inline (_report_item.html).
 #}
 
+{# Ligne de la liste des rapports (fiche projet). Même balisage que buildRow() dans project-reports.js. #}
+{% macro report_list_row(report) %}
+{% from "admin/macros.html" import initials %}
+<button type="button" class="report-list-row report-list-row--{{ report.category }}" data-report-row="{{ report.id }}"
+    aria-controls="report-{{ report.id }}" aria-current="false">
+    <span class="report-list-row-title">{{ report.title }}</span>
+    <span class="report-list-row-meta">
+        <span class="project-report-avatar report-list-row-avatar{% if report.is_mine %} is-mine{% endif %}" aria-hidden="true">{{ initials(report.author_name, '') }}</span>
+        <span>{{ report.created_at_short }} · {{ report.category_label }}</span>
+    </span>
+</button>
+{% endmacro %}
+
 {% macro report_category_badge(key, label) %}
 <span class="report-category-badge report-category--{{ key }}">{{ label }}</span>
 {% endmacro %}
@@ -37,9 +50,9 @@
     <legend class="report-field-label">Catégorie</legend>
     <div class="report-pills">
         {% for key, label in categories %}
-        <label class="report-pill report-pill--choice report-category--{{ key }}">
+        <label class="report-category-choice report-category--{{ key }}">
             <input type="radio" name="category" value="{{ key }}" {% if key == (selected or 'note') %}checked{% endif %}>
-            <span>{{ label }}</span>
+            <span class="report-category-badge">{{ label }}</span>
         </label>
         {% endfor %}
     </div>

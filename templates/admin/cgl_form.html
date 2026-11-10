@@ -1,4 +1,5 @@
 {% extends "admin/admin_base.html" %}
+{% from "admin/_signer_invite.html" import signer_fields %}
 
 {% block title %}Nouvelles conditions générales (CGL){% endblock %}
 {% block page_title %}Nouvelles conditions générales (CGL){% endblock %}
@@ -67,10 +68,22 @@
             </button>
         </div>
 
+        <!-- Signataire (révélé après choix du projet, pré-rempli avec son contact production) -->
+        <div class="u-d-none u-mb-4" data-signer-section>
+            <div class="admin-card-title u-flex u-align-center u-gap-2 u-mt-2">
+                <i data-lucide="user-check" class="u-text-waiver"></i>
+                <span>Signataire des CGL</span>
+            </div>
+            <p class="u-mb-3 u-text-muted u-text-sm">
+                Représentant légal de la production locataire. Le contact production du projet est proposé par défaut.
+            </p>
+            {{ signer_fields('cglNewSigner', None, job_title_label='Qualité du signataire', show_company=False) }}
+        </div>
+
         <div class="u-flex u-gap-2 u-justify-end">
             <a href="{{ url_for('admin_waivers.admin_cgl_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary" id="submitWaiverBtn" disabled>
-                <i data-lucide="plus-circle"></i> Créer les CGL
+                <i data-lucide="send"></i> Créer l'invitation CGL
             </button>
         </div>
     </form>

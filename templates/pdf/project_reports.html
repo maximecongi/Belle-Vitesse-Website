@@ -3,13 +3,15 @@
 
 {% block title %}Journal de bord — {{ project.name }}{% endblock %}
 
+{% block body_class %}reports-pdf{% endblock %}
+
 {% block extra_css %}
 <link rel="stylesheet" href="{{ asset_url('css/pdf/project-reports-pdf.css') }}">
 {% endblock %}
 
 {% block pdf_header %}
 {{ pdf_header(
-    doc_type_title='JOURNAL DE BORD',
+    doc_type_title='Journal de Bord',
     doc_id=project.project_id,
     date_str=generated_at_fr,
     company_name=company_name
@@ -29,35 +31,47 @@
     ('Production', project.production.name if project.production else ''),
     ('Projet', project.project_id),
     ('Rapports', reports|length),
-    ('Édité le', generated_at_fr),
-], columns=2) }}
+], columns=3) }}
 
 {% if not reports %}
 <p class="reports-pdf-empty">Aucun rapport ne correspond aux critères sélectionnés.</p>
 {% endif %}
 
-{% for r in reports %}
-<article class="reports-pdf-entry reports-pdf-entry--{{ r.category }}">
-    <header class="reports-pdf-entry-head">
-        <h2 class="reports-pdf-entry-title">{{ r.title }}</h2>
-        <div class="reports-pdf-entry-meta">
-            <span class="reports-pdf-category reports-pdf-category--{{ r.category }}">{{ r.category_label }}</span>
-            {% if r.shoot_day_label %}<span>{{ r.shoot_day_label }}</span>{% endif %}
-            <span>{{ r.author_name }} — {{ r.author_job }}</span>
-            <span>{{ r.created_at_fr }}{% if r.is_edited %} (modifié){% endif %}</span>
-        </div>
+{% for group in report_groups %}
+<section class="reports-pdf-day">
+    {% if group.day or report_groups|length > 1 %}
+    <header class="reports-pdf-day-head">
+        <span class="reports-pdf-day-title">{{ group.heading }}</span>
+        <span class="reports-pdf-day-rule"></span>
+        <span class="reports-pdf-day-count">{{ group.reports|length }} rapport{{ 's' if group.reports|length > 1 else '' }}</span>
     </header>
-    <div class="reports-pdf-entry-body">
-        {{ r.content | markdown }}
-    </div>
-    {% if r.photo_uris %}
-    <div class="reports-pdf-photos">
-        {% for uri in r.photo_uris %}
-        <img src="{{ uri }}" alt="Photo {{ loop.index }}">
-        {% endfor %}
-    </div>
     {% endif %}
-</article>
+
+    {% for r in group.reports %}
+    <article class="reports-pdf-entry reports-pdf-entry--{{ r.category }}">
+        <header class="reports-pdf-entry-head">
+            <div class="reports-pdf-entry-top">
+                <h2 class="reports-pdf-entry-title">{{ r.title }}</h2>
+                <span class="reports-pdf-category reports-pdf-category--{{ r.category }}">{{ r.category_label }}</span>
+            </div>
+            <div class="reports-pdf-entry-meta">
+                <span class="reports-pdf-entry-author">{{ r.author_name }}{% if r.author_job %} — {{ r.author_job }}{% endif %}</span>
+                <span>{{ r.created_at_fr }}{% if r.is_edited %} (modifié){% endif %}</span>
+            </div>
+        </header>
+        <div class="reports-pdf-entry-body">
+            {{ r.content | markdown }}
+        </div>
+        {% if r.photo_uris %}
+        <div class="reports-pdf-photos">
+            {% for uri in r.photo_uris %}
+            <img src="{{ uri }}" alt="Photo {{ loop.index }}">
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+    {% endfor %}
+</section>
 {% endfor %}
 {% endblock %}
 

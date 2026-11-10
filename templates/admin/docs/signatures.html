@@ -9,7 +9,12 @@
 <h2>Processus de Signature</h2>
 <ol>
     <li><strong>Génération</strong> : Un jeton unique (token) est généré pour le document.</li>
-    <li><strong>Invitation</strong> : Un email est envoyé au signataire avec un lien sécurisé.</li>
+    <li><strong>Invitation</strong> : Le signataire est choisi depuis une modale unique (CGL, BVSR, Annexe 3, BVRA) avec
+        recherche dans l'annuaire (contacts du projet, de la production, puis tous les contacts et l'équipe BV). Ses
+        coordonnées sont copiées sur le document (valeur légale) et le document est lié à sa fiche contact
+        (<code>signer_contact_id</code>) ; un signataire saisi librement est ajouté automatiquement aux contacts. Un email
+        lui est envoyé avec un lien sécurisé ; envoi et relances utilisent toujours le signataire enregistré sur le
+        document (à défaut, le contact du projet correspondant au rôle).</li>
     <li><strong>Capture</strong> : Le signataire dessine sa signature sur l'interface publique.</li>
     <li><strong>Traitement</strong> : Le serveur capture la signature (base64 PNG), l'IP du signataire et l'horodatage.
     </li>

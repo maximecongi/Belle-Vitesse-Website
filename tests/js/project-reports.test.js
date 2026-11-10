@@ -1,4 +1,4 @@
-// Module des rapports d'équipe (project-reports.js) : filtres, export, brouillons, compte à rebours, photos, AJAX.
+// Module des rapports d'équipe (project-reports.js) : liste + lecture, filtres, export, brouillons, compte à rebours, photos, AJAX.
 const fs = require('fs');
 const path = require('path');
 const { JSDOM } = require('jsdom');
@@ -12,7 +12,8 @@ function check(name, cond, info) { console.log((cond ? 'OK  ' : 'FAIL') + ' ' + 
 
 const item = (id, { category = 'note', day = '', search = '', created = '2026-09-10T10:00:00', until = '' } = {}) => `
 <div class="project-report-item" id="report-${id}" data-report-id="${id}" data-category="${category}" data-day="${day}"
-  data-day-heading="${day ? 'J · ' + day : 'Général'}"
+  data-day-heading="${day ? 'J · ' + day : 'Général'}" data-title="Rapport ${id}" data-initials="MC" data-time="10:00"
+  data-category-label="${category}"
   data-updated-at="${created}" data-created-at="${created}" data-search="${search}">
   <div class="project-report-card">
     ${until ? `<span class="project-report-countdown" data-editable-until="${until}"></span>` : ''}
@@ -32,6 +33,14 @@ function page(items, { storage = {} } = {}) {
 <div data-reports-root data-project-id="1">
   <span data-reports-count-badge><span class="badge-pill">${items.length} contributions</span></span>
   <button type="button" data-action="open-report-form">+ Nouveau rapport</button>
+  <div data-reports-browser>
+  <div data-reports-list>
+    <button type="button" data-compose-row hidden>Nouveau rapport</button>
+    <div data-reports-groups></div>
+    <div data-reports-nomatch hidden><button type="button" data-action="reset-report-filters">Réinitialiser</button></div>
+  </div>
+  <div data-reports-reader>
+  <button type="button" data-action="reports-back">Liste</button>
   <form id="create" data-report-form="create" data-draft-key="1:new" action="/admin/projects/1/reports" method="POST" hidden>
     <button type="button" data-action="close-report-form">x</button>
     <button type="button" data-action="cancel-report-form">Annuler</button>
@@ -46,6 +55,11 @@ function page(items, { storage = {} } = {}) {
     <div class="report-form-error is-hidden" data-form-error></div>
     <button type="submit" data-submit-label="Publier">Publier</button>
   </form>
+  <div data-reports-timeline>${items.join('')}</div>
+  <div data-reader-placeholder="select" hidden></div>
+  <div data-reader-placeholder="nomatch" hidden></div>
+  </div>
+  </div>
   <div data-reports-toolbar>
     <button type="button" class="is-active" data-reports-category="">Toutes <span data-category-count=""></span></button>
     <button type="button" data-reports-category="securite">Sécurité <span data-category-count="securite"></span></button>
@@ -55,7 +69,6 @@ function page(items, { storage = {} } = {}) {
     <a data-reports-export href="/admin/projects/1/reports/export">PDF</a>
   </div>
   <p data-reports-filter-summary class="is-hidden"></p>
-  <div data-reports-timeline>${items.join('')}</div>
   <div data-reports-empty hidden></div>
 </div></body>`, { runScripts: 'outside-only', url: 'https://bv.test/admin/projects/1' });
   const w = dom.window;
@@ -73,6 +86,9 @@ function page(items, { storage = {} } = {}) {
   return { w, doc: w.document };
 }
 
+const row = (doc, id) => doc.querySelector(`[data-report-row="${id}"]`);
+const shown = (doc) => [...doc.querySelectorAll('.project-report-item')].filter((i) => !i.hidden).map((i) => i.dataset.reportId).join(',');
+
 (async () => {
   // ── Filtres & lien d'export ──
   {
@@ -82,12 +98,12 @@ function page(items, { storage = {} } = {}) {
     ]);
     const q = doc.querySelector('[data-reports-filter="q"]');
     q.value = 'pneu'; q.dispatchEvent(new w.Event('input'));
-    check('Filtre texte', !doc.getElementById('report-1').hidden && doc.getElementById('report-2').hidden, '');
+    check('Filtre texte (lignes de la liste)', !row(doc, 1).hidden && row(doc, 2).hidden, '');
     q.value = ''; q.dispatchEvent(new w.Event('input'));
     doc.querySelector('[data-reports-category="securite"]').click();
     const day = doc.querySelector('[data-reports-filter="day"]');
     day.value = '2026-09-10'; day.dispatchEvent(new w.Event('change'));
-    check('Filtres catégorie + jour', !doc.getElementById('report-1').hidden && doc.getElementById('report-2').hidden, '');
+    check('Filtres catégorie + jour', !row(doc, 1).hidden && row(doc, 2).hidden, '');
     const href = doc.querySelector('[data-reports-export]').getAttribute('href');
     check("Lien d'export synchronisé", href === '/admin/projects/1/reports/export?category=securite&day=2026-09-10', href);
     check('Résumé des filtres', doc.querySelector('[data-reports-filter-summary]').textContent.startsWith('1 rapport sur 2'), doc.querySelector('[data-reports-filter-summary]').textContent);
@@ -104,7 +120,7 @@ function page(items, { storage = {} } = {}) {
     pill.click();
     check('Pastille active (aria-pressed)', pill.classList.contains('is-active') && pill.getAttribute('aria-pressed') === 'true'
       && !doc.querySelector('[data-reports-category=""]').classList.contains('is-active'), '');
-    check('Filtre par pastille', doc.getElementById('report-1').hidden && !doc.getElementById('report-2').hidden, '');
+    check('Filtre par pastille', row(doc, 1).hidden && !row(doc, 2).hidden, '');
   }
 
   // ── Regroupement par jour de tournage ──
@@ -121,14 +137,72 @@ function page(items, { storage = {} } = {}) {
     form.querySelector('.notion-wysiwyg-wrapper')._notionEditor.setContent('<p>y</p>');
     form.dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
     await sleep(20);
-    const groups = [...doc.querySelectorAll('.report-day-group')].map((g) => g.dataset.groupDay + ':' + [...g.querySelectorAll('.project-report-item')].map((i) => i.dataset.reportId).join(''));
+    const groups = [...doc.querySelectorAll('.report-day-group')].map((g) => g.dataset.groupDay + ':' + [...g.querySelectorAll('[data-report-row]')].map((i) => i.dataset.reportRow).join(''));
     check('Groupes : jours récents d\'abord, « sans jour » en dernier, rapports récents d\'abord', groups.join(' | ') === '2026-09-11:53 | 2026-09-10:41 | :2', groups.join(' | '));
     check('Intitulé et compteur du groupe', doc.querySelector('.report-day-group .report-day-title').textContent === 'J · 2026-09-11'
-      && doc.querySelector('.report-day-group [data-group-count]').textContent === '2 rapports', doc.querySelector('.report-day-group [data-group-count]').textContent);
+      && doc.querySelector('.report-day-group [data-group-count]').textContent === '2', doc.querySelector('.report-day-group [data-group-count]').textContent);
+    check('Cartes du volet de lecture rangées dans le même ordre', [...doc.querySelectorAll('[data-reports-timeline] .project-report-item')].map((i) => i.dataset.reportId).join('') === '53412', '');
+    check('Rapport publié sélectionné et affiché seul', shown(doc) === '5' && row(doc, 5).classList.contains('is-selected'), shown(doc));
     doc.querySelector('[data-reports-category="securite"]').click();
     const visibleGroups = [...doc.querySelectorAll('.report-day-group')].filter((g) => !g.hidden).map((g) => g.dataset.groupDay);
     check('Filtre : groupes vides masqués, compteur = visibles', visibleGroups.join(',') === '2026-09-11'
-      && doc.querySelector('.report-day-group [data-group-count]').textContent === '1 rapport', visibleGroups.join(','));
+      && doc.querySelector('.report-day-group [data-group-count]').textContent === '1', visibleGroups.join(','));
+    check('Filtre : sélection déplacée sur le premier rapport visible', shown(doc) === '3', shown(doc));
+  }
+
+  // ── Liste + lecture : sélection, clavier, suppression, aucun résultat, mobile ──
+  {
+    const { w, doc } = page([
+      item(1, { day: '2026-09-10', created: '2026-09-10T08:00:00', search: 'alpha' }),
+      item(2, { day: '2026-09-10', created: '2026-09-10T12:00:00', search: 'beta' }),
+      item(3, { day: '2026-09-11', created: '2026-09-11T08:00:00', search: 'gamma' }),
+    ]);
+    const browser = doc.querySelector('[data-reports-browser]');
+    check('Au chargement : rapport le plus récent sélectionné, seul affiché', shown(doc) === '3' && row(doc, 3).getAttribute('aria-current') === 'true', shown(doc));
+    row(doc, 1).click();
+    check('Clic sur une ligne : rapport affiché dans le lecteur', shown(doc) === '1' && row(doc, 1).classList.contains('is-selected')
+      && !row(doc, 3).classList.contains('is-selected'), shown(doc));
+    check('Mobile : la lecture remplace la liste', browser.classList.contains('is-reading'), '');
+    doc.querySelector('[data-action="reports-back"]').click();
+    check('« Liste des rapports » : retour à la liste', !browser.classList.contains('is-reading'), '');
+    const list = doc.querySelector('[data-reports-list]');
+    list.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    check('↑ : rapport précédent dans la liste', shown(doc) === '2', shown(doc));
+    list.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    list.dispatchEvent(new w.KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    check('↑ en haut de liste : reste sur le premier', shown(doc) === '3', shown(doc));
+
+    const q = doc.querySelector('[data-reports-filter="q"]');
+    q.value = 'introuvable'; q.dispatchEvent(new w.Event('input'));
+    check('Aucun résultat : message dans la liste + lecteur « rien à afficher »', !doc.querySelector('[data-reports-nomatch]').hidden
+      && shown(doc) === '' && !doc.querySelector('[data-reader-placeholder="nomatch"]').hidden
+      && doc.querySelector('[data-reader-placeholder="select"]').hidden, shown(doc));
+    doc.querySelector('[data-action="reset-report-filters"]').click();
+    check('Réinitialiser les filtres', q.value === '' && doc.querySelector('[data-reports-nomatch]').hidden && shown(doc) === '3', shown(doc));
+
+    row(doc, 2).click();
+    w.fetch = async () => ({ ok: true, status: 200, json: async () => ({ status: 'success', count: 2, restore_url: '' }) });
+    doc.querySelector('#report-2 .project-report-delete-form').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
+    await sleep(20);
+    check('Suppression : rapport suivant sélectionné', !row(doc, 2) && shown(doc) === '1', shown(doc));
+
+    doc.querySelector('[data-action="open-report-form"]').click();
+    check('Nouveau rapport : formulaire dans le lecteur, ligne brouillon, cartes masquées', !doc.getElementById('create').hidden
+      && !doc.querySelector('[data-compose-row]').hidden && shown(doc) === '' && !row(doc, 1).classList.contains('is-selected'), shown(doc));
+    row(doc, 3).click();
+    check('Clic sur une ligne pendant la rédaction : formulaire refermé (brouillon conservé)', doc.getElementById('create').hidden
+      && doc.querySelector('[data-compose-row]').hidden && shown(doc) === '3', shown(doc));
+  }
+
+  // ── Aucun rapport : bloc liste + lecture masqué, sauf pendant la rédaction ──
+  {
+    const { doc } = page([]);
+    const browser = doc.querySelector('[data-reports-browser]');
+    check('0 rapport : état vide, bloc masqué', browser.hidden && !doc.querySelector('[data-reports-empty]').hidden, '');
+    doc.querySelector('[data-action="open-report-form"]').click();
+    check('0 rapport + Nouveau rapport : bloc affiché, état vide masqué', !browser.hidden && doc.querySelector('[data-reports-empty]').hidden, '');
+    doc.querySelector('[data-action="close-report-form"]').click();
+    check('Fermeture : retour à l\'état vide', browser.hidden && !doc.querySelector('[data-reports-empty]').hidden, '');
   }
 
   // ── Formulaire « Nouveau rapport » replié ──

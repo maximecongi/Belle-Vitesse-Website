@@ -120,6 +120,10 @@ class Waiver(db.Model):
     signer_email = db.Column(db.String(120), nullable=True)
     signer_phone = db.Column(db.String(50), nullable=True)
     signer_company = db.Column(db.String(255), nullable=True)
+    # Contact ERP choisi comme signataire (les coordonnées ci-dessus restent la copie figée à valeur légale)
+    signer_contact_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id", ondelete="SET NULL"), nullable=True, index=True)
+    signer_contact = db.relationship("Contact", foreign_keys=[signer_contact_id], lazy=True)
     # Noms des référents BV pour ce tournage (personnalisables)
     safety_technicians = db.Column(db.Text, nullable=True)
     helmets_inventory = db.Column(db.JSON, default=dict, nullable=True)
