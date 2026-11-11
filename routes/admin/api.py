@@ -170,6 +170,80 @@ def admin_api_search():
     return jsonify(perform_global_search(q, raw_scope, user_role))
 
 
+# ── Pages épinglées (⌘ + ;) ───────────────────────────────────
+# Toutes les opérations sont scopées sur l'utilisateur connecté.
+
+_PIN_ROLES = ('administrator', 'manager', 'commercial', 'user', 'technicien')
+
+
+def _pins_response(status=200, **extra):
+    from services.admin.pins import list_pins
+    return jsonify({"success": True, "pins": list_pins(session.get("admin_user_id")), **extra}), status
+
+
+def _pin_user_id():
+    return session.get("admin_user_id")
+
+
+@api_bp.route("/api/pins", methods=["GET"])
+@require_roles(*_PIN_ROLES)
+def admin_api_pins_list():
+    return _pins_response()
+
+
+@api_bp.route("/api/pins", methods=["POST"])
+@require_roles(*_PIN_ROLES)
+def admin_api_pins_create():
+    from services.admin.pins import PinError, upsert_pin
+    user_id = _pin_user_id()
+    if not user_id:
+        return jsonify({"success": False, "error": "Utilisateur inconnu."}), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        pin = upsert_pin(user_id, data.get("url"), data.get("label"))
+    except PinError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    return _pins_response(pin=pin.to_dict())
+
+
+@api_bp.route("/api/pins/<int:pin_id>", methods=["PATCH"])
+@require_roles(*_PIN_ROLES)
+def admin_api_pins_rename(pin_id):
+    from services.admin.pins import PinError, rename_pin
+    data = request.get_json(silent=True) or {}
+    try:
+        pin = rename_pin(_pin_user_id(), pin_id, data.get("label"))
+    except PinError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    if not pin:
+        return jsonify({"success": False, "error": "Favori introuvable."}), 404
+    return _pins_response(pin=pin.to_dict())
+
+
+@api_bp.route("/api/pins/<int:pin_id>", methods=["DELETE"])
+@require_roles(*_PIN_ROLES)
+def admin_api_pins_delete(pin_id):
+    from services.admin.pins import delete_pin
+    if not delete_pin(_pin_user_id(), pin_id):
+        return jsonify({"success": False, "error": "Favori introuvable."}), 404
+    return _pins_response()
+
+
+@api_bp.route("/api/pins/reorder", methods=["POST"])
+@require_roles(*_PIN_ROLES)
+def admin_api_pins_reorder():
+    from services.admin.pins import PinError, reorder_pins
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids")
+    if not isinstance(ids, list):
+        return jsonify({"success": False, "error": "Ordre invalide."}), 400
+    try:
+        reorder_pins(_pin_user_id(), ids)
+    except PinError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    return _pins_response()
+
+
 def init_api_routes(app):
     """Enregistre le blueprint admin_api (compatibilité ascendante)."""
     if "admin_api" not in app.blueprints:

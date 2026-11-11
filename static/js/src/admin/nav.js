@@ -22,7 +22,8 @@ function updateActiveNavLink() {
     let bestMatch = null;
     let maxLen = -1;
 
-    const navItems = document.querySelectorAll('.admin-nav-item');
+    // Les épingles (sidebar « Épinglé(s) ») sont surlignées par pins.js, sur l'URL exacte
+    const navItems = document.querySelectorAll('.admin-nav-item:not(.admin-nav-pin-link)');
     navItems.forEach(link => {
         link.classList.remove('active');
         const href = link.getAttribute('href');

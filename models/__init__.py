@@ -41,3 +41,4 @@ from models.project_report import ProjectReport
 from models.kdrive import KDriveObject
 from models.signature_event import SignatureEvent
 
+from models.user_pin import UserPin

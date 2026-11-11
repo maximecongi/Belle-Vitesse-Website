@@ -542,8 +542,19 @@ def init_context_processors(app):
                     user_role, is_admin=current_user.get("is_admin", False)
                 )
 
+                # Pages épinglées (favoris) de l'utilisateur : non mises en cache (modifiées en direct)
+                from services.admin.pins import list_pins
+
+                try:
+                    user_pins = list_pins(user_id)
+                except Exception as pins_error:
+                    app.logger.warning(f"⚠️ Épingles indisponibles : {pins_error}")
+                    db.session.rollback()
+                    user_pins = []
+
                 return {
                     "current_user": current_user,
+                    "user_pins": user_pins,
                     **_permission_helpers(
                         user_role, perms, is_admin=current_user.get("is_admin", False)
                     ),

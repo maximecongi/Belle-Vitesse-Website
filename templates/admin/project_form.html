@@ -11,307 +11,387 @@
 
 {% block page_title %}{% if is_duplicate %}Dupliquer le projet{% elif is_edit %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
 
+{% block header_actions %}
+{% set cancel_url = url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else (url_for('admin_projects.admin_project_detail', record_id=source_project_id) if source_project_id else url_for('admin_projects.admin_projects_list')) %}
+<span class="pf-dirty-indicator" id="pfDirtyIndicator" aria-live="polite">Modifications non enregistrées</span>
+<a href="{{ cancel_url }}" class="admin-btn admin-btn-secondary">Annuler</a>
+<button type="submit" form="projectMainForm" class="admin-btn admin-btn-primary">
+    {% if is_duplicate %}<i data-lucide="copy" class="u-mr-1"></i> Créer le projet{% elif is_edit %}Enregistrer{% else %}Créer le projet{% endif %}
+</button>
+{% endblock %}
+
 {% block content %}
-<div class="admin-card">
-    {% if is_duplicate and source_project_name %}
-    {{ admin_banner(
-        variant='warning',
-        icon='copy',
-        title="Duplication de tournage :",
-        desc="Ce formulaire a été pré-rempli à partir de « " ~ source_project_name ~ " ». Modifiez les dates ou équipements si nécessaire avant de valider la création."
-    ) }}
-    {% endif %}
-    <form method="POST" id="projectMainForm" {% if not is_edit
-        %}action="{{ url_for('admin_projects.admin_project_new') }}" {% endif %}
-        data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <input type="hidden" id="current_project_id"
-            value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}" />
-        <div class="form-group">
-            <label class="form-label">Nom du projet</label>
-            <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
-        </div>
+<div class="pf-layout">
+    <div class="pf-main">
+        {% if is_duplicate and source_project_name %}
+        {{ admin_banner(
+            variant='warning',
+            icon='copy',
+            title="Duplication de tournage :",
+            desc="Ce formulaire a été pré-rempli à partir de « " ~ source_project_name ~ " ». Modifiez les dates ou équipements si nécessaire avant de valider la création."
+        ) }}
+        {% endif %}
 
-        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">Production <span class="u-text-error">*</span></label>
-                    <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-quick-add">
-                        <i data-lucide="plus"></i> Nouvelle production
-                    </button>
-                </div>
-                <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
-                    <option value="">— Sélectionner une production —</option>
-                    {% for p in productions %}
-                    <option value="{{ p.id }}" {% if data and (data.production_id|string==p.id|string or
-                        data.production_id==p.id) %}selected{% endif %}>
-                        {{ p.fields.get('Nom', '—') }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+        <form method="POST" id="projectMainForm" {% if not is_edit
+            %}action="{{ url_for('admin_projects.admin_project_new') }}" {% endif %}
+            data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <input type="hidden" id="current_project_id"
+                value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}" />
 
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">Contact de Production</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                        data-target="production_contact_id" data-job="Directeur.rice de production">
-                        <i data-lucide="plus"></i> Nouveau contact
-                    </button>
-                </div>
-                <select name="production_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un contact de production —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and (data.production_contact_id|string==c.id|string or
-                        data.production_contact_id==c.id) %}selected{% endif %}>
-                        {{ c.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                        data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
-                        <i data-lucide="plus"></i> Nouveau contact
-                    </button>
-                </div>
-                <select name="dop_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un DOP —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and (data.dop_contact_id|string==c.id|string or
-                        data.dop_contact_id==c.id) %}selected{% endif %}>
-                        {{ c.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">Pilote</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                        data-target="pilot_contact_id" data-job="Pilote de précision">
-                        <i data-lucide="plus"></i> Nouveau contact
-                    </button>
-                </div>
-                <select name="pilot_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un pilote —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and (data.pilot_contact_id|string==c.id|string or
-                        data.pilot_contact_id==c.id) %}selected{% endif %}>
-                        {{ c.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">1er Assistant Caméra</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                        data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
-                        <i data-lucide="plus"></i> Nouveau contact
-                    </button>
-                </div>
-                <select name="first_ac_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un 1er assistant caméra —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and (data.first_ac_contact_id|string==c.id|string or
-                        data.first_ac_contact_id==c.id) %}selected{% endif %}>
-                        {{ c.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <label class="form-label u-mb-0">Chef Machiniste</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                        data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
-                        <i data-lucide="plus"></i> Nouveau contact
-                    </button>
-                </div>
-                <select name="key_grip_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un chef machiniste —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and (data.key_grip_contact_id|string==c.id|string or
-                        data.key_grip_contact_id==c.id) %}selected{% endif %}>
-                        {{ c.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <!-- Référents Belle Vitesse -->
-        <div class="form-group u-mb-3 bv-referents-card">
-            <label class="form-label u-mb-1">
-                Référents Plateau BV
-            </label>
-            <div class="u-flex u-flex-wrap u-gap-2">
-                {% for u in bv_users %}
-                {% set is_selected = data and data.bv_referent_ids and (u.id in data.bv_referent_ids or (u.id|string) in
-                data.bv_referent_ids) %}
-                <label class="project-checkbox-card {% if is_selected %}selected{% endif %}">
-                    <input type="checkbox" name="bv_referent_ids" value="{{ u.id }}" {% if is_selected %}checked{% endif
-                        %} class="u-d-none">
-                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">
-                        <i data-lucide="user-check" class="u-w-14 u-h-14"></i>
-                    </span>
-                    <div class="u-flex u-flex-column u-gap-0">
-                        <span class="u-text-medium u-font-semibold">{{ u.name }}</span>
-                        <span class="u-text-xs u-text-muted">{{ u.job }}</span>
+            <!-- ① PROJET -->
+            <section class="admin-card pf-section" id="pf-section-projet" data-pf-section>
+                <h2 class="pf-section-title">Projet</h2>
+                <div class="u-grid u-grid-2 u-gap-3">
+                    <div class="form-group">
+                        <label class="form-label">Nom du projet <span class="u-text-error">*</span></label>
+                        <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
                     </div>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
 
-        <!-- Sélecteur de Dates Unifié (Timeline & Double Calendrier) -->
-        <div class="form-group u-mb-3">
-            <label class="form-label u-mb-2">Planning & Dates du Projet</label>
-
-            <!-- Inputs cachés pour soumission formulaire (rétrocompatibilité totale) -->
-            <input type="hidden" name="date_mode" id="date_mode_input"
-                value="{{ data.date_mode if data and data.date_mode else 'continuous' }}">
-            <input type="hidden" name="is_immobilized_between" id="is_immobilized_between_input"
-                value="{{ 'true' if (not data or data.is_immobilized_between is not defined or data.is_immobilized_between) else 'false' }}">
-            <input type="hidden" name="shoot_dates" id="shoot_dates_input"
-                value="{{ data.shoot_dates_json if data and data.shoot_dates_json else '[]' }}">
-            <input type="hidden" name="inter_shoot_statuses" id="inter_shoot_statuses_input"
-                value="{{ data.inter_shoot_statuses_json if data and data.inter_shoot_statuses_json else '[]' }}">
-            <input type="hidden" name="departure_date" id="departure_date_input"
-                value="{{ data.departure_date_raw if data else '' }}">
-            <input type="hidden" name="shoot_start" id="shoot_start_input"
-                value="{{ data.shoot_start_raw if data else '' }}">
-            <input type="hidden" name="shoot_end" id="shoot_end_input" value="{{ data.shoot_end_raw if data else '' }}">
-            <input type="hidden" name="return_date" id="return_date_input"
-                value="{{ data.return_date_raw if data else '' }}">
-
-            <div id="projectDatePickerContainer"></div>
-        </div>
-
-        <!-- Lieux de Tournage (Source unique pour CGL, BVSR, BVPA) -->
-        <div class="form-group u-mb-3" id="projectLocationsWrapper">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <div>
-                    <label class="form-label u-mb-0">Lieux de Tournage</label>
-                    <span class="u-text-xs u-text-muted u-d-block">Source unique reprise automatiquement dans les CGL,
-                        BVSR et attestations pilote.</span>
-                </div>
-                <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="addLocationBtn">
-                    <i data-lucide="plus"></i>
-                    <span>Ajouter un lieu</span>
-                </button>
-            </div>
-
-            <input type="hidden" name="shooting_locations" id="shooting_locations_input"
-                value="{{ data.shooting_locations_json if data and data.shooting_locations_json else '[]' }}">
-
-            <div class="project-locations-container">
-                <div id="projectLocationsList" class="project-locations-list"></div>
-                {{ empty_state('map-pin', "Aucun lieu de tournage renseigné", "Cliquez sur « Ajouter un lieu » pour
-                commencer.", class_name='empty-state-sm' ~ (' u-d-none' if (data and ((data.locations_list and
-                data.locations_list|length > 0) or (data.shooting_locations and data.shooting_locations|length > 0)))
-                else '')) }}
-            </div>
-        </div>
-
-        <div class="form-group u-mt-3">
-            <label class="form-label">Notes - Demandes spécifiques</label>
-            <textarea name="notes" class="form-input u-resize-y u-min-h-100" rows="4"
-                placeholder="Ex: Lumières additionnelles, contraintes d'accès, besoins spécifiques batterie...">{{ data.notes if data else '' }}</textarea>
-        </div>
-
-        <!-- Carte d'alerte Conflits de Réservation (Design System BV) -->
-        <div id="bookingConflictsAlert" class="booking-conflicts-card is-hidden u-mt-3 u-mb-3" role="alert">
-            <div class="booking-conflicts-card-header">
-                <div class="booking-conflicts-card-title">
-                    <span class="booking-conflicts-badge">
-                        <i data-lucide="triangle-alert" class="u-w-14 u-h-14"></i>
-                    </span>
-                    <span class="u-font-semibold">Conflit de réservation détecté</span>
-                </div>
-            </div>
-            <div class="booking-conflicts-card-body">
-                <p id="bookingConflictsSummary" class="booking-conflicts-summary u-mb-2">
-                    Des équipements sélectionnés sont déjà engagés sur un autre tournage aux mêmes dates.
-                </p>
-                <div id="bookingConflictsDetailsList" class="booking-conflicts-items"></div>
-            </div>
-        </div>
-
-        <div class="form-group u-mt-3">
-            <label class="form-label">Véhicules</label>
-            <div class="u-flex u-flex-wrap u-gap-1">
-                {% for v in vehicles %}
-                {% set vf = v.fields %}
-                {% set v_uid = (vf.get('unique_id') if vf else None) or (v.get('unique_id') if v is mapping else None)
-                %}
-                {% set v_is_selected = data and data.vehicle_ids and (v.id in data.vehicle_ids or (v.id|string) in
-                data.vehicle_ids) %}
-                <label class="project-checkbox-card {% if v_is_selected %}selected{% endif %}" data-item-id="{{ v.id }}"
-                    data-item-type="vehicle">
-                    <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if v_is_selected %}checked{% endif
-                        %} class="u-d-none">
-                    {% if vf.get('thumbnail') %}
-                    <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
-                    {% endif %}
-                    <div>
-                        <span class="u-text-medium">{{ vf.get('name', '—') }}</span>
-                        {% if v_uid %}
-                        <span class="checkout-doc-id u-text-4xs u-mt-0">{{ v_uid }}</span>
-                        {% endif %}
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">Production <span class="u-text-error">*</span></label>
+                            <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-quick-add">
+                                <i data-lucide="plus"></i> Nouvelle production
+                            </button>
+                        </div>
+                        <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
+                            <option value="">— Sélectionner une production —</option>
+                            {% for p in productions %}
+                            <option value="{{ p.id }}" {% if data and (data.production_id|string==p.id|string or
+                                data.production_id==p.id) %}selected{% endif %}>
+                                {{ p.fields.get('Nom', '—') }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
-                    <div class="conflict-placeholder" data-conflict-id="{{ v.id }}"></div>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
+                </div>
+            </section>
 
-        <div class="form-group u-mt-2">
-            <label class="form-label">Têtes</label>
-            <div class="u-flex u-flex-wrap u-gap-1">
-                {% for h in heads %}
-                {% set hf = h.fields %}
-                {% set h_is_selected = data and data.head_ids and (h.id in data.head_ids or (h.id|string) in
-                data.head_ids) %}
-                <label class="project-checkbox-card {% if h_is_selected %}selected{% endif %}" data-item-id="{{ h.id }}"
-                    data-item-type="head">
-                    <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if h_is_selected %}checked{% endif %}
-                        class="u-d-none">
-                    {% if hf.get('thumbnail') %}
-                    <img src="{{ hf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
-                    {% endif %}
-                    <span class="u-text-medium">{{ hf.get('name', '—') }}</span>
-                    <div class="conflict-placeholder" data-conflict-id="{{ h.id }}"></div>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
+            <!-- ② DATES -->
+            <section class="admin-card pf-section" id="pf-section-dates" data-pf-section>
+                <h2 class="pf-section-title">Dates</h2>
 
-        <div class="u-mt-4 u-flex u-justify-between u-align-center">
-            <div>
-                
-            </div>
-            <div>
-                <a href="{{ url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else (url_for('admin_projects.admin_project_detail', record_id=source_project_id) if source_project_id else url_for('admin_projects.admin_projects_list')) }}"
-                    class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
-                <button type="submit" class="admin-btn admin-btn-primary">
-                    {% if is_duplicate %}<i data-lucide="copy" class="u-mr-1"></i> Créer le projet{% elif is_edit
-                    %}Enregistrer{% else %}Créer le projet{% endif %}
-                </button>
-            </div>
+                <!-- Inputs cachés pour soumission formulaire (rétrocompatibilité totale) -->
+                <input type="hidden" name="date_mode" id="date_mode_input"
+                    value="{{ data.date_mode if data and data.date_mode else 'continuous' }}">
+                <input type="hidden" name="is_immobilized_between" id="is_immobilized_between_input"
+                    value="{{ 'true' if (not data or data.is_immobilized_between is not defined or data.is_immobilized_between) else 'false' }}">
+                <input type="hidden" name="shoot_dates" id="shoot_dates_input"
+                    value="{{ data.shoot_dates_json if data and data.shoot_dates_json else '[]' }}">
+                <input type="hidden" name="inter_shoot_statuses" id="inter_shoot_statuses_input"
+                    value="{{ data.inter_shoot_statuses_json if data and data.inter_shoot_statuses_json else '[]' }}">
+                <input type="hidden" name="departure_date" id="departure_date_input"
+                    value="{{ data.departure_date_raw if data else '' }}">
+                <input type="hidden" name="shoot_start" id="shoot_start_input"
+                    value="{{ data.shoot_start_raw if data else '' }}">
+                <input type="hidden" name="shoot_end" id="shoot_end_input" value="{{ data.shoot_end_raw if data else '' }}">
+                <input type="hidden" name="return_date" id="return_date_input"
+                    value="{{ data.return_date_raw if data else '' }}">
+
+                <div id="projectDatePickerContainer"></div>
+            </section>
+
+            <!-- ③ MATÉRIEL -->
+            <section class="admin-card pf-section" id="pf-section-materiel" data-pf-section>
+                <h2 class="pf-section-title">Matériel</h2>
+
+                <!-- Carte d'alerte Conflits de Réservation (Design System BV) -->
+                <div id="bookingConflictsAlert" class="booking-conflicts-card is-hidden u-mb-3" role="alert">
+                    <div class="booking-conflicts-card-header">
+                        <div class="booking-conflicts-card-title">
+                            <span class="booking-conflicts-badge">
+                                <i data-lucide="triangle-alert" class="u-w-14 u-h-14"></i>
+                            </span>
+                            <span class="u-font-semibold">Conflit de réservation détecté</span>
+                        </div>
+                    </div>
+                    <div class="booking-conflicts-card-body">
+                        <p id="bookingConflictsSummary" class="booking-conflicts-summary u-mb-2">
+                            Des équipements sélectionnés sont déjà engagés sur un autre tournage aux mêmes dates.
+                        </p>
+                        <div id="bookingConflictsDetailsList" class="booking-conflicts-items"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="pf-subtitle">Véhicules <span class="pf-subtitle-hint">disponibilité calculée sur les dates ci-dessus</span></div>
+                    <div class="u-flex u-flex-wrap u-gap-1">
+                        {% for v in vehicles %}
+                        {% set vf = v.fields %}
+                        {% set v_uid = (vf.get('unique_id') if vf else None) or (v.get('unique_id') if v is mapping else None)
+                        %}
+                        {% set v_is_selected = data and data.vehicle_ids and (v.id in data.vehicle_ids or (v.id|string) in
+                        data.vehicle_ids) %}
+                        <label class="project-checkbox-card {% if v_is_selected %}selected{% endif %}" data-item-id="{{ v.id }}"
+                            data-item-type="vehicle">
+                            <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if v_is_selected %}checked{% endif
+                                %} class="u-d-none">
+                            {% if vf.get('thumbnail') %}
+                            <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
+                            {% endif %}
+                            <div>
+                                <span class="u-text-medium" data-pf-item-name>{{ vf.get('name', '—') }}</span>
+                                {% if v_uid %}
+                                <span class="checkout-doc-id u-text-4xs u-mt-0">{{ v_uid }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="conflict-placeholder" data-conflict-id="{{ v.id }}"></div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="form-group u-mb-0">
+                    <div class="pf-subtitle">Têtes</div>
+                    <div class="u-flex u-flex-wrap u-gap-1">
+                        {% for h in heads %}
+                        {% set hf = h.fields %}
+                        {% set h_is_selected = data and data.head_ids and (h.id in data.head_ids or (h.id|string) in
+                        data.head_ids) %}
+                        <label class="project-checkbox-card {% if h_is_selected %}selected{% endif %}" data-item-id="{{ h.id }}"
+                            data-item-type="head">
+                            <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if h_is_selected %}checked{% endif %}
+                                class="u-d-none">
+                            {% if hf.get('thumbnail') %}
+                            <img src="{{ hf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
+                            {% endif %}
+                            <span class="u-text-medium" data-pf-item-name>{{ hf.get('name', '—') }}</span>
+                            <div class="conflict-placeholder" data-conflict-id="{{ h.id }}"></div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- ④ ÉQUIPE -->
+            <section class="admin-card pf-section" id="pf-section-equipe" data-pf-section>
+                <h2 class="pf-section-title">Équipe</h2>
+
+                <div class="pf-subtitle">Côté production</div>
+                <div class="u-grid u-grid-2 u-gap-3">
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">Contact de Production</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="production_contact_id" data-job="Directeur.rice de production">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="production_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un contact de production —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and (data.production_contact_id|string==c.id|string or
+                                data.production_contact_id==c.id) %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="dop_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un DOP —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and (data.dop_contact_id|string==c.id|string or
+                                data.dop_contact_id==c.id) %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">Pilote</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="pilot_contact_id" data-job="Pilote de précision">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="pilot_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un pilote —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and (data.pilot_contact_id|string==c.id|string or
+                                data.pilot_contact_id==c.id) %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">1er Assistant Caméra</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="first_ac_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un 1er assistant caméra —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and (data.first_ac_contact_id|string==c.id|string or
+                                data.first_ac_contact_id==c.id) %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">Chef Machiniste</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="key_grip_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un chef machiniste —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and (data.key_grip_contact_id|string==c.id|string or
+                                data.key_grip_contact_id==c.id) %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Côté Belle Vitesse : référents plateau + rôles nominatifs -->
+                <div class="pf-team-divider"></div>
+                <div class="pf-subtitle">Côté Belle Vitesse</div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bvReferentsSelect">Référents plateau</label>
+                    <select name="bv_referent_ids" id="bvReferentsSelect" class="form-input" multiple
+                        data-placeholder="Sélectionner les référents…">
+                        {% for u in bv_users %}
+                        {% set is_selected = data and data.bv_referent_ids and (u.id in data.bv_referent_ids or (u.id|string) in
+                        data.bv_referent_ids) %}
+                        <option value="{{ u.id }}" data-job="{{ u.job or '' }}" {% if is_selected %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Rôles nominatifs -->
+                <div class="u-grid u-grid-3 u-gap-3">
+                    <div class="form-group">
+                        <label class="form-label">Commercial</label>
+                        <select name="commercial_user_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner —</option>
+                            {% for u in bv_all_users %}
+                            <option value="{{ u.id }}" {% if data and data.commercial_user_id|string==u.id|string %}selected{% endif %}>
+                                {{ u.name }}{% if u.is_commercial %} · Commercial{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Machiniste BV</label>
+                        <select name="bv_grip_user_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner —</option>
+                            {% for u in bv_users %}
+                            <option value="{{ u.id }}" {% if data and data.bv_grip_user_id|string==u.id|string %}selected{% endif %}>
+                                {{ u.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Opérateur Remote Head : affiché uniquement si au moins une tête est sélectionnée -->
+                    {% set has_head_selected = data and data.head_ids and data.head_ids|length > 0 %}
+                    <div class="form-group {% if not has_head_selected %}u-d-none{% endif %}" id="remoteHeadOperatorGroup">
+                        <label class="form-label">Opérateur Remote Head</label>
+                        <select name="remote_head_operator_user_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner —</option>
+                            {% for u in bv_users %}
+                            <option value="{{ u.id }}" {% if data and data.remote_head_operator_user_id|string==u.id|string %}selected{% endif %}>
+                                {{ u.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ⑤ LIEUX & NOTES -->
+            <section class="admin-card pf-section" id="pf-section-lieux" data-pf-section>
+                <h2 class="pf-section-title">Lieux &amp; notes</h2>
+                <div class="u-grid u-grid-1 u-gap-3">
+                    <!-- Lieux de Tournage (Source unique pour CGL, BVSR, BVPA) -->
+                    <div class="form-group u-mb-0" id="projectLocationsWrapper">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <div class="pf-subtitle u-mb-0">Lieux de tournage</div>
+                            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="addLocationBtn">
+                                <i data-lucide="plus"></i>
+                                <span>Ajouter un lieu</span>
+                            </button>
+                        </div>
+
+                        <input type="hidden" name="shooting_locations" id="shooting_locations_input"
+                            value="{{ data.shooting_locations_json if data and data.shooting_locations_json else '[]' }}">
+
+                        <div class="project-locations-container">
+                            <div id="projectLocationsList" class="project-locations-list"></div>
+                            {{ empty_state('map-pin', "Aucun lieu renseigné", "Repris automatiquement dans les CGL, BVSR et attestations pilote.", class_name='empty-state-sm' ~ (' u-d-none' if (data and ((data.locations_list and
+                            data.locations_list|length > 0) or (data.shooting_locations and data.shooting_locations|length > 0)))
+                            else '')) }}
+                        </div>
+                    </div>
+
+                    <div class="form-group u-mb-0">
+                        <div class="pf-subtitle">Notes · Demandes spécifiques</div>
+                        <textarea name="notes" class="form-input u-resize-y u-min-h-100" rows="5"
+                            placeholder="Ex: Lumières additionnelles, contraintes d'accès, besoins spécifiques batterie...">{{ data.notes if data else '' }}</textarea>
+                    </div>
+                </div>
+            </section>
+        </form>
+    </div>
+
+    <!-- Colonne latérale : récapitulatif + navigation entre sections -->
+    <aside class="pf-aside">
+        <div class="admin-card pf-recap" id="pfRecap">
+            <div class="pf-recap-title">Récapitulatif</div>
+            <dl class="pf-recap-list">
+                <div class="pf-recap-row">
+                    <dt>Dates</dt>
+                    <dd id="pfRecapDates">—</dd>
+                </div>
+                <div class="pf-recap-pills" id="pfRecapDatePills"></div>
+                <div class="pf-recap-row">
+                    <dt>Matériel</dt>
+                    <dd id="pfRecapMaterial">—</dd>
+                </div>
+                <div class="pf-recap-row">
+                    <dt>Référents</dt>
+                    <dd id="pfRecapReferents">—</dd>
+                </div>
+                <div class="pf-recap-row">
+                    <dt>Lieux</dt>
+                    <dd id="pfRecapLocations">—</dd>
+                </div>
+            </dl>
+
+            <nav class="pf-nav" aria-label="Sections du formulaire">
+                <a href="#pf-section-projet" class="pf-nav-link" data-pf-step="projet"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">1</span><i data-lucide="check"></i></span><span class="pf-nav-label">Projet</span></a>
+                <a href="#pf-section-dates" class="pf-nav-link" data-pf-step="dates"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">2</span><i data-lucide="check"></i></span><span class="pf-nav-label">Dates</span></a>
+                <a href="#pf-section-materiel" class="pf-nav-link" data-pf-step="materiel"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">3</span><i data-lucide="check"></i></span><span class="pf-nav-label">Matériel</span></a>
+                <a href="#pf-section-equipe" class="pf-nav-link" data-pf-step="equipe"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">4</span><i data-lucide="check"></i></span><span class="pf-nav-label">Équipe</span></a>
+                <a href="#pf-section-lieux" class="pf-nav-link" data-pf-step="lieux"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">5</span><i data-lucide="check"></i></span><span class="pf-nav-label">Lieux &amp; notes</span></a>
+            </nav>
         </div>
-    </form>
+    </aside>
 </div>
 
 <!-- Modal Nouvelle Production -->

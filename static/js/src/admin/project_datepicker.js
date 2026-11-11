@@ -154,41 +154,47 @@
                         </div>
                     </div>
 
-                    <!-- Cartes des Jalons -->
-                    <div class="pdp-milestones-grid" id="pdp-milestones-grid">
-                        ${this.renderMilestonesHtml()}
+                    <!-- Corps : jalons + raccourcis à gauche, calendrier (1 mois) à droite -->
+                    <div class="pdp-body">
+                        <div class="pdp-side">
+                            <!-- Cartes des Jalons -->
+                            <div class="pdp-milestones-grid" id="pdp-milestones-grid">
+                                ${this.renderMilestonesHtml()}
+                            </div>
+
+                            <div class="pdp-summary" id="pdp-summary"></div>
+
+                            <!-- Barre d'outils et Raccourcis -->
+                            <div class="pdp-toolbar">
+                                <div class="pdp-presets-group">
+                                    <button type="button" class="pdp-preset-btn btn-highlight" id="pdp-preset-auto-range" title="Caler automatiquement la Prépa à J-1 et le Retour à J+1 autour de la période de tournage">
+                                        <i data-lucide="zap"></i> Auto prépa / retour
+                                    </button>
+                                    ${!isPunctual ? `
+                                        <button type="button" class="pdp-preset-btn" id="pdp-preset-1day" title="Cliquez sur le jour du tournage pour créer un shoot d'1 jour avec prépa J-1 et retour J+1">
+                                            Shoot 1 jour
+                                        </button>
+                                    ` : `
+                                        <button type="button" class="pdp-preset-btn" id="pdp-preset-toggle-immob" title="Basculer le statut d'immobilisation du véhicule entre les dates">
+                                            ${this.isImmobilized ? '<i data-lucide="unlock"></i> Retour entre les dates' : '<i data-lucide="lock"></i> Immobilisation entre les dates'}
+                                        </button>
+                                    `}
+                                </div>
+                                <div class="pdp-actions-group">
+                                    <button type="button" class="pdp-preset-btn" id="pdp-btn-today">Aujourd'hui</button>
+                                    <button type="button" class="pdp-preset-btn pdp-btn-reset" id="pdp-btn-reset" title="Effacer toutes les dates"><i data-lucide="trash-2"></i> Effacer</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendrier (1 mois) -->
+                        <div class="pdp-calendar-container" id="pdp-calendar-viewport">
+                            <!-- Généré dynamiquement -->
+                        </div>
                     </div>
 
                     <!-- Section dynamique des Intervalles Ponctuels -->
                     <div class="pdp-intervals-container" id="pdp-intervals-container" style="display: none;"></div>
-
-                    <!-- Barre d'outils et Raccourcis -->
-                    <div class="pdp-toolbar">
-                        <div class="pdp-presets-group">
-                            <span class="pdp-preset-label"><i data-lucide="sparkles"></i> Raccourcis :</span>
-                            <button type="button" class="pdp-preset-btn btn-highlight" id="pdp-preset-auto-range" title="Caler automatiquement la Prépa à J-1 et le Retour à J+1 autour de la période de tournage">
-                                <i data-lucide="wand-2"></i> Auto Prépa / Retour
-                            </button>
-                            ${!isPunctual ? `
-                                <button type="button" class="pdp-preset-btn" id="pdp-preset-1day" title="Cliquez sur le jour du tournage pour créer un shoot d'1 jour avec prépa J-1 et retour J+1">
-                                    <i data-lucide="zap"></i> Shoot 1 jour complet
-                                </button>
-                            ` : `
-                                <button type="button" class="pdp-preset-btn" id="pdp-preset-toggle-immob" title="Basculer le statut d'immobilisation du véhicule entre les dates">
-                                    ${this.isImmobilized ? '<i data-lucide="unlock"></i> Retour entre les dates' : '<i data-lucide="lock"></i> Immobilisation entre les dates'}
-                                </button>
-                            `}
-                        </div>
-                        <div class="pdp-actions-group">
-                            <button type="button" class="pdp-preset-btn" id="pdp-btn-today"><i data-lucide="calendar"></i> Aujourd'hui</button>
-                            <button type="button" class="pdp-preset-btn pdp-btn-reset" id="pdp-btn-reset" style="color: #ef4444;"><i data-lucide="trash-2"></i> Effacer les dates</button>
-                        </div>
-                    </div>
-
-                    <!-- Vue Double Calendrier -->
-                    <div class="pdp-calendar-container" id="pdp-calendar-viewport">
-                        <!-- Généré dynamiquement -->
-                    </div>
 
                     <!-- Légende -->
                     <div class="pdp-footer-legend">
@@ -234,7 +240,7 @@
                 return `
                     <div class="pdp-milestone-card type-departure ${this.activeMilestone === 'departure' ? 'active' : ''}" data-milestone="departure">
                         <div class="pdp-milestone-header">
-                            <span class="pdp-milestone-label"><i data-lucide="package-check"></i> Prépa / Départ</span>
+                            <span class="pdp-milestone-label"><i data-lucide="truck"></i> Prépa / Départ</span>
                             <span class="pdp-step-badge">1</span>
                         </div>
                         <div class="pdp-milestone-date" id="pdp-date-departure">Non définie</div>
@@ -247,7 +253,7 @@
 
                     <div class="pdp-milestone-card type-shoot_dates ${this.activeMilestone === 'shoot_dates' ? 'active' : ''}" data-milestone="shoot_dates">
                         <div class="pdp-milestone-header">
-                            <span class="pdp-milestone-label"><i data-lucide="clapperboard"></i> Dates Tournage</span>
+                            <span class="pdp-milestone-label"><i data-lucide="clapperboard"></i> Dates tournage</span>
                             <span class="pdp-step-badge">${count}j</span>
                         </div>
                         <div class="pdp-milestone-date ${count === 0 ? 'empty' : ''}" id="pdp-date-shoot_dates">${shootDateText}</div>
@@ -260,7 +266,7 @@
 
                     <div class="pdp-milestone-card type-return ${this.activeMilestone === 'return' ? 'active' : ''}" data-milestone="return">
                         <div class="pdp-milestone-header">
-                            <span class="pdp-milestone-label"><i data-lucide="rotate-ccw"></i> Retour Matériel</span>
+                            <span class="pdp-milestone-label"><i data-lucide="package"></i> Retour matériel</span>
                             <span class="pdp-step-badge">Fin</span>
                         </div>
                         <div class="pdp-milestone-date" id="pdp-date-return">Non définie</div>
@@ -277,7 +283,7 @@
             return `
                 <div class="pdp-milestone-card type-departure ${this.activeMilestone === 'departure' ? 'active' : ''}" data-milestone="departure">
                     <div class="pdp-milestone-header">
-                        <span class="pdp-milestone-label"><i data-lucide="package-check"></i> Prépa / Départ</span>
+                        <span class="pdp-milestone-label"><i data-lucide="truck"></i> Prépa / Départ</span>
                         <span class="pdp-step-badge">1</span>
                     </div>
                     <div class="pdp-milestone-date" id="pdp-date-departure">Non définie</div>
@@ -290,7 +296,7 @@
 
                 <div class="pdp-milestone-card type-shoot_start ${this.activeMilestone === 'shoot_start' ? 'active' : ''}" data-milestone="shoot_start">
                     <div class="pdp-milestone-header">
-                        <span class="pdp-milestone-label"><i data-lucide="clapperboard"></i> Début Tournage</span>
+                        <span class="pdp-milestone-label"><i data-lucide="clapperboard"></i> Début tournage</span>
                         <span class="pdp-step-badge">2</span>
                     </div>
                     <div class="pdp-milestone-date" id="pdp-date-shoot_start">Non définie</div>
@@ -303,7 +309,7 @@
 
                 <div class="pdp-milestone-card type-shoot_end ${this.activeMilestone === 'shoot_end' ? 'active' : ''}" data-milestone="shoot_end">
                     <div class="pdp-milestone-header">
-                        <span class="pdp-milestone-label"><i data-lucide="flag"></i> Fin Tournage</span>
+                        <span class="pdp-milestone-label"><i data-lucide="clapperboard"></i> Fin tournage</span>
                         <span class="pdp-step-badge">3</span>
                     </div>
                     <div class="pdp-milestone-date" id="pdp-date-shoot_end">Non définie</div>
@@ -316,7 +322,7 @@
 
                 <div class="pdp-milestone-card type-return ${this.activeMilestone === 'return' ? 'active' : ''}" data-milestone="return">
                     <div class="pdp-milestone-header">
-                        <span class="pdp-milestone-label"><i data-lucide="rotate-ccw"></i> Retour Matériel</span>
+                        <span class="pdp-milestone-label"><i data-lucide="package"></i> Retour matériel</span>
                         <span class="pdp-step-badge">4</span>
                     </div>
                     <div class="pdp-milestone-date" id="pdp-date-return">Non définie</div>
@@ -503,7 +509,39 @@
             this.refreshIcons();
         }
 
+        updateSummary() {
+            const el = this.container.querySelector('#pdp-summary');
+            if (!el) return;
+
+            const isPunctual = (this.mode === 'punctual');
+            const shootDays = isPunctual
+                ? this.shootDates.length
+                : (this.dates.shoot_start
+                    ? this.getDaysDiff(this.dates.shoot_start, this.dates.shoot_end || this.dates.shoot_start) + 1
+                    : 0);
+
+            const allDates = [
+                this.dates.departure,
+                this.dates.shoot_start,
+                this.dates.shoot_end,
+                this.dates.return,
+                ...(isPunctual ? this.shootDates : [])
+            ].filter(Boolean).sort();
+
+            if (allDates.length === 0) {
+                el.textContent = 'Aucune date définie';
+                el.classList.add('empty');
+                return;
+            }
+
+            const totalDays = this.getDaysDiff(allDates[0], allDates[allDates.length - 1]) + 1;
+            const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+            el.textContent = `${plural(totalDays, 'jour')} · ${plural(shootDays, 'jour')} de tournage`;
+            el.classList.remove('empty');
+        }
+
         syncInputs() {
+            this.updateSummary();
             if (this.inputDateMode) this.inputDateMode.value = this.mode;
             if (this.inputIsImmobilized) this.inputIsImmobilized.value = this.isImmobilized ? 'true' : 'false';
             if (this.inputShootDates) this.inputShootDates.value = JSON.stringify(this.shootDates || []);
@@ -645,21 +683,8 @@
             const viewport = this.container.querySelector('#pdp-calendar-viewport');
             if (!viewport) return;
 
-            const m1Year = this.currentYear;
-            const m1Month = this.currentMonth;
-
-            // Deuxième mois
-            let m2Year = m1Year;
-            let m2Month = m1Month + 1;
-            if (m2Month > 11) {
-                m2Month = 0;
-                m2Year++;
-            }
-
-            viewport.innerHTML = `
-                ${this.buildMonthHtml(m1Year, m1Month, true, false)}
-                ${this.buildMonthHtml(m2Year, m2Month, false, true)}
-            `;
+            // Un seul mois affiché, navigation précédent / suivant sur le même en-tête
+            viewport.innerHTML = this.buildMonthHtml(this.currentYear, this.currentMonth, true, true);
 
             // Reconnecter la navigation des mois
             const prevBtn = viewport.querySelector('#pdp-prev-month');

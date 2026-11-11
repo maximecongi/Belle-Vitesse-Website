@@ -7,6 +7,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
 {% from "admin/_signer_invite.html" import signer_invite_modal %}
 
 {% block title %}{{ project.name }}{% endblock %}
+{% block pin_label %}Projet - {{ project.name }}{% endblock %}
 {% block page_title %}Détail projet{% endblock %}
 
 {% block extra_css %}
@@ -547,26 +548,22 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
             {% endif %}
         </div>
 
-        <!-- Référents Belle Vitesse -->
+        <!-- Équipe Belle Vitesse : rôles nominatifs (Commercial, Machiniste BV, Opérateur Remote Head) -->
+        {% set bv_team_roles = project.bv_team_roles %}
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
                 <div class="u-flex u-align-center u-gap-2">
-                    <h2 class="admin-card-title u-m-0">Référents Plateau BV</h2>
+                    <h2 class="admin-card-title u-m-0">Équipe Belle Vitesse</h2>
                 </div>
-                {% if project.bv_referents and project.bv_referents|length > 0 %}
-                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">
-                    {{ project.bv_referents|length }} référent{{ 's' if project.bv_referents|length > 1 else '' }}
-                </span>
-                {% endif %}
             </div>
 
-            {% if project.bv_referents and project.bv_referents|length > 0 %}
+            {% if bv_team_roles %}
             <div class="project-contacts-list">
-                {% for u in project.bv_referents %}
+                {% for role_label, u in bv_team_roles %}
                 <div class="project-contact-row">
                     <div class="project-contact-main">
                         <span class="project-contact-name">{{ u.firstname }} {{ u.lastname }}</span>
-                        <span class="project-contact-role">{{ u.job }}</span>
+                        <span class="project-contact-role">{{ role_label }}</span>
                     </div>
                     {% if u.phone or u.mail %}
                     <div class="project-contact-actions">
@@ -587,7 +584,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 {% endfor %}
             </div>
             {% else %}
-            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun référent BV désigné sur ce projet.</p>
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun membre de l'équipe BV désigné sur ce projet.</p>
             {% endif %}
         </div>
 

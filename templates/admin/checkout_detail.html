@@ -3,6 +3,7 @@
 {% from "admin/macros.html" import danger_zone, back_button %}
 
 {% block title %}Départ {{ data.inspection_id }}{% endblock %}
+{% block pin_label %}Départ - {{ data.project if data.project and data.project != '—' else data.inspection_id }}{% endblock %}
 {% block page_title %}Départ {{ data.inspection_id }}{% endblock %}
 
 {% block header_actions %}

@@ -5,6 +5,7 @@ incident_signature_badge, equipment_icon, empty_state, danger_zone, back_button 
 {% from "admin/_signer_invite.html" import signer_picker %}
 
 {% block title %}Incident {{ incident.incident_number }}{% endblock %}
+{% block pin_label %}Incident - {{ incident.project.name if incident.project else incident.incident_number }}{% endblock %}
 {% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
 
 {% block header_actions %}

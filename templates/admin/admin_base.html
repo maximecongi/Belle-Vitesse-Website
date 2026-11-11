@@ -36,6 +36,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {# Nom proposé par défaut lors de l'épinglage (⌘ + ;) ; repli JS sur le <title> #}
+    <meta name="pin-label" content="{% filter trim %}{% block pin_label %}{% endblock %}{% endfilter %}">
     <link rel="manifest" href="/static/imgs/favicons/admin.webmanifest">
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="apple-touch-icon" href="/static/imgs/favicons/apple-touch-icon.png">
@@ -125,6 +127,30 @@
                 </a>
                 {% endif %}
                 {% endmacro %}
+
+                {# Pages épinglées (⌘ + ;) — re-rendu côté client par pins.js après chaque modification #}
+                {% set pins = user_pins or [] %}
+                <div class="admin-nav-pins {% if not pins %}u-d-none{% endif %}" data-pins
+                    data-pins-url="{{ url_for('admin_api.admin_api_pins_list') }}">
+                    <div class="admin-nav-pins-title" data-pins-title>{{ 'Épinglés' if pins|length > 1 else 'Épinglé' }}</div>
+                    <div class="admin-nav-pins-list" data-pins-list>
+                        {% for pin in pins %}
+                        <div class="admin-nav-pin" draggable="true" data-pin-id="{{ pin.id }}"
+                            data-pin-label="{{ pin.label }}" data-pin-url="{{ pin.url }}">
+                            <a href="{{ pin.url }}" class="admin-nav-item admin-nav-pin-link" title="{{ pin.label }}">
+                                <span class="admin-nav-label"><i data-lucide="pin" class="admin-nav-icon"></i><span
+                                        class="admin-nav-pin-text">{{ pin.label }}</span></span>
+                            </a>
+                            <span class="admin-nav-pin-actions">
+                                <button type="button" class="admin-nav-pin-action" data-pin-edit
+                                    aria-label="Renommer le favori"><i data-lucide="pencil"></i></button>
+                                <button type="button" class="admin-nav-pin-action" data-pin-remove
+                                    aria-label="Retirer le favori"><i data-lucide="x"></i></button>
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
 
                 {{ nav_item(url_for('admin_dashboard.admin_dashboard'), 'Tableau de bord', 'dashboard', icon='layout-dashboard') }}
 
@@ -230,6 +256,24 @@
         <button type="button" class="admin-btn admin-btn-secondary" data-modal-close="confirmModal">Annuler</button>
         <button type="button" class="admin-btn admin-btn-danger" data-confirm-accept>Supprimer</button>
     </div>
+    {% endcall %}
+
+    <!-- Modale d'épinglage d'une page (⌘ + ;) — pilotée par pins.js -->
+    {% call admin_modal('pinModal', 'Épingler la page', 'sm') %}
+    <form class="admin-pin-form" data-pin-form novalidate>
+        <div class="form-group u-mb-3">
+            <label for="pinLabelInput" class="form-label u-font-semibold">Nom du favori</label>
+            <input type="text" id="pinLabelInput" class="form-input" data-pin-input maxlength="120"
+                autocomplete="off" spellcheck="false" required>
+            <p class="admin-pin-url" data-pin-url></p>
+        </div>
+        <div class="admin-confirm-actions">
+            <button type="button" class="admin-btn admin-btn-danger admin-pin-remove u-d-none"
+                data-pin-modal-remove>Retirer</button>
+            <button type="button" class="admin-btn admin-btn-secondary" data-modal-close="pinModal">Annuler</button>
+            <button type="submit" class="admin-btn admin-btn-primary" data-pin-submit>Épingler</button>
+        </div>
+    </form>
     {% endcall %}
 
     <!-- Modal protocoles freins et pneus -->

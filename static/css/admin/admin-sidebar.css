@@ -314,3 +314,102 @@
     opacity: 0.6;
     margin-left: auto;
 }
+/* ── Pages épinglées (⌘ + ;) ─────────────────────────────────── */
+.admin-nav-pins {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-nav-pins-title {
+    padding: 0 2rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.admin-nav-pin {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.admin-nav-pin-link {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    /* place pour les actions au survol */
+    padding-right: 4.25rem;
+}
+
+.admin-nav-pin-link .admin-nav-label {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.admin-nav-pin-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-nav-pin-actions {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.15rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.admin-nav-pin:hover .admin-nav-pin-actions,
+.admin-nav-pin:focus-within .admin-nav-pin-actions {
+    opacity: 1;
+}
+
+/* Écrans tactiles (iPad / app iOS) : pas de survol, actions toujours visibles */
+@media (hover: none) {
+    .admin-nav-pin-actions {
+        opacity: 0.7;
+    }
+}
+
+.admin-nav-pin-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-nav-pin-action:hover,
+.admin-nav-pin-action:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--white-1);
+}
+
+.admin-nav-pin-action svg {
+    width: 14px;
+    height: 14px;
+}
+
+.admin-nav-pin[draggable="true"] {
+    cursor: grab;
+}
+
+.admin-nav-pin.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}

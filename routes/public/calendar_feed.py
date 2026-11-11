@@ -144,6 +144,11 @@ def _build_event_description(project, phase_title="🎬 Tournage", vehicle_map=N
         contact_lines.append(_format_contact(
             project.production_contact, "Contact Prod"))
 
+    for role_label, u in getattr(project, "bv_team_roles", []) or []:
+        name = f"{u.firstname or ''} {u.lastname or ''}".strip() or "Inconnu"
+        phone_part = f" ({u.phone})" if u.phone else ""
+        contact_lines.append(f"• {role_label} : {name}{phone_part}")
+
     if contact_lines:
         lines.append("👥 ÉQUIPE & CONTACTS :")
         lines.extend(contact_lines)

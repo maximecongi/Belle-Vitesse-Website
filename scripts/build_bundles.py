@@ -56,11 +56,13 @@ ADMIN_CSS_FILES: List[str] = [
 ]
 
 ADMIN_JS_FILES: List[str] = [
+    "js/src/common/modal-backdrop-guard.js",
     "js/src/common/image-compressor.js",
     "js/src/common/signature-pad-controller.js",
     "js/src/admin/flash.js",
     "js/src/admin/nav.js",
     "js/src/admin/confirm-dialog.js",
+    "js/src/admin/pins.js",
     "js/src/admin/selects.js",
     "js/src/admin/tables.js",
     "js/src/admin/charts.js",
@@ -87,6 +89,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/project-detail-calendar.js",
     "js/src/admin/project-form.js",
     "js/src/admin/project-locations.js",
+    "js/src/admin/project-form-layout.js",
     "js/src/admin/checkpoints.js",
     "js/src/admin/safety-rules-catalog.js",
     "js/src/admin/risk-assessment-catalog.js",
@@ -102,6 +105,7 @@ ADMIN_JS_FILES: List[str] = [
 ]
 
 PUBLIC_JS_FILES: List[str] = [
+    "js/src/common/modal-backdrop-guard.js",
     "js/src/common/image-compressor.js",
     "js/src/common/signature-pad-controller.js",
     "js/src/common/pdf-form-preview.js",

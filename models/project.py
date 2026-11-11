@@ -94,6 +94,14 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     key_grip_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
+    # Équipe Belle Vitesse (utilisateurs internes)
+    commercial_user_id = db.Column(db.Integer, db.ForeignKey(
+        "users.id", ondelete="SET NULL"), nullable=True, index=True)
+    bv_grip_user_id = db.Column(db.Integer, db.ForeignKey(
+        "users.id", ondelete="SET NULL"), nullable=True, index=True)
+    # Opérateur Remote Head : uniquement pertinent si au moins une tête est assignée
+    remote_head_operator_user_id = db.Column(db.Integer, db.ForeignKey(
+        "users.id", ondelete="SET NULL"), nullable=True, index=True)
     departure_date = db.Column(db.Date, index=True)  # Date de départ (enlèvement)
     shoot_start_date = db.Column(db.Date, index=True)  # Date de début de tournage (ou 1re date ponctuelle)
     shoot_end_date = db.Column(db.Date)  # Date de fin de tournage (ou dernière date ponctuelle)
@@ -150,6 +158,15 @@ class Project(db.Model):
     # Contact Chef Machiniste du projet
     key_grip_contact = db.relationship(
         "Contact", foreign_keys=[key_grip_contact_id], backref="key_grip_projects", lazy=True)
+    # Commercial Belle Vitesse en charge du projet
+    commercial_user = db.relationship(
+        "User", foreign_keys=[commercial_user_id], lazy=True)
+    # Machiniste Belle Vitesse affecté au projet
+    bv_grip_user = db.relationship(
+        "User", foreign_keys=[bv_grip_user_id], lazy=True)
+    # Opérateur Remote Head affecté au projet
+    remote_head_operator_user = db.relationship(
+        "User", foreign_keys=[remote_head_operator_user_id], lazy=True)
     # Décharges associées au projet
     waivers = db.relationship(
         "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
@@ -191,6 +208,17 @@ class Project(db.Model):
         if not self.bv_referents:
             return ""
         return ", ".join(f"{u.firstname} {u.lastname}".strip() for u in self.bv_referents if (u.firstname or u.lastname))
+
+    @property
+    def bv_team_roles(self) -> list:
+        """Rôles nominatifs de l'équipe BV : liste de (libellé, User) renseignés, dans l'ordre d'affichage."""
+        roles = [
+            ("Commercial", self.commercial_user),
+            ("Machiniste BV", self.bv_grip_user),
+        ]
+        if self.head_ids_list:
+            roles.append(("Opérateur Remote Head", self.remote_head_operator_user))
+        return [(label, u) for label, u in roles if u is not None]
 
     @property
     def vehicle_ids_list(self) -> list:
@@ -576,6 +604,9 @@ class Project(db.Model):
             "dop_contact_id": self.dop_contact_id,
             "first_ac_contact_id": self.first_ac_contact_id,
             "key_grip_contact_id": self.key_grip_contact_id,
+            "commercial_user_id": self.commercial_user_id,
+            "bv_grip_user_id": self.bv_grip_user_id,
+            "remote_head_operator_user_id": self.remote_head_operator_user_id,
             "departure_date": self.departure_date.isoformat() if self.departure_date else None,
             "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,
             "shoot_end_date": self.shoot_end_date.isoformat() if self.shoot_end_date else None,

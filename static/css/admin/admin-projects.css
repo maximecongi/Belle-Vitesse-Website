@@ -837,8 +837,297 @@
     opacity: 1;
 }
 
-.bv-referents-card .lucide {
-    margin: 0 !important;
+/* ── Formulaire projet : mise en page à sections + récapitulatif ───────── */
+.pf-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.pf-main {
+    min-width: 0;
+}
+
+.pf-section {
+    margin-bottom: 1rem;
+    border-radius: 0 !important;
+    /* bordure gauche colorée : angles droits */
+    scroll-margin-top: calc(var(--admin-header-height, 64px) + 1rem);
+}
+
+.pf-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 1.25rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+/* Séparation « Côté production » / « Côté Belle Vitesse » */
+.pf-team-divider {
+    height: 1px;
+    margin: 1.75rem 0 1.25rem;
+    background: #E0E0E0;
+}
+
+/* Référents plateau : option de la liste déroulante (nom + métier en gris) */
+.bv-referent-option-job {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+.pf-subtitle {
+    margin-bottom: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+}
+
+.pf-subtitle-hint {
+    margin-left: 0.5rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: #6b7280;
+}
+
+/* Dans les grilles d'une section, l'espacement vient de la grille (pas de marge en plus) */
+.pf-section .u-grid>.form-group {
+    margin-bottom: 0;
+    min-width: 0;
+    /* un libellé long de Select2 ne doit pas élargir sa colonne */
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Le sélecteur de dates n'a plus besoin de son propre cadre dans une section */
+.pf-section .project-datepicker-container {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+}
+
+/* Indicateur de modifications dans l'en-tête */
+.pf-dirty-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+    margin-right: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--status-warning-text, #B45309);
+    white-space: nowrap;
+}
+
+.pf-dirty-indicator::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--status-warning, #F59E0B);
+}
+
+.pf-dirty-indicator.is-visible {
+    display: inline-flex;
+}
+
+/* Colonne latérale */
+.pf-aside {
+    position: sticky;
+    top: calc(var(--admin-header-height, 64px) + 1rem);
+}
+
+.pf-recap {
+    padding: 1.15rem 1.25rem;
+}
+
+.pf-recap-title {
+    margin-bottom: 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1a1a1a;
+}
+
+.pf-recap-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.pf-recap-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.pf-recap-row dt {
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.pf-recap-row dd {
+    margin: 0;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.pf-recap-row dd.is-empty {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+.pf-recap-pills {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    margin-top: -0.2rem;
+}
+
+.pf-recap-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-left: 3px solid currentColor;
+    border-radius: 0;
+    /* bordure colorée : angles droits */
+}
+
+.pf-recap-pill .lucide,
+.pf-recap-pill svg {
+    width: 11px;
+    height: 11px;
+}
+
+.pf-recap-pill.is-dep {
+    background: var(--entity-checkout-bg, #DCFCE7);
+    color: var(--entity-checkout, #15803D);
+}
+
+.pf-recap-pill.is-shoot {
+    background: var(--status-warning-bg, #FEF3C7);
+    color: var(--status-warning-text, #B45309);
+}
+
+.pf-recap-pill.is-ret {
+    background: var(--entity-checkin-bg, #DBEAFE);
+    color: var(--entity-checkin-text, #1E40AF);
+}
+
+/* Navigation = suivi d'avancement : pastilles reliées par un trait vertical neutre.
+   Pastilles pleines (sans bordure colorée) : à faire = gris, section affichée = noir, remplie = coche verte. */
+.pf-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.pf-nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.4rem 0;
+    font-size: 0.85rem;
+    color: #374151;
+    text-decoration: none;
+}
+
+/* Trait reliant la pastille à la suivante */
+.pf-nav-link:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: calc(50% + 11px);
+    height: calc(100% - 22px);
+    width: 1px;
+    background: #E0E0E0;
+}
+
+.pf-nav-marker {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #F3F4F6;
+    color: #6b7280;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.pf-nav-marker .lucide,
+.pf-nav-marker svg {
+    display: none;
+    width: 12px;
+    height: 12px;
+    stroke-width: 3;
+}
+
+.pf-nav-link.is-done .pf-nav-marker {
+    background: var(--entity-checkout, #15803D);
+    color: #fff;
+}
+
+.pf-nav-link.is-done .pf-nav-num {
+    display: none;
+}
+
+.pf-nav-link.is-done .pf-nav-marker .lucide,
+.pf-nav-link.is-done .pf-nav-marker svg {
+    display: block;
+}
+
+.pf-nav-link.is-active .pf-nav-marker {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.pf-nav-link:hover {
+    color: #1a1a1a;
+}
+
+.pf-nav-link.is-active {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+@media (max-width: 1100px) {
+    .pf-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pf-aside {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .pf-dirty-indicator {
+        display: none !important;
+    }
 }
 
 /* Notion Slash Command Dropdown */

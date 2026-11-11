@@ -117,20 +117,20 @@
 
 /* Specific Milestone Colors when Active */
 .pdp-milestone-card.type-departure.active {
-    border-color: var(--status-info);
+    border-color: var(--entity-checkout, #15803D);
 }
 
 .pdp-milestone-card.type-shoot_start.active,
 .pdp-milestone-card.type-shoot_dates.active {
-    border-color: #f97316;
+    border-color: var(--entity-project, #F59E0B);
 }
 
 .pdp-milestone-card.type-shoot_end.active {
-    border-color: #f97316;
+    border-color: var(--entity-project, #F59E0B);
 }
 
 .pdp-milestone-card.type-return.active {
-    border-color: var(--entity-checkout, #15803D);
+    border-color: var(--entity-checkin, #3B82F6);
 }
 
 .pdp-milestone-card.type-shoot_dates {
@@ -228,23 +228,23 @@
 }
 
 .type-departure .pdp-milestone-label {
-    color: #2563eb;
+    color: var(--entity-checkout, #15803D);
 }
 
 .type-shoot_start .pdp-milestone-label {
-    color: #ea580c;
+    color: var(--entity-project-text, #B45309);
 }
 
 .type-shoot_end .pdp-milestone-label {
-    color: #ea580c;
+    color: var(--entity-project-text, #B45309);
 }
 
 .type-return .pdp-milestone-label {
-    color: #059669;
+    color: var(--entity-checkin, #3B82F6);
 }
 
 .type-shoot_dates .pdp-milestone-label {
-    color: #ea580c;
+    color: var(--entity-project-text, #B45309);
 }
 
 .pdp-step-badge {
@@ -474,24 +474,26 @@
     row-gap: 4px;
 }
 
+/* Cases du calendrier : même langage que les cartes de jalons
+   (angles droits, fond pâle teinté, chiffre foncé de la couleur du jalon). */
 .pdp-day-cell {
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
+    border-radius: 0;
     font-size: 0.85rem;
     font-weight: 500;
     color: #334155;
     cursor: pointer;
     position: relative;
     user-select: none;
-    transition: all 0.1s ease;
+    transition: background-color 0.1s ease, color 0.1s ease;
 }
 
 .pdp-day-cell:hover:not(.empty):not(.disabled) {
-    background: #f1f5f9;
+    background: #F3F4F6;
     color: #0f172a;
     font-weight: 700;
 }
@@ -503,55 +505,62 @@
 
 .pdp-day-cell.is-today {
     font-weight: 800;
-    border: 1px solid #cbd5e1;
+    box-shadow: inset 0 0 0 1px #CBD5E1;
 }
 
-/* Range & Milestone Day Styling */
+/* Tournage : ambre pâle */
 .pdp-day-cell.in-shoot-range,
 .pdp-day-cell.shoot-start-day,
-.pdp-day-cell.shoot-end-day {
-    background: #f97316 !important;
-    color: #ffffff !important;
+.pdp-day-cell.shoot-end-day,
+.pdp-day-cell.shoot-punctual-day {
+    background: var(--entity-project-bg, #FEF3C7) !important;
+    color: var(--entity-project-text, #B45309) !important;
     font-weight: 700;
-    border-radius: 0;
 }
 
-.pdp-day-cell.shoot-start-day {
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
-}
-
-.pdp-day-cell.shoot-end-day {
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
-}
-
-.pdp-day-cell.shoot-start-day.shoot-end-day {
-    border-radius: 6px !important;
-}
-
+/* Départ / Retour : prioritaires sur le tournage le même jour (pastilles en bas si chevauchement) */
 .pdp-day-cell.departure-day {
-    background: var(--status-info) !important;
-    color: #ffffff !important;
+    background: var(--entity-checkout-bg, #DCFCE7) !important;
+    color: var(--entity-checkout-text, #14532D) !important;
     font-weight: 700;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
 }
 
 .pdp-day-cell.return-day {
-    background: var(--entity-checkout, #15803D) !important;
-    color: #ffffff !important;
+    background: var(--entity-checkin-bg, #DBEAFE) !important;
+    color: var(--entity-checkin-text, #1E40AF) !important;
     font-weight: 700;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px var(--entity-checkout-glow, rgba(21, 128, 61, 0.4));
 }
 
-/* Dots / Indicators below day number if overlap occurs */
+.pdp-day-cell.in-shoot-range:hover,
+.pdp-day-cell.shoot-punctual-day:hover,
+.pdp-day-cell.departure-day:hover,
+.pdp-day-cell.return-day:hover {
+    filter: brightness(0.97);
+}
+
+/* « Aujourd'hui » sur un jour de jalon : contour dans la couleur pleine du jalon
+   (départ / retour prioritaires sur le tournage, comme pour le fond) */
+.pdp-day-cell.is-today.in-shoot-range,
+.pdp-day-cell.is-today.shoot-start-day,
+.pdp-day-cell.is-today.shoot-end-day,
+.pdp-day-cell.is-today.shoot-punctual-day {
+    box-shadow: inset 0 0 0 1px var(--entity-project, #F59E0B);
+}
+
+.pdp-day-cell.is-today.departure-day {
+    box-shadow: inset 0 0 0 1px var(--entity-checkout, #15803D);
+}
+
+.pdp-day-cell.is-today.return-day {
+    box-shadow: inset 0 0 0 1px var(--entity-checkin, #3B82F6);
+}
+
+/* Pastilles quand plusieurs jalons tombent le même jour */
 .pdp-day-badges {
     display: flex;
     gap: 2px;
     position: absolute;
-    bottom: 2px;
+    bottom: 3px;
 }
 
 .pdp-dot {
@@ -561,27 +570,18 @@
 }
 
 .pdp-dot.dot-dep {
-    background: var(--status-info);
-}
-
-.pdp-dot.dot-shoot {
-    background: #f97316;
-}
-
-.pdp-dot.dot-ret {
     background: var(--entity-checkout, #15803D);
 }
 
-/* Punctual shoot day styling */
-.pdp-day-cell.shoot-punctual-day {
-    background: #f97316 !important;
-    color: #ffffff !important;
-    font-weight: 700;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4);
+.pdp-dot.dot-shoot {
+    background: var(--entity-project, #F59E0B);
 }
 
-/* Intermediate Immobilisé / immobilized day (Ambre doux hachuré) */
+.pdp-dot.dot-ret {
+    background: var(--entity-checkin, #3B82F6);
+}
+
+/* Jour intermédiaire immobilisé (mode ponctuel) : hachures ambre douces */
 .pdp-day-cell.intermediate-standby-day {
     background: repeating-linear-gradient(45deg,
             var(--entity-project-bg),
@@ -590,15 +590,12 @@
             #fde68a 12px) !important;
     color: #92400e !important;
     font-weight: 700;
-    border-radius: 4px;
-    border: 1px solid #fcd34d;
+    border-radius: 0;
 }
 
 .pdp-day-cell.intermediate-standby-day:hover {
     filter: brightness(0.96);
 }
-
-
 
 /* ── Help / Legend Footer ─────────────────────────────────────── */
 .pdp-footer-legend {
@@ -634,11 +631,11 @@
 }
 
 .pdp-legend-swatch.swatch-dep {
-    background: var(--status-info);
+    background: var(--entity-checkout, #15803D);
 }
 
 .pdp-legend-swatch.swatch-shoot {
-    background: #f97316;
+    background: var(--entity-project, #F59E0B);
 }
 
 .pdp-legend-swatch.swatch-standby {
@@ -653,7 +650,7 @@
 
 
 .pdp-legend-swatch.swatch-ret {
-    background: var(--entity-checkout, #15803D);
+    background: var(--entity-checkin, #3B82F6);
 }
 
 .pdp-legend-hint {
@@ -710,13 +707,15 @@
     transition: all 0.15s ease;
     flex-wrap: wrap;
     border-left: 4px solid var(--entity-checkout, #15803D);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     gap: 0.6rem;
 }
 
 .pdp-interval-card.is-immob {
     border-left: 4px solid var(--entity-project, #f59e0b);
-    border-radius: 0 !important; /* bordure gauche colorée : jamais d'arrondi */
+    border-radius: 0 !important;
+    /* bordure gauche colorée : jamais d'arrondi */
     background: #fffdfa;
 }
 
@@ -827,4 +826,296 @@
     height: 16px;
     vertical-align: -3px;
     margin-right: 0.4rem;
+}
+
+/* ── Disposition : jalons + raccourcis à gauche, calendrier (1 mois) à droite ── */
+.pdp-body {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.pdp-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+/* Jalons empilés : libellé + date à gauche, boutons ±1j à droite */
+.pdp-side .pdp-milestones-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    margin-bottom: 0;
+}
+
+.pdp-side .pdp-milestone-card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "header actions"
+        "date   actions";
+    align-items: center;
+    column-gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+}
+
+.pdp-side .pdp-milestone-header {
+    grid-area: header;
+    margin-bottom: 0.1rem;
+}
+
+.pdp-side .pdp-step-badge {
+    display: none;
+}
+
+.pdp-side .pdp-milestone-date {
+    grid-area: date;
+}
+
+.pdp-side .pdp-milestone-actions {
+    grid-area: actions;
+    margin-top: 0;
+}
+
+.pdp-summary {
+    font-size: 0.78rem;
+    color: #64748b;
+    padding: 0.1rem 0.15rem;
+}
+
+.pdp-summary.empty {
+    font-style: italic;
+}
+
+.pdp-side .pdp-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin-bottom: 0;
+}
+
+.pdp-side .pdp-presets-group,
+.pdp-side .pdp-actions-group {
+    flex-wrap: wrap;
+}
+
+.pdp-body .pdp-calendar-container {
+    justify-content: stretch;
+}
+
+.pdp-body .pdp-month-card {
+    max-width: none;
+}
+
+.project-datepicker-container .pdp-intervals-container {
+    margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+    .pdp-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Colonne des jalons : cartes à bordure gauche colorée (angles droits), raccourcis à plat ──
+   La couleur de la bordure gauche est fixée UNE fois par type de jalon ; survol et état actif ne
+   modifient que le fond et les trois autres bordures (pas de « border-color » raccourci, pas de
+   « transition: all ») pour que la bordure gauche ne puisse jamais être écrasée. */
+.pdp-side .pdp-milestone-card {
+    padding: 0.7rem 0.85rem;
+    background-color: #fff;
+    border-style: solid;
+    border-width: 1px 1px 1px 4px;
+    border-top-color: #E0E0E0;
+    border-right-color: #E0E0E0;
+    border-bottom-color: #E0E0E0;
+    border-left-color: #9ca3af;
+    border-radius: 0;
+    /* bordure colorée : angles droits */
+    box-shadow: none;
+    transition: background-color 0.15s ease, border-top-color 0.15s ease,
+        border-right-color 0.15s ease, border-bottom-color 0.15s ease;
+}
+
+/* Couleur propre à chaque jalon : libellé + bordure gauche */
+.pdp-side .pdp-milestone-card.type-departure {
+    --pdp-accent-text: var(--entity-checkout-text, #14532D);
+    border-left-color: var(--entity-checkout, #15803D);
+}
+
+.pdp-side .pdp-milestone-card.type-shoot_start,
+.pdp-side .pdp-milestone-card.type-shoot_end,
+.pdp-side .pdp-milestone-card.type-shoot_dates {
+    --pdp-accent-text: var(--entity-project-text, #B45309);
+    border-left-color: var(--entity-project, #F59E0B);
+}
+
+.pdp-side .pdp-milestone-card.type-return {
+    --pdp-accent-text: var(--entity-checkin-text, #1E40AF);
+    border-left-color: var(--entity-checkin, #3B82F6);
+}
+
+/* Survol (carte non active) : fond gris très léger, contour un peu plus marqué */
+.pdp-side .pdp-milestone-card:not(.active):hover {
+    background-color: #FAFAFA;
+    border-top-color: #CBD5E1;
+    border-right-color: #CBD5E1;
+    border-bottom-color: #CBD5E1;
+}
+
+/* Carte active : fond teinté et contour dans la couleur du jalon */
+.pdp-side .pdp-milestone-card.type-departure.active {
+    background-color: #F0FDF4;
+    border-top-color: rgba(21, 128, 61, 0.3);
+    border-right-color: rgba(21, 128, 61, 0.3);
+    border-bottom-color: rgba(21, 128, 61, 0.3);
+}
+
+.pdp-side .pdp-milestone-card.type-shoot_start.active,
+.pdp-side .pdp-milestone-card.type-shoot_end.active,
+.pdp-side .pdp-milestone-card.type-shoot_dates.active {
+    background-color: #FFFBEB;
+    border-top-color: rgba(245, 158, 11, 0.35);
+    border-right-color: rgba(245, 158, 11, 0.35);
+    border-bottom-color: rgba(245, 158, 11, 0.35);
+}
+
+.pdp-side .pdp-milestone-card.type-return.active {
+    background-color: #EFF6FF;
+    border-top-color: rgba(59, 130, 246, 0.3);
+    border-right-color: rgba(59, 130, 246, 0.3);
+    border-bottom-color: rgba(59, 130, 246, 0.3);
+}
+
+.pdp-side .pdp-milestone-label {
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--pdp-accent-text);
+}
+
+.pdp-side .pdp-milestone-label .lucide {
+    width: 13px;
+    height: 13px;
+}
+
+.pdp-side .pdp-milestone-date {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.pdp-side .pdp-milestone-date.empty {
+    font-size: 0.85rem;
+    font-weight: 400;
+    font-style: italic;
+    color: #9ca3af;
+}
+
+.pdp-side .pdp-milestone-actions {
+    gap: 0.3rem;
+}
+
+.pdp-side .pdp-mini-btn {
+    padding: 0.3rem 0.45rem;
+    background: #fff;
+    border: 1px solid #E0E0E0;
+    border-radius: 0;
+    font-size: 0.7rem;
+    color: #374151;
+}
+
+.pdp-side .pdp-mini-btn:hover {
+    background: #F3F4F6;
+    border-color: #D1D5DB;
+    color: #1a1a1a;
+}
+
+/* Effacer un jalon : discret, visible au survol de la carte */
+.pdp-side .pdp-mini-btn.btn-clear {
+    display: none;
+    border-color: transparent;
+    background: transparent;
+    color: #9ca3af;
+}
+
+.pdp-side .pdp-milestone-card:hover .pdp-mini-btn.btn-clear {
+    display: inline-flex;
+}
+
+/* Croix placée à gauche des boutons −1j / +1j */
+.pdp-side .pdp-mini-btn.btn-clear {
+    order: -1;
+}
+
+.pdp-side .pdp-mini-btn.btn-clear:hover {
+    color: #dc2626;
+    background: transparent;
+}
+
+.pdp-side .pdp-summary {
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+/* Raccourcis à plat */
+.pdp-side .pdp-toolbar {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    gap: 0.5rem;
+}
+
+.pdp-side .pdp-presets-group,
+.pdp-side .pdp-actions-group {
+    gap: 0.5rem;
+}
+
+.pdp-side .pdp-preset-btn {
+    padding: 0.45rem 0.75rem;
+    background: #fff;
+    border: 1px solid #E0E0E0;
+    border-radius: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.pdp-side .pdp-preset-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.pdp-side .pdp-preset-btn.btn-highlight {
+    background: var(--entity-project-bg, #FEF3C7);
+    border-color: var(--entity-project-border, rgba(245, 158, 11, 0.35));
+    color: var(--entity-project-text, #B45309);
+}
+
+.pdp-side .pdp-preset-btn.btn-highlight:hover {
+    background: #FDE9A9;
+}
+
+.pdp-side .pdp-preset-btn.pdp-btn-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #dc2626;
+}
+
+.pdp-side .pdp-preset-btn.pdp-btn-reset .lucide {
+    width: 14px;
+    height: 14px;
+}
+
+.pdp-side .pdp-preset-btn.pdp-btn-reset:hover {
+    background: #FEF2F2;
+    border-color: #FECACA;
+    color: #991b1b;
 }

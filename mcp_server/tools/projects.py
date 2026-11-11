@@ -262,6 +262,9 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "dop_contact_id": project.dop_contact_id,
         "first_ac_contact_id": project.first_ac_contact_id,
         "key_grip_contact_id": project.key_grip_contact_id,
+        "commercial_user_id": project.commercial_user_id,
+        "bv_grip_user_id": project.bv_grip_user_id,
+        "remote_head_operator_user_id": project.remote_head_operator_user_id,
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
         "production": production_data,
@@ -273,6 +276,11 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
             "first_ac": _fmt_contact(project.first_ac_contact),
             "key_grip": _fmt_contact(project.key_grip_contact),
         },
+        "bv_team": [
+            {"role": role_label, "user_id": u.id, "name": f"{u.firstname} {u.lastname}".strip(),
+             "phone": u.phone or "", "email": u.mail or ""}
+            for role_label, u in project.bv_team_roles
+        ],
         "vehicles": resolved_vehicles,
         "heads": resolved_heads,
         "cgl": cgl_data,
@@ -388,6 +396,9 @@ def create_project(
     dop_contact_id: Optional[int] = None,
     first_ac_contact_id: Optional[int] = None,
     key_grip_contact_id: Optional[int] = None,
+    commercial_user_id: Optional[int] = None,
+    bv_grip_user_id: Optional[int] = None,
+    remote_head_operator_user_id: Optional[int] = None,
     notes: Optional[str] = None,
     departure_date: Optional[str] = None,
     shoot_start: Optional[str] = None,
@@ -399,6 +410,8 @@ def create_project(
     """
     Crée un nouveau projet en base de données.
     Les dates peuvent être passées aux formats 'YYYY-MM-DD', 'DD/MM/YYYY', etc.
+    Rôles équipe BV (IDs utilisateurs, cf. list_users) : commercial_user_id, bv_grip_user_id (Machiniste BV),
+    remote_head_operator_user_id (Opérateur Remote Head, ignoré si aucune tête n'est assignée).
     """
     from services.admin.projects import create_project as _create_project
 
@@ -424,6 +437,9 @@ def create_project(
         "dop_contact_id": str(dop_contact_id) if dop_contact_id else "",
         "first_ac_contact_id": str(first_ac_contact_id) if first_ac_contact_id else "",
         "key_grip_contact_id": str(key_grip_contact_id) if key_grip_contact_id else "",
+        "commercial_user_id": str(commercial_user_id) if commercial_user_id else "",
+        "bv_grip_user_id": str(bv_grip_user_id) if bv_grip_user_id else "",
+        "remote_head_operator_user_id": str(remote_head_operator_user_id) if remote_head_operator_user_id else "",
         "notes": notes or "",
         "departure_date": parse_flexible_date(departure_date) or "",
         "shoot_start": parse_flexible_date(shoot_start) or "",
@@ -447,6 +463,9 @@ def update_project(
     dop_contact_id: Optional[int] = None,
     first_ac_contact_id: Optional[int] = None,
     key_grip_contact_id: Optional[int] = None,
+    commercial_user_id: Optional[int] = None,
+    bv_grip_user_id: Optional[int] = None,
+    remote_head_operator_user_id: Optional[int] = None,
     notes: Optional[str] = None,
     departure_date: Optional[str] = None,
     shoot_start: Optional[str] = None,
@@ -457,6 +476,8 @@ def update_project(
 ) -> Dict[str, Any]:
     """
     Met à jour un projet existant par son ID (mode patch : conserve les champs non spécifiés).
+    Rôles équipe BV (IDs utilisateurs) : commercial_user_id, bv_grip_user_id (Machiniste BV),
+    remote_head_operator_user_id (Opérateur Remote Head, effacé si le projet n'a plus de tête).
     Les dates peuvent être fournies dans tous les formats usuels ('YYYY-MM-DD', 'DD/MM/YYYY', etc.).
     """
     from models import Project, db
@@ -481,6 +502,8 @@ def update_project(
                 return final_veh_ids
             if key == "head_ids":
                 return final_head_ids
+            if key == "bv_referent_ids":
+                return [str(u.id) for u in (project.bv_referents or [])]
             return []
 
     # Dates existantes
@@ -510,6 +533,9 @@ def update_project(
         "dop_contact_id": str(dop_contact_id) if dop_contact_id is not None else (str(project.dop_contact_id) if project.dop_contact_id else ""),
         "first_ac_contact_id": str(first_ac_contact_id) if first_ac_contact_id is not None else (str(project.first_ac_contact_id) if project.first_ac_contact_id else ""),
         "key_grip_contact_id": str(key_grip_contact_id) if key_grip_contact_id is not None else (str(project.key_grip_contact_id) if project.key_grip_contact_id else ""),
+        "commercial_user_id": str(commercial_user_id) if commercial_user_id is not None else (str(project.commercial_user_id) if project.commercial_user_id else ""),
+        "bv_grip_user_id": str(bv_grip_user_id) if bv_grip_user_id is not None else (str(project.bv_grip_user_id) if project.bv_grip_user_id else ""),
+        "remote_head_operator_user_id": str(remote_head_operator_user_id) if remote_head_operator_user_id is not None else (str(project.remote_head_operator_user_id) if project.remote_head_operator_user_id else ""),
         "notes": notes if notes is not None else (project.notes or ""),
         "departure_date": parsed_dep or "",
         "shoot_start": parsed_start or "",

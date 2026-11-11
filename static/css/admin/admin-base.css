@@ -95,6 +95,16 @@
     --status-neutral-glow: rgba(107, 114, 128, 0.35);
 }
 
+/* styles.css (site public) met overflow-x: hidden sur html/body et overflow-y: scroll sur body :
+   body devient alors un conteneur de défilement qui ne défile jamais, ce qui neutralise tout
+   position: sticky (en-tête admin, récapitulatif du formulaire projet…). « clip » coupe le
+   débordement horizontal sans créer de conteneur de défilement. */
+html,
+body {
+    overflow-x: clip;
+    overflow-y: visible;
+}
+
 body {
     margin: 0;
     padding: 0;
