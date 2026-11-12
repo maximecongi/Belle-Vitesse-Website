@@ -11,7 +11,7 @@ list_header_actions, table_empty_row, render_pagination %}
 {% block header_actions %}
 {{ list_header_actions('Rechercher un projet...',
 url_for('admin_projects.admin_project_new') if can('project_edit') else None, '+ Nouveau projet',
-is_archive) }}
+is_archive, hidden={'commercial': request.args.get('commercial')}) }}
 {% endblock %}
 
 {% macro project_table(project_list) %}
@@ -35,6 +35,10 @@ is_archive) }}
                         {{ project.name }} <span class="u-text-xs u-text-muted">{{ project.production }}</span>
 
                         {{ shoot_status_badge(project.shoot_status) }}
+                        {% if commercial and commercial.enabled and project.commercial_status_label %}
+                        <span class="badge-pill ctl-badge ctl-badge--{{ project.commercial_status_variant }} u-text-xs"
+                            title="Statut commercial">{{ project.commercial_status_label }}</span>
+                        {% endif %}
                         {% if project.usage_pending %}
                         <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}#pointage"
                             class="badge-pill u-bg-warning-light u-text-warning u-text-xs usage-pending-badge"
@@ -290,6 +294,26 @@ is_archive) }}
             {% endif %}
         </h2>
     </div>
+    {% endif %}
+    {% if commercial and commercial.enabled %}
+    {% set base_endpoint = 'admin_projects.admin_projects_archives' if is_archive else 'admin_projects.admin_projects_list' %}
+    {% set q = request.args.get('q') or None %}
+    <nav class="ctl-filter-pills u-mb-3" aria-label="Filtrer par statut commercial">
+        <a href="{{ url_for(base_endpoint, q=q) }}"
+            class="ctl-filter-pill{% if not commercial.active %} is-active{% endif %}"
+            {% if not commercial.active %}aria-current="true"{% endif %}>
+            Tous <span class="ctl-filter-count">{{ commercial.total }}</span>
+        </a>
+        {% for key, label, variant, count in commercial.options %}
+        {% if count or commercial.active == key %}
+        <a href="{{ url_for(base_endpoint, q=q, commercial=key) }}"
+            class="ctl-filter-pill ctl-filter-pill--{{ variant }}{% if commercial.active == key %} is-active{% endif %}"
+            {% if commercial.active == key %}aria-current="true"{% endif %}>
+            {{ label }} <span class="ctl-filter-count">{{ count }}</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </nav>
     {% endif %}
     {{ project_table(projects) }}
     {{ render_pagination(pagination, label_singular="projet", label_plural="projets") }}

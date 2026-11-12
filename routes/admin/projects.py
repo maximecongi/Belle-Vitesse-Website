@@ -51,8 +51,12 @@ from services.admin.commercial_timeline import (
     CommercialEventNotFoundError,
     add_commercial_event,
     build_commercial_timeline,
+    complete_commercial_event,
     delete_commercial_event,
+    update_commercial_event,
 )
+from models.commercial_event import COMMERCIAL_STATUS_LABELS, COMMERCIAL_STATUSES
+from services.admin.projects.crud import UNTRACKED_COMMERCIAL_FILTER, commercial_status_counts
 from utils.context_processors import resolve_user_role, role_can
 from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
@@ -76,6 +80,28 @@ _LIST_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
 # ── CRUD Projets ──────────────────────────────────────────────
 
 
+def _commercial_list_filter(is_archive):
+    """
+    Filtre par statut commercial de la liste des projets (rôles commerciaux uniquement) :
+    statut actif (paramètre ?commercial=) et compteurs par statut pour les pastilles.
+    """
+    if not _can_see_commercial_timeline():
+        return {"enabled": False, "active": None}
+    active = request.args.get("commercial") or None
+    if active not in COMMERCIAL_STATUS_LABELS and active != UNTRACKED_COMMERCIAL_FILTER:
+        active = None
+    counts = commercial_status_counts(is_archive=is_archive, scope=session_project_scope())
+    return {
+        "enabled": True,
+        "active": active,
+        "total": sum(counts.values()),
+        "options": [
+            (key, label, variant, counts.get(key, 0)) for key, label, variant in COMMERCIAL_STATUSES
+        ] + [(UNTRACKED_COMMERCIAL_FILTER, "Non suivi", "neutral", counts.get(None, 0))],
+    }
+
+
+
 @projects_bp.route("/projects")
 @require_roles(*_LIST_ROLES)
 def admin_projects_list():
@@ -84,15 +110,17 @@ def admin_projects_list():
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
 
+        commercial = _commercial_list_filter(is_archive=False)
         pagination = list_projects(
             is_archive=False, q=q if q else None, page=page, per_page=per_page,
-            scope=session_project_scope(),
+            scope=session_project_scope(), commercial_status=commercial["active"],
         )
         return render_template(
             "admin/projects_list.html",
             projects=pagination.items,
             pagination=pagination,
             is_archive=False,
+            commercial=commercial,
         )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_projects_list : {e}")
@@ -110,15 +138,17 @@ def admin_projects_archives():
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
 
+        commercial = _commercial_list_filter(is_archive=True)
         pagination = list_projects(
             is_archive=True, q=q if q else None, page=page, per_page=per_page,
-            scope=session_project_scope(),
+            scope=session_project_scope(), commercial_status=commercial["active"],
         )
         return render_template(
             "admin/projects_list.html",
             projects=pagination.items,
             pagination=pagination,
             is_archive=True,
+            commercial=commercial,
         )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_projects_archives : {e}")
@@ -443,41 +473,108 @@ def _can_see_commercial_timeline():
     return role_can(role, "project_commercial_timeline", is_admin=session_is_admin())
 
 
-def _commercial_redirect(record_id):
+def _commercial_response(record_id, *, message, category="success", status=200, event_id=None):
+    """
+    Réponse des routes de la timeline commerciale :
+    - requête AJAX (modale / suppression) : JSON avec le HTML de la carte redessinée ;
+    - envoi classique (repli sans JavaScript) : message flash + retour sur la fiche.
+    """
+    if _wants_json():
+        body = {"status": "success" if category == "success" else "error", "message": message}
+        if category == "success":
+            from models import Project
+
+            project = db.session.get(Project, record_id)
+            body["event_id"] = event_id
+            body["html"] = render_template(
+                "admin/_commercial_timeline.html", project=project, tl=build_commercial_timeline(project)
+            )
+        return jsonify(body), status
+    flash(message, category)
     return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#commercial-timeline")
+
+
+def _commercial_event_form():
+    """Champs du formulaire (modale) d'ajout / de modification d'une prise de contact."""
+    form = request.form
+    return {
+        "event_type": form.get("event_type", ""),
+        "date_str": form.get("occurred_date", ""),
+        "time_str": form.get("occurred_time", ""),
+        "contact_id": form.get("contact_id") or None,
+        "summary": form.get("summary", ""),
+        "lost_reason": form.get("lost_reason") or None,
+        "is_planned": form.get("is_planned") or "0",
+        "new_contact": {
+            "first_name": form.get("new_contact_first_name"),
+            "last_name": form.get("new_contact_last_name"),
+            "phone": form.get("new_contact_phone"),
+            "mail": form.get("new_contact_mail"),
+            "job_title": form.get("new_contact_job_title"),
+            # Absent (None) → production du projet ; vide → freelance
+            "production_id": form.get("new_contact_production_id"),
+        },
+    }
 
 
 @projects_bp.route("/projects/<int:record_id>/commercial-events", methods=["POST"])
 @require_roles(*_COMMERCIAL_ROLES)
 def admin_project_commercial_event_add(record_id):
-    form = request.form
     try:
-        add_commercial_event(
-            record_id,
-            event_type=form.get("event_type", ""),
-            date_str=form.get("occurred_date", ""),
-            time_str=form.get("occurred_time", ""),
-            contact_id=form.get("contact_id") or None,
-            summary=form.get("summary", ""),
-            lost_reason=form.get("lost_reason") or None,
-            user_id=session.get("admin_user_id"),
-            new_contact={
-                "first_name": form.get("new_contact_first_name"),
-                "last_name": form.get("new_contact_last_name"),
-                "phone": form.get("new_contact_phone"),
-                "mail": form.get("new_contact_mail"),
-            },
-        )
-        flash("Prise de contact ajoutée à la timeline.", "success")
-    except CommercialEventNotFoundError:
-        abort(404)
+        event = add_commercial_event(record_id, user_id=session.get("admin_user_id"), **_commercial_event_form())
+        return _commercial_response(record_id, message="Prise de contact ajoutée à la timeline.",
+                                    status=201, event_id=event.id)
+    except CommercialEventNotFoundError as nf:
+        return _commercial_response(record_id, message=str(nf), category="error", status=404)
     except ValueError as ve:
-        flash(str(ve), "error")
+        db.session.rollback()
+        return _commercial_response(record_id, message=str(ve), category="error", status=400)
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"❌ Erreur ajout prise de contact projet {record_id} : {e}")
-        flash("Erreur lors de l'enregistrement de la prise de contact.", "error")
-    return _commercial_redirect(record_id)
+        return _commercial_response(record_id, message="Erreur lors de l'enregistrement de la prise de contact.",
+                                    category="error", status=500)
+
+
+@projects_bp.route(
+    "/projects/<int:record_id>/commercial-events/<int:event_id>/edit", methods=["POST"]
+)
+@require_roles(*_COMMERCIAL_ROLES)
+def admin_project_commercial_event_edit(record_id, event_id):
+    try:
+        update_commercial_event(record_id, event_id, **_commercial_event_form())
+        return _commercial_response(record_id, message="Prise de contact modifiée.", event_id=event_id)
+    except CommercialEventNotFoundError as nf:
+        return _commercial_response(record_id, message=str(nf), category="error", status=404)
+    except ValueError as ve:
+        db.session.rollback()
+        return _commercial_response(record_id, message=str(ve), category="error", status=400)
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur modification prise de contact {event_id} : {e}")
+        return _commercial_response(record_id, message="Erreur lors de la modification de la prise de contact.",
+                                    category="error", status=500)
+
+
+@projects_bp.route(
+    "/projects/<int:record_id>/commercial-events/<int:event_id>/complete", methods=["POST"]
+)
+@require_roles(*_COMMERCIAL_ROLES)
+def admin_project_commercial_event_complete(record_id, event_id):
+    """Événement à venir marqué « fait » : il devient une prise de contact réelle."""
+    try:
+        complete_commercial_event(record_id, event_id)
+        return _commercial_response(record_id, message="Événement marqué comme fait.", event_id=event_id)
+    except CommercialEventNotFoundError as nf:
+        return _commercial_response(record_id, message=str(nf), category="error", status=404)
+    except ValueError as ve:
+        db.session.rollback()
+        return _commercial_response(record_id, message=str(ve), category="error", status=400)
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur « fait » prise de contact {event_id} : {e}")
+        return _commercial_response(record_id, message="Erreur lors de l'enregistrement.",
+                                    category="error", status=500)
 
 
 @projects_bp.route(
@@ -487,14 +584,14 @@ def admin_project_commercial_event_add(record_id):
 def admin_project_commercial_event_delete(record_id, event_id):
     try:
         delete_commercial_event(record_id, event_id)
-        flash("Prise de contact supprimée.", "success")
+        return _commercial_response(record_id, message="Prise de contact supprimée.")
     except CommercialEventNotFoundError as nf:
-        flash(str(nf), "error")
+        return _commercial_response(record_id, message=str(nf), category="error", status=404)
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"❌ Erreur suppression prise de contact {event_id} : {e}")
-        flash("Erreur lors de la suppression de la prise de contact.", "error")
-    return _commercial_redirect(record_id)
+        return _commercial_response(record_id, message="Erreur lors de la suppression de la prise de contact.",
+                                    category="error", status=500)
 
 
 _REPORT_ROLES = ("administrator", "manager", "commercial", "user", "technicien")

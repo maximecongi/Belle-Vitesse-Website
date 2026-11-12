@@ -6,6 +6,7 @@ from services.admin.status_mapping import (
 from services.admin.projects.intervals import get_project_shoot_status
 from utils.formatting import format_date_fr, get_today_paris
 from utils.image_utils import extract_head_image, extract_vehicle_image
+from models.commercial_event import COMMERCIAL_STATUS_LABELS, COMMERCIAL_STATUS_VARIANTS
 
 _extract_vehicle_image = extract_vehicle_image
 _extract_head_image = extract_head_image
@@ -109,6 +110,9 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "shoot_status_id": shoot_status_id,
         "shoot_status_color": shoot_status_color,
         "usage_pending": usage_pending,
+        "commercial_status": p.commercial_status,
+        "commercial_status_label": COMMERCIAL_STATUS_LABELS.get(p.commercial_status),
+        "commercial_status_variant": COMMERCIAL_STATUS_VARIANTS.get(p.commercial_status, "neutral"),
         "production": p.production.name if p.production else "—",
         "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
         "raw_departure_date": str(p.departure_date) if p.departure_date else "",

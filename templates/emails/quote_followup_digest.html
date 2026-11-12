@@ -1,0 +1,86 @@
+{% extends "emails/base_transactional.html" %}
+
+{% block title %}Suivi commercial — Belle Vitesse{% endblock %}
+
+{% block content %}
+<h1 class="dot-before">Suivi commercial du jour</h1>
+
+{% if agenda %}
+<h2>Agenda : aujourd'hui et en retard</h2>
+<p>
+    Échanges prévus dans la timeline commerciale pour aujourd'hui, et ceux dont la date est passée
+    sans avoir été marqués « fait ».
+</p>
+
+<table class="email-table">
+    <thead>
+        <tr>
+            <th>Échange prévu</th>
+            <th>Quand</th>
+            <th>État</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in agenda %}
+        <tr>
+            <td>
+                <a href="{{ a.url }}"><strong>{{ a.headline }}</strong></a><br>
+                <span class="text-muted">{{ a.name }} · {{ a.production }}{% if a.summary %} — {{ a.summary }}{% endif %}</span>
+            </td>
+            <td>{{ a.when }}</td>
+            <td>
+                {% if a.late_days %}
+                <span class="badge badge-warning">en retard de {{ a.late_days }} j</span>
+                {% else %}
+                <span class="badge badge-info">aujourd'hui</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if projects %}
+<h2>Devis à relancer</h2>
+<p>
+    {{ projects|length }} devis {{ 'sont' if projects|length > 1 else 'est' }} sans réponse du client
+    depuis {{ days }} jours ou plus. Une relance est conseillée.
+</p>
+
+<table class="email-table">
+    <thead>
+        <tr>
+            <th>Projet</th>
+            <th>Dernier échange</th>
+            <th>Attente</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in projects %}
+        <tr>
+            <td>
+                <a href="{{ p.url }}"><strong>{{ p.name }}</strong></a><br>
+                <span class="text-muted">{{ p.production }}{% if p.commercial %} · {{ p.commercial }}{% endif %}</span>
+            </td>
+            <td>
+                {{ p.last_label }}<br>
+                <span class="text-muted">le {{ p.last_date }}{% if p.contact %} · {{ p.contact }}{% endif %}</span>
+            </td>
+            <td><span class="badge badge-warning">{{ p.days }} j</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p style="text-align: center; margin-top: 24px;">
+    <a href="{{ list_url }}" class="button">Voir les devis en attente</a>
+</p>
+{% endif %}
+
+<p class="text-muted">
+    Récapitulatif quotidien : les administrateurs et managers reçoivent tout le suivi commercial,
+    les commerciaux celui de leurs propres projets. Marquer un échange prévu comme « fait », ajouter une
+    relance ou une réponse du client dans la timeline du projet le retire de ce récapitulatif.
+</p>
+{% endblock %}

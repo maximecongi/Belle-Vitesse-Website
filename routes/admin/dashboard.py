@@ -9,6 +9,7 @@ from flask import (
 from services.admin import (
     list_projects,
 )
+from services.admin.commercial_timeline import commercial_stats
 from services.admin.equipment_stats import projects_pending_usage
 from services.admin.project_access import session_project_scope
 from utils.context_processors import role_can
@@ -58,7 +59,17 @@ def admin_dashboard():
         except Exception as e:
             current_app.logger.error(f"❌ Erreur lors du calcul des projets à pointer : {e}")
 
-    return render_template("admin/dashboard.html", agenda=agenda, pending_usage=pending_usage)
+    # Suivi commercial (taux de transformation, délais, abandons, devis à relancer) : rôles commerciaux
+    commercial = None
+    if role_can(session.get("admin_user_role"), "project_commercial_timeline", is_admin=session_is_admin()):
+        try:
+            commercial = commercial_stats()
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur lors du calcul des statistiques commerciales : {e}")
+
+    return render_template(
+        "admin/dashboard.html", agenda=agenda, pending_usage=pending_usage, commercial=commercial
+    )
 
 
 def init_dashboard_routes(app):

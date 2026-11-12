@@ -1,0 +1,139 @@
+{#
+  Sélecteur de contact unifié (timeline commerciale, équipe du formulaire projet…).
+
+  - contact_select       : liste déroulante recherchable (Select2) avec « — » puis « + Nouveau contact »
+                           en tête, et les contacts (groupés ou non) ;
+  - new_contact_fieldset : encart en pointillés Prénom / Nom / Téléphone / Mail, plus Métier et Production
+                           rattachée quand `productions` est fourni (liste d'objets { id, fields.Nom } ou de
+                           couples (id, nom) ; `production_id` / `job_title` = valeurs proposées par défaut) ;
+  - job_title_options    : liste des métiers (options groupées), commune à tous les formulaires de contact.
+
+  Deux usages de « + Nouveau contact » :
+  - timeline commerciale : l'encart s'affiche sous la liste ([data-contact-picker], contact-picker.js) et le
+    contact est créé à l'enregistrement (services/admin/contacts.py::find_or_build_contact, champs postés sous
+    <new_prefix>first_name / last_name / phone / mail) ;
+  - équipe du formulaire projet : l'encart est dans la modale #teamContactModal, le contact est créé
+    immédiatement via /admin/api/contacts/quick puis sélectionné (project-form.js).
+
+  `groups` : liste de (libellé de groupe ou None, éléments) ; un élément est soit un objet { id, name },
+  soit un couple (id, libellé).
+#}
+
+{% macro contact_select(name, id, groups, selected=None, placeholder="Rechercher un contact…", class_name="", attrs="") %}
+{% set sel = (selected|string) if selected not in (None, "") else "" %}
+<select class="form-input {{ class_name }}" id="{{ id }}" name="{{ name }}" data-contact-select
+    data-placeholder="{{ placeholder }}" {{ attrs|safe }}>
+    <option value="">—</option>
+    <option value="__new__" {% if sel == "__new__" %}selected{% endif %}>+ Nouveau contact</option>
+    {% for group_label, items in groups %}
+    {% if items %}
+    {% if group_label %}<optgroup label="{{ group_label }}">{% endif %}
+        {% for item in items %}
+        {% set cid = item.id if item.id is defined else item[0] %}
+        {% set clabel = item.name if item.name is defined else item[1] %}
+        <option value="{{ cid }}" {% if sel and sel == cid|string %}selected{% endif %}>{{ clabel }}</option>
+        {% endfor %}
+    {% if group_label %}</optgroup>{% endif %}
+    {% endif %}
+    {% endfor %}
+</select>
+{% endmacro %}
+
+
+{% macro new_contact_fieldset(id, new_prefix, legend_suffix=None, values=None, open=False, class_name="",
+    productions=None, production_id=None, job_title=None) %}
+{% set v = values or {} %}
+<fieldset class="contact-new {{ class_name }}" data-contact-new {% if not open %}hidden disabled{% endif %}>
+    <legend class="form-label">Nouveau contact<span data-contact-new-suffix>{% if legend_suffix %} · {{ legend_suffix }}{% endif %}</span></legend>
+    <div class="contact-new-grid">
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}First">Prénom</label>
+            <input type="text" class="form-input" id="{{ id }}First" name="{{ new_prefix }}first_name"
+                value="{{ v.get(new_prefix ~ 'first_name') or '' }}" autocomplete="off" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}Last">Nom</label>
+            <input type="text" class="form-input" id="{{ id }}Last" name="{{ new_prefix }}last_name"
+                value="{{ v.get(new_prefix ~ 'last_name') or '' }}" autocomplete="off" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}Phone">Téléphone</label>
+            <input type="tel" class="form-input" id="{{ id }}Phone" name="{{ new_prefix }}phone"
+                value="{{ v.get(new_prefix ~ 'phone') or '' }}" autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}Mail">Mail</label>
+            <input type="email" class="form-input" id="{{ id }}Mail" name="{{ new_prefix }}mail"
+                value="{{ v.get(new_prefix ~ 'mail') or '' }}" autocomplete="off">
+        </div>
+        {% if productions is not none %}
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}Job">Métier / Rôle</label>
+            <select class="form-input" id="{{ id }}Job" name="{{ new_prefix }}job_title" data-contact-search>
+                {{ job_title_options(v.get(new_prefix ~ 'job_title') or job_title) }}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="{{ id }}Production">Production rattachée</label>
+            {% set sel_prod = (v.get(new_prefix ~ 'production_id') or production_id or '')|string %}
+            <select class="form-input" id="{{ id }}Production" name="{{ new_prefix }}production_id" data-contact-search>
+                <option value="">— Aucune / Freelance —</option>
+                {% for p in productions %}
+                {% set pid = (p.id if p.id is defined else p[0])|string %}
+                {% set plabel = p.fields.get('Nom', '—') if p.fields is defined else (p.name if p.name is defined else p[1]) %}
+                <option value="{{ pid }}" {% if pid == sel_prod %}selected{% endif %}>{{ plabel }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+    </div>
+</fieldset>
+{% endmacro %}
+
+
+{% macro job_title_options(selected=None) %}
+{% set sel = selected or "" %}
+<option value="">— Aucun métier —</option>
+<optgroup label="🎬 Réalisation">
+    <option value="Réalisateur.rice" {% if sel == "Réalisateur.rice" %}selected{% endif %}>Réalisateur.rice</option>
+    <option value="Premier.ère assistant.e réalisateur.rice" {% if sel == "Premier.ère assistant.e réalisateur.rice" %}selected{% endif %}>Premier.ère assistant.e réalisateur.rice</option>
+    <option value="Second.e assistant.e réalisateur.rice" {% if sel == "Second.e assistant.e réalisateur.rice" %}selected{% endif %}>Second.e assistant.e réalisateur.rice</option>
+    <option value="Scripte" {% if sel == "Scripte" %}selected{% endif %}>Scripte</option>
+</optgroup>
+<optgroup label="📷 Caméra">
+    <option value="Directeur.rice de la photographie" {% if sel == "Directeur.rice de la photographie" %}selected{% endif %}>Directeur.rice de la photographie</option>
+    <option value="Opérateur.rice caméra" {% if sel == "Opérateur.rice caméra" %}selected{% endif %}>Opérateur.rice caméra</option>
+    <option value="Opérateur.rice Steadicam" {% if sel == "Opérateur.rice Steadicam" %}selected{% endif %}>Opérateur.rice Steadicam</option>
+    <option value="Opérateur.rice Remote Head" {% if sel == "Opérateur.rice Remote Head" %}selected{% endif %}>Opérateur.rice Remote Head</option>
+    <option value="Premier.ère assistant.e caméra" {% if sel == "Premier.ère assistant.e caméra" %}selected{% endif %}>Premier.ère assistant.e caméra</option>
+    <option value="Second.e assistant.e caméra" {% if sel == "Second.e assistant.e caméra" %}selected{% endif %}>Second.e assistant.e caméra</option>
+    <option value="DIT" {% if sel == "DIT" %}selected{% endif %}>DIT</option>
+    <option value="Data manager" {% if sel == "Data manager" %}selected{% endif %}>Data manager</option>
+    <option value="Gimbal tech" {% if sel == "Gimbal tech" %}selected{% endif %}>Gimbal tech</option>
+    <option value="Pilote de drone" {% if sel == "Pilote de drone" %}selected{% endif %}>Pilote de drone</option>
+</optgroup>
+<optgroup label="💡 Électricité">
+    <option value="Chef.fe électricien.ne" {% if sel == "Chef.fe électricien.ne" %}selected{% endif %}>Chef.fe électricien.ne</option>
+    <option value="Électricien.ne de plateau" {% if sel == "Électricien.ne de plateau" %}selected{% endif %}>Électricien.ne de plateau</option>
+</optgroup>
+<optgroup label="🔧 Machinerie">
+    <option value="Chef.fe machiniste" {% if sel == "Chef.fe machiniste" %}selected{% endif %}>Chef.fe machiniste</option>
+    <option value="Machiniste" {% if sel == "Machiniste" %}selected{% endif %}>Machiniste</option>
+</optgroup>
+<optgroup label="🏎️ Automobile">
+    <option value="Pilote de précision" {% if sel == "Pilote de précision" %}selected{% endif %}>Pilote de précision</option>
+    <option value="Mécanicien.ne" {% if sel == "Mécanicien.ne" %}selected{% endif %}>Mécanicien.ne</option>
+    <option value="Pilote de course" {% if sel == "Pilote de course" %}selected{% endif %}>Pilote de course</option>
+</optgroup>
+<optgroup label="🎯 Production">
+    <option value="Directeur.rice de production" {% if sel == "Directeur.rice de production" %}selected{% endif %}>Directeur.rice de production</option>
+    <option value="Chargé.e de production" {% if sel == "Chargé.e de production" %}selected{% endif %}>Chargé.e de production</option>
+    <option value="Coordinateur.rice de production" {% if sel == "Coordinateur.rice de production" %}selected{% endif %}>Coordinateur.rice de production</option>
+    <option value="Assistant.e de production" {% if sel == "Assistant.e de production" %}selected{% endif %}>Assistant.e de production</option>
+    <option value="Producteur.rice" {% if sel == "Producteur.rice" %}selected{% endif %}>Producteur.rice</option>
+</optgroup>
+<optgroup label="🎙️ Son">
+    <option value="Chef.fe opérateur.rice du son" {% if sel == "Chef.fe opérateur.rice du son" %}selected{% endif %}>Chef.fe opérateur.rice du son</option>
+    <option value="Perchiste" {% if sel == "Perchiste" %}selected{% endif %}>Perchiste</option>
+</optgroup>
+{% endmacro %}

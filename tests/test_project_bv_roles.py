@@ -72,7 +72,8 @@ class ProjectBvRolesTest(BaseTestCase):
             self.assertEqual(dup["remote_head_operator_contact_id"], str(operator.id))
             self.assertEqual(sorted(dup["bv_technician_ids"]), sorted([grip.id, self.grip2.id]))
 
-    def test_operator_ignored_without_head(self):
+    def test_operator_kept_without_head(self):
+        """L'opérateur Remote Head est enregistré quel que soit le matériel loué."""
         with self.app.app_context():
             commercial, grip, operator, prod = self._setup()
             form = _Form(self._base_form(prod, commercial, grip, operator))
@@ -80,9 +81,9 @@ class ProjectBvRolesTest(BaseTestCase):
 
             project = db.session.get(Project, project.id)
             self.assertEqual(project.commercial_user_id, commercial.id)
-            self.assertIsNone(project.remote_head_operator_contact_id)
+            self.assertEqual(project.remote_head_operator_contact_id, operator.id)
 
-    def test_operator_cleared_when_heads_removed(self):
+    def test_operator_kept_when_heads_removed(self):
         with self.app.app_context():
             commercial, grip, operator, prod = self._setup()
             data = self._base_form(prod, commercial, grip, operator)
@@ -95,7 +96,7 @@ class ProjectBvRolesTest(BaseTestCase):
             project = db.session.get(Project, project.id)
             self.assertIsNone(project.commercial_user_id)
             self.assertEqual([u.id for u in project.bv_technicians], [grip.id])
-            self.assertIsNone(project.remote_head_operator_contact_id)
+            self.assertEqual(project.remote_head_operator_contact_id, operator.id)
 
             # Retirer tous les techniciens vide la liste
             self.assertTrue(update_project(project.id, _Form(data)))

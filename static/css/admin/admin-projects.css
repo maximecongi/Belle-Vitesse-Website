@@ -992,18 +992,18 @@
 
 .pf-recap-pills {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 0.3rem;
+    justify-content: space-between;
     margin-top: -0.2rem;
+    flex-wrap: nowrap;
 }
 
 .pf-recap-pill {
     display: inline-flex;
     align-items: center;
+    font-family: monospace;
     gap: 0.25rem;
     padding: 0.15rem 0.4rem;
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     font-weight: 600;
     border-left: 3px solid currentColor;
     border-radius: 0;

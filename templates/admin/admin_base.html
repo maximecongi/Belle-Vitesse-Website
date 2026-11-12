@@ -138,8 +138,14 @@
                         <div class="admin-nav-pin" draggable="true" data-pin-id="{{ pin.id }}"
                             data-pin-label="{{ pin.label }}" data-pin-url="{{ pin.url }}">
                             <a href="{{ pin.url }}" class="admin-nav-item admin-nav-pin-link" title="{{ pin.label }}">
-                                <span class="admin-nav-label"><i data-lucide="pin" class="admin-nav-icon"></i><span
-                                        class="admin-nav-pin-text">{{ pin.label }}</span></span>
+                                <span class="admin-nav-label">
+                                    <svg class="admin-nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="2 2 20 20"
+                                        fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3.5 7.8 7.8 3.5" />
+                                        <path d="M4.2 7.1 8.5 11.3 9.2 16.2 16.2 9.2 11.3 8.5 7.1 4.2" />
+                                        <path d="M12.7 12.7 18.4 18.4" />
+                                    </svg><span class="admin-nav-pin-text">{{ pin.label }}</span></span>
                             </a>
                             <span class="admin-nav-pin-actions">
                                 <button type="button" class="admin-nav-pin-action" data-pin-edit

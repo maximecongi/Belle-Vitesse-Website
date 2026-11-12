@@ -96,22 +96,27 @@ class BackupSQLTestCase(unittest.TestCase):
     @patch("scripts.backup_sql.KDriveClient")
     def test_purge_old_kdrive_backups(self, mock_client_cls):
         """Vérifie la détection et la suppression des anciennes archives sur kDrive."""
+        from datetime import datetime, timedelta
+
+        # Dates relatives à aujourd'hui : le test ne doit pas « vieillir » avec le calendrier
+        old_day = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
+        recent_day = (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d")
         mock_client = MagicMock()
         mock_client.token = "fake_kdrive_token"
         mock_client.list_files.side_effect = [
             # 1. Mois sous BACKUPS_SQL
-            ([{"id": 2001, "name": "2026-08", "type": "dir"}], None, False),
-            # 2. Fichiers sous 2026-08
+            ([{"id": 2001, "name": old_day[:7], "type": "dir"}], None, False),
+            # 2. Fichiers du dossier mensuel
             ([
-                {"id": 3001, "name": "dump_2026-08-01_04-00-00.sql.gz", "type": "file"},
-                {"id": 3002, "name": "dump_2026-10-09_04-00-00.sql.gz", "type": "file"},
+                {"id": 3001, "name": f"dump_{old_day}_04-00-00.sql.gz", "type": "file"},
+                {"id": 3002, "name": f"dump_{recent_day}_04-00-00.sql.gz", "type": "file"},
             ], None, False),
         ]
         mock_client_cls.return_value = mock_client
 
         backup_module.purge_old_kdrive_backups(retention_days=30)
 
-        # Seul le dump du 2026-08-01 doit être supprimé (> 30 jours)
+        # Seul le dump d'il y a 60 jours doit être supprimé (> 30 jours)
         mock_client.delete.assert_called_once_with(3001)
 
 

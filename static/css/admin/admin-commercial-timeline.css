@@ -27,12 +27,35 @@
     gap: 0.5rem;
 }
 
-.ctl-badge--project { background: var(--entity-project-bg); color: var(--entity-project-text); }
-.ctl-badge--warning { background: var(--status-warning-bg); color: var(--status-warning-text); }
-.ctl-badge--success { background: var(--status-success-bg); color: var(--status-success-text); }
-.ctl-badge--info { background: var(--status-info-bg); color: var(--status-info-text); }
-.ctl-badge--danger { background: var(--status-danger-bg); color: var(--status-danger-text); }
-.ctl-badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral-text); }
+.ctl-badge--project {
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
+}
+
+.ctl-badge--warning {
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+}
+
+.ctl-badge--success {
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
+}
+
+.ctl-badge--info {
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+}
+
+.ctl-badge--danger {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
+}
+
+.ctl-badge--neutral {
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+}
 
 /* ── Modale d'ajout ────────────────────────────────────────── */
 .ctl-form-grid {
@@ -85,8 +108,13 @@
     min-width: 480px;
 }
 
-.ctl-track--dense { min-width: 900px; }
-.ctl-track--xdense { min-width: 1500px; }
+.ctl-track--dense {
+    min-width: 900px;
+}
+
+.ctl-track--xdense {
+    min-width: 1500px;
+}
 
 .ctl-line {
     position: absolute;
@@ -188,12 +216,41 @@
 }
 
 /* Familles de couleur (Design System BV) */
-.ctl-dot--project { --ctl-dot-bg: var(--entity-project-bg); --ctl-dot-fg: var(--entity-project-text); --ctl-dot-ring: var(--entity-project); }
-.ctl-dot--info { --ctl-dot-bg: var(--status-info-bg); --ctl-dot-fg: var(--status-info-text); --ctl-dot-ring: var(--status-info); }
-.ctl-dot--neutral { --ctl-dot-bg: var(--status-neutral-bg); --ctl-dot-fg: var(--status-neutral-text); --ctl-dot-ring: var(--status-neutral); }
-.ctl-dot--warning { --ctl-dot-bg: var(--status-warning-bg); --ctl-dot-fg: var(--status-warning-text); --ctl-dot-ring: var(--status-warning); }
-.ctl-dot--success { --ctl-dot-bg: var(--status-success-bg); --ctl-dot-fg: var(--status-success-text); --ctl-dot-ring: var(--status-success); }
-.ctl-dot--danger { --ctl-dot-bg: var(--status-danger-bg); --ctl-dot-fg: var(--status-danger-text); --ctl-dot-ring: var(--status-danger); }
+.ctl-dot--project {
+    --ctl-dot-bg: var(--entity-project-bg);
+    --ctl-dot-fg: var(--entity-project-text);
+    --ctl-dot-ring: var(--entity-project);
+}
+
+.ctl-dot--info {
+    --ctl-dot-bg: var(--status-info-bg);
+    --ctl-dot-fg: var(--status-info-text);
+    --ctl-dot-ring: var(--status-info);
+}
+
+.ctl-dot--neutral {
+    --ctl-dot-bg: var(--status-neutral-bg);
+    --ctl-dot-fg: var(--status-neutral-text);
+    --ctl-dot-ring: var(--status-neutral);
+}
+
+.ctl-dot--warning {
+    --ctl-dot-bg: var(--status-warning-bg);
+    --ctl-dot-fg: var(--status-warning-text);
+    --ctl-dot-ring: var(--status-warning);
+}
+
+.ctl-dot--success {
+    --ctl-dot-bg: var(--status-success-bg);
+    --ctl-dot-fg: var(--status-success-text);
+    --ctl-dot-ring: var(--status-success);
+}
+
+.ctl-dot--danger {
+    --ctl-dot-bg: var(--status-danger-bg);
+    --ctl-dot-fg: var(--status-danger-text);
+    --ctl-dot-ring: var(--status-danger);
+}
 
 /* Dates sous la ligne */
 .ctl-date {
@@ -228,11 +285,11 @@
 /* ── Détail de la prise de contact sélectionnée ────────────── */
 .ctl-detail {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 0.75rem;
     margin-top: 0.75rem;
     padding: 0.75rem 1rem;
-    background: var(--status-neutral-bg);
+    background: var(--admin-bg);
     border-radius: 8px;
 }
 
@@ -277,6 +334,7 @@
     align-items: baseline;
     flex-wrap: wrap;
     gap: 0.5rem;
+    height: 2rem;
 }
 
 .ctl-detail-summary {
@@ -291,26 +349,13 @@
     font-weight: 600;
 }
 
-/* Nouveau contact saisi à la volée (pleine largeur du formulaire) */
-.ctl-new-contact {
-    grid-column: 1 / -1;
+/* Encart « Nouveau contact » (styles partagés : admin-components.css) — pleine largeur de la grille */
+.ctl-form-grid>.contact-new {
     margin: 0 0 0.75rem;
-    padding: 0.75rem 1rem 0;
-    border: 1px dashed var(--grey-border, #E0E0E0);
-    border-radius: 8px;
-    min-width: 0;
-}
-
-.ctl-new-contact[hidden] {
-    display: none;
-}
-
-.ctl-new-contact legend {
-    padding: 0 0.25rem;
 }
 
 /* Les colonnes de la grille ne s'élargissent pas selon leur contenu (libellés de contact longs) */
-.ctl-form-grid > * {
+.ctl-form-grid>* {
     min-width: 0;
 }
 
@@ -334,4 +379,332 @@
 /* Liste déroulante Select2 rattachée à la modale : au-dessus de son contenu */
 #ctlModal .select2-dropdown {
     z-index: 3001;
+}
+
+/* ── Liste des projets : filtre par statut commercial ──────── */
+.ctl-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.ctl-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--grey-border, #E0E0E0);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--status-neutral-text);
+    text-decoration: none;
+    background: white;
+    transition: background 0.15s ease;
+}
+
+.ctl-filter-pill:hover {
+    background: var(--status-neutral-bg);
+}
+
+.ctl-filter-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.75;
+}
+
+.ctl-filter-pill.is-active {
+    background: var(--status-neutral-text);
+    border-color: transparent;
+    color: white;
+}
+
+.ctl-filter-pill--project.is-active {
+    background: var(--entity-project-bg);
+    border-color: transparent;
+    color: var(--entity-project-text);
+}
+
+.ctl-filter-pill--warning.is-active {
+    background: var(--status-warning-bg);
+    border-color: transparent;
+    color: var(--status-warning-text);
+}
+
+.ctl-filter-pill--success.is-active {
+    background: var(--status-success-bg);
+    border-color: transparent;
+    color: var(--status-success-text);
+}
+
+.ctl-filter-pill--info.is-active {
+    background: var(--status-info-bg);
+    border-color: transparent;
+    color: var(--status-info-text);
+}
+
+.ctl-filter-pill--danger.is-active {
+    background: var(--status-danger-bg);
+    border-color: transparent;
+    color: var(--status-danger-text);
+}
+
+.ctl-filter-pill--neutral.is-active {
+    background: var(--status-neutral-bg);
+    border-color: transparent;
+    color: var(--status-neutral-text);
+}
+
+/* ── Tableau de bord : suivi commercial ────────────────────── */
+.dashboard-commercial-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.dashboard-commercial-kpi-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.dashboard-commercial-kpi-link:hover .admin-kpi-value {
+    text-decoration: underline;
+}
+
+.usage-ranking-bar.dashboard-lost-bar {
+    background: var(--status-danger);
+}
+
+.dashboard-commercial-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 900px) {
+    .dashboard-commercial-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Contact de la prise de contact, dans la ligne du titre : « Mail envoyé à [👤 Jeanne Martin] » */
+.ctl-detail-title {
+    align-items: center;
+}
+
+.ctl-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.ctl-contact-prep {
+    font-size: 0.85rem;
+    color: var(--status-neutral);
+}
+
+.ctl-contact-badge {
+    background: white;
+    border: 1px solid var(--grey-border, #E0E0E0);
+    /* gris neutre : arrondi autorisé */
+    color: var(--status-neutral-text);
+    font-weight: 600;
+    cursor: default;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Erreur de validation renvoyée par le serveur (la modale reste ouverte, saisie conservée) */
+.ctl-form-error {
+    margin: 0 0 0.75rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
+    font-size: 0.85rem;
+    border-radius: 6px;
+}
+
+.ctl-form-error[hidden] {
+    display: none;
+}
+
+/* Carte pendant un envoi : seules la frise et le détail s'atténuent ; la modale (contenue dans
+   la carte) reste opaque jusqu'à sa fermeture, une fois la frise mise à jour */
+.ctl.is-busy .ctl-scroll,
+.ctl.is-busy .ctl-detail {
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+/* ══ Événements à venir (planifiés) : bleu « Info / À venir » de la charte ══ */
+
+/* Choix « Déjà eu lieu / À venir » en tête de la modale */
+.ctl-when {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--grey-border, #E0E0E0);
+    margin-bottom: 1rem;
+}
+
+.ctl-when-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.ctl-when-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ctl-when-option span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--status-neutral-text);
+    transition: background 0.15s ease;
+}
+
+.ctl-when-option span .lucide,
+.ctl-when-option span svg.lucide {
+    width: 15px;
+    height: 15px;
+}
+
+.ctl-when-option input:checked+span {
+    background: var(--status-neutral-bg);
+    color: #111;
+}
+
+.ctl-when-option input[value="1"]:checked+span {
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+}
+
+.ctl-when-option input:focus-visible+span {
+    outline: 2px solid var(--status-info);
+    outline-offset: -2px;
+}
+
+/* Zone « à venir » à droite du repère Aujourd'hui (pas de bordure colorée : fond seul) */
+.ctl-future-zone {
+    position: absolute;
+    top: 10px;
+    bottom: 26px;
+    left: var(--start, 0%);
+    width: calc(var(--end, 100%) - var(--start, 0%) + 24px);
+    opacity: 0.45;
+}
+
+.ctl-future-line {
+    position: absolute;
+    top: var(--ctl-line-y);
+    left: var(--start, 0%);
+    width: calc(var(--end, 100%) - var(--start, 0%));
+    height: 2px;
+    margin-top: -1px;
+    background: repeating-linear-gradient(90deg, white 0 6px, transparent 6px 11px);
+}
+
+.ctl-gap--future {}
+
+/* Points prévus : mêmes couleurs que le type d'échange (famille), bordure en pointillés ;
+   en retard : orange (à confirmer) */
+.ctl-dot.is-planned,
+.ctl-detail-icon.is-planned {
+    border: 2px dashed var(--ctl-dot-ring);
+    box-shadow: none;
+}
+
+.ctl-dot.is-late,
+.ctl-detail-icon.is-late {
+    --ctl-dot-bg: var(--status-warning-bg);
+    --ctl-dot-fg: var(--status-warning-text);
+    --ctl-dot-ring: var(--status-warning);
+    border: 2px dashed var(--status-warning);
+    box-shadow: none;
+}
+
+.ctl-dot.is-planned.is-selected,
+.ctl-dot.is-late.is-selected {
+    box-shadow: 0 0 0 3px var(--ctl-dot-ring);
+}
+
+.ctl-date--planned {
+    color: var(--status-info-text);
+    font-weight: 600;
+}
+
+.ctl-date--late {
+    color: var(--status-warning-text);
+    font-weight: 600;
+}
+
+/* Actions du détail */
+.ctl-detail-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.ctl-btn-done {
+    background: var(--entity-checkout-bg);
+    border-color: var(--entity-checkout-border);
+    color: var(--entity-checkout-text);
+}
+
+.ctl-btn-done:hover {
+    filter: brightness(0.94);
+}
+
+/* ── Points groupés (plusieurs échanges le même jour) ──────── */
+.ctl-dot {
+    overflow: visible;
+}
+
+.ctl-dot-count {
+    position: absolute;
+    top: -7px;
+    right: -9px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: #111;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 17px;
+    text-align: center;
+    box-shadow: 0 0 0 2px white;
+}
+
+.ctl-detail-group-title {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--status-neutral);
+}
+
+/* Un échange dans le détail (une ligne par échange de la journée) */
+.ctl-detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.ctl-detail-row+.ctl-detail-row {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--grey-border, #E0E0E0);
 }

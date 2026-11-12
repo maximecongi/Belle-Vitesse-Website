@@ -1,5 +1,7 @@
 import logging
 
+from sqlalchemy import func
+
 from models import Contact, Production, db
 from services.admin.utils import (
     BusinessIntegrityError,
@@ -129,3 +131,44 @@ def delete_contact(record_id):
 def get_productions_for_select():
     """Retourne toutes les productions pour le sélecteur du formulaire contact."""
     return Production.query.order_by(Production.name).all()
+
+
+# ── Saisie d'un nouveau contact à la volée (sélecteurs de contact « + Nouveau contact ») ──
+# Valeur de l'option « + Nouveau contact » des sélecteurs (cf. templates/admin/_contact_picker.html).
+NEW_CONTACT_VALUE = "__new__"
+
+
+def _clean(value):
+    return (value or "").strip() or None
+
+
+def find_or_build_contact(data, production_id=None, job_title=None):
+    """
+    Contact saisi à la volée : réutilise un contact existant de même prénom + nom
+    (de préférence de la même production) en complétant ses champs vides, sinon le crée
+    rattaché à `production_id`. Aucun commit ici : l'appelant porte la transaction.
+    """
+    first_name, last_name = _clean(data.get("first_name")), _clean(data.get("last_name"))
+    if not first_name or not last_name:
+        raise ValueError("Le prénom et le nom du nouveau contact sont requis.")
+    attrs = {
+        "phone": _clean(data.get("phone")),
+        "mail": _clean(data.get("mail")),
+        "job_title": _clean(data.get("job_title")) or _clean(job_title),
+    }
+    query = Contact.query.filter(
+        func.lower(func.trim(Contact.first_name)) == first_name.lower(),
+        func.lower(func.trim(Contact.last_name)) == last_name.lower(),
+    )
+    if production_id:
+        query = query.order_by((Contact.production_id == production_id).desc())
+    contact = query.first()
+    if contact:
+        for attr, val in attrs.items():
+            if val and not getattr(contact, attr):
+                setattr(contact, attr, val)
+        return contact
+    contact = Contact(first_name=first_name, last_name=last_name,
+                      production_id=production_id, **attrs)
+    db.session.add(contact)
+    return contact

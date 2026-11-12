@@ -1,6 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import empty_state, admin_banner %}
+{% from "admin/macros.html" import empty_state, admin_banner, admin_modal %}
+{% from "admin/_contact_picker.html" import contact_select, new_contact_fieldset %}
 
 {% block title %}{% if is_duplicate %}Dupliquer le projet{% elif is_edit %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
 
@@ -169,120 +170,50 @@
                 <h2 class="pf-section-title">Équipe</h2>
 
                 <div class="pf-subtitle">Côté production</div>
+                {# « + Nouveau contact » ouvre la modale #teamContactModal (project-form.js) #}
+                {% set contact_groups = [('Tous les contacts', contacts)] %}
                 <div class="u-grid u-grid-2 u-gap-3">
-                    <div class="form-group">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">Contact de Production</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="production_contact_id" data-job="Directeur.rice de production">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="production_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un contact de production —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and (data.production_contact_id|string==c.id|string or
-                                data.production_contact_id==c.id) %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-group pf-contact-field">
+                        <label class="form-label" for="pfProductionContact">Contact de Production</label>
+                        {{ contact_select('production_contact_id', 'pfProductionContact', contact_groups,
+                           selected=data.production_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="Contact de Production" data-contact-job="Directeur.rice de production"') }}
                     </div>
 
-                    <div class="form-group">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="dop_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un DOP —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and (data.dop_contact_id|string==c.id|string or
-                                data.dop_contact_id==c.id) %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-group pf-contact-field">
+                        <label class="form-label" for="pfDopContact">DOP (Directeur Photo)</label>
+                        {{ contact_select('dop_contact_id', 'pfDopContact', contact_groups,
+                           selected=data.dop_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="DOP (Directeur Photo)" data-contact-job="Directeur.rice de la photographie"') }}
                     </div>
 
-                    <div class="form-group">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">Pilote</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="pilot_contact_id" data-job="Pilote de précision">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="pilot_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un pilote —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and (data.pilot_contact_id|string==c.id|string or
-                                data.pilot_contact_id==c.id) %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-group pf-contact-field">
+                        <label class="form-label" for="pfPilotContact">Pilote</label>
+                        {{ contact_select('pilot_contact_id', 'pfPilotContact', contact_groups,
+                           selected=data.pilot_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="Pilote" data-contact-job="Pilote de précision"') }}
                     </div>
 
-                    <!-- Opérateur Remote Head (contact) : à côté du pilote, affiché uniquement si au moins une tête est sélectionnée -->
-                    {% set has_head_selected = data and data.head_ids and data.head_ids|length > 0 %}
-                    <div class="form-group {% if not has_head_selected %}u-d-none{% endif %}" id="remoteHeadOperatorGroup">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">Opérateur Remote Head</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="remote_head_operator_contact_id" data-job="Opérateur.rice Remote Head">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="remote_head_operator_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un opérateur Remote Head —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and data.remote_head_operator_contact_id|string==c.id|string %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <!-- Opérateur Remote Head (contact) : à côté du pilote, toujours affiché quel que soit le matériel loué -->
+                    <div class="form-group pf-contact-field" id="remoteHeadOperatorGroup">
+                        <label class="form-label" for="pfRemoteHeadOperatorContact">Opérateur Remote Head</label>
+                        {{ contact_select('remote_head_operator_contact_id', 'pfRemoteHeadOperatorContact', contact_groups,
+                           selected=data.remote_head_operator_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="Opérateur Remote Head" data-contact-job="Opérateur.rice Remote Head"') }}
                     </div>
 
-                    <div class="form-group">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">1er Assistant Caméra</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="first_ac_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un 1er assistant caméra —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and (data.first_ac_contact_id|string==c.id|string or
-                                data.first_ac_contact_id==c.id) %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-group pf-contact-field">
+                        <label class="form-label" for="pfFirstAcContact">1er Assistant Caméra</label>
+                        {{ contact_select('first_ac_contact_id', 'pfFirstAcContact', contact_groups,
+                           selected=data.first_ac_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="1er Assistant Caméra" data-contact-job="Premier.ère assistant.e caméra"') }}
                     </div>
 
-                    <div class="form-group">
-                        <div class="u-flex u-justify-between u-align-center u-mb-1">
-                            <label class="form-label u-mb-0">Chef Machiniste</label>
-                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
-                                data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
-                                <i data-lucide="plus"></i> Nouveau contact
-                            </button>
-                        </div>
-                        <select name="key_grip_contact_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner un chef machiniste —</option>
-                            {% for c in contacts %}
-                            <option value="{{ c.id }}" {% if data and (data.key_grip_contact_id|string==c.id|string or
-                                data.key_grip_contact_id==c.id) %}selected{% endif %}>
-                                {{ c.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                    <div class="form-group pf-contact-field">
+                        <label class="form-label" for="pfKeyGripContact">Chef Machiniste</label>
+                        {{ contact_select('key_grip_contact_id', 'pfKeyGripContact', contact_groups,
+                           selected=data.key_grip_contact_id if data else None, class_name='searchable-select',
+                           attrs='data-team-contact data-contact-role="Chef Machiniste" data-contact-job="Chef.fe machiniste"') }}
                     </div>
                 </div>
 
@@ -446,113 +377,11 @@
     </div>
 </div>
 
-<!-- Modal Nouveau Contact -->
-<div id="quickContactModal" class="admin-modal-overlay">
-    <div class="admin-modal-container admin-modal-dialog-sm">
-        <button type="button" class="admin-modal-close" id="closeContactModalBtn" title="Fermer">&times;</button>
-        <div class="admin-modal-content u-p-4 u-overflow-y-auto">
-            <h2 class="admin-section-title u-mt-0 u-mb-3 u-text-lg">
-                <i data-lucide="user-plus"></i> Nouveau contact
-            </h2>
-            <form id="quickContactForm">
-
-                <input type="hidden" id="modalTargetSelect" value="">
-
-                <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
-                    <div class="form-group">
-                        <label class="form-label">Prénom <span class="u-text-error">*</span></label>
-                        <input type="text" id="modalContactFirstName" class="form-input" required
-                            placeholder="Ex: Jean">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Nom <span class="u-text-error">*</span></label>
-                        <input type="text" id="modalContactLastName" class="form-input" required
-                            placeholder="Ex: Dupont">
-                    </div>
-                </div>
-
-                <div class="form-group u-mb-2">
-                    <label class="form-label">Métier / Rôle</label>
-                    <select id="modalContactJob" class="form-input">
-                        <option value="">— Sélectionner un métier —</option>
-                        <optgroup label="🎬 Réalisation">
-                            <option value="Réalisateur.rice">Réalisateur.rice</option>
-                            <option value="Premier.ère assistant.e réalisateur.rice">Premier.ère assistant.e
-                                réalisateur.rice</option>
-                            <option value="Second.e assistant.e réalisateur.rice">Second.e assistant.e réalisateur.rice
-                            </option>
-                            <option value="Scripte">Scripte</option>
-                        </optgroup>
-                        <optgroup label="📷 Caméra">
-                            <option value="Directeur.rice de la photographie">Directeur.rice de la photographie</option>
-                            <option value="Opérateur.rice caméra">Opérateur.rice caméra</option>
-                            <option value="Opérateur.rice Steadicam">Opérateur.rice Steadicam</option>
-                            <option value="Opérateur.rice Remote Head">Opérateur.rice Remote Head</option>
-                            <option value="Premier.ère assistant.e caméra">Premier.ère assistant.e caméra</option>
-                            <option value="Second.e assistant.e caméra">Second.e assistant.e caméra</option>
-                            <option value="DIT">DIT</option>
-                            <option value="Data manager">Data manager</option>
-                            <option value="Gimbal tech">Gimbal tech</option>
-                            <option value="Pilote de drone">Pilote de drone</option>
-                        </optgroup>
-                        <optgroup label="💡 Électricité">
-                            <option value="Chef.fe électricien.ne">Chef.fe électricien.ne</option>
-                            <option value="Électricien.ne de plateau">Électricien.ne de plateau</option>
-                        </optgroup>
-                        <optgroup label="🔧 Machinerie">
-                            <option value="Chef.fe machiniste">Chef.fe machiniste</option>
-                            <option value="Machiniste">Machiniste</option>
-                        </optgroup>
-                        <optgroup label="🏎️ Automobile">
-                            <option value="Pilote de précision">Pilote de précision</option>
-                            <option value="Mécanicien.ne">Mécanicien.ne</option>
-                            <option value="Pilote de course">Pilote de course</option>
-                        </optgroup>
-                        <optgroup label="🎯 Production">
-                            <option value="Directeur.rice de production">Directeur.rice de production</option>
-                            <option value="Chargé.e de production">Chargé.e de production</option>
-                            <option value="Coordinateur.rice de production">Coordinateur.rice de production</option>
-                            <option value="Assistant.e de production">Assistant.e de production</option>
-                            <option value="Producteur.rice">Producteur.rice</option>
-                        </optgroup>
-                        <optgroup label="🎙️ Son">
-                            <option value="Chef.fe opérateur.rice du son">Chef.fe opérateur.rice du son</option>
-                            <option value="Perchiste">Perchiste</option>
-                        </optgroup>
-                    </select>
-                </div>
-
-                <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
-                    <div class="form-group">
-                        <label class="form-label">E-mail</label>
-                        <input type="email" id="modalContactMail" class="form-input"
-                            placeholder="jean.dupont@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Téléphone</label>
-                        <input type="tel" id="modalContactPhone" class="form-input" placeholder="+33 6 ...">
-                    </div>
-                </div>
-
-                <div class="form-group u-mb-3">
-                    <label class="form-label">Production rattachée</label>
-                    <select id="modalContactProduction" class="form-input">
-                        <option value="">— Aucune / Freelance —</option>
-                        {% for p in productions %}
-                        <option value="{{ p.id }}">{{ p.fields.get('Nom', '—') }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="u-flex u-justify-end u-gap-2 u-mt-4">
-                    <button type="button" id="cancelContactModalBtn"
-                        class="admin-btn admin-btn-secondary">Annuler</button>
-                    <button type="submit" id="submitContactModalBtn" class="admin-btn admin-btn-primary">Créer le
-                        contact</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<!-- Modale Nouveau contact de l'équipe (même saisie que la timeline commerciale) -->
+{% call admin_modal('teamContactModal', 'Nouveau contact', 'md') %}
+<form class="team-contact-form" id="teamContactForm" data-team-contact-form novalidate>
+    {{ new_contact_fieldset('teamContactNew', 'team_contact_', open=True, productions=productions) }}
+{% endcall %}
 {% endblock %}
 
 {% block extra_js %}

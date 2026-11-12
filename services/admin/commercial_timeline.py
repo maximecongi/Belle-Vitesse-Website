@@ -3,16 +3,21 @@ Timeline commerciale d'un projet : saisie des prises de contact, statut commerci
 calcul de la frise (espacement proportionnel au temps) et détection des devis à relancer.
 
 Échelle de la frise :
-- l'écart entre deux points est proportionnel au temps écoulé ;
+- un point par jour (les échanges d'une même journée sont regroupés, avec un compteur) ;
+- l'écart entre deux points est proportionnel à la racine carrée du nombre de jours écoulés
+  (les longs silences sont compressés, les écarts courts restent lisibles) ;
 - chaque intervalle reçoit une largeur minimale (points jamais superposés) ;
-- un silence de plus de BREAK_THRESHOLD_DAYS jours est plafonné et signalé par une coupure « ≈ ».
+- un silence de plus de BREAK_THRESHOLD_DAYS jours est plafonné et signalé par une coupure « ≈ » ;
+- la partie « à venir » occupe au plus MAX_FUTURE_SHARE_PCT % de la largeur.
 """
+import math
+import os
 from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import func
 
-from models import Contact, Project, User, db
+from models import Contact, Production, Project, User, db
 from models.commercial_event import (
     CLOSED_COMMERCIAL_STATUSES,
     COMMERCIAL_STATUS_LABELS,
@@ -22,20 +27,26 @@ from models.commercial_event import (
     EVENT_TYPE_MILESTONES,
     LOST_REASON_LABELS,
     LOST_REASONS,
+    PLANNABLE_EVENT_TYPES,
+    PLANNED_ONLY_EVENT_TYPES,
     ProjectCommercialEvent,
 )
+from services.admin.contacts import NEW_CONTACT_VALUE, find_or_build_contact
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
 
 # Échelle de la frise
-BREAK_THRESHOLD_DAYS = 30      # au-delà, l'intervalle est compressé (coupure « ≈ »)
+BREAK_THRESHOLD_DAYS = 60      # au-delà, l'intervalle est plafonné (coupure « ≈ »)
 MIN_SEGMENT_PCT = 4.0          # largeur minimale d'un intervalle (% de la frise)
 MIN_DATE_LABEL_GAP_PCT = 9.0   # écart minimal entre deux dates affichées sous la frise
 MIN_GAP_LABEL_PCT = 7.0        # largeur minimale d'un intervalle pour afficher sa durée
 MIN_GAP_LABEL_DAYS = 2         # durée minimale d'un intervalle pour l'afficher
+MAX_FUTURE_SHARE_PCT = 40.0    # part maximale de la frise occupée par les événements à venir
 
-# Relance des devis : délai sans réponse au-delà duquel une relance est conseillée
-QUOTE_FOLLOWUP_DAYS = 10
+# Relance des devis : délai sans réponse au-delà duquel une relance est conseillée.
+# Réglable via QUOTE_FOLLOWUP_DAYS dans le .env (badge de la fiche, tableau de bord, cron et MCP) ;
+# l'application web le lit au démarrage, le cron à chaque exécution.
+QUOTE_FOLLOWUP_DAYS = int(os.getenv("QUOTE_FOLLOWUP_DAYS", "10"))
 # Événements « sortants » : s'ils sont les derniers, le client n'a pas encore répondu
 OUTGOING_EVENT_TYPES = {"email_out", "call_out", "quote_sent", "quote_followup"}
 
@@ -46,10 +57,6 @@ _DAYS_SHORT = ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."]
 
 class CommercialEventNotFoundError(Exception):
     pass
-
-
-# Valeur du sélecteur de contact signifiant « créer un nouveau contact »
-NEW_CONTACT_VALUE = "__new__"
 
 
 def paris_now():
@@ -63,13 +70,22 @@ def _chronological(events):
     return sorted(events, key=lambda e: (e.occurred_at, e.id or 0))
 
 
+def _done(events):
+    """Prises de contact réelles (les événements à venir / planifiés sont exclus)."""
+    return [e for e in _chronological(events) if not e.is_planned]
+
+
+def _planned(events):
+    return [e for e in _chronological(events) if e.is_planned]
+
+
 def compute_commercial_status(events, current_status=None):
     """
     Statut atteint par le dernier jalon (devis, confirmation, facture, abandon…).
     Sans jalon : le projet reste « non suivi » (None) s'il l'était, sinon « Demande en cours ».
     """
     status = None
-    for ev in _chronological(events):
+    for ev in _done(events):  # un événement à venir ne change jamais le statut
         milestone = EVENT_TYPE_MILESTONES.get(ev.event_type)
         if milestone:
             status = milestone
@@ -101,55 +117,49 @@ def _parse_occurred_at(date_str, time_str):
     return datetime.combine(day, at)
 
 
-def _clean(value):
-    return (value or "").strip() or None
-
-
-def _find_or_build_contact(project, data):
+def _new_contact_production_id(project, new_contact):
     """
-    Contact saisi à la volée : réutilise un contact existant de même prénom + nom
-    (de préférence de la même production) en complétant ses champs vides, sinon le crée
-    rattaché à la production du projet. Aucun commit ici (transaction de l'événement).
+    Production rattachée au nouveau contact : celle choisie dans la saisie (vide = freelance),
+    ou par défaut celle du projet quand le choix n'est pas fourni (ex. outil MCP).
     """
-    first_name, last_name = _clean(data.get("first_name")), _clean(data.get("last_name"))
-    if not first_name or not last_name:
-        raise ValueError("Le prénom et le nom du nouveau contact sont requis.")
-    attrs = {
-        "phone": _clean(data.get("phone")),
-        "mail": _clean(data.get("mail")),
-        "job_title": _clean(data.get("job_title")),
-    }
-    query = Contact.query.filter(
-        func.lower(func.trim(Contact.first_name)) == first_name.lower(),
-        func.lower(func.trim(Contact.last_name)) == last_name.lower(),
-    )
-    if project.production_id:
-        query = query.order_by((Contact.production_id == project.production_id).desc())
-    contact = query.first()
-    if contact:
-        for attr, val in attrs.items():
-            if val and not getattr(contact, attr):
-                setattr(contact, attr, val)
-        return contact
-    contact = Contact(first_name=first_name, last_name=last_name,
-                      production_id=project.production_id, **attrs)
-    db.session.add(contact)
-    return contact
+    if not new_contact or new_contact.get("production_id") is None:
+        return project.production_id
+    raw = str(new_contact.get("production_id")).strip()
+    if not raw:
+        return None
+    try:
+        production = db.session.get(Production, int(raw))
+    except (TypeError, ValueError):
+        production = None
+    if not production:
+        raise ValueError("Production du nouveau contact introuvable.")
+    return production.id
 
 
-def add_commercial_event(project_id, *, event_type, date_str, time_str=None, contact_id=None,
-                         summary=None, lost_reason=None, user_id=None, now=None, new_contact=None):
-    project = db.session.get(Project, project_id)
-    if not project or project.deleted_at is not None:
-        raise CommercialEventNotFoundError("Projet introuvable.")
+def _as_bool(value):
+    return str(value).strip().lower() in ("1", "true", "on", "yes", "oui") if value is not None else False
 
+
+def _validated_fields(project, *, event_type, date_str, time_str, contact_id, summary,
+                      lost_reason, new_contact, now, is_planned=False):
+    """Valide la saisie (ajout ou modification) et retourne les valeurs à enregistrer."""
     if event_type not in EVENT_TYPE_LABELS:
         raise ValueError("Type de prise de contact inconnu.")
 
+    is_planned = _as_bool(is_planned)
     occurred_at = _parse_occurred_at(date_str, time_str)
-    now = now or paris_now()
-    if occurred_at.date() > now.date():
-        raise ValueError("La date de la prise de contact ne peut pas être dans le futur.")
+    today = (now or paris_now()).date()
+    if is_planned:
+        if event_type not in PLANNABLE_EVENT_TYPES:
+            raise ValueError(f"« {EVENT_TYPE_LABELS[event_type]} » ne peut pas être planifié.")
+        if occurred_at.date() < today:
+            raise ValueError("La date d'un événement à venir ne peut pas être dans le passé.")
+    else:
+        if event_type in PLANNED_ONLY_EVENT_TYPES:
+            raise ValueError(f"« {EVENT_TYPE_LABELS[event_type]} » ne peut être qu'un événement à venir.")
+        if occurred_at.date() > today:
+            raise ValueError("La date de la prise de contact ne peut pas être dans le futur. "
+                             "Pour un échange prévu, choisissez « À venir ».")
 
     if event_type == "lost":
         if lost_reason not in LOST_REASON_LABELS:
@@ -160,7 +170,7 @@ def add_commercial_event(project_id, *, event_type, date_str, time_str=None, con
     # En dernier : un nouveau contact n'est ajouté à la session qu'une fois tout le reste validé
     contact = None
     if contact_id == NEW_CONTACT_VALUE:
-        contact = _find_or_build_contact(project, new_contact or {})
+        contact = find_or_build_contact(new_contact or {}, production_id=_new_contact_production_id(project, new_contact))
     elif contact_id not in (None, ""):
         try:
             contact = db.session.get(Contact, int(contact_id))
@@ -169,7 +179,31 @@ def add_commercial_event(project_id, *, event_type, date_str, time_str=None, con
         if not contact:
             raise ValueError("Contact introuvable.")
 
-    summary = (summary or "").strip()[:500] or None
+    return {
+        "event_type": event_type,
+        "is_planned": is_planned,
+        "occurred_at": occurred_at,
+        "contact": contact,
+        "summary": (summary or "").strip()[:500] or None,
+        "lost_reason": lost_reason,
+    }
+
+
+def _active_project(project_id):
+    project = db.session.get(Project, project_id)
+    if not project or project.deleted_at is not None:
+        raise CommercialEventNotFoundError("Projet introuvable.")
+    return project
+
+
+def add_commercial_event(project_id, *, event_type, date_str, time_str=None, contact_id=None,
+                         summary=None, lost_reason=None, user_id=None, now=None, new_contact=None,
+                         is_planned=False):
+    project = _active_project(project_id)
+    fields = _validated_fields(
+        project, event_type=event_type, date_str=date_str, time_str=time_str, contact_id=contact_id,
+        summary=summary, lost_reason=lost_reason, new_contact=new_contact, now=now, is_planned=is_planned,
+    )
 
     author_name = None
     if user_id:
@@ -177,17 +211,54 @@ def add_commercial_event(project_id, *, event_type, date_str, time_str=None, con
         if user:
             author_name = f"{user.firstname or ''} {user.lastname or ''}".strip() or None
 
-    event = ProjectCommercialEvent(
-        project=project,
-        event_type=event_type,
-        occurred_at=occurred_at,
-        contact=contact,
-        summary=summary,
-        lost_reason=lost_reason,
-        user_id=user_id,
-        author_name=author_name,
-    )
+    event = ProjectCommercialEvent(project=project, user_id=user_id, author_name=author_name, **fields)
     db.session.add(event)
+    db.session.flush()
+    recompute_commercial_status(project)
+    db.session.commit()
+    return event
+
+
+def update_commercial_event(project_id, event_id, *, event_type, date_str, time_str=None, contact_id=None,
+                            summary=None, lost_reason=None, now=None, new_contact=None, is_planned=None):
+    """
+    Modifie une prise de contact (l'auteur d'origine est conservé) et recalcule le statut.
+    `is_planned` à None conserve la nature actuelle (réalisé / à venir).
+    """
+    project = _active_project(project_id)
+    event = db.session.get(ProjectCommercialEvent, event_id)
+    if not event or event.project_id != project.id:
+        raise CommercialEventNotFoundError("Prise de contact introuvable.")
+    fields = _validated_fields(
+        project, event_type=event_type, date_str=date_str, time_str=time_str, contact_id=contact_id,
+        summary=summary, lost_reason=lost_reason, new_contact=new_contact, now=now,
+        is_planned=event.is_planned if is_planned is None else is_planned,
+    )
+    for attr, value in fields.items():
+        setattr(event, attr, value)
+    db.session.flush()
+    recompute_commercial_status(project)
+    db.session.commit()
+    return event
+
+
+def complete_commercial_event(project_id, event_id, now=None):
+    """
+    Marque un événement à venir comme « fait » : il devient une prise de contact réelle.
+    Fait en avance (date future) : il prend la date et l'heure du moment.
+    """
+    project = _active_project(project_id)
+    event = db.session.get(ProjectCommercialEvent, event_id)
+    if not event or event.project_id != project.id:
+        raise CommercialEventNotFoundError("Prise de contact introuvable.")
+    if not event.is_planned:
+        raise ValueError("Cette prise de contact a déjà eu lieu.")
+    if event.event_type in PLANNED_ONLY_EVENT_TYPES:
+        raise ValueError(f"« {event.type_label} » ne peut pas être marqué comme fait : modifiez-le ou supprimez-le.")
+    now = now or paris_now()
+    if event.occurred_at.date() > now.date():
+        event.occurred_at = now.replace(second=0, microsecond=0)
+    event.is_planned = False
     db.session.flush()
     recompute_commercial_status(project)
     db.session.commit()
@@ -228,7 +299,9 @@ def compute_timeline_layout(moments, break_threshold_days=BREAK_THRESHOLD_DAYS,
         return [50.0], []
 
     gaps = [_gap_days(moments[i], moments[i + 1]) for i in range(n)]
-    weights = [min(g, break_threshold_days) for g in gaps]
+    # Racine du temps : les longs silences sont compressés, les écarts courts dilatés ; au-delà du seuil,
+    # l'intervalle est plafonné (coupure « ≈ »). Rendu stable d'un projet à l'autre.
+    weights = [math.sqrt(min(g, break_threshold_days)) for g in gaps]
 
     min_pct = min(min_segment_pct, 100.0 / n)
     free = 100.0 - n * min_pct
@@ -281,9 +354,13 @@ def followup_due(events, status, now=None, days=QUOTE_FOLLOWUP_DAYS):
     Nombre de jours d'attente si une relance est conseillée, sinon None :
     devis envoyé, dernier échange sortant (pas de réponse du client) depuis au moins `days` jours.
     """
-    if status != "quote_sent" or not events:
+    done = _done(events)
+    if status != "quote_sent" or not done:
         return None
-    last = _chronological(events)[-1]
+    # Une relance de devis déjà planifiée : pas de rappel
+    if any(e.event_type == "quote_followup" for e in _planned(events)):
+        return None
+    last = done[-1]
     if last.event_type not in OUTGOING_EVENT_TYPES:
         return None
     waited = ((now or paris_now()) - last.occurred_at).days
@@ -307,7 +384,7 @@ def find_projects_awaiting_quote_reply(days=QUOTE_FOLLOWUP_DAYS, now=None):
         if waited is not None:
             results.append({
                 "project": project,
-                "last_event": _chronological(project.commercial_events)[-1],
+                "last_event": _done(project.commercial_events)[-1],
                 "days_waiting": waited,
             })
     results.sort(key=lambda r: r["days_waiting"], reverse=True)
@@ -343,71 +420,439 @@ def _contact_choices(project):
     return {"project": project_choices, "others": others}
 
 
+def cap_future_share(positions, segments, today_idx, max_future_pct=MAX_FUTURE_SHARE_PCT):
+    """
+    Plafonne la part « à venir » (à droite du repère Aujourd'hui) à `max_future_pct` % de la frise,
+    pour qu'un horizon planifié lointain n'écrase pas l'historique. Les proportions restent exactes
+    à l'intérieur de chaque partie (passé d'un côté, avenir de l'autre). Sans passé : inchangé.
+    """
+    if today_idx is None or today_idx == 0 or not positions:
+        return positions, segments
+    today_pct = positions[today_idx]
+    if 100.0 - today_pct <= max_future_pct:
+        return positions, segments
+    new_today = 100.0 - max_future_pct
+
+    def remap(p):
+        if p <= today_pct:
+            return round(p * new_today / today_pct, 3)
+        return round(new_today + (p - today_pct) * max_future_pct / (100.0 - today_pct), 3)
+
+    new_segments = []
+    for seg in segments:
+        seg = dict(seg)
+        seg["start_pct"], seg["end_pct"] = remap(seg["start_pct"]), remap(seg["end_pct"])
+        new_segments.append(seg)
+    return [remap(p) for p in positions], new_segments
+
+
+def _relative_label(day, today):
+    """« aujourd'hui », « demain », « dans 3 j » ou « date dépassée de 2 j »."""
+    delta = (day - today).days
+    if delta == 0:
+        return "aujourd'hui"
+    if delta == 1:
+        return "demain"
+    if delta > 1:
+        return f"dans {delta} j"
+    return f"date dépassée de {-delta} j"
+
+
+def _midnight(d):
+    return datetime.combine(d, time(0, 0))
+
+
 def build_commercial_timeline(project, now=None):
-    """Contexte complet du bloc « Timeline commerciale » de la fiche projet."""
+    """
+    Contexte complet du bloc « Timeline commerciale » de la fiche projet.
+
+    Frise : prises de contact réelles à gauche, repère « Aujourd'hui », puis événements à venir
+    (zone teintée). Un événement prévu dont la date est passée reste à sa date, signalé « en retard ».
+    """
     now = now or paris_now()
+    today_d = now.date()
     events = _chronological(project.commercial_events)
+    done = [e for e in events if not e.is_planned]
     status = project.commercial_status
     is_closed = status in CLOSED_COMMERCIAL_STATUSES
+    has_upcoming = any(e.is_planned and not e.is_late(today_d) for e in events)
 
-    moments = [e.occurred_at for e in events]
-    show_today = bool(events) and not is_closed and now > moments[-1]
+    # Un point (« nœud ») par jour : les échanges d'une même journée sont regroupés (compteur), en séparant
+    # le réalisé / en retard (rang 0) de l'à venir (rang 2) ; le repère « Aujourd'hui » a le rang 1.
+    def rank(ev):
+        return 2 if (ev.is_planned and not ev.is_late(today_d)) else 0
+
+    last_past_day = max((e.occurred_at.date() for e in events if rank(e) == 0), default=None)
+    show_today = has_upcoming or (bool(done) and not is_closed and last_past_day is not None
+                                  and last_past_day < today_d)
+
+    groups = {}
+    for ev in events:
+        groups.setdefault((ev.occurred_at.date(), rank(ev)), []).append(ev)
+    keys = sorted(groups)
     if show_today:
-        moments.append(now)
+        keys.append((today_d, 1))
+        keys.sort()
 
-    positions, segments = compute_timeline_layout(moments)
-    multi_year = len({m.year for m in moments}) > 1 or (moments and moments[0].year != now.year)
+    positions, segments = compute_timeline_layout([_midnight(day) for day, _ in keys])
+    today_idx = keys.index((today_d, 1)) if show_today else None
+    positions, segments = cap_future_share(positions, segments, today_idx)
+    multi_year = len({d.year for d, _ in keys}) > 1 or any(d.year != today_d.year for d, _ in keys)
+    today_pct = positions[today_idx] if today_idx is not None else None
 
-    items, last_label_pct = [], None
-    for ev, pct in zip(events, positions):
-        show_date = last_label_pct is None or pct - last_label_pct >= MIN_DATE_LABEL_GAP_PCT
-        if show_date:
-            last_label_pct = pct
-        items.append({
+    def event_item(ev, pct):
+        return {
             "id": ev.id,
             "type": ev.event_type,
             "label": ev.type_label,
             "icon": ev.icon,
             "family": ev.family,
             "pct": pct,
-            "show_date": show_date,
             "date_short": _short_date(ev.occurred_at, with_year=multi_year),
             "date_full": _full_datetime(ev.occurred_at),
             "contact_name": ev.contact_name,
+            "contact_preposition": ev.contact_preposition,
+            "contact_details": ev.contact_details,
+            "headline": ev.headline,
             "summary": ev.summary,
             "lost_reason_label": ev.lost_reason_label,
             "author_name": ev.author_name,
+            "is_planned": bool(ev.is_planned),
+            "is_late": ev.is_late(today_d),
+            "can_complete": bool(ev.is_planned) and ev.event_type not in PLANNED_ONLY_EVENT_TYPES,
+            "relative": _relative_label(ev.occurred_at.date(), today_d) if ev.is_planned else None,
+            "edit": {
+                "event_type": ev.event_type,
+                "is_planned": "1" if ev.is_planned else "0",
+                "date": ev.occurred_at.date().isoformat(),
+                "time": ev.occurred_at.strftime("%H:%M") if (ev.occurred_at.hour or ev.occurred_at.minute) else "",
+                "contact_id": str(ev.contact_id) if ev.contact_id else "",
+                "lost_reason": ev.lost_reason or "",
+                "summary": ev.summary or "",
+            },
+        }
+
+    nodes, items, last_label_pct = [], [], None
+    for (day, rk), pct in zip(keys, positions):
+        if rk == 1:
+            continue  # repère « Aujourd'hui »
+        node_events = [event_item(ev, pct) for ev in groups[(day, rk)]]
+        items.extend(node_events)
+        # Point représentatif : le dernier jalon du jour (devis, confirmation…), sinon le dernier échange
+        lead = next((e for e in reversed(node_events) if e["type"] in EVENT_TYPE_MILESTONES), node_events[-1])
+        late = any(e["is_late"] for e in node_events)
+        show_date = (last_label_pct is None or pct - last_label_pct >= MIN_DATE_LABEL_GAP_PCT) and (
+            today_pct is None or abs(pct - today_pct) >= MIN_DATE_LABEL_GAP_PCT
+        )
+        if show_date:
+            last_label_pct = pct
+        count = len(node_events)
+        date_label = _short_date(datetime.combine(day, time(0, 0)), with_year=multi_year)
+        if count == 1:
+            title = f"{lead['headline']} — {lead['date_full']}"
+        else:
+            title = f"{count} échanges le {date_label} : " + ", ".join(e["label"] for e in node_events)
+        if late:
+            title += " (en retard)"
+        elif rk == 2:
+            title += f" (prévu, {_relative_label(day, today_d)})"
+        nodes.append({
+            "id": f"{day.isoformat()}-{'p' if rk == 2 else 'r'}",
+            "pct": pct,
+            "count": count,
+            "icon": lead["icon"],
+            "family": lead["family"],
+            "state": "late" if late else ("planned" if rk == 2 else "done"),
+            "show_date": show_date,
+            "date_short": date_label,
+            "title": title,
+            "events": node_events,
         })
 
-    for seg in segments:
+    for i, seg in enumerate(segments):
         width = seg["end_pct"] - seg["start_pct"]
         seg["mid_pct"] = round((seg["start_pct"] + seg["end_pct"]) / 2, 3)
-        seg["label"] = _duration_label(seg["days"])
+        seg["is_future"] = today_idx is not None and i >= today_idx
+        seg["is_pending"] = today_idx is not None and i + 1 == today_idx and seg["days"] > 0
+        if seg["is_future"] and i == today_idx and seg["days"] >= 1:
+            seg["label"] = f"dans {round(seg['days'])} j"
+        else:
+            seg["label"] = _duration_label(seg["days"])
         seg["show_label"] = seg["is_break"] or (
             seg["days"] >= MIN_GAP_LABEL_DAYS and width >= MIN_GAP_LABEL_PCT
         )
-    if show_today and segments:
-        segments[-1]["is_pending"] = True  # silence en cours, jusqu'à aujourd'hui
 
-    first, last = (events[0].occurred_at, events[-1].occurred_at) if events else (None, None)
+    # Point sélectionné par défaut : un événement en retard, sinon le prochain à venir, sinon le dernier contact
+    late = [it for it in items if it["is_late"]]
+    upcoming = [it for it in items if it["is_planned"] and not it["is_late"]]
+    if late:
+        selected_id = late[0]["id"]
+    elif upcoming:
+        selected_id = upcoming[0]["id"]
+    else:
+        selected_id = items[-1]["id"] if items else None
+    selected_node = next((n["id"] for n in nodes if any(e["id"] == selected_id for e in n["events"])), None)
+    nxt = upcoming[0] if upcoming else None
+
+    first, last = (done[0].occurred_at, done[-1].occurred_at) if done else (None, None)
     return {
         "events": items,
+        "nodes": nodes,
         "segments": segments,
-        "today_pct": positions[-1] if show_today else None,
-        "count": len(events),
+        "today_pct": today_pct,
+        "future_zone": has_upcoming and today_idx is not None,
+        "selected_id": selected_id,
+        "selected_node": selected_node,
+        "count": len(done),
+        "upcoming_count": len(upcoming),
+        "late_count": len(late),
+        "next_upcoming": {"label": nxt["label"], "relative": nxt["relative"]} if nxt else None,
         "status": status,
         "status_label": COMMERCIAL_STATUS_LABELS.get(status) if status else None,
         "status_variant": COMMERCIAL_STATUS_VARIANTS.get(status, "neutral"),
-        "span_days": (last - first).days if events else 0,
+        "span_days": (last - first).days if done else 0,
         "followup_days": followup_due(events, status, now=now),
         "followup_threshold": QUOTE_FOLLOWUP_DAYS,
         "type_groups": [
-            (group, [(k, EVENT_TYPE_LABELS[k]) for k in keys]) for group, keys in EVENT_TYPE_GROUPS
+            (group, [(k, EVENT_TYPE_LABELS[k], k in PLANNABLE_EVENT_TYPES, k in PLANNED_ONLY_EVENT_TYPES)
+                     for k in keys])
+            for group, keys in EVENT_TYPE_GROUPS
         ],
         "lost_reasons": LOST_REASONS,
         "contact_choices": _contact_choices(project),
+        "production_choices": [(p.id, p.name) for p in Production.query.order_by(Production.name).all()],
         "new_contact_value": NEW_CONTACT_VALUE,
-        "default_date": now.date().isoformat(),
-        "default_time": now.strftime("%H:%M"),
-        "max_date": now.date().isoformat(),
+        "default_date": today_d.isoformat(),
+        "default_time": "",  # heure facultative : vide par défaut (sinon ce serait l'heure de la saisie)
+        "today": today_d.isoformat(),
     }
+
+
+# ── Agenda des événements à venir (tableau de bord, mail du matin) ──
+
+UPCOMING_WINDOW_DAYS = 7
+
+
+def planned_agenda(now=None, days_ahead=UPCOMING_WINDOW_DAYS):
+    """
+    Événements à venir de tous les projets actifs :
+    - overdue : date dépassée, pas encore marqués « fait » (le plus ancien d'abord) ;
+    - today : prévus aujourd'hui ;
+    - upcoming : prévus dans les `days_ahead` prochains jours (hors aujourd'hui).
+    Chaque élément : {project, event, days} (days = écart en jours avec aujourd'hui).
+    """
+    today_d = (now or paris_now()).date()
+    rows = (
+        ProjectCommercialEvent.query.join(Project, ProjectCommercialEvent.project_id == Project.id)
+        .filter(ProjectCommercialEvent.is_planned.is_(True), Project.deleted_at.is_(None))
+        .order_by(ProjectCommercialEvent.occurred_at)
+        .all()
+    )
+    agenda = {"overdue": [], "today": [], "upcoming": []}
+    for ev in rows:
+        delta = (ev.occurred_at.date() - today_d).days
+        item = {"project": ev.project, "event": ev, "days": delta}
+        if delta < 0:
+            agenda["overdue"].append(item)
+        elif delta == 0:
+            agenda["today"].append(item)
+        elif delta <= days_ahead:
+            agenda["upcoming"].append(item)
+    return agenda
+
+
+# ── Statistiques commerciales (tableau de bord) ───────────────
+
+WON_COMMERCIAL_STATUSES = {"confirmed", "invoiced", "paid"}
+
+
+def commercial_stats(now=None, followup_days=QUOTE_FOLLOWUP_DAYS):
+    """
+    Indicateurs commerciaux calculés sur les projets suivis (statut non NULL) :
+    - répartition par statut ;
+    - taux de transformation = gagnés / (gagnés + abandonnés) ;
+    - délai moyen entre la première prise de contact et la confirmation ;
+    - motifs d'abandon (dernier abandon de chaque projet abandonné) ;
+    - devis à relancer (cf. find_projects_awaiting_quote_reply).
+    """
+    now = now or paris_now()
+    projects = Project.query.filter(
+        Project.deleted_at.is_(None),
+        Project.commercial_status.isnot(None),
+    ).all()
+
+    by_status = {key: 0 for key in COMMERCIAL_STATUS_LABELS}
+    reasons = {key: 0 for key in LOST_REASON_LABELS}
+    delays = []
+    for project in projects:
+        by_status[project.commercial_status] = by_status.get(project.commercial_status, 0) + 1
+        events = _done(project.commercial_events)
+        if not events:
+            continue
+        confirmed = next((e for e in events if e.event_type == "confirmed"), None)
+        if confirmed:
+            delays.append((confirmed.occurred_at - events[0].occurred_at).total_seconds() / 86400)
+        if project.commercial_status == "lost":
+            lost = [e for e in events if e.event_type == "lost"]
+            if lost and lost[-1].lost_reason in reasons:
+                reasons[lost[-1].lost_reason] += 1
+
+    won = sum(by_status.get(s, 0) for s in WON_COMMERCIAL_STATUSES)
+    lost_count = by_status.get("lost", 0)
+    decided = won + lost_count
+    max_reason = max(reasons.values()) if reasons else 0
+
+    return {
+        "tracked": len(projects),
+        "by_status": [
+            (key, COMMERCIAL_STATUS_LABELS[key], COMMERCIAL_STATUS_VARIANTS[key], by_status.get(key, 0))
+            for key in COMMERCIAL_STATUS_LABELS
+        ],
+        "prospects": by_status.get("prospect", 0),
+        "quotes_pending": by_status.get("quote_sent", 0),
+        "won": won,
+        "lost": lost_count,
+        "conversion_rate": round(100 * won / decided) if decided else None,
+        "avg_days_to_confirm": round(sum(delays) / len(delays), 1) if delays else None,
+        "confirmed_sample": len(delays),
+        "lost_reasons": [
+            {
+                "key": key,
+                "label": LOST_REASON_LABELS[key],
+                "count": count,
+                "pct": round(100 * count / max_reason) if max_reason else 0,
+            }
+            for key, count in sorted(reasons.items(), key=lambda kv: kv[1], reverse=True)
+            if count
+        ],
+        "followups": find_projects_awaiting_quote_reply(days=followup_days, now=now),
+        "followup_threshold": followup_days,
+        "agenda": planned_agenda(now=now),
+        "agenda_window_days": UPCOMING_WINDOW_DAYS,
+    }
+
+
+# ── Relance des devis : récapitulatif par e-mail (cron) ────────
+
+# Rôles recevant tous les devis à relancer ; un commercial ne reçoit que les projets dont il est le commercial
+_FOLLOWUP_ALL_ROLES = ("administrateur", "super administrateur", "manager")
+
+
+def _digest_items_for(user, items):
+    """Éléments d'un récapitulatif visibles par un utilisateur (tous, ou ceux de ses projets), ou None."""
+    from utils.decorators import normalize_role
+
+    role = normalize_role(user.role)
+    if role in _FOLLOWUP_ALL_ROLES:
+        return list(items)
+    if role == "commercial":
+        return [i for i in items if i["project"].commercial_user_id == user.id]
+    return None
+
+
+def followup_digest_recipients(followups):
+    """
+    Destinataires du récapitulatif : {e-mail: [relances]}.
+    Administrateurs / managers : toutes les relances. Commercial : celles de ses projets.
+    """
+    recipients = {}
+    for user in User.query.all():
+        mail = (user.mail or "").strip()
+        items = _digest_items_for(user, followups) if mail else None
+        if items:
+            recipients[mail] = items
+    return recipients
+
+
+def send_quote_followup_digest(base_url=None, dry_run=False, now=None, days=QUOTE_FOLLOWUP_DAYS):
+    """
+    Mail du matin du suivi commercial :
+    - devis sans réponse depuis au moins `days` jours ;
+    - événements prévus aujourd'hui et événements prévus en retard (date dépassée, non marqués « fait »).
+    Administrateurs / managers : tout ; commerciaux : leurs projets. Aucun e-mail s'il n'y a rien à signaler.
+    Retourne {"followups", "planned", "recipients", "sent"}.
+    """
+    from flask import url_for
+    from utils.mailer import EmailService
+    from utils.request_utils import resolve_base_url
+
+    followups = find_projects_awaiting_quote_reply(days=days, now=now)
+    agenda = planned_agenda(now=now)
+    planned = agenda["overdue"] + agenda["today"]
+
+    per_user = {}
+    for user in User.query.all():
+        mail = (user.mail or "").strip()
+        if not mail:
+            continue
+        f_items = _digest_items_for(user, followups) or []
+        p_items = _digest_items_for(user, planned) or []
+        if f_items or p_items:
+            per_user[mail] = (f_items, p_items)
+
+    result = {"followups": followups, "planned": planned, "recipients": sorted(per_user), "sent": 0}
+    if not per_user or dry_run:
+        return result
+
+    root = resolve_base_url(base_url).rstrip("/")
+
+    def project_url(p):
+        return root + url_for("admin_projects.admin_project_detail", record_id=p.id) + "#commercial-timeline"
+
+    def commercial_name(p):
+        u = p.commercial_user
+        return f"{u.firstname or ''} {u.lastname or ''}".strip() if u else None
+
+    def followup_row(f):
+        p, last = f["project"], f["last_event"]
+        return {
+            "name": p.name,
+            "production": p.production.name if p.production else "—",
+            "commercial": commercial_name(p),
+            "last_label": last.type_label,
+            "last_date": last.occurred_at.strftime("%d/%m/%Y"),
+            "contact": last.contact_name,
+            "days": f["days_waiting"],
+            "url": project_url(p),
+        }
+
+    def planned_row(item):
+        p, ev = item["project"], item["event"]
+        has_time = ev.occurred_at.hour or ev.occurred_at.minute
+        return {
+            "name": p.name,
+            "production": p.production.name if p.production else "—",
+            "headline": ev.headline,
+            "summary": ev.summary,
+            "when": ev.occurred_at.strftime("%d/%m/%Y") + (ev.occurred_at.strftime(" à %H:%M") if has_time else ""),
+            "late_days": -item["days"] if item["days"] < 0 else 0,
+            "url": project_url(p),
+        }
+
+    list_url = root + url_for("admin_projects.admin_projects_list", commercial="quote_sent")
+    for to, (f_items, p_items) in per_user.items():
+        projects = [followup_row(f) for f in f_items]
+        agenda_rows = [planned_row(i) for i in p_items]
+        parts = []
+        if projects:
+            parts.append(f"{len(projects)} devis à relancer")
+        n_today = sum(1 for r in agenda_rows if not r["late_days"])
+        n_late = len(agenda_rows) - n_today
+        if n_today:
+            parts.append(f"{n_today} échange{'s' if n_today > 1 else ''} prévu{'s' if n_today > 1 else ''} aujourd'hui")
+        if n_late:
+            parts.append(f"{n_late} en retard")
+        subject = "Suivi commercial : " + ", ".join(parts)
+        lines = [subject, ""]
+        lines += [f"- [Agenda] {r['headline']} — {r['name']} ({r['production']}) : {r['when']}"
+                  f"{' (en retard de ' + str(r['late_days']) + ' j)' if r['late_days'] else ''} — {r['url']}"
+                  for r in agenda_rows]
+        lines += [f"- [Relance] {r['name']} ({r['production']}) : {r['last_label'].lower()} le {r['last_date']}, "
+                  f"{r['days']} j sans réponse — {r['url']}" for r in projects]
+        if EmailService.send_templated_email(
+            to_email=to, subject=subject, template_name="emails/quote_followup_digest.html",
+            context={"projects": projects, "agenda": agenda_rows, "days": days, "list_url": list_url},
+            text_content="\n".join(lines), sender_type="contact",
+        ):
+            result["sent"] += 1
+    return result

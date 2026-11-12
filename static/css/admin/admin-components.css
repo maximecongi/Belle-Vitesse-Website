@@ -3176,3 +3176,47 @@ body.has-admin-savebar .admin-content {
     outline: 2px solid var(--grey-1, #151515);
     outline-offset: 2px;
 }
+
+/* ── Sélecteur de contact unifié (templates/admin/_contact_picker.html) ───────── */
+/* Encart « + Nouveau contact » : Prénom / Nom / Téléphone / Mail en 2 colonnes */
+.contact-new {
+    margin: 0.75rem 0 0;
+    padding: 0.75rem 1rem 0;
+    border: 1px dashed var(--grey-border, #E0E0E0);
+    border-radius: 8px;
+    min-width: 0;
+}
+
+.contact-new[hidden] {
+    display: none;
+}
+
+.contact-new legend {
+    padding: 0 0.25rem;
+}
+
+.contact-new-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 1rem;
+}
+
+.contact-new-grid > * {
+    min-width: 0;
+}
+
+.contact-new-grid .form-group {
+    margin-bottom: 0.9rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Dans une modale (équipe du formulaire projet) : l'encart ouvre directement la saisie */
+.admin-modal-body > form > .contact-new {
+    margin: 0 0 0.75rem;
+}
+
+@media (max-width: 640px) {
+    .contact-new-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

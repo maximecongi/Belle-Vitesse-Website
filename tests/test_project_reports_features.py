@@ -364,7 +364,7 @@ class ProjectReportsFeaturesTest(BaseTestCase):
                                category="securite", shoot_day="2026-09-10")
             ctx = build_reports_export_context(self.project_id)
             html = render_template("pdf/project_reports.html", company_name="BV", doc_id="X", is_preview=False, **ctx)
-            self.assertIn("JOURNAL DE BORD", html)
+            self.assertIn("Journal de Bord", html)
             self.assertIn("<strong>Gras</strong>", html)
             self.assertIn("reports-pdf-entry--securite", html)
             self.assertIn("Sécurité", html)

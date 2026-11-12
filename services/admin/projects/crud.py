@@ -28,12 +28,51 @@ from utils.storage import get_project_base_path
 logger = logging.getLogger(__name__)
 
 
+# Filtre « statut commercial » de la liste des projets : clé de statut, ou « untracked »
+# pour les projets antérieurs au suivi commercial (statut NULL).
+UNTRACKED_COMMERCIAL_FILTER = "untracked"
+
+
+def filter_by_commercial_status(query, commercial_status: Optional[str]):
+    from models.commercial_event import COMMERCIAL_STATUS_LABELS
+
+    if commercial_status == UNTRACKED_COMMERCIAL_FILTER:
+        return query.filter(Project.commercial_status.is_(None))
+    if commercial_status in COMMERCIAL_STATUS_LABELS:
+        return query.filter(Project.commercial_status == commercial_status)
+    return query
+
+
+def commercial_status_counts(is_archive: Optional[bool] = None, scope: Optional[int] = None) -> dict:
+    """Nombre de projets par statut commercial (clé None = non suivi), sur le même périmètre que la liste."""
+    from services.admin.project_access import scope_project_query
+
+    query = scope_project_query(Project.query.filter(Project.deleted_at.is_(None)), scope)
+    query = _filter_archive(query, is_archive)
+    rows = (
+        query.with_entities(Project.commercial_status, db.func.count(Project.id))
+        .group_by(Project.commercial_status)
+        .all()
+    )
+    return {status: count for status, count in rows}
+
+
+def _filter_archive(query, is_archive: Optional[bool]):
+    today = date.today()
+    if is_archive is True:
+        return query.filter(Project.return_date.isnot(None), Project.return_date < today)
+    if is_archive is False:
+        return query.filter(db.or_(Project.return_date.is_(None), Project.return_date >= today))
+    return query
+
+
 def list_projects(
     is_archive: Optional[bool] = None,
     q: Optional[str] = None,
     page: Optional[int] = None,
     per_page: int = 10,
     scope: Optional[int] = None,
+    commercial_status: Optional[str] = None,
 ):
     """
     Récupère les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
@@ -70,6 +109,8 @@ def list_projects(
             Project.departure_date.desc(),
             Project.name.asc(),
         ]
+
+    query = filter_by_commercial_status(query, commercial_status)
 
     if q:
         term = f"%{q.strip()}%"
@@ -220,10 +261,10 @@ def get_project_form_context():
     }
 
 
-def _apply_bv_team_roles(project, form, head_ids):
+def _apply_bv_team_roles(project, form):
     """
     Affecte les rôles nominatifs de l'équipe BV (Commercial, Techniciens BV) et le contact
-    Opérateur Remote Head, conservé uniquement si au moins une tête est assignée au projet.
+    Opérateur Remote Head (indépendant du matériel loué).
     """
     project.commercial_user_id = _parse_int(form.get("commercial_user_id"))
     technician_ids = [
@@ -233,10 +274,7 @@ def _apply_bv_team_roles(project, form, head_ids):
     project.bv_technicians = (
         User.query.filter(User.id.in_(technician_ids)).all() if technician_ids else []
     )
-    has_head = any(str(h).strip() for h in (head_ids or []))
-    project.remote_head_operator_contact_id = (
-        _parse_int(form.get("remote_head_operator_contact_id")) if has_head else None
-    )
+    project.remote_head_operator_contact_id = _parse_int(form.get("remote_head_operator_contact_id"))
 
 
 @handle_admin_service_error
@@ -303,7 +341,7 @@ def create_project(form, user_id=None):
         heads_to_check=",".join(head_ids),
         last_action_by_id=user_id,
     )
-    _apply_bv_team_roles(project, form, head_ids)
+    _apply_bv_team_roles(project, form)
     bv_referent_ids = [
         _parse_int(uid) for uid in (form.getlist("bv_referent_ids") if hasattr(form, 'getlist') else [])
     ]
@@ -393,7 +431,7 @@ def update_project(record_id, form, user_id=None):
         project.shooting_locations = _parse_shooting_locations(form)
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
-    _apply_bv_team_roles(project, form, head_ids)
+    _apply_bv_team_roles(project, form)
     project.last_action_by_id = user_id
 
     # Mise à jour des référents BV du projet

@@ -66,6 +66,12 @@ EXPECTED_JOBS = [
         "expected_freq": "Tous les jours à 8h15",
         "tolerance_hours": 26,  # 24h + 2h margin
     },
+    {
+        "job_name": "remind_quote_followups",
+        "display_name": "Relance des devis sans réponse",
+        "expected_freq": "Jours ouvrés à 8h30",
+        "tolerance_hours": 74,  # week-end (vendredi 8h30 → lundi 8h30) + 2h margin
+    },
 ]
 
 

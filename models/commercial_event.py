@@ -21,6 +21,7 @@ COMMERCIAL_EVENT_TYPES = [
     ("invoice_sent", "Facture émise", "receipt", "info", "invoiced"),
     ("invoice_paid", "Facture payée", "badge-euro", "success", "paid"),
     ("lost", "Abandon du projet", "circle-x", "danger", "lost"),
+    ("deadline", "Échéance", "flag", "neutral", None),
 ]
 EVENT_TYPE_KEYS = [t[0] for t in COMMERCIAL_EVENT_TYPES]
 EVENT_TYPE_LABELS = {t[0]: t[1] for t in COMMERCIAL_EVENT_TYPES}
@@ -28,11 +29,34 @@ EVENT_TYPE_ICONS = {t[0]: t[2] for t in COMMERCIAL_EVENT_TYPES}
 EVENT_TYPE_FAMILIES = {t[0]: t[3] for t in COMMERCIAL_EVENT_TYPES}
 EVENT_TYPE_MILESTONES = {t[0]: t[4] for t in COMMERCIAL_EVENT_TYPES if t[4]}
 
+# Mot de liaison entre le type et le contact : « Mail envoyé à », « Mail reçu de », « Rendez-vous avec »…
+EVENT_CONTACT_PREPOSITIONS = {
+    "first_request": "de",
+    "email_in": "de",
+    "call_in": "de",
+    "email_out": "à",
+    "call_out": "à",
+    "quote_sent": "à",
+    "quote_followup": "à",
+    "invoice_sent": "à",
+    "meeting": "avec",
+    "confirmed": "par",
+    "invoice_paid": "par",
+    "lost": "par",
+    "deadline": "pour",
+}
+
+# ── Événements à venir (planifiés) ─────────────────────────────
+# Types que l'on peut planifier ; « Échéance » (ex. : date limite de réponse du client) n'existe qu'à venir.
+PLANNABLE_EVENT_TYPES = {"meeting", "call_out", "email_out", "quote_followup", "deadline"}
+PLANNED_ONLY_EVENT_TYPES = {"deadline"}
+
 # Regroupement dans le sélecteur du formulaire
 EVENT_TYPE_GROUPS = [
     ("Échanges", ["first_request", "email_in", "email_out", "call_in", "call_out", "meeting"]),
     ("Devis & facturation", ["quote_sent", "quote_followup", "confirmed", "invoice_sent", "invoice_paid"]),
     ("Clôture", ["lost"]),
+    ("Planification", ["deadline"]),
 ]
 
 # Motifs d'abandon
@@ -78,6 +102,8 @@ class ProjectCommercialEvent(db.Model):
     contact_id = db.Column(db.Integer, db.ForeignKey("contacts.id", ondelete="SET NULL"), nullable=True)
     summary = db.Column(db.String(500), nullable=True)
     lost_reason = db.Column(db.String(30), nullable=True)
+    # Événement à venir (planifié) : n'influe pas sur le statut commercial tant qu'il n'est pas marqué « fait »
+    is_planned = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     author_name = db.Column(db.String(150), nullable=True)
@@ -119,6 +145,32 @@ class ProjectCommercialEvent(db.Model):
             return None
         return f"{self.contact.first_name} {self.contact.last_name}".strip()
 
+    @property
+    def contact_preposition(self):
+        return EVENT_CONTACT_PREPOSITIONS.get(self.event_type, "avec")
+
+    @property
+    def contact_details(self):
+        """Infobulle du contact : poste · production, téléphone, mail (lignes non vides)."""
+        c = self.contact
+        if not c:
+            return None
+        production = c.production_rel.name if c.production_rel else None
+        first = " · ".join(v for v in (c.job_title, production) if v)
+        lines = [v.strip() for v in (first, c.phone, c.mail) if v and v.strip()]
+        return "\n".join(lines) or None
+
+    @property
+    def headline(self):
+        """Libellé complet : « Mail envoyé à Jeanne Martin » (ou le type seul sans contact)."""
+        if not self.contact_name:
+            return self.type_label
+        return f"{self.type_label} {self.contact_preposition} {self.contact_name}"
+
+    def is_late(self, today):
+        """Événement prévu dont le jour est passé sans avoir été marqué « fait »."""
+        return bool(self.is_planned) and self.occurred_at.date() < today
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -132,6 +184,7 @@ class ProjectCommercialEvent(db.Model):
             "lost_reason": self.lost_reason,
             "lost_reason_label": self.lost_reason_label,
             "author_name": self.author_name,
+            "is_planned": bool(self.is_planned),
         }
 
     def __repr__(self):

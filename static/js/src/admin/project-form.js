@@ -3,7 +3,7 @@
  * Gère :
  * - L'initialisation du DatePicker Timeline unifié (ProjectTimelineDatePicker)
  * - Les sélecteurs enrichis Select2 pour les productions et contacts
- * - Les modales AJAX d'ajout rapide (Production & Contacts)
+ * - Les modales AJAX d'ajout rapide (Production & contacts de l'équipe)
  * - La validation front-end avant soumission
  * - La détection en temps réel des conflits de réservation matériels (véhicules / têtes)
  */
@@ -77,28 +77,26 @@
             if (!$select || !$select.length) return;
             const currentVal = $select.val();
 
+            // Les contacts peuvent être regroupés (optgroup « Tous les contacts ») : on insère et trie dans le groupe
+            const $group = $select.children('optgroup').first();
+            const $container = $group.length ? $group : $select;
+
             let $opt = $select.find("option[value='" + id + "']");
             if ($opt.length === 0) {
                 $opt = $('<option>', { value: id, text: text });
-                $select.append($opt);
+                $container.append($opt);
             } else {
                 $opt.text(text);
             }
 
-            // Tri alphabétique des options (en préservant le placeholder value="" en première position)
-            const $placeholder = $select.find('option[value=""]');
-            const $options = $select.find('option[value!=""]').get();
-
+            // Tri alphabétique ; « — » et « + Nouveau contact » restent en tête de liste
+            const $pinned = $container.children('option[value=""], option[value="__new__"]');
+            const $options = $container.children('option').not($pinned).get();
             $options.sort(function (a, b) {
                 return (a.text || '').localeCompare(b.text || '', 'fr', { sensitivity: 'base' });
             });
-
-            $select.empty();
-            if ($placeholder.length) {
-                $select.append($placeholder);
-            }
             $options.forEach(function (opt) {
-                $select.append(opt);
+                $container.append(opt);
             });
 
             if (selectIt) {
@@ -180,7 +178,7 @@
                 success: function (response) {
                     if (response && response.id) {
                         upsertSelectOption($('#productionSelect'), response.id, response.name, true);
-                        upsertSelectOption($('#modalContactProduction'), response.id, response.name, false);
+                        upsertSelectOption($('#teamContactNewProduction'), response.id, response.name, false);
                         closeProductionModal();
                     } else {
                         alert("Une erreur est survenue lors de la création de la production.");
@@ -196,136 +194,108 @@
             });
         });
 
-        // 5. Modale Contact Rapide
-        $('.quick-add-contact-btn').off('click').on('click', function () {
-            const targetSelectName = $(this).data('target');
-            const defaultJob = $(this).data('job') || '';
+        // 5. Sélecteurs de contact de l'équipe : « + Nouveau contact » ouvre la modale #teamContactModal
+        //    (même saisie que la timeline commerciale). Le contact est créé tout de suite
+        //    (/admin/api/contacts/quick), ajouté à toutes les listes de l'équipe et sélectionné.
+        const NEW_CONTACT = '__new__';
+        const $teamSelects = $('select[data-team-contact]');
+        const $teamModal = $('#teamContactModal');
+        const $teamForm = $('#teamContactForm');
+        let $teamTarget = null;
 
-            $('#modalTargetSelect').val(targetSelectName);
-            $('#modalContactFirstName').val('');
-            $('#modalContactLastName').val('');
-            $('#modalContactMail').val('');
-            $('#modalContactPhone').val('');
-            const currentSelectedProd = $('#productionSelect').val() || '';
-            if (targetSelectName === 'production_contact_id' && currentSelectedProd) {
-                $('#modalContactProduction').val(currentSelectedProd);
-            } else {
-                $('#modalContactProduction').val('');
-            }
-
-            if (defaultJob) {
-                $('#modalContactJob').val(defaultJob);
-            } else {
-                $('#modalContactJob').val('');
-            }
-
-            const $submitBtn = $('#submitContactModalBtn');
-            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
-
-            $('#quickContactModal').css('display', 'flex');
-            setTimeout(function () {
-                $('#modalContactFirstName').focus();
-            }, 100);
+        $teamSelects.each(function () {
+            const $sel = $(this);
+            $sel.data('prevValue', $sel.val() === NEW_CONTACT ? '' : ($sel.val() || ''));
         });
 
-        function closeContactModal() {
-            const $submitBtn = $('#submitContactModalBtn');
-            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
-            $('#quickContactModal').css('display', 'none');
+        function openTeamContactModal($sel) {
+            $teamTarget = $sel;
+            $teamForm[0].reset();
+            const role = $sel.data('contactRole') || '';
+            $teamForm.find('[data-contact-new-suffix]').text(role ? ' · ' + role : '');
+            // Production rattachée : au choix ; proposée d'office pour le contact de production uniquement
+            const projectProd = $('#productionSelect').val() || '';
+            $('#teamContactNewProduction').val($sel.attr('name') === 'production_contact_id' ? projectProd : '').trigger('change.select2');
+            // Métier : au choix, proposé d'après le rôle du champ
+            $('#teamContactNewJob').val($sel.data('contactJob') || '').trigger('change.select2');
+            $teamForm.find('[data-team-contact-submit]').prop('disabled', false).text('Créer le contact');
+            if (window.adminModal) window.adminModal.open('teamContactModal');
         }
 
-        $('#closeContactModalBtn, #cancelContactModalBtn').off('click').on('click', function () {
-            closeContactModal();
-        });
-
-        $('#quickContactModal').off('click').on('click', function (e) {
-            if (e.target === this) {
-                closeContactModal();
+        $teamSelects.on('change.teamContact', function () {
+            const $sel = $(this);
+            if ($sel.val() !== NEW_CONTACT) {
+                $sel.data('prevValue', $sel.val() || '');
+                return;
             }
+            // L'option « + Nouveau contact » n'est jamais conservée : on revient à la valeur précédente
+            $sel.val($sel.data('prevValue') || '').trigger('change.select2');
+            if ($sel.data('select2')) $sel.select2('close');
+            openTeamContactModal($sel);
         });
 
-        $(document).off('keydown.modalEscape').on('keydown.modalEscape', function (e) {
-            if (e.key === 'Escape') {
-                if ($('#quickProductionModal').is(':visible')) {
-                    closeProductionModal();
-                } else if ($('#quickContactModal').is(':visible')) {
-                    closeContactModal();
-                }
-            }
+        $teamModal.on('admin-modal:open', function () {
+            setTimeout(function () { $teamForm.find('input').first().trigger('focus'); }, 50);
         });
 
-        $('#quickContactForm').off('submit').on('submit', function (e) {
+        $teamForm.on('submit', function (e) {
             e.preventDefault();
+            const $submit = $teamForm.find('[data-team-contact-submit]');
+            if ($submit.prop('disabled') || !$teamTarget) return;
 
-            const $submitBtn = $('#submitContactModalBtn');
-            // Verrou anti-double soumission
-            if ($submitBtn.data('submitting') || $submitBtn.prop('disabled')) {
-                return;
-            }
-
-            const firstName = ($('#modalContactFirstName').val() || '').trim();
-            const lastName = ($('#modalContactLastName').val() || '').trim();
-            const jobTitle = ($('#modalContactJob').val() || '').trim();
-            const mail = ($('#modalContactMail').val() || '').trim();
-            const phone = ($('#modalContactPhone').val() || '').trim();
-            const productionId = $('#modalContactProduction').val();
-            const targetSelectName = $('#modalTargetSelect').val();
-
+            const field = function (key) { return ($teamForm.find('[name="team_contact_' + key + '"]').val() || '').trim(); };
+            const firstName = field('first_name');
+            const lastName = field('last_name');
             if (!firstName || !lastName) {
-                alert("Le prénom et le nom sont requis.");
+                const $missing = $teamForm.find(firstName ? '[name="team_contact_last_name"]' : '[name="team_contact_first_name"]');
+                $missing[0].reportValidity ? $missing[0].reportValidity() : alert('Le prénom et le nom sont requis.');
+                $missing.trigger('focus');
                 return;
             }
 
-            const csrfToken = $('input[name="csrf_token"]').val();
-            $submitBtn.data('submitting', true).prop('disabled', true).text('Création...');
-
+            $submit.prop('disabled', true).text('Création…');
             $.ajax({
-                url: "/admin/api/contacts/quick",
-                type: "POST",
-                contentType: "application/json",
-                headers: {
-                    "X-CSRFToken": csrfToken
-                },
+                url: '/admin/api/contacts/quick',
+                type: 'POST',
+                contentType: 'application/json',
+                headers: { 'X-CSRFToken': $('input[name="csrf_token"]').val() },
                 data: JSON.stringify({
                     first_name: firstName,
                     last_name: lastName,
-                    job_title: jobTitle,
-                    mail: mail,
-                    phone: phone,
-                    production_id: productionId || null
+                    phone: field('phone'),
+                    mail: field('mail'),
+                    job_title: $('#teamContactNewJob').val() || '',
+                    production_id: $('#teamContactNewProduction').val() || null
                 }),
                 success: function (response) {
-                    if (response && response.id) {
-                        const contactSelectNames = [
-                            'production_contact_id',
-                            'dop_contact_id',
-                            'pilot_contact_id',
-                            'first_ac_contact_id',
-                            'key_grip_contact_id',
-                            'remote_head_operator_contact_id'
-                        ];
-
-                        contactSelectNames.forEach(function (name) {
-                            upsertSelectOption($('select[name="' + name + '"]'), response.id, response.name, name === targetSelectName);
-                        });
-
-                        closeContactModal();
-                    } else {
-                        alert("Une erreur est survenue lors de la création du contact.");
+                    if (!response || !response.id) {
+                        alert('Une erreur est survenue lors de la création du contact.');
+                        return;
                     }
+                    const $target = $teamTarget;
+                    $teamSelects.each(function () {
+                        upsertSelectOption($(this), response.id, response.name, this === $target[0]);
+                    });
+                    if (window.adminModal) window.adminModal.close('teamContactModal');
                 },
                 error: function (xhr) {
-                    const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
-                    alert("Impossible de créer le contact : " + errorMsg);
+                    const msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Erreur serveur';
+                    alert('Impossible de créer le contact : ' + msg);
                 },
                 complete: function () {
-                    $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
+                    $submit.prop('disabled', false).text('Créer le contact');
                 }
             });
         });
 
+        $(document).off('keydown.modalEscape').on('keydown.modalEscape', function (e) {
+            if (e.key === 'Escape' && $('#quickProductionModal').is(':visible')) {
+                closeProductionModal();
+            }
+        });
+
         // 6. Validation front-end de la production requise
-        $('form:not(#quickContactForm):not(#quickProductionForm)').on('submit', function (e) {
+        $('form:not(#quickProductionForm):not(#teamContactForm)').on('submit', function (e) {
             if (document.activeElement && document.activeElement.getAttribute('formaction') && document.activeElement.getAttribute('formaction').includes('/delete')) {
                 return;
             }
@@ -501,14 +471,6 @@
 
         $('input[name="vehicle_ids"], input[name="head_ids"]').on('change', checkBookingConflicts);
 
-        // 4. Opérateur Remote Head : visible seulement si au moins une tête est cochée
-        //    (le serveur ignore la valeur s'il n'y a aucune tête)
-        function toggleRemoteHeadOperator() {
-            const hasHead = $('input[name="head_ids"]:checked').length > 0;
-            $('#remoteHeadOperatorGroup').toggleClass('u-d-none', !hasHead);
-        }
-        $('input[name="head_ids"]').on('change', toggleRemoteHeadOperator);
-        toggleRemoteHeadOperator();
         $('#departure_date_input, #shoot_start_input, #shoot_end_input, #return_date_input, #date_mode_input, #is_immobilized_between_input, #shoot_dates_input, #inter_shoot_statuses_input').on('change', checkBookingConflicts);
 
         // Observer les inputs cachés modifiés par ProjectTimelineDatePicker

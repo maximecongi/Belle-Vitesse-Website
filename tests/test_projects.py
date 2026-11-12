@@ -653,7 +653,7 @@ class ProjectsTest(BaseTestCase):
                 self.assertIn("CGL & Sécurité", html)
                 self.assertIn("CGL :", html)
                 self.assertIn("BVSR", html)
-                self.assertIn("BVPA :", html)
+                self.assertIn("Attest. Pilote :", html)
                 self.assertIn("1/1 signé", html)
             finally:
                 db.session.delete(pw1)
@@ -709,6 +709,43 @@ class ProjectsTest(BaseTestCase):
             db.session.delete(prod)
             db.session.delete(user)
             db.session.commit()
+
+    def _login_admin(self, mail):
+        user = User(firstname="Admin", lastname="Contacts", mail=mail, role="administrator")
+        db.session.add(user)
+        db.session.commit()
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user.id
+            sess["admin_user_role"] = user.role
+            sess["admin_user_email"] = user.mail
+        return user
+
+    def test_project_form_renders_unified_contact_pickers(self):
+        """Les sélecteurs de l'équipe proposent « + Nouveau contact », qui ouvre la modale de saisie unifiée."""
+        with self.app.app_context():
+            self._login_admin("admin_team_contacts_render@example.com")
+            db.session.add(Contact(first_name="Gaby", last_name="Groupe"))
+            db.session.commit()
+            res = self.client.get("/admin/projects/new")
+            self.assertEqual(res.status_code, 200)
+            html = res.get_data(as_text=True)
+            for field in ("production_contact", "dop_contact", "pilot_contact",
+                          "remote_head_operator_contact", "first_ac_contact", "key_grip_contact"):
+                self.assertIn(f'name="{field}_id"', html)
+                self.assertNotIn(f'name="{field}_new_first_name"', html)
+            self.assertEqual(html.count('data-team-contact '), 6)
+            self.assertIn('<optgroup label="Tous les contacts">', html)
+            self.assertIn('value="__new__"', html)
+            # Modale unique de création, avec la saisie de la timeline (Prénom / Nom / Téléphone / Mail)
+            self.assertIn('id="teamContactModal"', html)
+            for key in ("first_name", "last_name", "phone", "mail"):
+                self.assertIn(f'name="team_contact_{key}"', html)
+            # Métier et production rattachée restent au choix
+            self.assertIn('name="team_contact_job_title"', html)
+            self.assertIn('name="team_contact_production_id"', html)
+            self.assertIn("— Aucune / Freelance —", html)
+            self.assertNotIn("quickContactModal", html)
 
     def test_get_project_for_duplicate(self):
         """Vérifie le formatage et le pré-remplissage des données lors de la duplication d'un projet."""
