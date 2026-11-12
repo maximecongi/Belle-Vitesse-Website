@@ -1,0 +1,235 @@
+{% extends "admin/admin_base.html" %}
+
+{% from "admin/macros.html" import empty_state %}
+
+{% block title %}Indicateurs{% endblock %}
+{% block page_title %}Indicateurs{% endblock %}
+
+{# ══════════════════════════════════════════════════════════════
+   Gabarit commun à chaque onglet : 4 KPI · 2 graphiques · évolution 12 mois
+   ══════════════════════════════════════════════════════════════ #}
+
+{# Carte KPI : valeur, précision, puis écart avec la période précédente (ou « en ce moment ») #}
+{% macro kpi(label, value, note, tone, d=none, instant=false, href=none) %}
+{% set tag = 'a' if href else 'div' %}
+<{{ tag }} class="admin-kpi-card admin-kpi-card--{{ tone }} ind-kpi{{ ' ind-kpi--link' if href }}"{% if href %} href="{{ href }}"{% endif %}>
+    <div class="admin-kpi-label">{{ label }}</div>
+    <div class="admin-kpi-value">{{ value }}</div>
+    <div class="ind-kpi-note">{{ note }}</div>
+    <div class="ind-kpi-foot">
+        {% if instant %}
+        <span class="ind-delta ind-delta--instant"><i data-lucide="clock"></i>en ce moment</span>
+        {% elif d %}
+        <span class="ind-delta ind-delta--{{ d.tone }}">
+            <i data-lucide="{{ 'arrow-up-right' if d.direction == 'up' else ('arrow-down-right' if d.direction == 'down' else 'minus') }}"></i>{{ d.text }}
+        </span>
+        <span class="ind-delta-ref">vs période préc.</span>
+        {% else %}
+        <span class="ind-delta ind-delta--none">pas de comparaison possible</span>
+        {% endif %}
+    </div>
+</{{ tag }}>
+{% endmacro %}
+
+{# Carte graphique : titre + précision à droite #}
+{% macro chart_card(title, sub) %}
+<div class="admin-card ind-card">
+    <div class="ind-card-head">
+        <h3 class="ind-card-title">{{ title }}</h3>
+        {% if sub %}<span class="ind-card-sub">{{ sub }}</span>{% endif %}
+    </div>
+    {{ caller() }}
+</div>
+{% endmacro %}
+
+{# Barres horizontales : rows = [{label|name, count, pct, color?, type?, id?}] #}
+{% macro bars(rows, unit='', tone='ink', empty_icon='circle-check', empty_text='Aucune donnée sur la période') %}
+{% if rows %}
+<ul class="usage-ranking-list">
+    {% for r in rows %}
+    <li class="usage-ranking-row">
+        <span class="usage-ranking-name">
+            {% if r.color %}<span class="eq-color-dot eq-color-{{ r.color }}"></span>{% endif %}
+            {% if r.type == 'vehicle' %}
+            <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=r.id) }}">{{ r.label or r.name }}</a>
+            {% else %}{{ r.label or r.name }}{% endif %}
+        </span>
+        <span class="usage-ranking-track"><span class="usage-ranking-bar ind-bar--{{ tone }}" data-pct="{{ r.pct if r.count else 0 }}"></span></span>
+        <span class="usage-ranking-value">{{ r.count }}{{ unit }}</span>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+{{ empty_state(empty_icon, empty_text, class_name='empty-state-sm') }}
+{% endif %}
+{% endmacro %}
+
+{# Histogramme des 12 derniers mois ; les mois hors période sont atténués #}
+{% macro months_chart(chart, title) %}
+<div class="admin-card ind-card">
+    <div class="ind-card-head">
+        <h3 class="ind-card-title">{{ title }}</h3>
+        <span class="ind-card-sub">12 derniers mois · mois hors période atténués</span>
+    </div>
+    {% if chart.series|length > 1 %}
+    <div class="ind-legend">
+        {% for s in chart.series %}
+        <span class="ind-legend-item"><span class="ind-legend-swatch ind-month-bar--{{ s.key }}"></span>{{ s.label }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <figure class="ind-months" aria-label="{{ title }}">
+        {% for col in chart.columns %}
+        <div class="ind-month{{ '' if col.in_period else ' is-out' }}"
+            title="{{ col.label_full|capitalize }}{% for v in col.points %} · {{ v.label }} : {{ v.value }}{% endfor %}">
+            <span class="ind-month-values">
+                {% for v in col.points %}<span class="ind-month-value">{{ v.value if v.value else '' }}</span>{% endfor %}
+            </span>
+            <span class="ind-month-track">
+                {% for v in col.points %}<span class="ind-month-bar ind-month-bar--{{ v.key }}" data-pct="{{ v.pct }}"></span>{% endfor %}
+            </span>
+            <span class="ind-month-label">{{ col.label }}</span>
+        </div>
+        {% endfor %}
+    </figure>
+</div>
+{% endmacro %}
+
+{% macro unavailable() %}
+<div class="admin-card">
+    {{ empty_state('triangle-alert', 'Indicateurs momentanément indisponibles', 'Le calcul a échoué ; le détail est dans les journaux du serveur.') }}
+</div>
+{% endmacro %}
+
+{% block content %}
+
+<!-- ═══════════ BARRE : onglets + période commune ═══════════ -->
+<div class="ind-toolbar">
+    <div class="ind-tabs" role="tablist" aria-label="Domaines">
+        {% for key, label in tabs.items() %}
+        <button type="button" role="tab" class="ind-tab ind-tab--{{ key }}" id="ind-tab-{{ key }}"
+            data-ind-tab="{{ key }}" aria-controls="ind-panel-{{ key }}"
+            aria-selected="{{ 'true' if key == tab else 'false' }}">
+            {{ label }}
+        </button>
+        {% endfor %}
+    </div>
+    <div class="ind-periods" role="group" aria-label="Période">
+        {% for key, label in periods.items() %}
+        <a href="{{ url_for('admin_indicators.admin_indicators', period=key, tab=tab) }}" data-ind-period-link
+            class="ind-period{{ ' is-active' if key == period.key }}"{% if key == period.key %} aria-current="true"{% endif %}>{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+<p class="ind-caption">
+    <i data-lucide="calendar-range"></i>
+    <strong>{{ period.caption }}</strong>
+    <span>· comparé au {{ period.prev_caption }}</span>
+</p>
+
+<!-- ═══════════ COMMERCIAL ═══════════ -->
+<section class="ind-panel" id="ind-panel-commercial" role="tabpanel" aria-labelledby="ind-tab-commercial"
+    data-ind-panel="commercial" {% if tab != 'commercial' %}hidden{% endif %}>
+    {% if commercial %}
+    {% set c = commercial %}
+    <div class="ind-kpis">
+        {{ kpi('Taux de transformation',
+               (c.conversion_rate ~ ' %') if c.conversion_rate is not none else '—',
+               c.won ~ ' confirmé' ~ ('s' if c.won > 1 else '') ~ ' · ' ~ c.lost ~ ' abandonné' ~ ('s' if c.lost > 1 else ''),
+               'checkin', c.deltas.conversion_rate) }}
+        {{ kpi('Délai moyen de confirmation',
+               (c.avg_days_to_confirm ~ ' j') if c.avg_days_to_confirm is not none else '—',
+               'du premier contact à la confirmation',
+               'checkin', c.deltas.avg_days_to_confirm) }}
+        {{ kpi('Nouvelles demandes', c.new, 'premier contact pendant la période',
+               'checkin', c.deltas.new) }}
+        {{ kpi('Devis à relancer', c.followups, 'devis envoyés restés sans réponse',
+               'checkin', instant=true, href=url_for('admin_projects.admin_projects_list', commercial='quote_sent')) }}
+    </div>
+    <div class="ind-grid">
+        {% call chart_card('Entonnoir des demandes', 'demandes reçues pendant la période') %}
+        {% if c.funnel.total %}
+        <ul class="ind-funnel">
+            {% for s in c.funnel.stages %}
+            <li class="ind-funnel-row">
+                <span class="ind-funnel-label">{{ s.label }}</span>
+                <span class="usage-ranking-track"><span class="usage-ranking-bar ind-bar--commercial" data-pct="{{ s.pct }}"></span></span>
+                <span class="ind-funnel-value">{{ s.count }}<small>{{ s.pct }} %</small></span>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="ind-funnel-foot">dont {{ c.funnel.lost }} abandonnée{{ 's' if c.funnel.lost > 1 }} · {{ c.funnel.open }} encore en cours</p>
+        {% else %}
+        {{ empty_state('inbox', 'Aucune demande reçue sur la période', class_name='empty-state-sm') }}
+        {% endif %}
+        {% endcall %}
+        {% call chart_card("Motifs d'abandon", c.lost ~ ' abandon' ~ ('s' if c.lost > 1 else '') ~ ' sur la période') %}
+        {{ bars(c.lost_reasons, tone='danger', empty_icon='thumbs-up', empty_text='Aucun abandon sur la période') }}
+        {% endcall %}
+    </div>
+    {{ months_chart(c.chart, 'Demandes et confirmations par mois') }}
+    {% else %}{{ unavailable() }}{% endif %}
+</section>
+
+<!-- ═══════════ MATÉRIEL ═══════════ -->
+<section class="ind-panel" id="ind-panel-equipment" role="tabpanel" aria-labelledby="ind-tab-equipment"
+    data-ind-panel="equipment" {% if tab != 'equipment' %}hidden{% endif %}>
+    {% if equipment %}
+    {% set e = equipment %}
+    <div class="ind-kpis">
+        {{ kpi("Taux d'utilisation",
+               (e.usage_rate ~ ' %') if e.usage_rate is not none else '—',
+               e.used_days ~ ' j utilisés sur ' ~ e.pointed_days ~ ' j pointés',
+               'checkout', e.deltas.usage_rate) }}
+        {{ kpi('Jours utilisés', e.used_days ~ ' j', 'jours × matériel pointés « utilisé »',
+               'checkout', e.deltas.used_days) }}
+        {{ kpi('Taux de pointage',
+               (e.pointing.rate ~ ' %') if e.pointing.rate is not none else '—',
+               e.pointing.marked ~ ' / ' ~ e.pointing.expected ~ ' jours × matériel pointés',
+               'checkout', e.deltas.pointing) }}
+        {{ kpi('Projets à pointer', e.pending_projects, 'jours de tournage passés non pointés',
+               'checkout', instant=true, href=url_for('admin_dashboard.admin_dashboard') ~ '#projets-a-pointer') }}
+    </div>
+    <div class="ind-grid">
+        {% call chart_card('Jours utilisés par matériel', 'sur la période') %}
+        {{ bars(e.by_used, unit=' j', tone='equipment', empty_icon='truck', empty_text='Aucun matériel au catalogue') }}
+        {% endcall %}
+        {% call chart_card("Taux d'utilisation par matériel", 'jours utilisés ÷ jours pointés') %}
+        {{ bars(e.by_rate, unit=' %', tone='equipment', empty_icon='calendar-x', empty_text='Aucun jour pointé sur la période') }}
+        {% endcall %}
+    </div>
+    {{ months_chart(e.chart, 'Jours utilisés par mois') }}
+    {% else %}{{ unavailable() }}{% endif %}
+</section>
+
+<!-- ═══════════ INCIDENTS ═══════════ -->
+<section class="ind-panel" id="ind-panel-incidents" role="tabpanel" aria-labelledby="ind-tab-incidents"
+    data-ind-panel="incidents" {% if tab != 'incidents' %}hidden{% endif %}>
+    {% if incidents %}
+    {% set i = incidents %}
+    <div class="ind-kpis">
+        {{ kpi('Incidents déclarés', i.declared,
+               'dont ' ~ i.declared_critical ~ ' critique' ~ ('s' if i.declared_critical > 1 else ''),
+               'incident', i.deltas.declared) }}
+        {{ kpi('Délai moyen de résolution',
+               (i.avg_days_to_resolve ~ ' j') if i.avg_days_to_resolve is not none else '—',
+               (i.resolved_sample ~ ' incident' ~ ('s' if i.resolved_sample > 1 else '') ~ ' résolu' ~ ('s' if i.resolved_sample > 1 else '')) if i.resolved_sample else 'aucun incident résolu',
+               'incident', i.deltas.avg_days_to_resolve) }}
+        {{ kpi('Coût réel', i.actual_cost_label,
+               'réparations et frais saisis', 'incident', i.deltas.actual_cost) }}
+        {{ kpi('Incidents ouverts', i.open,
+               'dont ' ~ i.open_critical ~ ' critique' ~ ('s' if i.open_critical > 1 else ''),
+               'incident', instant=true, href=url_for('admin_incidents.admin_incidents_list')) }}
+    </div>
+    <div class="ind-grid">
+        {% call chart_card('Par catégorie', 'incidents déclarés sur la période') %}
+        {{ bars(i.by_category, tone='danger', empty_text='Aucun incident sur la période') }}
+        {% endcall %}
+        {% call chart_card('Impact sur le tournage', 'incidents déclarés sur la période') %}
+        {{ bars(i.by_impact, tone='warning', empty_text='Aucun incident sur la période') }}
+        {% endcall %}
+    </div>
+    {{ months_chart(i.chart, 'Incidents déclarés par mois') }}
+    {% else %}{{ unavailable() }}{% endif %}
+</section>
+{% endblock %}

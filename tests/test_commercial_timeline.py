@@ -546,13 +546,17 @@ class CommercialStatsTest(BaseTestCase):
             sess["admin_user_id"] = user.id
             sess["admin_user_role"] = user.role
 
-    def test_dashboard_widget_for_sales_only(self):
+    def test_commercial_kpis_on_admin_indicators_page_only(self):
         self._project("Perdu", [("lost", date.today().isoformat(), {"lost_reason": "price"})])
+        # Le commercial n'a pas accès à la page Indicateurs (réservée aux administrateurs)
         self._login(self.commercial)
+        self.assertEqual(self.client.get("/admin/indicators").status_code, 302)
+        # Les KPI ne sont plus sur le tableau de bord
         html = self.client.get("/admin/dashboard").get_data(as_text=True)
-        self.assertIn('id="suivi-commercial"', html)
-        self.assertIn("Motifs d'abandon", html)
+        self.assertNotIn("Taux de transformation", html)
+        self.assertNotIn("Motifs d'abandon", html)
         self._login(self.tech)
+        self.assertEqual(self.client.get("/admin/indicators").status_code, 302)
         html = self.client.get("/admin/dashboard").get_data(as_text=True)
         self.assertNotIn('id="suivi-commercial"', html)
 

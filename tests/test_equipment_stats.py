@@ -142,27 +142,26 @@ class EquipmentStatsTest(BaseTestCase):
         html = self.client.get("/admin/dashboard").get_data(as_text=True)
         self.assertIn("Projets à pointer", html)
         self.assertIn("#pointage", html)
-        self.assertNotIn("Taux de pointage", html)  # déplacé sur la page Flotte
+        self.assertNotIn("Taux de pointage", html)  # déplacé sur la page Indicateurs
 
         self._login(self.admin_id, "manager")
         html = self.client.get("/admin/dashboard").get_data(as_text=True)
         self.assertNotIn("Projets à pointer", html)
 
-    def test_fleet_usage_stats_admin_only(self):
+    def test_usage_stats_moved_to_admin_indicators(self):
         self._login(self.admin_id, "administrateur")
-        resp = self.client.get("/admin/fleet?usage_period=year")
+        resp = self.client.get("/admin/indicators?tab=equipment&period=30d")
         self.assertEqual(resp.status_code, 200)
         html = resp.get_data(as_text=True)
-        self.assertIn("Utilisation du matériel", html)
         self.assertIn("Taux de pointage", html)
-        # Les deux périodes sont rendues ; « Année en cours » est la période affichée
-        self.assertIn('data-usage-period-panel="30d" hidden', html)
-        self.assertIn('data-usage-period="year" aria-pressed="true"', html)
+        self.assertIn("Jours utilisés par matériel", html)
+        # La page Flotte ne porte plus ces statistiques
+        html = self.client.get("/admin/fleet").get_data(as_text=True)
+        self.assertNotIn("Taux de pointage", html)
 
         for role in ("manager", "commercial"):
             self._login(self.admin_id, role)
-            html = self.client.get("/admin/fleet").get_data(as_text=True)
-            self.assertNotIn("Taux de pointage", html, role)
+            self.assertEqual(self.client.get("/admin/indicators").status_code, 302, role)
 
     def test_vehicle_page_shows_usage(self):
         self._login(self.admin_id, "administrateur")

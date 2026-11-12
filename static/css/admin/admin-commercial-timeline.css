@@ -455,39 +455,6 @@
     color: var(--status-neutral-text);
 }
 
-/* ── Tableau de bord : suivi commercial ────────────────────── */
-.dashboard-commercial-kpis {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.dashboard-commercial-kpi-link {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-}
-
-.dashboard-commercial-kpi-link:hover .admin-kpi-value {
-    text-decoration: underline;
-}
-
-.usage-ranking-bar.dashboard-lost-bar {
-    background: var(--status-danger);
-}
-
-.dashboard-commercial-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-}
-
-@media (max-width: 900px) {
-    .dashboard-commercial-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
 /* Contact de la prise de contact, dans la ligne du titre : « Mail envoyé à [👤 Jeanne Martin] » */
 .ctl-detail-title {
     align-items: center;

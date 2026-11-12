@@ -45,24 +45,8 @@ def admin_fleet_list():
                 "image_url": extract_head_image(f),
                 "color": colors.get(("head", str(h["id"])), DEFAULT_COLOR),
             })
-        # Utilisation du matériel (pointage) : réservé aux administrateurs
-        usage = None
-        if role_can(session.get("admin_user_role"), "equipment_usage_admin", is_admin=session_is_admin()):
-            try:
-                from services.admin.equipment_stats import USAGE_PERIODS, fleet_usage_ranking, pointing_rate
-                # Les deux périodes sont calculées d'emblée : la bascule se fait sans recharger la page
-                selected = request.args.get("usage_period", "30d")
-                usage = {
-                    "period": selected if selected in USAGE_PERIODS else "30d",
-                    "rankings": [fleet_usage_ranking(key) for key in USAGE_PERIODS],
-                    "pointing": pointing_rate(),
-                }
-            except Exception as e:
-                logger.warning(f"Statistiques d'utilisation de la flotte indisponibles : {e}")
-
         return render_template(
             "admin/fleet_list.html",
-            usage=usage,
             vehicles=vehicles,
             heads=heads,
             stats=data["stats"],

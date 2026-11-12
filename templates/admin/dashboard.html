@@ -329,34 +329,9 @@
 </div>
 {% endif %}
 
-{% if commercial and (commercial.tracked or commercial.agenda.overdue or commercial.agenda.today or commercial.agenda.upcoming) %}
-<!-- ═══════════ SUIVI COMMERCIAL (rôles commerciaux) ═══════════ -->
+{% if commercial and (commercial.followups or commercial.agenda.overdue or commercial.agenda.today or commercial.agenda.upcoming) %}
+<!-- ═══════════ SUIVI COMMERCIAL : actions à mener (rôles commerciaux) — les KPI sont sur la page Indicateurs ═══════════ -->
 <h2 class="dashboard-section-header" id="suivi-commercial">Suivi commercial</h2>
-<div class="dashboard-commercial-kpis u-mb-3">
-    <div class="admin-kpi-card admin-kpi-card--success">
-        <div class="admin-kpi-label">Taux de transformation</div>
-        <div class="admin-kpi-value">{% if commercial.conversion_rate is not none %}{{ commercial.conversion_rate }} %{% else %}—{% endif %}</div>
-        <div class="u-text-xs u-text-muted">{{ commercial.won }} gagné{{ 's' if commercial.won > 1 else '' }} · {{ commercial.lost }} abandonné{{ 's' if commercial.lost > 1 else '' }}</div>
-    </div>
-    <div class="admin-kpi-card admin-kpi-card--info">
-        <div class="admin-kpi-label">Délai moyen de confirmation</div>
-        <div class="admin-kpi-value">{% if commercial.avg_days_to_confirm is not none %}{{ commercial.avg_days_to_confirm|round|int }} j{% else %}—{% endif %}</div>
-        <div class="u-text-xs u-text-muted">du premier contact à la confirmation{% if commercial.confirmed_sample %} · {{ commercial.confirmed_sample }} projet{{ 's' if commercial.confirmed_sample > 1 else '' }}{% endif %}</div>
-    </div>
-    <a class="admin-kpi-card admin-kpi-card--project dashboard-commercial-kpi-link"
-        href="{{ url_for('admin_projects.admin_projects_list', commercial='prospect') }}">
-        <div class="admin-kpi-label">Demandes en cours</div>
-        <div class="admin-kpi-value">{{ commercial.prospects }}</div>
-        <div class="u-text-xs u-text-muted">sans devis envoyé · {{ commercial.quotes_pending }} devis en attente</div>
-    </a>
-    <a class="admin-kpi-card admin-kpi-card--warning dashboard-commercial-kpi-link"
-        href="{{ url_for('admin_projects.admin_projects_list', commercial='quote_sent') }}">
-        <div class="admin-kpi-label">Devis à relancer</div>
-        <div class="admin-kpi-value">{{ commercial.followups|length }}</div>
-        <div class="u-text-xs u-text-muted">sans réponse depuis {{ commercial.followup_threshold }} j ou plus</div>
-    </a>
-</div>
-
 {% set ag = commercial.agenda %}
 {% if ag.overdue or ag.today or ag.upcoming %}
 <div class="admin-card u-mb-3">
@@ -388,48 +363,29 @@
 </div>
 {% endif %}
 
-<div class="dashboard-commercial-grid">
-    <div class="admin-card">
-        <div class="admin-card-title admin-card-header">
-            <span>Devis à relancer</span>
-        </div>
-        {% if commercial.followups %}
-        <ul class="usage-pending-list">
-            {% for f in commercial.followups[:8] %}
-            <li>
-                <a href="{{ url_for('admin_projects.admin_project_detail', record_id=f.project.id) }}#commercial-timeline" class="usage-pending-row">
-                    <span class="usage-pending-main">
-                        <span class="u-font-semibold u-text-sm">{{ f.project.name }}</span>
-                        <span class="u-text-xs u-text-muted">{{ f.project.production.name if f.project.production else '—' }} · {{ f.last_event.type_label|lower }} le {{ f.last_event.occurred_at.strftime('%d/%m/%Y') }}</span>
-                    </span>
-                    <span class="badge-pill u-bg-warning-light u-text-warning u-text-xs">{{ f.days_waiting }} j</span>
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        {{ empty_state('circle-check', "Aucun devis en attente de relance", class_name='empty-state-sm') }}
-        {% endif %}
+{% if commercial.followups %}
+<div class="admin-card u-mb-3">
+    <div class="admin-card-title admin-card-header u-flex-wrap u-gap-2">
+        <span>Devis à relancer</span>
+        <span class="admin-card-header-sub">sans réponse depuis {{ commercial.followup_threshold }} j ou plus</span>
     </div>
-    <div class="admin-card">
-        <div class="admin-card-title admin-card-header">
-            <span>Motifs d'abandon</span>
-            <span class="admin-card-header-sub">{{ commercial.lost }} projet{{ 's' if commercial.lost > 1 else '' }}</span>
-        </div>
-        {% if commercial.lost_reasons %}
-        <ul class="usage-ranking-list">
-            {% for r in commercial.lost_reasons %}
-            <li class="usage-ranking-row">
-                <span class="usage-ranking-name">{{ r.label }}</span>
-                <span class="usage-ranking-track"><span class="usage-ranking-bar dashboard-lost-bar" data-pct="{{ r.pct }}"></span></span>
-                <span class="usage-ranking-value">{{ r.count }}</span>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        {{ empty_state('thumbs-up', "Aucun abandon enregistré", class_name='empty-state-sm') }}
-        {% endif %}
-    </div>
+    <ul class="usage-pending-list">
+        {% for f in commercial.followups[:8] %}
+        <li>
+            <a href="{{ url_for('admin_projects.admin_project_detail', record_id=f.project.id) }}#commercial-timeline" class="usage-pending-row">
+                <span class="usage-pending-main">
+                    <span class="u-font-semibold u-text-sm">{{ f.project.name }}</span>
+                    <span class="u-text-xs u-text-muted">{{ f.project.production.name if f.project.production else '—' }} · {{ f.last_event.type_label|lower }} le {{ f.last_event.occurred_at.strftime('%d/%m/%Y') }}</span>
+                </span>
+                <span class="badge-pill u-bg-warning-light u-text-warning u-text-xs">{{ f.days_waiting }} j</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% if commercial.followups|length > 8 %}
+    <p class="u-text-xs u-text-muted u-mt-2 u-mb-0">+ {{ commercial.followups|length - 8 }} autre{{ 's' if commercial.followups|length - 8 > 1 else '' }} devis à relancer.</p>
+    {% endif %}
 </div>
+{% endif %}
 {% endif %}
 {% endblock %}

@@ -14,6 +14,7 @@ from .dashboard import dashboard_bp
 from .files import files_bp
 from .fleet import fleet_bp
 from .incidents import incidents_bp
+from .indicators import indicators_bp
 from .mcp_tokens import mcp_tokens_bp
 from .newsletter import newsletter_bp
 from .preview import preview_bp
@@ -29,6 +30,7 @@ ADMIN_BLUEPRINTS = [
     auth_bp,
     files_bp,
     dashboard_bp,
+    indicators_bp,
     fleet_bp,
     checkpoints_bp,
     checkouts_bp,

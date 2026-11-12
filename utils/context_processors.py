@@ -123,6 +123,7 @@ _NAV_MANAGER = _NAV_COMMERCIAL | {
 }
 
 _NAV_ADMINISTRATEUR = _NAV_MANAGER | {
+    "indicators",
     "vehicles",
     "checkpoints",
     "settings",
@@ -189,7 +190,7 @@ ACTION_PERMISSIONS = {
     "fleet_checkpoints_config": _ROLES_ADMIN,
     # Couleur d'identification fixe d'un véhicule / d'une tête
     "fleet_equipment_color": _ROLES_SALES,
-    # Statistiques d'utilisation du matériel (page Flotte) et projets à pointer (tableau de bord)
+    # Statistiques d'utilisation du matériel (page Indicateurs) et projets à pointer (tableau de bord)
     "equipment_usage_admin": _ROLES_ADMIN,
     # Tarification
     "pricing_edit": _ROLES_ADMIN,

@@ -197,6 +197,8 @@ def search_navigation_and_actions(
     pages_and_actions = [
         {"title": "Tableau de bord", "subtitle": "Vue d'ensemble", "url": url_for(
             "admin_dashboard.admin_dashboard"), "category": "Navigation", "entity_type": "page", "icon": "layout-dashboard", "roles": ['all']},
+        {"title": "Indicateurs", "subtitle": "Commercial, utilisation du matériel, incidents", "url": url_for(
+            "admin_indicators.admin_indicators"), "category": "Navigation", "entity_type": "page", "icon": "chart-column", "roles": ['admin']},
         {"title": "Nouveau Projet", "subtitle": "Créer un nouveau tournage", "url": url_for(
             "admin_projects.admin_project_new"), "category": "Actions", "entity_type": "action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
         {"title": "Projets (Tous)", "subtitle": "Tournages en préparation ou en cours", "url": url_for(

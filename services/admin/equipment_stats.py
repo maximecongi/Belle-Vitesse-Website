@@ -263,7 +263,7 @@ def send_usage_reminder_digest(today=None, base_url=None, dry_run=False):
         f"- {p['name']} ({p['production']}) : {p['pending_days']} jour(s) à pointer — {p['url']}" for p in projects
     ])
     context = {"projects": projects, "total_days": total, "window_days": DIGEST_WINDOW_DAYS,
-               "dashboard_url": root + url_for("admin_dashboard.admin_dashboard") + "#utilisation-materiel"}
+               "dashboard_url": root + url_for("admin_dashboard.admin_dashboard") + "#projets-a-pointer"}
     for to in recipients:
         if EmailService.send_templated_email(
             to_email=to, subject=subject, template_name="emails/equipment_usage_digest.html",

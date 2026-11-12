@@ -293,6 +293,34 @@ class IncidentsTestCase(BaseTestCase):
         self.assertEqual(resp_new.status_code, 302)
         self.assertTrue(resp_new.headers.get("Location", "").endswith("/admin/dashboard"))
 
+    def test_incident_stats_over_period(self):
+        """Indicateurs incidents d'une période : déclarés, délai de résolution, coût, répartitions, ouverts."""
+        from datetime import datetime, timedelta
+        from services.admin.incidents.stats import incident_stats
+
+        today = date(2026, 6, 15)
+        db.session.add_all([
+            Incident(title="Choc", project_id=self.project.id, incident_date=today - timedelta(days=10),
+                     category="carrosserie", severity="critique", status="signale", shooting_impact="retard"),
+            Incident(title="Batterie", project_id=self.project.id, incident_date=today - timedelta(days=40),
+                     category="electrique", severity="mineur", status="resolu", shooting_impact="aucun",
+                     resolved_at=datetime(2026, 5, 10, 12, 0), actual_cost=300),
+            Incident(title="Ancien", project_id=self.project.id, incident_date=today - timedelta(days=500),
+                     category="carrosserie", severity="critique", status="cloture", actual_cost=9999),
+        ])
+        db.session.commit()
+
+        st = incident_stats(today - timedelta(days=364), today)
+        self.assertEqual((st["open"], st["open_critical"]), (1, 1))  # instantané
+        self.assertEqual((st["declared"], st["declared_critical"]), (2, 1))
+        self.assertEqual(st["avg_days_to_resolve"], 4)  # 6 mai → 10 mai
+        self.assertEqual(st["actual_cost"], 300.0)
+        self.assertEqual({r["key"] for r in st["by_category"]}, {"carrosserie", "electrique"})
+
+        # Sur 30 jours : seul « Choc » est déclaré, aucune résolution
+        st = incident_stats(today - timedelta(days=29), today)
+        self.assertEqual((st["declared"], st["resolved_sample"], st["avg_days_to_resolve"]), (1, 0, None))
+
     def test_automatic_transition_on_contradictory_seal(self):
         """Vérifie que le scellement contradictoire fait passer le statut de 'signale' à 'en_expertise'."""
         inc = incident_service.create_incident({

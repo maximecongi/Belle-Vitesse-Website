@@ -1487,57 +1487,9 @@
 
 
 /* ══════════════════════════════════════════════════════════════════
-   UTILISATION DU MATÉRIEL — page Flotte (administrateurs)
-   Barres neutres (encre ERP) : l'identité du matériel est portée par sa pastille de couleur.
-   Largeurs via --pct (static/js/src/admin/data-bars.js).
+   CLASSEMENTS EN BARRES HORIZONTALES (page Indicateurs, fiche matériel)
+   Barres neutres (encre ERP) par défaut ; largeurs via --pct (static/js/src/admin/data-bars.js).
    ══════════════════════════════════════════════════════════════════ */
-.fleet-usage-grid {
-    display: grid;
-    grid-template-columns: minmax(220px, 1fr) minmax(320px, 2.4fr);
-    gap: 1rem;
-    align-items: start;
-}
-
-@media (max-width: 800px) {
-    .fleet-usage-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.fleet-usage-kpi-value {
-    font-size: 2.25rem;
-    font-weight: 700;
-    line-height: 1.1;
-    margin-top: 0.4rem;
-    color: #0f172a;
-    font-variant-numeric: tabular-nums;
-}
-
-.fleet-usage-kpi-value span {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #64748b;
-    margin-left: 2px;
-}
-
-.fleet-usage-kpi-value.is-empty {
-    color: #94a3b8;
-}
-
-.fleet-usage-meter {
-    height: 6px;
-    margin-top: 0.75rem;
-    background: #f1f5f9;
-    overflow: hidden;
-}
-
-.fleet-usage-meter-fill {
-    display: block;
-    height: 100%;
-    width: var(--pct, 0%);
-    background: #334155;
-}
-
 /* Classement horizontal */
 .usage-ranking-list {
     list-style: none;

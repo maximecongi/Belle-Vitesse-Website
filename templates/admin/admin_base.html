@@ -159,6 +159,7 @@
                 </div>
 
                 {{ nav_item(url_for('admin_dashboard.admin_dashboard'), 'Tableau de bord', 'dashboard', icon='layout-dashboard') }}
+                {{ nav_item(url_for('admin_indicators.admin_indicators'), 'Indicateurs', 'indicators', icon='chart-column') }}
 
                 {% call nav_group('Projets', 'projets', 'clapperboard', ['projects', 'archives', 'reports', 'booking', 'productions', 'contacts']) %}
                 {{ nav_item(url_for('admin_projects.admin_projects_list'), 'Projets', 'projects') }}
