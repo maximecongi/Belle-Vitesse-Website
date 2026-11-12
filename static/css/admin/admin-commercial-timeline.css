@@ -212,6 +212,7 @@
 
 .ctl-dot.is-selected {
     box-shadow: 0 0 0 3px var(--ctl-dot-ring);
+    border-color: transparent;
     z-index: 2;
 }
 
@@ -543,14 +544,33 @@
 
 /* Choix « Déjà eu lieu / À venir » en tête de la modale */
 .ctl-when {
+    position: relative;
     display: grid;
     grid-template-columns: 1fr 1fr;
     border: 1px solid var(--grey-border, #E0E0E0);
     margin-bottom: 1rem;
+    background: white;
+}
+
+/* Interrupteur : un curseur noir glisse sous l'option choisie (même rendu des deux côtés) */
+.ctl-when::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 50%;
+    background: #111;
+    transition: transform 0.2s ease;
+}
+
+.ctl-when:has(input[value="1"]:checked)::before {
+    transform: translateX(100%);
 }
 
 .ctl-when-option {
     position: relative;
+    z-index: 1;
     cursor: pointer;
 }
 
@@ -568,8 +588,8 @@
     padding: 0.55rem 0.75rem;
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--status-neutral-text);
-    transition: background 0.15s ease;
+    color: var(--status-neutral);
+    transition: color 0.2s ease;
 }
 
 .ctl-when-option span .lucide,
@@ -578,19 +598,17 @@
     height: 15px;
 }
 
-.ctl-when-option input:checked+span {
-    background: var(--status-neutral-bg);
+.ctl-when-option:hover input:not(:checked)+span {
     color: #111;
 }
 
-.ctl-when-option input[value="1"]:checked+span {
-    background: var(--status-info-bg);
-    color: var(--status-info-text);
+.ctl-when-option input:checked+span {
+    color: white;
 }
 
 .ctl-when-option input:focus-visible+span {
-    outline: 2px solid var(--status-info);
-    outline-offset: -2px;
+    outline: 2px solid var(--status-neutral);
+    outline-offset: 2px;
 }
 
 /* Zone « à venir » à droite du repère Aujourd'hui (pas de bordure colorée : fond seul) */
@@ -619,7 +637,7 @@
    en retard : orange (à confirmer) */
 .ctl-dot.is-planned,
 .ctl-detail-icon.is-planned {
-    border: 2px dashed var(--ctl-dot-ring);
+    border: 1px dashed var(--ctl-dot-ring);
     box-shadow: none;
 }
 
@@ -628,12 +646,13 @@
     --ctl-dot-bg: var(--status-warning-bg);
     --ctl-dot-fg: var(--status-warning-text);
     --ctl-dot-ring: var(--status-warning);
-    border: 2px dashed var(--status-warning);
+    border: 1px dashed var(--status-warning);
     box-shadow: none;
 }
 
 .ctl-dot.is-planned.is-selected,
 .ctl-dot.is-late.is-selected {
+    border-color: transparent;
     box-shadow: 0 0 0 3px var(--ctl-dot-ring);
 }
 
