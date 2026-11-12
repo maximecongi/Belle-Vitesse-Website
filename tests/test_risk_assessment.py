@@ -260,6 +260,49 @@ class RiskAssessmentComprehensiveTest(BaseTestCase):
         self.assertEqual(res_verify.status_code, 200)
         self.assertIn(b"Analyse des Risques BVRA", res_verify.data)
 
+    def test_risk_assessment_signature_routes_to_waiver_post_actions(self):
+        """Un BVRA signé doit déclencher les post-traitements décharge (kDrive + e-mail), pas ceux d'inspection."""
+        from unittest.mock import patch
+
+        project = self._create_mock_project()
+        ok, msg = create_risk_assessment_waiver(
+            project_id=project.id,
+            signer_role="location_manager",
+            signer_first_name="Claire",
+            signer_last_name="Régisseuse",
+            signer_email="claire@prod.com",
+        )
+        self.assertTrue(ok, msg)
+        waiver = RiskAssessmentWaiver.query.filter_by(project_id=project.id).first()
+        ok_send, send_msg = send_risk_assessment_waiver(waiver.waiver_id)
+        self.assertTrue(ok_send, send_msg)
+        token_obj = WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).first()
+
+        payload = {
+            "signature": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+            "first_name": "Claire",
+            "last_name": "Régisseuse",
+            "email": "claire@prod.com",
+            "phone": "0600000000",
+            "role": "location_manager",
+            "role_custom": "",
+            "entity_type": "freelance",
+            "ack_risk_assessment": True,
+        }
+        with patch("services.common.pdf_tasks.dispatch_pdf_generation") as mock_dispatch:
+            res = self.client.post(
+                f"/sign/risk-assessment/{token_obj.token}",
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+        self.assertEqual(res.status_code, 200)
+        mock_dispatch.assert_called_once()
+        kwargs = mock_dispatch.call_args.kwargs
+        self.assertEqual(kwargs["entity_type"], "waiver")
+        self.assertEqual(kwargs["post_action"], "waiver_post_actions")
+        self.assertEqual(kwargs["entity_id"], waiver.waiver_id)
+        self.assertEqual(kwargs["extra_context"]["mode"], "risk_assessment")
+
     def test_risk_assessment_roles_labels(self):
         """Vérifie le mapping et libellé de tous les rôles acceptés pour le BVRA."""
         roles_expectations = {

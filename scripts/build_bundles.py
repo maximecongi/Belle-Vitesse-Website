@@ -94,6 +94,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/contact-picker.js",
     "js/src/admin/commercial-timeline.js",
     "js/src/admin/project-form.js",
+    "js/src/admin/project-billing.js",
     "js/src/admin/project-locations.js",
     "js/src/admin/project-form-layout.js",
     "js/src/admin/checkpoints.js",

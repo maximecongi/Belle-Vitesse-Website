@@ -11,13 +11,22 @@ PROJECT_SUBFOLDERS = [
     "6_INCIDENTS",
 ]
 
+SECURITY_SUBFOLDERS = [
+    "1_CHECKOUTS",
+    "2_RÈGLES_SÉCURITÉ",
+    "3_CGL",
+    "4_ATTESTATIONS_PILOTES",
+    "5_RISK_ASSESSMENTS",
+    "6_CHECKINS",
+]
+
 DOC_FOLDERS = {
     "checkout": "4_SÉCURITÉ/1_CHECKOUTS",
     "safety_rules": "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ",
     "cgl": "4_SÉCURITÉ/3_CGL",
     "pilot_waiver": "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES",
-    "checkin": "4_SÉCURITÉ/5_CHECKINS",
-    "risk_assessment": "4_SÉCURITÉ/6_RISK_ASSESSMENTS",
+    "risk_assessment": "4_SÉCURITÉ/5_RISK_ASSESSMENTS",
+    "checkin": "4_SÉCURITÉ/6_CHECKINS",
     "incident": "6_INCIDENTS",
 }
 

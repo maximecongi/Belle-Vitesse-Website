@@ -293,6 +293,58 @@
                     </div>
                 </div>
             </section>
+
+            <!-- ⑥ FACTURATION -->
+            <section class="admin-card pf-section" id="pf-section-facturation" data-pf-section data-billing>
+                <h2 class="pf-section-title">Facturation</h2>
+                <p class="pf-billing-hint">Montants HT. Le chiffre d'affaires est compté à la date de la facture
+                    (« Facture émise » dans la timeline commerciale).</p>
+                {% set eb = data.equipment_billing if (data and data.equipment_billing is mapping) else {} %}
+
+                <div class="form-group pf-billing-total">
+                    <label class="form-label" for="pfBillingAmount">Montant global du projet</label>
+                    <div class="pf-amount">
+                        <input type="text" inputmode="decimal" id="pfBillingAmount" name="billing_amount"
+                            class="form-input" placeholder="0" autocomplete="off" data-billing-total
+                            value="{{ (data.get('billing_amount') if data and data.get is defined else '') or '' }}">
+                        <span class="pf-amount-unit">€ HT</span>
+                    </div>
+                </div>
+
+                <div class="pf-subtitle">Par matériel</div>
+                <p class="pf-billing-empty u-text-sm u-text-muted" data-billing-empty>Sélectionnez des véhicules ou des têtes
+                    dans la section Matériel pour saisir leur facturation.</p>
+                <ul class="pf-billing-list">
+                    {% for kind, items in (('vehicle', vehicles), ('head', heads)) %}
+                    {% for it in items %}
+                    {% set key = kind ~ ':' ~ it.id %}
+                    {% set is_selected = data and ((data.vehicle_ids if kind == 'vehicle' else data.head_ids) or []) and
+                    (it.id in (data.vehicle_ids if kind == 'vehicle' else data.head_ids) or (it.id|string) in
+                    (data.vehicle_ids if kind == 'vehicle' else data.head_ids)) %}
+                    <li class="pf-billing-row" data-billing-row data-billing-type="{{ kind }}" data-billing-id="{{ it.id }}"
+                        {% if not is_selected %}hidden{% endif %}>
+                        <label class="pf-billing-name" for="pfBilling-{{ kind }}-{{ loop.index }}">
+                            <i data-lucide="{{ 'car' if kind == 'vehicle' else 'camera' }}"></i>
+                            {{ it.fields.get('name', '—') if it.fields else '—' }}
+                        </label>
+                        <div class="pf-amount">
+                            <input type="text" inputmode="decimal" id="pfBilling-{{ kind }}-{{ loop.index }}"
+                                name="equipment_billing[{{ key }}]" class="form-input" placeholder="0" autocomplete="off"
+                                data-billing-amount value="{{ eb.get(key) or (data.get('equipment_billing[' ~ key ~ ']') if data and data.get is defined else '') or '' }}" {% if not is_selected %}disabled{% endif %}>
+                            <span class="pf-amount-unit">€ HT</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% endfor %}
+                </ul>
+
+                <dl class="pf-billing-summary">
+                    <div><dt>Matériel</dt><dd data-billing-equipment>—</dd></div>
+                    <div><dt>Autres prestations</dt><dd data-billing-other>—</dd></div>
+                </dl>
+                <p class="pf-billing-error u-text-sm" data-billing-error hidden>
+                    La somme du matériel dépasse le montant global.</p>
+            </section>
         </form>
     </div>
 
@@ -330,6 +382,7 @@
                 <a href="#pf-section-materiel" class="pf-nav-link" data-pf-step="materiel"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">3</span><i data-lucide="check"></i></span><span class="pf-nav-label">Matériel</span></a>
                 <a href="#pf-section-equipe" class="pf-nav-link" data-pf-step="equipe"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">4</span><i data-lucide="check"></i></span><span class="pf-nav-label">Équipe</span></a>
                 <a href="#pf-section-lieux" class="pf-nav-link" data-pf-step="lieux"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">5</span><i data-lucide="check"></i></span><span class="pf-nav-label">Lieux &amp; notes</span></a>
+                <a href="#pf-section-facturation" class="pf-nav-link" data-pf-step="facturation"><span class="pf-nav-marker" aria-hidden="true"><span class="pf-nav-num">6</span><i data-lucide="check"></i></span><span class="pf-nav-label">Facturation</span></a>
             </nav>
         </div>
     </aside>

@@ -105,8 +105,8 @@ class KDrivePathsTestCase(unittest.TestCase):
         self.assertEqual(build_document_directory_path(p, "checkout", "BVCO-1111", "pdf"), "4_SÉCURITÉ/1_CHECKOUTS/BVCO-1111")
         self.assertEqual(build_document_directory_path(p, "checkout", "BVCO-1111", "photo"), "4_SÉCURITÉ/1_CHECKOUTS/BVCO-1111/PHOTOS")
         # Checkin
-        self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "pdf"), "4_SÉCURITÉ/5_CHECKINS/BVCI-2222")
-        self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "photo"), "4_SÉCURITÉ/5_CHECKINS/BVCI-2222/PHOTOS")
+        self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "pdf"), "4_SÉCURITÉ/6_CHECKINS/BVCI-2222")
+        self.assertEqual(build_document_directory_path(p, "checkin", "BVCI-2222", "photo"), "4_SÉCURITÉ/6_CHECKINS/BVCI-2222/PHOTOS")
         # CGL
         self.assertEqual(build_document_directory_path(p, "cgl", "BVTC-3333", "pdf"), "4_SÉCURITÉ/3_CGL/BVTC-3333/1_CGL")
         self.assertEqual(build_document_directory_path(p, "cgl", "BVTC-3333", "insurance"), "4_SÉCURITÉ/3_CGL/BVTC-3333/2_ATTESTATION_ASSURANCE")

@@ -52,6 +52,23 @@ class PeriodTest(BaseTestCase):
         self.assertEqual(delta(3, 3)["tone"], "neutral")
         self.assertIsNone(delta(None, 4))
         self.assertEqual(delta(1500.0, 300.0, " €", better="down", money=True)["text"], "+1 200 €")
+        self.assertEqual(delta(5, 3, " j", better=None)["tone"], "neutral")  # écart sans bon ni mauvais sens
+
+    def test_median_shoot_days(self):
+        from services.admin.indicators import _median_shoot_days
+        prod = self.create_production("Prod Médiane")
+        projects = [
+            Project(name=n, production_id=prod.id, shoot_start_date=date(2026, 10, d),
+                    shoot_end_date=date(2026, 10, d + k - 1), commercial_status=status)
+            for n, d, k, status in (("A", 1, 2, "confirmed"), ("B", 5, 7, "confirmed"), ("C", 20, 1, None),
+                                    ("D", 22, 4, "confirmed"), ("Perdu", 3, 9, "lost"))
+        ]
+        db.session.add_all(projects)
+        db.session.commit()
+        oct_ = (date(2026, 10, 1), date(2026, 10, 31))
+        self.assertEqual(_median_shoot_days(projects, *oct_), (3, 4))  # 1, 2, 4, 7 → 3 ; abandon exclu
+        self.assertEqual(_median_shoot_days(projects[:3], *oct_), (2, 3))
+        self.assertEqual(_median_shoot_days(projects[:2], *oct_), (4.5, 2))
 
 
 class CommercialIndicatorsTest(BaseTestCase):
@@ -67,7 +84,7 @@ class CommercialIndicatorsTest(BaseTestCase):
             add_commercial_event(p.id, event_type=ev_type, date_str=day, now=NOW, **extra)
         return p
 
-    def test_window_counts_funnel_and_comparison(self):
+    def test_window_counts_statuses_and_comparison(self):
         self._project("A", [("first_request", "2026-10-20", {}), ("quote_sent", "2026-10-22", {}),
                             ("confirmed", "2026-10-30", {})])
         self._project("B", [("first_request", "2026-10-25", {}), ("lost", "2026-11-02", {"lost_reason": "price"})])
@@ -82,13 +99,72 @@ class CommercialIndicatorsTest(BaseTestCase):
         self.assertEqual(c["deltas"]["conversion_rate"]["text"], "−50 pts")  # 100 % le mois précédent
         self.assertEqual(c["deltas"]["avg_days_to_confirm"]["tone"], "bad")  # 10 j contre 5 j
         self.assertEqual(c["deltas"]["new"]["text"], "+2")
-        self.assertEqual([s["count"] for s in c["funnel"]["stages"]], [3, 1, 1])
-        self.assertEqual((c["funnel"]["lost"], c["funnel"]["open"]), (1, 1))
+        # Répartition par statut actuel des 3 demandes reçues sur la période
+        counts = {r["key"]: r["count"] for r in c["by_status"]["rows"]}
+        self.assertEqual((counts["prospect"], counts["confirmed"], counts["lost"], counts["paid"]), (1, 1, 1, 0))
+        self.assertEqual(c["by_status"]["total"], 3)
         self.assertEqual([r["key"] for r in c["lost_reasons"]], ["price"])
         # Évolution : 4 demandes (sept., oct. ×2, nov.), confirmations en sept. et oct.
         totals = {col["label"]: [pt["value"] for pt in col["points"]] for col in c["chart"]["columns"]}
         self.assertEqual(totals["oct."], [2, 1])
         self.assertEqual(totals["sept."], [1, 1])
+
+
+class CommercialRevenueTest(BaseTestCase):
+    """CA facturé (fiche projet), compté à la date de la facture ; agenda des échanges planifiés."""
+
+    def setUp(self):
+        super().setUp()
+        self.prod = self.create_production("Prod CA")
+        db.session.add_all([
+            Vehicle(id="rec_erover", fields={"name": "eRover"}, display_order=0),
+            Vehicle(id="rec_erider", fields={"name": "eRider"}, display_order=1),
+        ])
+        db.session.commit()
+
+    def _project(self, name, vehicles, amount, equipment, events):
+        p = Project(name=name, production_id=self.prod.id, vehicles_to_check=vehicles,
+                    billing_amount=amount, equipment_billing=equipment)
+        db.session.add(p)
+        db.session.commit()
+        for ev_type, day, extra in events:
+            add_commercial_event(p.id, event_type=ev_type, date_str=day, now=NOW, **extra)
+        return p
+
+    def test_revenue_counted_at_invoice_date_with_equipment_breakdown(self):
+        self._project("Facturé", "rec_erover,rec_erider", 10000, {"vehicle:rec_erover": 6000, "vehicle:rec_erider": 2500},
+                      [("first_request", "2026-09-01", {}), ("confirmed", "2026-09-10", {}),
+                       ("invoice_sent", "2026-10-25", {})])
+        # Matériel non engagé ignoré ; montant global absent → somme du matériel
+        self._project("Sans global", "rec_erider", None, {"vehicle:rec_erider": 1500, "vehicle:rec_erover": 999},
+                      [("first_request", "2026-09-01", {}), ("invoice_sent", "2026-11-02", {})])
+        self._project("Sans montant", "", None, None,
+                      [("first_request", "2026-09-01", {}), ("invoice_sent", "2026-11-03", {})])
+        # Facturé avant la période : compte pour la comparaison
+        self._project("Ancien", "rec_erover", 4000, {"vehicle:rec_erover": 4000},
+                      [("first_request", "2026-08-01", {}), ("invoice_sent", "2026-09-20", {})])
+
+        period = resolve_period("30d", TODAY)
+        c = commercial_indicators(period, last_12_months(period), now=NOW)
+        self.assertEqual(c["revenue"], 11500)
+        self.assertEqual((c["invoiced_count"], c["invoiced_without_amount"]), (3, 1))
+        self.assertEqual(c["deltas"]["revenue"]["text"], "+7\u202f500 €")
+        rbe = c["revenue_by_equipment"]
+        self.assertEqual([(r["name"], r["count"]) for r in rbe["rows"]], [("eRover", 6000), ("eRider", 4000)])
+        self.assertEqual(rbe["share"], 87)  # 10 000 € de matériel sur 11 500 €
+        self.assertEqual(rbe["other_label"], "1\u202f500\u202f€")
+
+    def test_agenda_lists_overdue_today_and_next_days(self):
+        p = self._project("Agenda", "", None, None, [("first_request", "2026-10-01", {})])
+        # Planifiés le 1er novembre ; le 10 est donc en retard au 12
+        for day in ("2026-11-10", "2026-11-12", "2026-11-15", "2026-12-30"):
+            add_commercial_event(p.id, event_type="call_out", date_str=day, now=datetime(2026, 11, 1, 9, 0),
+                                 is_planned=True)
+        period = resolve_period("30d", TODAY)
+        rows = commercial_indicators(period, last_12_months(period), now=NOW)["agenda"]["rows"]
+        self.assertEqual([(r["badge"], r["tone"]) for r in rows],
+                         [("En retard · 2 j", "danger"), ("Aujourd'hui", "warning"), ("J+3", "info")])
+        self.assertEqual(rows[0]["action"], "Appel émis")
 
 
 class EquipmentIndicatorsTest(BaseTestCase):
@@ -124,6 +200,11 @@ class EquipmentIndicatorsTest(BaseTestCase):
         self.assertEqual(e["pending_projects"], 1)
         self.assertIsNone(e["deltas"]["usage_rate"])  # rien de pointé sur la période précédente
         self.assertEqual(e["deltas"]["used_days"]["text"], "+3 j")
+        self.assertEqual(e["top"]["name"], "eRider")
+        # Un seul tournage (3 jours) commencé sur la période ; rien sur la précédente
+        self.assertEqual((e["median_shoot_days"], e["median_sample"], e["median_shoot_days_label"]), (3, 1, "3 j"))
+        self.assertIsNone(e["deltas"]["median_shoot_days"])
+        self.assertTrue(e["top"]["color"])
 
 
 class IndicatorsPageTest(BaseTestCase):
@@ -154,3 +235,14 @@ class IndicatorsPageTest(BaseTestCase):
         html = self.client.get("/admin/indicators").get_data(as_text=True)
         self.assertIn('aria-current="true">12 mois', html)
         self.assertRegex(html, r'data-ind-tab="commercial"[^>]*aria-selected="true"')
+
+    def test_new_widgets_rendered(self):
+        self._login("Administrateur")
+        html = self.client.get("/admin/indicators?tab=equipment").get_data(as_text=True)
+        self.assertNotIn("indisponibles", html)
+        for text in ("Chiffre d&#39;affaires", "Répartition par statut", "Motifs d'abandon",
+                     "Agenda des échanges · 7 jours", "Devis à relancer (&gt;", "Chiffre d&#39;affaires par matériel",
+                     "Matériel le plus utilisé", "Projets à pointer", 'class="ind-gauge'):
+            self.assertIn(text, html)
+        self.assertIn('class="ind-kpis ind-kpis--5"', html)
+

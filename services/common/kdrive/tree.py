@@ -12,6 +12,7 @@ from services.common.kdrive.client import KDriveError
 from services.common.kdrive.config import KDRIVE_ROOT_FOLDER_ID
 from services.common.kdrive.paths import (
     PROJECT_SUBFOLDERS,
+    SECURITY_SUBFOLDERS,
     build_project_path,
     build_project_rel_path,
     clean_segment,
@@ -40,7 +41,8 @@ class ProjectTreeMixin:
         │   ├── 2_RÈGLES_SÉCURITÉ/
         │   ├── 3_CGL/
         │   ├── 4_ATTESTATIONS_PILOTES/
-        │   └── 5_CHECKINS/
+        │   ├── 5_RISK_ASSESSMENTS/
+        │   └── 6_CHECKINS/
         ├── 5_BTS/
         └── 6_INCIDENTS/
 
@@ -91,10 +93,10 @@ class ProjectTreeMixin:
         for sub in PROJECT_SUBFOLDERS:
             sub_res = self.client.create_directory(
                 parent_id=project_folder_id, name=sub)
-            # Pour 4_SÉCURITÉ, créer également ses 5 sous-catégories
+            # Pour 4_SÉCURITÉ, créer également ses sous-catégories
             if sub == "4_SÉCURITÉ":
                 sec_id = sub_res["id"]
-                for sec_sub in ["1_CHECKOUTS", "2_RÈGLES_SÉCURITÉ", "3_CGL", "4_ATTESTATIONS_PILOTES", "5_CHECKINS"]:
+                for sec_sub in SECURITY_SUBFOLDERS:
                     self.client.create_directory(
                         parent_id=sec_id, name=sec_sub)
 
@@ -111,7 +113,7 @@ class ProjectTreeMixin:
 
     def check_and_repair_project_structure(self, project: Project, dry_run: bool = False) -> List[str]:
         """
-        Vérifie que l'ensemble de l'arborescence standard (6 sous-dossiers + 4 sous-dossiers de sécurité)
+        Vérifie que l'ensemble de l'arborescence standard (6 sous-dossiers + sous-dossiers de sécurité)
         est bien présente dans le dossier kDrive du projet. Recrée automatiquement tout dossier manquant.
         Retourne la liste des dossiers qui ont dû être réparés/recréés (ou détectés manquants en dry-run).
         """
@@ -149,7 +151,7 @@ class ProjectTreeMixin:
                 sec_items, _, _ = self.client.list_files(sec_id, limit=50)
                 existing_sec = {item["name"]
                                 for item in sec_items if item.get("type") == "dir"}
-                for sec_sub in ["1_CHECKOUTS", "2_RÈGLES_SÉCURITÉ", "3_CGL", "4_ATTESTATIONS_PILOTES", "5_CHECKINS"]:
+                for sec_sub in SECURITY_SUBFOLDERS:
                     if sec_sub not in existing_sec:
                         if dry_run:
                             logger.info(

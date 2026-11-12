@@ -48,15 +48,11 @@
     color: var(--grey-1);
 }
 
+/* Onglet actif : soulignement jaune Belle Vitesse, identique pour tous les domaines */
 .ind-tab[aria-selected="true"] {
     color: var(--grey-1);
-    border-bottom-color: var(--grey-1);
+    border-bottom-color: var(--admin-accent);
 }
-
-/* Soulignement de l'onglet actif à la couleur du domaine (Commercial : bleu · Matériel : vert) */
-.ind-tab--commercial[aria-selected="true"] { border-bottom-color: var(--entity-checkin); }
-.ind-tab--equipment[aria-selected="true"] { border-bottom-color: var(--entity-checkout); }
-.ind-tab--incidents[aria-selected="true"] { border-bottom-color: var(--entity-incident); }
 
 .ind-tab:focus-visible {
     outline: 2px solid var(--grey-1);
@@ -80,7 +76,7 @@
     white-space: nowrap;
 }
 
-.ind-period + .ind-period {
+.ind-period+.ind-period {
     border-left: 1px solid var(--grey-border, #E0E0E0);
 }
 
@@ -137,6 +133,8 @@
 .ind-kpi {
     display: flex;
     flex-direction: column;
+    border-left: 0;
+    /* pas de bordure gauche sur la page Indicateurs */
 }
 
 .ind-kpi .admin-kpi-value {
@@ -184,9 +182,17 @@
     stroke-width: 2.5;
 }
 
-.ind-delta--good { color: var(--status-success-text); }
-.ind-delta--bad { color: var(--status-danger-text); }
-.ind-delta--neutral { color: var(--status-neutral-text); }
+.ind-delta--good {
+    color: var(--status-success-text);
+}
+
+.ind-delta--bad {
+    color: var(--status-danger-text);
+}
+
+.ind-delta--neutral {
+    color: var(--status-neutral-text);
+}
 
 .ind-delta--instant,
 .ind-delta--none {
@@ -232,11 +238,51 @@
 }
 
 /* Couleurs des barres horizontales */
-.usage-ranking-bar.ind-bar--ink { background: var(--grey-1); }
-.usage-ranking-bar.ind-bar--commercial { background: var(--entity-checkin); }
-.usage-ranking-bar.ind-bar--equipment { background: var(--entity-checkout); }
-.usage-ranking-bar.ind-bar--danger { background: var(--status-danger); }
-.usage-ranking-bar.ind-bar--warning { background: var(--status-warning); }
+.usage-ranking-bar.ind-bar--ink {
+    background: var(--grey-1);
+}
+
+.usage-ranking-bar.ind-bar--muted {
+    background: var(--status-neutral);
+}
+
+/* Barres à la couleur du matériel (pastilles .eq-color-* : --usage-color) */
+.usage-ranking-bar.ind-bar--color {
+    background: var(--usage-color, var(--grey-1));
+}
+
+/* Répartition par statut commercial : une couleur par statut */
+.usage-ranking-bar.ind-bar--status-prospect {
+    background: var(--entity-checkin);
+}
+
+.usage-ranking-bar.ind-bar--status-quote_sent {
+    background: var(--entity-project);
+}
+
+.usage-ranking-bar.ind-bar--status-confirmed {
+    background: var(--status-success);
+}
+
+.usage-ranking-bar.ind-bar--status-invoiced {
+    background: var(--entity-waiver);
+}
+
+.usage-ranking-bar.ind-bar--status-paid {
+    background: var(--entity-checkout);
+}
+
+.usage-ranking-bar.ind-bar--status-lost {
+    background: var(--status-danger);
+}
+
+.usage-ranking-bar.ind-bar--danger {
+    background: var(--status-danger);
+}
+
+.usage-ranking-bar.ind-bar--warning {
+    background: var(--status-warning);
+}
 
 /* ── Entonnoir commercial ── */
 .ind-funnel {
@@ -321,7 +367,8 @@
     justify-content: center;
     gap: 2px;
     width: 100%;
-    height: 1rem; /* hauteur fixe : un mois avec valeur ne décale pas son axe */
+    height: 1rem;
+    /* hauteur fixe : un mois avec valeur ne décale pas son axe */
     line-height: 1rem;
 }
 
@@ -350,6 +397,8 @@
     max-width: 22px;
     height: var(--pct, 0%);
     min-height: 0;
+    border-radius: 4px 4px 0 0;
+    /* colonnes sans bordure : coins supérieurs adoucis */
 }
 
 .ind-month-label {
@@ -368,10 +417,16 @@
 }
 
 /* Couleurs des séries */
-.ind-month-bar--requests { background: var(--entity-checkin); }
-.ind-month-bar--used { background: var(--entity-checkout); }
-.ind-month-bar--won { background: var(--status-success); }
-.ind-month-bar--declared { background: var(--entity-incident); }
+/* Histogramme : teintes douces des couleurs BV (série principale jaune BV, confirmations vert BV) */
+.ind-month-bar--requests,
+.ind-month-bar--used,
+.ind-month-bar--declared {
+    background: var(--status-neutral-border);
+}
+
+.ind-month-bar--won {
+    background: color-mix(in srgb, var(--green-1, #618B4A) 60%, white);
+}
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
@@ -413,5 +468,144 @@
 
     .ind-month-value {
         display: none;
+    }
+}
+
+/* ── Commercial : 5 KPI ── */
+.ind-kpis--5 {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+/* ── Sous-partie d'une carte (motifs d'abandon, devis à relancer) ── */
+.ind-card-section {
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--grey-border, #E0E0E0);
+}
+
+.ind-card-subtitle {
+    margin-bottom: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+}
+
+/* ── Tableaux compacts dans les cartes ── */
+.ind-table {
+    width: 100%;
+    font-size: 0.88rem;
+}
+
+.ind-table th,
+.ind-table td {
+    padding: 0.55rem 0.5rem;
+}
+
+.ind-table td a {
+    color: var(--grey-1);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.ind-table td a:hover {
+    text-decoration: underline;
+}
+
+.ind-table-num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.ind-table-more {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    color: var(--grey-2);
+}
+
+/* Badges d'échéance : En retard · Aujourd'hui · J+n */
+.ind-badge {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.ind-badge--danger {
+    background: var(--entity-incident-bg);
+    color: var(--entity-incident-text);
+}
+
+.ind-badge--warning {
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
+}
+
+.ind-badge--info {
+    background: var(--entity-checkin-bg);
+    color: var(--entity-checkin-text);
+}
+
+.ind-badge--neutral {
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+}
+
+/* ── Jauge circulaire (taux de pointage) : anneau conique alimenté par --pct ── */
+.ind-gauge-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.25rem 0 0;
+}
+
+.ind-gauge {
+    --gauge-color: #15803D;
+    /* vert BV */
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background: conic-gradient(var(--gauge-color) var(--pct, 0%), var(--status-neutral-bg) 0);
+}
+
+.ind-gauge::before {
+    content: "";
+    position: absolute;
+    inset: 16px;
+    border-radius: 50%;
+    background: white;
+}
+
+.ind-gauge-value {
+    position: relative;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--grey-1);
+    font-variant-numeric: tabular-nums;
+}
+
+.ind-gauge-value small {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grey-2);
+}
+
+.ind-gauge-caption {
+    font-size: 0.8rem;
+    color: var(--grey-2);
+}
+
+@media (max-width: 1300px) {
+    .ind-kpis--5 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    .ind-kpis--5 {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

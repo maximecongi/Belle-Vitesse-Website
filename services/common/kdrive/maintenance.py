@@ -139,7 +139,7 @@ class MaintenanceMixin:
         if objects:
             project = objects[0].project
         if not project:
-            if canonical_type in ("cgl", "safety_rules"):
+            if canonical_type in ("cgl", "safety_rules", "pilot_waiver", "risk_assessment"):
                 from models import Waiver
                 rec = Waiver.query.filter_by(waiver_id=entity_id).first()
                 project = rec.project if rec else None

@@ -514,14 +514,15 @@ class KDriveServiceTestCase(BaseTestCase):
         assert "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ" in missing
         assert "4_SÉCURITÉ/3_CGL" in missing
         assert "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES" in missing
-        assert "4_SÉCURITÉ/5_CHECKINS" in missing
+        assert "4_SÉCURITÉ/5_RISK_ASSESSMENTS" in missing
+        assert "4_SÉCURITÉ/6_CHECKINS" in missing
         assert mock_client.create_directory.call_count == 0
     
         # En mode réel : doit créer les manquants
         repaired = service.check_and_repair_project_structure(
             project, dry_run=False)
-        assert len(repaired) == 8
-        assert mock_client.create_directory.call_count == 8
+        assert len(repaired) == 9
+        assert mock_client.create_directory.call_count == 9
     
     
     def test_upload_bundle_sync(self):

@@ -7,14 +7,17 @@ Les indicateurs « instantanés » (devis à relancer, projets à pointer, incid
 la période. L'évolution mensuelle couvre toujours les 12 derniers mois ; les mois qui recoupent la
 période sélectionnée sont signalés (`in_period`).
 
-Chaque domaine expose le même gabarit : 4 KPI, 2 graphiques en barres, 1 évolution mensuelle.
+Chaque domaine expose le même gabarit : une ligne de KPI, des cartes (barres, tableaux, jauge),
+puis une évolution mensuelle. Le chiffre d'affaires vient de la facturation saisie dans la fiche projet
+(montant global + montant par matériel), compté à la date de l'événement « Facture émise ».
 """
 from datetime import date, timedelta
+from statistics import median
 
 from sqlalchemy.orm import selectinload
 
 from models import Head, Project, Vehicle
-from models.commercial_event import LOST_REASON_LABELS
+from models.commercial_event import COMMERCIAL_STATUSES, EVENT_TYPE_LABELS, LOST_REASON_LABELS
 from services.admin.equipment_colors import DEFAULT_COLOR, get_color_map
 from utils.formatting import get_today_paris
 
@@ -169,7 +172,7 @@ def delta(current, previous, unit="", better="up", money=False):
         number = f"{abs(diff):g}"
     sign = "+" if diff > 0 else ("−" if diff < 0 else "±")
     direction = "up" if diff > 0 else ("down" if diff < 0 else "flat")
-    if diff == 0:
+    if diff == 0 or better is None:  # better=None : écart sans « bon » ni « mauvais » sens
         tone = "neutral"
     else:
         tone = "good" if (diff > 0) == (better == "up") else "bad"
@@ -188,7 +191,11 @@ def _project_milestones(project):
     quote = first_of("quote_sent")
     lost = [e for e in events if e.event_type == "lost"]
     is_lost = project.commercial_status == "lost"
+    invoice = first_of("invoice_sent")
     return {
+        "project": project,
+        "status": project.commercial_status,
+        "invoiced": invoice.occurred_at if invoice else None,
         "first": events[0].occurred_at if events else None,
         "confirmed": confirmed.occurred_at if confirmed else None,
         "quoted": bool(quote) or project.commercial_status in WON_COMMERCIAL_STATUSES,
@@ -203,7 +210,13 @@ def _commercial_window(items, start, end):
     won = [i for i in items if i["confirmed"] and _in(i["confirmed"].date(), start, end)]
     lost = [i for i in items if i["lost"] and _in(i["lost"].date(), start, end)]
     delays = [(i["confirmed"] - i["first"]).total_seconds() / 86400 for i in won if i["first"]]
+    invoiced = [i for i in items if i["invoiced"] and _in(i["invoiced"].date(), start, end)]
+    amounts = [i["project"].billing_total for i in invoiced]
     return {
+        "revenue": round(sum(a for a in amounts if a), 2),
+        "invoiced_count": len(invoiced),
+        "invoiced_without_amount": sum(1 for a in amounts if a is None),
+        "invoiced_items": invoiced,
         "new": len(new),
         "won": len(won),
         "lost": len(lost),
@@ -218,8 +231,75 @@ def _commercial_window(items, start, end):
     }
 
 
+def _money(value):
+    """Montant en euros arrondi à l'unité, espaces fines : 148600 → « 148 600 € »."""
+    return f"{value or 0:,.0f}".replace(",", "\u202f") + "\u202f€"
+
+
+def _agenda_rows(agenda, limit=8):
+    """Agenda des échanges (en retard, aujourd'hui, 7 prochains jours) : lignes du tableau, dans l'ordre."""
+    rows = []
+    for group in ("overdue", "today", "upcoming"):
+        for item in agenda[group]:
+            ev, days = item["event"], item["days"]
+            if days < 0:
+                badge, tone = f"En retard · {-days} j", "danger"
+            elif days == 0:
+                badge, tone = "Aujourd'hui", "warning"
+            else:
+                badge, tone = f"J+{days}", "info"
+            rows.append({
+                "id": item["project"].id,
+                "name": item["project"].name,
+                "action": EVENT_TYPE_LABELS.get(ev.event_type, ev.event_type),
+                "summary": ev.summary,
+                "date": _fmt_day(ev.occurred_at.date()),
+                "badge": badge,
+                "tone": tone,
+            })
+    return {"rows": rows[:limit], "hidden": max(len(rows) - limit, 0)}
+
+
+def _revenue_by_equipment(invoiced_items, revenue):
+    """
+    CA facturé par véhicule / tête sur la période (montants saisis par matériel dans la fiche projet),
+    aux couleurs du matériel ; « Autres prestations » = reste des montants globaux.
+    """
+    totals = {}
+    for item in invoiced_items:
+        for key, amount in item["project"].equipment_billing_map.items():
+            totals[key] = totals.get(key, 0) + amount
+    catalog = {f"{eq['type']}:{eq['id']}": eq for eq in _equipment_catalog()}
+    rows = []
+    for key, amount in totals.items():
+        eq = catalog.get(key)
+        eq_type, _, eq_id = key.partition(":")
+        rows.append({
+            "type": eq_type, "id": eq_id,
+            "name": eq["name"] if eq else eq_id,
+            "color": eq["color"] if eq else DEFAULT_COLOR,
+            "count": round(amount, 2),
+        })
+    rows.sort(key=lambda r: (-r["count"], r["name"]))
+    top = max([r["count"] for r in rows] or [0]) or 1
+    for r in rows:
+        r["pct"] = round(100 * r["count"] / top)
+        r["value_label"] = _money(r["count"])
+    equipment_total = sum(r["count"] for r in rows)
+    return {
+        "rows": rows,
+        "equipment_label": _money(equipment_total),
+        "share": _rate(equipment_total, revenue) if revenue else None,
+        "other_label": _money(max(revenue - equipment_total, 0)),
+    }
+
+
 def commercial_indicators(period, months, now=None):
-    from services.admin.commercial_timeline import find_projects_awaiting_quote_reply
+    from services.admin.commercial_timeline import (
+        QUOTE_FOLLOWUP_DAYS,
+        find_projects_awaiting_quote_reply,
+        planned_agenda,
+    )
 
     projects = (Project.query
                 .filter(Project.deleted_at.is_(None), Project.commercial_status.isnot(None))
@@ -229,23 +309,21 @@ def commercial_indicators(period, months, now=None):
     cur = _commercial_window(items, period["start"], period["end"])
     prev = _commercial_window(items, period["prev_start"], period["prev_end"])
 
-    # Entonnoir : jusqu'où sont allées les demandes reçues pendant la période
+    # Répartition par statut actuel des demandes reçues pendant la période
     cohort = cur.pop("cohort")
     prev.pop("cohort")
-    total = len(cohort)
-    stages = [
-        ("requests", "Demandes reçues", total),
-        ("quoted", "Devis envoyés", sum(1 for i in cohort if i["quoted"])),
-        ("won", "Confirmées", sum(1 for i in cohort if i["won"])),
-    ]
-    funnel = {
-        "stages": [{"key": k, "label": label, "count": n, "pct": _rate(n, total) or 0} for k, label, n in stages],
-        "lost": sum(1 for i in cohort if i["lost"]),
-        "open": sum(1 for i in cohort if not i["won"] and not i["lost"]),
-        "total": total,
+    invoiced_items = cur.pop("invoiced_items")
+    prev.pop("invoiced_items")
+    status_counts = [(key, label, sum(1 for i in cohort if i["status"] == key))
+                     for key, label, _ in COMMERCIAL_STATUSES]
+    top = max([n for _, _, n in status_counts] or [0]) or 1
+    by_status = {
+        "rows": [{"key": k, "label": label, "count": n, "pct": round(100 * n / top)} for k, label, n in status_counts],
+        "total": len(cohort),
     }
 
     followups = find_projects_awaiting_quote_reply(now=now)
+    agenda = _agenda_rows(planned_agenda(now=now))
     chart = _chart(months, [
         ("requests", "Nouvelles demandes", _monthly_series(months, [i["first"].date() for i in items if i["first"]])),
         ("won", "Confirmations", _monthly_series(months, [i["confirmed"].date() for i in items if i["confirmed"]])),
@@ -256,9 +334,20 @@ def commercial_indicators(period, months, now=None):
             "conversion_rate": delta(cur["conversion_rate"], prev["conversion_rate"], " pts"),
             "avg_days_to_confirm": delta(cur["avg_days_to_confirm"], prev["avg_days_to_confirm"], " j", better="down"),
             "new": delta(cur["new"], prev["new"]),
+            "revenue": delta(cur["revenue"], prev["revenue"], " €", money=True) if (cur["invoiced_count"] or prev["invoiced_count"]) else None,
         },
         "followups": len(followups),
-        "funnel": funnel,
+        "by_status": by_status,
+        "agenda": agenda,
+        "followup_rows": [
+            {"id": f["project"].id, "name": f["project"].name,
+             "production": f["project"].production.name if f["project"].production else "",
+             "days": f["days_waiting"]}
+            for f in followups
+        ],
+        "followup_threshold": QUOTE_FOLLOWUP_DAYS,
+        "revenue_label": _money(cur["revenue"]),
+        "revenue_by_equipment": _revenue_by_equipment(invoiced_items, cur["revenue"]),
         "chart": chart,
     }
 
@@ -294,6 +383,26 @@ def _usage_window(rows, start, end):
             "usage_rate": _rate(total_used, total_pointed), "pointed_days": total_pointed}
 
 
+def _median_shoot_days(projects, start, end):
+    """
+    Durée médiane de tournage (en jours de tournage) des projets dont le premier jour de tournage
+    tombe dans [start, end] ; projets abandonnés exclus. Retourne (médiane ou None, nombre de projets).
+    """
+    from services.admin.equipment_usage import usage_days
+
+    durations = []
+    for p in projects:
+        if p.commercial_status == "lost":
+            continue
+        days = usage_days(p)
+        if days and _in(days[0], start, end):
+            durations.append(len(days))
+    if not durations:
+        return None, 0
+    value = median(durations)
+    return (int(value) if value == int(value) else round(value, 1)), len(durations)
+
+
 def equipment_indicators(period, months):
     from models.equipment_usage import ProjectEquipmentUsage
     from services.admin.equipment_stats import (
@@ -315,8 +424,6 @@ def equipment_indicators(period, months):
 
     projects = _projects_with_usage()
     pointing = pointing_rate(today=period["end"], window_days=period["days"], projects=projects)
-    prev_days = (period["prev_end"] - period["prev_start"]).days + 1
-    prev_pointing = pointing_rate(today=period["prev_end"], window_days=prev_days, projects=projects)
 
     catalog = _equipment_catalog()
     by_used, by_rate = [], []
@@ -334,6 +441,9 @@ def equipment_indicators(period, months):
     for x in by_rate:
         x["pct"] = x["count"]
 
+    pending = projects_pending_usage(today=period["end"], projects=projects)
+    median_days, median_sample = _median_shoot_days(projects, period["start"], period["end"])
+    prev_median, _ = _median_shoot_days(projects, period["prev_start"], period["prev_end"])
     chart = _chart(months, [
         ("used", "Jours utilisés", _monthly_series(months, [r[2] for r in rows if r[3]])),
     ])
@@ -342,11 +452,16 @@ def equipment_indicators(period, months):
         "used_days": cur["used_days"],
         "pointed_days": cur["pointed_days"],
         "pointing": pointing,
-        "pending_projects": len(projects_pending_usage(today=period["end"], projects=projects)),
+        "median_shoot_days": median_days,
+        "median_shoot_days_label": (str(median_days).replace(".", ",") + " j") if median_days is not None else "—",
+        "median_sample": median_sample,
+        "pending_projects": len(pending),
+        "pending_rows": pending[:6],
+        "top": by_used[0] if by_used and by_used[0]["count"] else None,
         "deltas": {
             "usage_rate": delta(cur["usage_rate"], prev["usage_rate"], " pts"),
             "used_days": delta(cur["used_days"], prev["used_days"], " j"),
-            "pointing": delta(pointing["rate"], prev_pointing["rate"], " pts"),
+            "median_shoot_days": delta(median_days, prev_median, " j", better=None),
         },
         "by_used": by_used,
         "by_rate": by_rate,

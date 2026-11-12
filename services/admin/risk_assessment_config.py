@@ -22,7 +22,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Intrusion into the Driving Area",
         "level": "major",
         "description_fr": "Une personne du public, un membre de l’équipe ou un véhicule extérieur peut entrer dans la trajectoire pendant une prise, y compris en forçant un blocage.",
-        "description_en": "Une personne du public, un membre de l’équipe ou un véhicule extérieur peut entrer dans la trajectoire pendant une prise, y compris en forçant un blocage.",
+        "description_en": "A member of the public, a crew member or an outside vehicle may enter the vehicle’s path during a take, including by forcing their way through a lock-off.",
         "recommendations_fr": [
             "Faire définir et sécuriser la zone de roulage par la production avant chaque plan (périmètre, circulation, public).",
             "Pendant les prises, rouler uniquement dans une zone fermée à toute circulation extérieure (voie fermée par arrêté de l’autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production.",
@@ -32,12 +32,12 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Relier chaque point de blocage au pilote par radio, pour pouvoir interrompre la prise immédiatement."
         ],
         "recommendations_en": [
-            "Faire définir et sécuriser la zone de roulage par la production avant chaque plan (périmètre, circulation, public).",
-            "Pendant les prises, rouler uniquement dans une zone fermée à toute circulation extérieure (voie fermée par arrêté de l’autorité compétente, terrain privé ou piste), délimitée et sécurisée par la production.",
-            "Vérifier que le blocage est en place avant chaque départ.",
-            "Éloigner de la trajectoire toute personne non indispensable au plan.",
-            "Placer des véhicules tampons devant et derrière pour protéger la scène.",
-            "Relier chaque point de blocage au pilote par radio, pour pouvoir interrompre la prise immédiatement."
+            "Have the production define and secure the driving area before each shot (perimeter, traffic, public).",
+            "During takes, drive only in an area closed to all outside traffic (road closed by order of the competent authority, private land or track), marked out and secured by the production.",
+            "Check that the lock-off is in place before each start.",
+            "Keep anyone not essential to the shot away from the vehicle’s path.",
+            "Position buffer vehicles ahead and behind to protect the scene.",
+            "Connect each lock-off point to the driver by radio, so the take can be stopped immediately."
         ]
     },
     {
@@ -48,16 +48,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Poor Ground Conditions",
         "level": "standard",
         "description_fr": "Des graviers, des nids de poule, de la boue, de l’huile ou un sol mouillé réduisent l’adhérence et peuvent faire perdre le contrôle du véhicule.",
-        "description_en": "Des graviers, des nids de poule, de la boue, de l’huile ou un sol mouillé réduisent l’adhérence et peuvent faire perdre le contrôle du véhicule.",
+        "description_en": "Gravel, potholes, mud, oil or wet ground reduce grip and can cause the driver to lose control of the vehicle.",
         "recommendations_fr": [
             "Reconnaître la trajectoire à pied ou à basse vitesse avant la première prise.",
             "Adapter la vitesse à l’état du sol.",
             "Suspendre le roulage en cas de doute."
         ],
         "recommendations_en": [
-            "Reconnaître la trajectoire à pied ou à basse vitesse avant la première prise.",
-            "Adapter la vitesse à l’état du sol.",
-            "Suspendre le roulage en cas de doute."
+            "Survey the path on foot or at low speed before the first take.",
+            "Adapt speed to ground conditions.",
+            "Suspend driving if in doubt."
         ]
     },
     {
@@ -68,16 +68,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Reduced Visibility",
         "level": "standard",
         "description_fr": "La nuit, la poussière, la fumée, les effets spéciaux ou un éblouissement peuvent empêcher le pilote de voir la trajectoire ou le sujet filmé.",
-        "description_en": "La nuit, la poussière, la fumée, les effets spéciaux ou un éblouissement peuvent empêcher le pilote de voir la trajectoire ou le sujet filmé.",
+        "description_en": "Darkness, dust, smoke, special effects or glare can prevent the driver from seeing the path or the filmed subject.",
         "recommendations_fr": [
             "Baliser et éclairer la trajectoire de nuit.",
             "Adapter la vitesse à la visibilité.",
             "S’arrêter immédiatement si la visibilité est perdue."
         ],
         "recommendations_en": [
-            "Baliser et éclairer la trajectoire de nuit.",
-            "Adapter la vitesse à la visibilité.",
-            "S’arrêter immédiatement si la visibilité est perdue."
+            "Mark out and light the path at night.",
+            "Adapt speed to visibility.",
+            "Stop immediately if visibility is lost."
         ]
     },
     {
@@ -88,16 +88,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Adverse Weather Conditions",
         "level": "standard",
         "description_fr": "La pluie, le vent fort ou le froid rendent les planchers glissants, gênent le pilotage et fatiguent les personnes exposées.",
-        "description_en": "La pluie, le vent fort ou le froid rendent les planchers glissants, gênent le pilotage et fatiguent les personnes exposées.",
+        "description_en": "Rain, strong wind or cold make the floors slippery, hamper driving and tire out anyone exposed.",
         "recommendations_fr": [
             "Adapter ou suspendre le roulage selon la météo.",
             "Essuyer les planchers mouillés avant chaque prise.",
             "Équiper les personnes exposées selon la météo."
         ],
         "recommendations_en": [
-            "Adapter ou suspendre le roulage selon la météo.",
-            "Essuyer les planchers mouillés avant chaque prise.",
-            "Équiper les personnes exposées selon la météo."
+            "Adapt or suspend driving according to the weather.",
+            "Wipe wet floors dry before each take.",
+            "Equip anyone exposed according to the weather."
         ]
     },
     {
@@ -108,7 +108,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Picture Vehicle Deviating from Trajectory",
         "level": "standard",
         "description_fr": "Un véhicule de jeu peut déraper ou sortir de sa trajectoire, surtout dans les virages et sur sol mouillé, et heurter l’équipe ou le matériel en bord de trajectoire.",
-        "description_en": "Un véhicule de jeu peut déraper ou sortir de sa trajectoire, surtout dans les virages et sur sol mouillé, et heurter l’équipe ou le matériel en bord de trajectoire.",
+        "description_en": "A picture vehicle may skid or leave its path, especially in turns and on wet ground, and strike crew or equipment at the edge of the path.",
         "recommendations_fr": [
             "Ne placer aucune personne ni caméra avec opérateur à l’extérieur des virages ou dans les zones de dérapage.",
             "Utiliser des caméras sans opérateur ou des protections à ces endroits.",
@@ -116,10 +116,10 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Interdire l’accès aux piétons dans les virages et les zones de manœuvres rapides."
         ],
         "recommendations_en": [
-            "Ne placer aucune personne ni caméra avec opérateur à l’extérieur des virages ou dans les zones de dérapage.",
-            "Utiliser des caméras sans opérateur ou des protections à ces endroits.",
-            "Choisir une trajectoire avec des zones de dégagement.",
-            "Interdire l’accès aux piétons dans les virages et les zones de manœuvres rapides."
+            "Never place anyone, or any manned camera, on the outside of turns or in skid zones.",
+            "Use unmanned cameras or protective barriers at these locations.",
+            "Choose a path with run-off areas.",
+            "Keep pedestrians out of turns and fast-maneuver areas."
         ]
     },
     {
@@ -130,16 +130,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Overhead Obstacles and Power Lines",
         "level": "standard",
         "description_fr": "Une potence, un bras ou une caméra qui dépasse du véhicule peut heurter un obstacle en hauteur ou sur le côté, ou s’approcher d’une ligne électrique.",
-        "description_en": "Une potence, un bras ou une caméra qui dépasse du véhicule peut heurter un obstacle en hauteur ou sur le côté, ou s’approcher d’une ligne électrique.",
+        "description_en": "A boom, an arm or a camera extending beyond the vehicle can strike an overhead or side obstacle, or come close to a power line.",
         "recommendations_fr": [
             "Repérer les obstacles en hauteur et sur les côtés de la trajectoire.",
             "Garder une distance de sécurité adaptée avec les lignes électriques.",
             "Près des arbres, surveiller les branches qui peuvent entrer dans la cabine."
         ],
         "recommendations_en": [
-            "Repérer les obstacles en hauteur et sur les côtés de la trajectoire.",
-            "Garder une distance de sécurité adaptée avec les lignes électriques.",
-            "Près des arbres, surveiller les branches qui peuvent entrer dans la cabine."
+            "Identify overhead and side obstacles along the path.",
+            "Keep an appropriate safe distance from power lines.",
+            "Near trees, watch out for branches that may enter the cab."
         ]
     },
     {
@@ -150,7 +150,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Poor Communication",
         "level": "standard",
         "description_fr": "Un ordre de départ ou d’arrêt mal compris entre le pilote, l’opérateur et la mise en scène peut provoquer un mouvement imprévu.",
-        "description_en": "Un ordre de départ ou d’arrêt mal compris entre le pilote, l’opérateur et la mise en scène peut provoquer un mouvement imprévu.",
+        "description_en": "A start or stop command misunderstood between the driver, the camera operator and the director’s team can cause an unexpected movement.",
         "recommendations_fr": [
             "Faire un safety meeting avant chaque plan.",
             "Désigner une seule personne pour donner les ordres de départ et d’arrêt.",
@@ -160,12 +160,12 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Lors d’un dépassement, laisser le pilote qui dépasse décider du moment."
         ],
         "recommendations_en": [
-            "Faire un safety meeting avant chaque plan.",
-            "Désigner une seule personne pour donner les ordres de départ et d’arrêt.",
-            "Garder une liaison radio permanente avec le pilote.",
-            "Convenir d’un mot d’arrêt connu de toute l’équipe.",
-            "Fixer à l’avance le point d’arrêt de chaque prise et le faire connaître à tous.",
-            "Lors d’un dépassement, laisser le pilote qui dépasse décider du moment."
+            "Hold a safety meeting before each shot.",
+            "Appoint a single person to give start and stop commands.",
+            "Maintain a permanent radio link with the driver.",
+            "Agree on a stop word known to the entire crew.",
+            "Set the stopping point of each take in advance and make it known to everyone.",
+            "When overtaking, let the overtaking driver decide when to pass."
         ]
     },
     {
@@ -176,7 +176,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Shot Modified Without Rehearsal",
         "level": "standard",
         "description_fr": "Un changement de trajectoire, de vitesse ou de configuration décidé au dernier moment augmente le risque d’erreur.",
-        "description_en": "Un changement de trajectoire, de vitesse ou de configuration décidé au dernier moment augmente le risque d’erreur.",
+        "description_en": "A last-minute change of path, speed or configuration increases the risk of error.",
         "recommendations_fr": [
             "Répéter à basse vitesse toute modification de trajectoire, de vitesse ou de configuration.",
             "Laisser au pilote et aux techniciens formés par Belle Vitesse le droit de refuser ou d’interrompre un mouvement.",
@@ -184,10 +184,10 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Réévaluer les risques dès que les conditions changent."
         ],
         "recommendations_en": [
-            "Répéter à basse vitesse toute modification de trajectoire, de vitesse ou de configuration.",
-            "Laisser au pilote et aux techniciens formés par Belle Vitesse le droit de refuser ou d’interrompre un mouvement.",
-            "Refaire un safety meeting dès que la chorégraphie, les véhicules ou les personnes changent.",
-            "Réévaluer les risques dès que les conditions changent."
+            "Rehearse at low speed any change of path, speed or configuration.",
+            "Give the driver and Belle Vitesse-trained technicians the right to refuse or stop a move.",
+            "Hold a new safety meeting whenever the choreography, vehicles or people change.",
+            "Reassess the risks whenever conditions change."
         ]
     },
     {
@@ -198,16 +198,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Fatigue and Shoot Pressure",
         "level": "standard",
         "description_fr": "L’enchaînement des prises et la pression du planning peuvent réduire la vigilance du pilote et de l’équipe.",
-        "description_en": "L’enchaînement des prises et la pression du planning peuvent réduire la vigilance du pilote et de l’équipe.",
+        "description_en": "Back-to-back takes and schedule pressure can reduce the alertness of the driver and the crew.",
         "recommendations_fr": [
             "Prévoir des pauses régulières pour le pilote.",
             "Ne jamais réduire le temps de répétition ou de mise en place pour gagner du temps.",
             "Découper l’action en plans courts."
         ],
         "recommendations_en": [
-            "Prévoir des pauses régulières pour le pilote.",
-            "Ne jamais réduire le temps de répétition ou de mise en place pour gagner du temps.",
-            "Découper l’action en plans courts."
+            "Schedule regular breaks for the driver.",
+            "Never cut rehearsal or setup time to save time.",
+            "Break the action down into short shots."
         ]
     },
     {
@@ -218,16 +218,16 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Inexperienced Picture Vehicle Driver",
         "level": "standard",
         "description_fr": "Un acteur ou un pilote non spécialisé au volant du véhicule de jeu peut perdre le contrôle ou mal réagir.",
-        "description_en": "Un acteur ou un pilote non spécialisé au volant du véhicule de jeu peut perdre le contrôle ou mal réagir.",
+        "description_en": "An actor or a non-specialist driver at the wheel of the picture vehicle may lose control or react poorly.",
         "recommendations_fr": [
             "Vérifier que le pilote du véhicule de jeu maîtrise ce qui lui est demandé.",
             "Ne jamais le pousser au‑delà de ses capacités.",
             "Prévoir un temps de répétition suffisant."
         ],
         "recommendations_en": [
-            "Vérifier que le pilote du véhicule de jeu maîtrise ce qui lui est demandé.",
-            "Ne jamais le pousser au‑delà de ses capacités.",
-            "Prévoir un temps de répétition suffisant."
+            "Check that the picture vehicle driver can handle what is being asked of them.",
+            "Never push them beyond their abilities.",
+            "Allow enough rehearsal time."
         ]
     },
     {
@@ -238,7 +238,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Ground Crew Near a Silent Vehicle",
         "level": "major",
         "description_fr": "Les membres de l’équipe à pied (assistants, perchman, machinistes), concentrés sur leur travail, peuvent ne pas voir le véhicule arriver. Électriques, les véhicules Belle Vitesse sont presque silencieux : l’équipe peut aussi ne pas les entendre, et être heurtée.",
-        "description_en": "Les membres de l’équipe à pied (assistants, perchman, machinistes), concentrés sur leur travail, peuvent ne pas voir le véhicule arriver. Électriques, les véhicules Belle Vitesse sont presque silencieux : l’équipe peut aussi ne pas les entendre, et être heurtée.",
+        "description_en": "Crew members on foot (assistants, boom operator, grips), focused on their work, may not see the vehicle coming. Being electric, Belle Vitesse vehicles are almost silent: the crew may not hear them either, and be struck.",
         "recommendations_fr": [
             "Donner deux coups de klaxon avant chaque démarrage et un coup de klaxon à chaque arrêt.",
             "Prévenir l’équipe par radio avant chaque départ.",
@@ -247,11 +247,11 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Respecter une distance de sécurité adaptée."
         ],
         "recommendations_en": [
-            "Donner deux coups de klaxon avant chaque démarrage et un coup de klaxon à chaque arrêt.",
-            "Prévenir l’équipe par radio avant chaque départ.",
-            "Définir des positions fixes pour l’équipe au sol, hors trajectoire.",
-            "Rouler au pas dans les zones où circule l’équipe.",
-            "Respecter une distance de sécurité adaptée."
+            "Sound the horn twice before each start and once at each stop.",
+            "Warn the crew by radio before each start.",
+            "Set fixed positions for the ground crew, outside the vehicle’s path.",
+            "Drive at walking pace in areas where crew are moving around.",
+            "Keep an appropriate safe distance."
         ]
     },
     {
@@ -262,14 +262,14 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Mounting or Dismounting While in Motion",
         "level": "standard",
         "description_fr": "Monter ou descendre d’un véhicule en mouvement peut provoquer une chute ou un écrasement.",
-        "description_en": "Monter ou descendre d’un véhicule en mouvement peut provoquer une chute ou un écrasement.",
+        "description_en": "Getting on or off a moving vehicle can result in a fall or crush injury.",
         "recommendations_fr": [
             "Ne jamais monter ni descendre tant que le véhicule n’est pas à l’arrêt complet.",
             "À l’arrêt, monter ou descendre seulement sur instruction du pilote."
         ],
         "recommendations_en": [
-            "Ne jamais monter ni descendre tant que le véhicule n’est pas à l’arrêt complet.",
-            "À l’arrêt, monter ou descendre seulement sur instruction du pilote."
+            "Never get on or off until the vehicle has come to a complete stop.",
+            "When stopped, get on or off only when instructed by the driver."
         ]
     },
     {
@@ -280,7 +280,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Uninformed Passengers",
         "level": "standard",
         "description_fr": "Une personne qui monte à bord sans connaître les consignes peut se mettre en danger ou mettre les autres en danger.",
-        "description_en": "Une personne qui monte à bord sans connaître les consignes peut se mettre en danger ou mettre les autres en danger.",
+        "description_en": "A person who boards without knowing the safety instructions may put themselves or others in danger.",
         "recommendations_fr": [
             "Faire un safety meeting avant la première montée de toute nouvelle personne.",
             "Réserver l’accès à bord aux personnes concernées et habilitées.",
@@ -288,10 +288,10 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Consulter le manuel officiel du véhicule, disponible à bord et via un QR code (eCar, eRider, eRover, eTrike et Segway)."
         ],
         "recommendations_en": [
-            "Faire un safety meeting avant la première montée de toute nouvelle personne.",
-            "Réserver l’accès à bord aux personnes concernées et habilitées.",
-            "Ne faire monter que les personnes indispensables au plan.",
-            "Consulter le manuel officiel du véhicule, disponible à bord et via un QR code (eCar, eRider, eRover, eTrike et Segway)."
+            "Hold a safety meeting before any new person boards for the first time.",
+            "Restrict access on board to the people concerned and authorized.",
+            "Only allow on board the people essential to the shot.",
+            "Consult the vehicle’s official manual, available on board and via a QR code (eCar, eRider, eRover, eTrike and Segway)."
         ]
     },
     {
@@ -302,7 +302,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Operator Standing or Leaning Out of Vehicle",
         "level": "standard",
         "description_fr": "Un opérateur qui se lève ou se penche pour cadrer peut être éjecté ou heurter un obstacle.",
-        "description_en": "Un opérateur qui se lève ou se penche pour cadrer peut être éjecté ou heurter un obstacle.",
+        "description_en": "A camera operator who stands up or leans out to frame a shot may be thrown from the vehicle or strike an obstacle.",
         "recommendations_fr": [
             "Rester assis et attaché pendant le roulage.",
             "Garder les pieds sur le plancher ou le cale‑pied.",
@@ -311,11 +311,11 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Utiliser une caméra télécommandée quand la position est trop exposée pour un opérateur."
         ],
         "recommendations_en": [
-            "Rester assis et attaché pendant le roulage.",
-            "Garder les pieds sur le plancher ou le cale‑pied.",
-            "Ne jamais sortir du gabarit du véhicule.",
-            "Ne jamais s’asseoir sur les rambardes de sécurité.",
-            "Utiliser une caméra télécommandée quand la position est trop exposée pour un opérateur."
+            "Remain seated and strapped in while the vehicle is moving.",
+            "Keep your feet on the floor or the footrest.",
+            "Never extend beyond the vehicle’s outline.",
+            "Never sit on the safety rails.",
+            "Use a remote-controlled camera when the position is too exposed for an operator."
         ]
     },
     {
@@ -326,14 +326,14 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Driver Obstructed or Distracted",
         "level": "standard",
         "description_fr": "Un opérateur ou du matériel placé dans le champ de vision du pilote, ou les gestes et les demandes d’une personne à bord, peuvent gêner le pilote ou détourner son attention.",
-        "description_en": "Un opérateur ou du matériel placé dans le champ de vision du pilote, ou les gestes et les demandes d’une personne à bord, peuvent gêner le pilote ou détourner son attention.",
+        "description_en": "A camera operator or equipment placed in the driver’s field of vision, or the gestures and requests of someone on board, can obstruct the driver or divert their attention.",
         "recommendations_fr": [
             "Ne placer aucun matériel ni opérateur dans le champ de vision du pilote.",
             "Ne jamais gêner le pilote par des gestes ou des demandes pendant le roulage."
         ],
         "recommendations_en": [
-            "Ne placer aucun matériel ni opérateur dans le champ de vision du pilote.",
-            "Ne jamais gêner le pilote par des gestes ou des demandes pendant le roulage."
+            "Never place any equipment or operator in the driver’s field of vision.",
+            "Never distract the driver with gestures or requests while the vehicle is moving."
         ]
     },
     {
@@ -344,7 +344,7 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
         "title_en": "Improperly Secured or Stored Equipment",
         "level": "standard",
         "description_fr": "Une caméra ou un accessoire mal fixé peut se détacher sous l’effet des vibrations et des freinages, et un câble ou une sangle mal rangé peut se prendre dans les roues ou faire trébucher l’équipe.",
-        "description_en": "Une caméra ou un accessoire mal fixé peut se détacher sous l’effet des vibrations et des freinages, et un câble ou une sangle mal rangé peut se prendre dans les roues ou faire trébucher l’équipe.",
+        "description_en": "A poorly secured camera or accessory can come loose under vibration and braking, and a poorly stowed cable or strap can get caught in the wheels or trip the crew.",
         "recommendations_fr": [
             "Élinguer et sécuriser tout élément technique.",
             "Faire valider chaque installation par un technicien formé par Belle Vitesse.",
@@ -355,13 +355,13 @@ DEFAULT_GENERAL_RISK_ASSESSMENT = [
             "Ranger dans le véhicule suiveur le matériel inutile au plan."
         ],
         "recommendations_en": [
-            "Élinguer et sécuriser tout élément technique.",
-            "Faire valider chaque installation par un technicien formé par Belle Vitesse.",
-            "Vérifier les serrages avant chaque roulage.",
-            "Placer le matériel pour qu’il ne puisse pas heurter un occupant en cas d’arrêt brusque.",
-            "Attacher tous les câbles et sangles le long de la structure, et ne rien laisser traîner au sol ni près des roues.",
-            "Faire vérifier le véhicule par le pilote après chaque changement de machinerie.",
-            "Ranger dans le véhicule suiveur le matériel inutile au plan."
+            "Safety-cable and secure every technical component.",
+            "Have every installation approved by a Belle Vitesse-trained technician.",
+            "Check all fastenings before each run.",
+            "Position equipment so that it cannot strike an occupant in the event of a sudden stop.",
+            "Tie all cables and straps along the structure, and leave nothing trailing on the ground or near the wheels.",
+            "Have the driver check the vehicle after each rigging change.",
+            "Store any equipment not needed for the shot in the follow vehicle."
         ]
     }
 ]
@@ -380,14 +380,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Driving on Public Open Roads",
                 "level": "major",
                 "description_fr": "Modifié pour la prise de vue, l’eRover n’est pas homologué pour circuler sur une voie ouverte au public. Un accident sur la route peut provoquer des blessures graves et ne pas être couvert par l’assurance.",
-                "description_en": "Modifié pour la prise de vue, l’eRover n’est pas homologué pour circuler sur une voie ouverte au public. Un accident sur la route peut provoquer des blessures graves et ne pas être couvert par l’assurance.",
+                "description_en": "Modified for filming, the eRover is not approved for use on roads open to the public. An accident on the road can cause serious injury and may not be covered by insurance.",
                 "recommendations_fr": [
                         "Ne jamais faire circuler l’eRover sur une voie ouverte au public, y compris pour se déplacer entre deux décors. Tout manquement engage la seule responsabilité de la production.",
                         "Déplacer l’eRover entre deux décors sur une voie fermée à la circulation, ou par transport sur plateau ou remorque."
                 ],
                 "recommendations_en": [
-                        "Ne jamais faire circuler l’eRover sur une voie ouverte au public, y compris pour se déplacer entre deux décors. Tout manquement engage la seule responsabilité de la production.",
-                        "Déplacer l’eRover entre deux décors sur une voie fermée à la circulation, ou par transport sur plateau ou remorque."
+                    "Never drive the eRover on a road open to the public, including to move between two sets. Any breach is the sole responsibility of the production.",
+                    "Move the eRover between sets on a road closed to traffic, or transport it on a flatbed or trailer."
                 ]
         },
         {
@@ -398,7 +398,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Collision with Filmed Subject",
                 "level": "major",
                 "description_fr": "Quand l’eRover suit le sujet filmé (acteur, cycliste, véhicule de jeu), une chute ou un freinage inattendu du sujet peut provoquer une collision. Quand le sujet suit l’eRover, c’est un freinage inattendu ou une mauvaise gestion de la vitesse de l’eRover qui peut la provoquer. Dans les deux cas, la collision peut causer des blessures graves.",
-                "description_en": "Quand l’eRover suit le sujet filmé (acteur, cycliste, véhicule de jeu), une chute ou un freinage inattendu du sujet peut provoquer une collision. Quand le sujet suit l’eRover, c’est un freinage inattendu ou une mauvaise gestion de la vitesse de l’eRover qui peut la provoquer. Dans les deux cas, la collision peut causer des blessures graves.",
+                "description_en": "When the eRover follows the filmed subject (actor, cyclist, picture vehicle), a fall or unexpected braking by the subject can cause a collision. When the subject follows the eRover, unexpected braking or poor speed management by the eRover can cause it. In both cases, the collision can cause serious injury.",
                 "recommendations_fr": [
                         "Rouler à une vitesse régulière et éviter tout freinage brusque hors urgence.",
                         "Respecter une distance de sécurité adaptée à la vitesse et à la distance de freinage.",
@@ -407,11 +407,11 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Garder une communication constante avec la mise en scène, le coordinateur cascade et le responsable du blocage."
                 ],
                 "recommendations_en": [
-                        "Rouler à une vitesse régulière et éviter tout freinage brusque hors urgence.",
-                        "Respecter une distance de sécurité adaptée à la vitesse et à la distance de freinage.",
-                        "Répéter le plan à basse vitesse avant de tourner.",
-                        "Schématiser les trajectoires complexes.",
-                        "Garder une communication constante avec la mise en scène, le coordinateur cascade et le responsable du blocage."
+                    "Drive at a steady speed and avoid any sudden braking except in an emergency.",
+                    "Keep a safe distance appropriate to the speed and braking distance.",
+                    "Rehearse the shot at low speed before shooting.",
+                    "Draw diagrams of complex paths.",
+                    "Maintain constant communication with the director’s team, the stunt coordinator and the lock-off supervisor."
                 ]
         },
         {
@@ -422,7 +422,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Impact Against Vehicle Structure",
                 "level": "standard",
                 "description_fr": "L’eRover est équipé de plaques en aluminium sur un châssis renforcé en acier, de planchers d’extension et de cale‑pieds. Cette structure ne se déforme pas à l’impact, et la machinerie installée augmente le gabarit du véhicule : même à basse vitesse, un choc peut provoquer des blessures graves.",
-                "description_en": "L’eRover est équipé de plaques en aluminium sur un châssis renforcé en acier, de planchers d’extension et de cale‑pieds. Cette structure ne se déforme pas à l’impact, et la machinerie installée augmente le gabarit du véhicule : même à basse vitesse, un choc peut provoquer des blessures graves.",
+                "description_en": "The eRover is fitted with aluminum plates on a reinforced steel chassis, extension platforms and footrests. This structure does not deform on impact, and the installed rigging increases the vehicle’s footprint: even at low speed, an impact can cause serious injury.",
                 "recommendations_fr": [
                         "Toujours installer les pare‑chocs en caoutchouc fournis sur les planchers d’extension et les cale‑pieds.",
                         "Faire valider chaque nouvelle installation par un technicien formé par Belle Vitesse.",
@@ -431,11 +431,11 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Respecter une distance de sécurité adaptée avec toute personne."
                 ],
                 "recommendations_en": [
-                        "Toujours installer les pare‑chocs en caoutchouc fournis sur les planchers d’extension et les cale‑pieds.",
-                        "Faire valider chaque nouvelle installation par un technicien formé par Belle Vitesse.",
-                        "Prendre en compte le gabarit réel dans le schéma des trajectoires et pendant la répétition.",
-                        "Faire définir et sécuriser la zone de roulage par la production avant chaque plan.",
-                        "Respecter une distance de sécurité adaptée avec toute personne."
+                    "Always fit the supplied rubber bumpers to the extension platforms and footrests.",
+                    "Have every new installation approved by a Belle Vitesse-trained technician.",
+                    "Take the actual footprint into account in the path diagram and during rehearsal.",
+                    "Have the production define and secure the driving area before each shot.",
+                    "Keep an appropriate safe distance from everyone."
                 ]
         },
         {
@@ -446,7 +446,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Impact During Emergency Braking",
                 "level": "major",
                 "description_fr": "Lors d’un freinage d’urgence, les passagers peuvent être violemment projetés contre le véhicule ou contre la machinerie installée pour le plan.",
-                "description_en": "Lors d’un freinage d’urgence, les passagers peuvent être violemment projetés contre le véhicule ou contre la machinerie installée pour le plan.",
+                "description_en": "During emergency braking, passengers can be thrown violently against the vehicle or against the rigging installed for the shot.",
                 "recommendations_fr": [
                         "Imposer la ceinture à toute personne à bord, et le casque et la double ceinture à toute personne à l’extérieur de l’habitacle.",
                         "Dans l’habitacle, garder le dos contre le siège et les pieds à plat.",
@@ -457,13 +457,13 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Respecter les seuils de vitesse fixés dans les règles de sécurité pour les personnes à l’extérieur de l’habitacle."
                 ],
                 "recommendations_en": [
-                        "Imposer la ceinture à toute personne à bord, et le casque et la double ceinture à toute personne à l’extérieur de l’habitacle.",
-                        "Dans l’habitacle, garder le dos contre le siège et les pieds à plat.",
-                        "Utiliser les filets ou les portes de la cabine, et vérifier ceintures, filets et attaches avant chaque utilisation.",
-                        "Ne jamais se tenir à l’arceau ni s’appuyer sur les portes ou les filets.",
-                        "Placer le matériel pour qu’il ne puisse pas heurter un occupant.",
-                        "Répéter le plan à basse vitesse pour limiter les freinages imprévus.",
-                        "Respecter les seuils de vitesse fixés dans les règles de sécurité pour les personnes à l’extérieur de l’habitacle."
+                    "Require a seatbelt for everyone on board, and a helmet and double harness for anyone outside the cab.",
+                    "Inside the cab, keep your back against the seat and your feet flat.",
+                    "Use the cab nets or doors, and check seatbelts, nets and fastenings before each use.",
+                    "Never hold onto the roll cage or lean on the doors or nets.",
+                    "Position equipment so that it cannot strike an occupant.",
+                    "Rehearse the shot at low speed to limit unplanned braking.",
+                    "Respect the speed limits set in the safety rules for people outside the cab."
                 ]
         },
         {
@@ -474,16 +474,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Foot Trapped in Front Wheel",
                 "level": "major",
                 "description_fr": "Les roues avant sont exposées pour laisser la direction libre. Un passager installé trop près peut, par inattention, coincer son pied entre la roue et le châssis et se blesser gravement.",
-                "description_en": "Les roues avant sont exposées pour laisser la direction libre. Un passager installé trop près peut, par inattention, coincer son pied entre la roue et le châssis et se blesser gravement.",
+                "description_en": "The front wheels are exposed to allow free steering. A passenger seated too close may inadvertently trap their foot between the wheel and the chassis and be seriously injured.",
                 "recommendations_fr": [
                         "Ne jamais installer quelqu’un trop près des roues avant.",
                         "Sécuriser au maximum toute personne installée à l’avant, pour qu’aucun membre ne puisse atteindre une roue.",
                         "Imposer la ceinture à toute personne à bord."
                 ],
                 "recommendations_en": [
-                        "Ne jamais installer quelqu’un trop près des roues avant.",
-                        "Sécuriser au maximum toute personne installée à l’avant, pour qu’aucun membre ne puisse atteindre une roue.",
-                        "Imposer la ceinture à toute personne à bord."
+                    "Never seat anyone too close to the front wheels.",
+                    "Secure anyone seated at the front as fully as possible, so that no limb can reach a wheel.",
+                    "Require a seatbelt for everyone on board."
                 ]
         },
         {
@@ -494,12 +494,12 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Clothing or Object Caught in Wheels",
                 "level": "standard",
                 "description_fr": "Une écharpe ou un vêtement ample peut être entraîné dans les roues et entraîner la personne qui le porte.",
-                "description_en": "Une écharpe ou un vêtement ample peut être entraîné dans les roues et entraîner la personne qui le porte.",
+                "description_en": "A scarf or loose clothing can get caught in the wheels and pull in the person wearing it.",
                 "recommendations_fr": [
                         "Retirer ou attacher les écharpes et vêtements amples avant tout roulage."
                 ],
                 "recommendations_en": [
-                        "Retirer ou attacher les écharpes et vêtements amples avant tout roulage."
+                    "Remove or tie back scarves and loose clothing before any driving."
                 ]
         },
         {
@@ -510,16 +510,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Vehicle Drop During Hoisting",
                 "level": "standard",
                 "description_fr": "Pendant un changement de roue, un véhicule mal calé ou mal soutenu peut tomber ou basculer.",
-                "description_en": "Pendant un changement de roue, un véhicule mal calé ou mal soutenu peut tomber ou basculer.",
+                "description_en": "During a wheel change, a poorly chocked or poorly supported vehicle can fall or tip over.",
                 "recommendations_fr": [
                         "Réserver le levage du véhicule aux techniciens formés par Belle Vitesse.",
                         "Lever le véhicule uniquement sur un sol plat et dur, en position P, roues calées.",
                         "Utiliser un cric adapté et ne jamais passer sous le véhicule sans chandelles."
                 ],
                 "recommendations_en": [
-                        "Réserver le levage du véhicule aux techniciens formés par Belle Vitesse.",
-                        "Lever le véhicule uniquement sur un sol plat et dur, en position P, roues calées.",
-                        "Utiliser un cric adapté et ne jamais passer sous le véhicule sans chandelles."
+                    "Restrict vehicle lifting to Belle Vitesse-trained technicians.",
+                    "Lift the vehicle only on flat, hard ground, in P, with the wheels chocked.",
+                    "Use a suitable jack and never go under the vehicle without jack stands."
                 ]
         },
         {
@@ -530,7 +530,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Vehicle Rollover",
                 "level": "major",
                 "description_fr": "L’eRover peut se retourner dans un virage pris trop vite ou trop serré, même sur terrain plat. Sur goudron, la forte adhérence augmente ce risque.",
-                "description_en": "L’eRover peut se retourner dans un virage pris trop vite ou trop serré, même sur terrain plat. Sur goudron, la forte adhérence augmente ce risque.",
+                "description_en": "The eRover can roll over in a turn taken too fast or too tight, even on flat ground. On asphalt, the high grip increases this risk.",
                 "recommendations_fr": [
                         "Réduire la vitesse avant chaque virage, en particulier sur goudron, et éviter les manœuvres brusques, les glissades, les dérapages et les fortes accélérations en virage, même au départ arrêté.",
                         "Anticiper les pentes, les ornières et les changements d’adhérence. En pente, rouler droit, en transmission intégrale (AWD), jamais au point mort ni en travers.",
@@ -541,13 +541,13 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Après un retournement ou un choc, ne pas reprendre le roulage avant une inspection complète (ceintures, arceau, freins, direction, système électrique)."
                 ],
                 "recommendations_en": [
-                        "Réduire la vitesse avant chaque virage, en particulier sur goudron, et éviter les manœuvres brusques, les glissades, les dérapages et les fortes accélérations en virage, même au départ arrêté.",
-                        "Anticiper les pentes, les ornières et les changements d’adhérence. En pente, rouler droit, en transmission intégrale (AWD), jamais au point mort ni en travers.",
-                        "Ne jamais sauter de bosse.",
-                        "Respecter le nombre maximum de personnes à bord (1 pilote et 3 passagers) et répartir le poids de façon cohérente.",
-                        "Régler le limiteur de vitesse (SPD LIM) selon le plan à chaque démarrage, car il se désactive à l’arrêt du contact (le véhicule reste bridé à 60 km/h en France).",
-                        "Si le véhicule bascule, se tenir fermement aux poignées et ne sortir aucune partie du corps du véhicule.",
-                        "Après un retournement ou un choc, ne pas reprendre le roulage avant une inspection complète (ceintures, arceau, freins, direction, système électrique)."
+                    "Reduce speed before each turn, especially on asphalt, and avoid sudden maneuvers, slides, skids and hard acceleration in turns, even from a standstill.",
+                    "Anticipate slopes, ruts and changes in grip. On slopes, drive straight up or down in all-wheel drive (AWD), never in neutral or across the slope.",
+                    "Never jump bumps.",
+                    "Respect the maximum number of people on board (1 driver and 3 passengers) and distribute the weight evenly.",
+                    "Set the speed limiter (SPD LIM) for the shot at each start-up, as it deactivates when the ignition is switched off (the vehicle remains restricted to 60 km/h in France).",
+                    "If the vehicle tips over, hold on firmly to the grab handles and keep every part of your body inside the vehicle.",
+                    "After a rollover or impact, do not resume driving until a full inspection has been carried out (seatbelts, roll cage, brakes, steering, electrical system)."
                 ]
         },
         {
@@ -558,7 +558,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Throttle and Pedal Response",
                 "level": "standard",
                 "description_fr": "Le jeu entre la pédale de frein et l’accélérateur peut provoquer des à‑coups, et l’eRover peut continuer à accélérer légèrement après le relâchement de l’accélérateur. Le mode Sport rend les accélérations très vives et le véhicule difficile à contrôler.",
-                "description_en": "Le jeu entre la pédale de frein et l’accélérateur peut provoquer des à‑coups, et l’eRover peut continuer à accélérer légèrement après le relâchement de l’accélérateur. Le mode Sport rend les accélérations très vives et le véhicule difficile à contrôler.",
+                "description_en": "The play between the brake pedal and the accelerator can cause jerky movements, and the eRover may continue to accelerate slightly after the accelerator is released. Sport mode makes acceleration very sharp and the vehicle hard to control.",
                 "recommendations_fr": [
                         "Confier la conduite uniquement à un pilote validé par Belle Vitesse ou mandaté par le coordinateur cascade.",
                         "Ne jamais appuyer sur les deux pédales en même temps, ce qui peut couper la puissance moteur.",
@@ -567,11 +567,11 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Répéter le plan à basse vitesse."
                 ],
                 "recommendations_en": [
-                        "Confier la conduite uniquement à un pilote validé par Belle Vitesse ou mandaté par le coordinateur cascade.",
-                        "Ne jamais appuyer sur les deux pédales en même temps, ce qui peut couper la puissance moteur.",
-                        "Anticiper les freinages et tenir compte des distances de freinage.",
-                        "Ne pas utiliser le mode Sport, sauf validation par un technicien formé par Belle Vitesse.",
-                        "Répéter le plan à basse vitesse."
+                    "Entrust driving only to a driver approved by Belle Vitesse or appointed by the stunt coordinator.",
+                    "Never press both pedals at the same time, as this can cut motor power.",
+                    "Anticipate braking and allow for braking distances.",
+                    "Do not use Sport mode unless approved by a Belle Vitesse-trained technician.",
+                    "Rehearse the shot at low speed."
                 ]
         },
         {
@@ -582,7 +582,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Unexpected Vehicle Movement",
                 "level": "standard",
                 "description_fr": "Un mauvais choix de sens de marche (F/R) peut faire partir le véhicule dans la direction opposée à celle prévue. À l’arrêt, la légère souplesse du frein à main peut le laisser avancer ou reculer d’environ 20 cm.",
-                "description_en": "Un mauvais choix de sens de marche (F/R) peut faire partir le véhicule dans la direction opposée à celle prévue. À l’arrêt, la légère souplesse du frein à main peut le laisser avancer ou reculer d’environ 20 cm.",
+                "description_en": "Selecting the wrong direction of travel (F/R) can send the vehicle the opposite way from what was planned. When stopped, the slight give in the parking brake can let it roll forward or backward by about 20 cm (8 in).",
                 "recommendations_fr": [
                         "Vérifier la position du sélecteur F/R avant chaque départ.",
                         "Ne jamais changer de sens en roulant.",
@@ -593,13 +593,13 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Ne jamais se placer juste devant ou derrière le véhicule à l’arrêt."
                 ],
                 "recommendations_en": [
-                        "Vérifier la position du sélecteur F/R avant chaque départ.",
-                        "Ne jamais changer de sens en roulant.",
-                        "En marche arrière, vérifier que la zone est dégagée, accélérer doucement et rouler lentement.",
-                        "Toujours passer en position P à l’arrêt.",
-                        "Sur une pente, caler les roues arrière côté descente.",
-                        "Retirer la clé quand le véhicule est laissé seul.",
-                        "Ne jamais se placer juste devant ou derrière le véhicule à l’arrêt."
+                    "Check the position of the F/R selector before each start.",
+                    "Never change direction while moving.",
+                    "When reversing, check that the area is clear, accelerate gently and drive slowly.",
+                    "Always shift into P when stopped.",
+                    "On a slope, chock the rear wheels on the downhill side.",
+                    "Remove the key when the vehicle is left unattended.",
+                    "Never stand directly in front of or behind the stationary vehicle."
                 ]
         },
         {
@@ -610,14 +610,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Water Fording",
                 "level": "standard",
                 "description_fr": "Une eau trop profonde ou un courant peut faire perdre l’adhérence et le contrôle du véhicule. Après un passage dans l’eau, les freins mouillés sont moins efficaces.",
-                "description_en": "Une eau trop profonde ou un courant peut faire perdre l’adhérence et le contrôle du véhicule. Après un passage dans l’eau, les freins mouillés sont moins efficaces.",
+                "description_en": "Water that is too deep or a current can cause loss of grip and loss of control of the vehicle. After driving through water, wet brakes are less effective.",
                 "recommendations_fr": [
                         "Ne jamais rouler dans une eau qui dépasse le plancher ou dans un courant.",
                         "Après un passage dans l’eau, tester les freins en roulant lentement."
                 ],
                 "recommendations_en": [
-                        "Ne jamais rouler dans une eau qui dépasse le plancher ou dans un courant.",
-                        "Après un passage dans l’eau, tester les freins en roulant lentement."
+                    "Never drive through water deeper than the floor or through a current.",
+                    "After driving through water, test the brakes while driving slowly."
                 ]
         },
         {
@@ -628,7 +628,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Loss of Power",
                 "level": "standard",
                 "description_fr": "Une batterie faible, une surchauffe du moteur ou de la batterie, des températures extrêmes ou de l’eau dans les composants électriques peuvent réduire la puissance ou arrêter le véhicule en pleine prise.",
-                "description_en": "Une batterie faible, une surchauffe du moteur ou de la batterie, des températures extrêmes ou de l’eau dans les composants électriques peuvent réduire la puissance ou arrêter le véhicule en pleine prise.",
+                "description_en": "A low battery, motor or battery overheating, extreme temperatures or water in the electrical components can reduce power or stop the vehicle in the middle of a take.",
                 "recommendations_fr": [
                         "Commencer chaque plan avec une batterie suffisamment chargée, et recharger pendant les pauses.",
                         "Arrêter les prises et ramener le véhicule dès l’alerte LOW CHARGE ou le voyant de surchauffe.",
@@ -636,10 +636,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Garder une distance de sécurité adaptée avec les véhicules qui suivent, pour absorber un arrêt imprévu."
                 ],
                 "recommendations_en": [
-                        "Commencer chaque plan avec une batterie suffisamment chargée, et recharger pendant les pauses.",
-                        "Arrêter les prises et ramener le véhicule dès l’alerte LOW CHARGE ou le voyant de surchauffe.",
-                        "Par grand froid, laisser chauffer la batterie quelques minutes avant de rouler.",
-                        "Garder une distance de sécurité adaptée avec les véhicules qui suivent, pour absorber un arrêt imprévu."
+                    "Start each shot with a sufficiently charged battery, and recharge during breaks.",
+                    "Stop shooting and bring the vehicle back as soon as the LOW CHARGE alert or the overheating warning light appears.",
+                    "In very cold weather, let the battery warm up for a few minutes before driving.",
+                    "Keep an appropriate safe distance from following vehicles, to absorb an unplanned stop."
                 ]
         },
         {
@@ -650,7 +650,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Undetected Defect Before Driving",
                 "level": "standard",
                 "description_fr": "Un défaut non repéré avant le roulage (pneus, freins, direction, ceintures) augmente le risque d’accident.",
-                "description_en": "Un défaut non repéré avant le roulage (pneus, freins, direction, ceintures) augmente le risque d’accident.",
+                "description_en": "A defect not spotted before driving (tires, brakes, steering, seatbelts) increases the risk of an accident.",
                 "recommendations_fr": [
                         "Faire avant chaque journée l’inspection préconisée par Polaris : charge, liquide de frein, direction, suspension, feux et ceintures.",
                         "Vérifier la pression des pneus (83 kPa à l’avant, 97 kPa à l’arrière) et les remplacer sous 3 mm de sculpture.",
@@ -659,11 +659,11 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Faire réparer tout élément défectueux par un technicien qualifié avant de rouler, et retirer du service tout matériel cassé."
                 ],
                 "recommendations_en": [
-                        "Faire avant chaque journée l’inspection préconisée par Polaris : charge, liquide de frein, direction, suspension, feux et ceintures.",
-                        "Vérifier la pression des pneus (83 kPa à l’avant, 97 kPa à l’arrière) et les remplacer sous 3 mm de sculpture.",
-                        "Vérifier le serrage des roues et retirer les débris inflammables (herbe, feuilles).",
-                        "Inspecter aussi le véhicule après chaque journée.",
-                        "Faire réparer tout élément défectueux par un technicien qualifié avant de rouler, et retirer du service tout matériel cassé."
+                    "Before each day, carry out the inspection recommended by Polaris: charge, brake fluid, steering, suspension, lights and seatbelts.",
+                    "Check tire pressure (83 kPa / 12 psi front, 97 kPa / 14 psi rear) and replace tires with less than 3 mm of tread.",
+                    "Check wheel nut tightness and remove flammable debris (grass, leaves).",
+                    "Also inspect the vehicle at the end of each day.",
+                    "Have any defective part repaired by a qualified technician before driving, and take any broken equipment out of service."
                 ]
         },
         {
@@ -674,7 +674,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Overloading",
                 "level": "standard",
                 "description_fr": "Le poids de la machinerie, du matériel et des personnes à bord allonge les distances de freinage et augmente le risque de perte de contrôle.",
-                "description_en": "Le poids de la machinerie, du matériel et des personnes à bord allonge les distances de freinage et augmente le risque de perte de contrôle.",
+                "description_en": "The weight of the rigging, equipment and people on board lengthens braking distances and increases the risk of loss of control.",
                 "recommendations_fr": [
                         "Ne jamais dépasser 680 kg de charge totale (pilote, passagers, chargement et accessoires compris).",
                         "Au‑delà de 227 kg de charge totale, rouler en gamme basse (LOW).",
@@ -682,10 +682,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Réduire la vitesse et anticiper les freinages quand le véhicule est chargé."
                 ],
                 "recommendations_en": [
-                        "Ne jamais dépasser 680 kg de charge totale (pilote, passagers, chargement et accessoires compris).",
-                        "Au‑delà de 227 kg de charge totale, rouler en gamme basse (LOW).",
-                        "Au‑delà de 249 kg de charge totale, ne pas dépasser 48 km/h.",
-                        "Réduire la vitesse et anticiper les freinages quand le véhicule est chargé."
+                    "Never exceed a total load of 680 kg (1,500 lb), including driver, passengers, cargo and accessories.",
+                    "Above a total load of 227 kg (500 lb), drive in low range (LOW).",
+                    "Above a total load of 249 kg (550 lb), do not exceed 48 km/h (30 mph).",
+                    "Reduce speed and anticipate braking when the vehicle is loaded."
                 ]
         },
         {
@@ -696,16 +696,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Reckless Driving",
                 "level": "standard",
                 "description_fr": "Une conduite imprudente, ou sous l’emprise de l’alcool, de médicaments ou de drogues, peut provoquer un accident grave.",
-                "description_en": "Une conduite imprudente, ou sous l’emprise de l’alcool, de médicaments ou de drogues, peut provoquer un accident grave.",
+                "description_en": "Reckless driving, or driving under the influence of alcohol, medication or drugs, can cause a serious accident.",
                 "recommendations_fr": [
                         "Interdire toute conduite imprudente.",
                         "Interdire le pilotage sous l’emprise de l’alcool, de médicaments ou de drogues.",
                         "Ne pas manipuler l’écran ni régler le volant en roulant."
                 ],
                 "recommendations_en": [
-                        "Interdire toute conduite imprudente.",
-                        "Interdire le pilotage sous l’emprise de l’alcool, de médicaments ou de drogues.",
-                        "Ne pas manipuler l’écran ni régler le volant en roulant."
+                    "Prohibit any reckless driving.",
+                    "Prohibit driving under the influence of alcohol, medication or drugs.",
+                    "Do not operate the screen or adjust the steering wheel while driving."
                 ]
         },
         {
@@ -716,7 +716,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Grip Rigging Failure",
                 "level": "standard",
                 "description_fr": "Une installation de machinerie qui cède (tubes, colliers, potence) peut faire chuter le matériel ou les personnes et provoquer des blessures graves.",
-                "description_en": "Une installation de machinerie qui cède (tubes, colliers, potence) peut faire chuter le matériel ou les personnes et provoquer des blessures graves.",
+                "description_en": "A grip rig that gives way (tubes, clamps, boom) can cause equipment or people to fall and result in serious injury.",
                 "recommendations_fr": [
                         "Réserver l’installation de la machinerie aux personnes habilitées par Belle Vitesse.",
                         "Faire valider chaque nouvelle installation par un technicien formé par Belle Vitesse.",
@@ -724,10 +724,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Imposer le casque à toute personne à l’extérieur de l’habitacle."
                 ],
                 "recommendations_en": [
-                        "Réserver l’installation de la machinerie aux personnes habilitées par Belle Vitesse.",
-                        "Faire valider chaque nouvelle installation par un technicien formé par Belle Vitesse.",
-                        "Vérifier les serrages avant chaque roulage.",
-                        "Imposer le casque à toute personne à l’extérieur de l’habitacle."
+                    "Restrict rigging installation to people authorized by Belle Vitesse.",
+                    "Have every new installation approved by a Belle Vitesse-trained technician.",
+                    "Check all fastenings before each run.",
+                    "Require a helmet for anyone outside the cab."
                 ]
         },
         {
@@ -738,16 +738,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Slip or Fall During Rigging Setup",
                 "level": "standard",
                 "description_fr": "Pendant l’installation de la machinerie, une glissade ou une chute depuis le véhicule peut provoquer une blessure grave. L’humidité et l’eau rendent les planchers glissants.",
-                "description_en": "Pendant l’installation de la machinerie, une glissade ou une chute depuis le véhicule peut provoquer une blessure grave. L’humidité et l’eau rendent les planchers glissants.",
+                "description_en": "While rigging is being installed, slipping or falling from the vehicle can cause serious injury. Moisture and water make the floors slippery.",
                 "recommendations_fr": [
                         "Préparer le véhicule hors circulation.",
                         "Essuyer les planchers mouillés avant toute installation.",
                         "Réserver l’installation aux personnes habilitées par Belle Vitesse."
                 ],
                 "recommendations_en": [
-                        "Préparer le véhicule hors circulation.",
-                        "Essuyer les planchers mouillés avant toute installation.",
-                        "Réserver l’installation aux personnes habilitées par Belle Vitesse."
+                    "Prepare the vehicle away from traffic.",
+                    "Wipe wet floors dry before any installation.",
+                    "Restrict installation to people authorized by Belle Vitesse."
                 ]
         },
         {
@@ -758,16 +758,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Falling Objects",
                 "level": "standard",
                 "description_fr": "Des outils ou du matériel mal sécurisés peuvent tomber pendant le roulage et faire chuter ou heurter le sujet filmé s’il suit l’eRover.",
-                "description_en": "Des outils ou du matériel mal sécurisés peuvent tomber pendant le roulage et faire chuter ou heurter le sujet filmé s’il suit l’eRover.",
+                "description_en": "Poorly secured tools or equipment can fall off while driving and cause the filmed subject to fall or be struck if it is following the eRover.",
                 "recommendations_fr": [
                         "Élinguer et sécuriser tout élément technique.",
                         "Sécuriser tout matériel supplémentaire (sac batterie, caméra, commande de point).",
                         "Ne laisser aucun outil libre sur le véhicule avant le roulage."
                 ],
                 "recommendations_en": [
-                        "Élinguer et sécuriser tout élément technique.",
-                        "Sécuriser tout matériel supplémentaire (sac batterie, caméra, commande de point).",
-                        "Ne laisser aucun outil libre sur le véhicule avant le roulage."
+                    "Safety-cable and secure every technical component.",
+                    "Secure any additional equipment (battery bag, camera, focus control).",
+                    "Leave no loose tools on the vehicle before driving."
                 ]
         },
         {
@@ -778,7 +778,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Electrocution",
                 "level": "standard",
                 "description_fr": "Un contact avec la batterie, le chargeur ou les câbles haute tension (orange) peut provoquer une électrocution.",
-                "description_en": "Un contact avec la batterie, le chargeur ou les câbles haute tension (orange) peut provoquer une électrocution.",
+                "description_en": "Contact with the battery, the charger or the high-voltage (orange) cables can cause electrocution.",
                 "recommendations_fr": [
                         "Réserver toute intervention sur la batterie aux techniciens formés par Belle Vitesse.",
                         "Ne jamais toucher les câbles haute tension, ni ouvrir la batterie ou le chargeur.",
@@ -786,10 +786,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "N’apporter aucune modification interne au véhicule."
                 ],
                 "recommendations_en": [
-                        "Réserver toute intervention sur la batterie aux techniciens formés par Belle Vitesse.",
-                        "Ne jamais toucher les câbles haute tension, ni ouvrir la batterie ou le chargeur.",
-                        "Après un choc ou un retournement, couper la haute tension (boucle de sécurité sous le bac du siège) et faire inspecter le véhicule avant de rouler.",
-                        "N’apporter aucune modification interne au véhicule."
+                    "Restrict any work on the battery to Belle Vitesse-trained technicians.",
+                    "Never touch the high-voltage cables, or open the battery or the charger.",
+                    "After an impact or rollover, disconnect the high voltage (safety loop under the seat base) and have the vehicle inspected before driving.",
+                    "Make no internal modifications to the vehicle."
                 ]
         },
         {
@@ -800,7 +800,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Electrical Hookup",
                 "level": "standard",
                 "description_fr": "Une caméra, un moniteur ou un éclairage branché sur le véhicule, un objet au contact de la batterie 12 V ou une source extérieure peut faire sauter un fusible, couper l’éclairage ou la puissance moteur, ou provoquer un court‑circuit et un départ de feu.",
-                "description_en": "Une caméra, un moniteur ou un éclairage branché sur le véhicule, un objet au contact de la batterie 12 V ou une source extérieure peut faire sauter un fusible, couper l’éclairage ou la puissance moteur, ou provoquer un court‑circuit et un départ de feu.",
+                "description_en": "A camera, monitor or light connected to the vehicle, an object in contact with the 12 V battery or an external power source can blow a fuse, cut the lights or motor power, or cause a short circuit and a fire.",
                 "recommendations_fr": [
                         "Respecter la capacité des prises 12 V : 10 A au tableau de bord, 15 A à l’arrière.",
                         "Ne raccorder aucun accessoire au circuit électrique du véhicule sans validation par un technicien formé par Belle Vitesse.",
@@ -808,10 +808,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Ne jamais brancher une source extérieure sur la batterie 12 V (pas de démarrage par câbles)."
                 ],
                 "recommendations_en": [
-                        "Respecter la capacité des prises 12 V : 10 A au tableau de bord, 15 A à l’arrière.",
-                        "Ne raccorder aucun accessoire au circuit électrique du véhicule sans validation par un technicien formé par Belle Vitesse.",
-                        "Ne rien ranger sous le bac du siège, au contact de la batterie 12 V.",
-                        "Ne jamais brancher une source extérieure sur la batterie 12 V (pas de démarrage par câbles)."
+                    "Respect the capacity of the 12 V outlets: 10 A on the dashboard, 15 A at the rear.",
+                    "Do not connect any accessory to the vehicle’s electrical circuit without approval from a Belle Vitesse-trained technician.",
+                    "Do not store anything under the seat base, in contact with the 12 V battery.",
+                    "Never connect an external power source to the 12 V battery (no jump-starting)."
                 ]
         },
         {
@@ -822,7 +822,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Crushing of Guiding Spotter",
                 "level": "major",
                 "description_fr": "Pendant le chargement ou le déchargement, la personne qui guide le pilote peut être écrasée si elle se trouve dans l’axe de roulage ou si les rampes glissent.",
-                "description_en": "Pendant le chargement ou le déchargement, la personne qui guide le pilote peut être écrasée si elle se trouve dans l’axe de roulage ou si les rampes glissent.",
+                "description_en": "During loading or unloading, the person guiding the driver can be crushed if they are in the vehicle’s line of travel or if the ramps slip.",
                 "recommendations_fr": [
                         "Charger et décharger à deux : le pilote et une personne qui le guide.",
                         "Ne jamais se trouver dans l’axe de roulage du véhicule.",
@@ -830,10 +830,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Réserver le chargement et le déchargement aux personnes habilitées par Belle Vitesse."
                 ],
                 "recommendations_en": [
-                        "Charger et décharger à deux : le pilote et une personne qui le guide.",
-                        "Ne jamais se trouver dans l’axe de roulage du véhicule.",
-                        "Toujours se trouver à plus de 2 m du véhicule.",
-                        "Réserver le chargement et le déchargement aux personnes habilitées par Belle Vitesse."
+                    "Load and unload with two people: the driver and a spotter guiding them.",
+                    "Never stand in the vehicle’s line of travel.",
+                    "Always stay more than 2 m (6.5 ft) from the vehicle.",
+                    "Restrict loading and unloading to people authorized by Belle Vitesse."
                 ]
         },
         {
@@ -844,14 +844,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Ramp Slippage",
                 "level": "standard",
                 "description_fr": "Une rampe non adaptée ou mal fixée peut glisser pendant le chargement ou le déchargement et faire chuter le véhicule.",
-                "description_en": "Une rampe non adaptée ou mal fixée peut glisser pendant le chargement ou le déchargement et faire chuter le véhicule.",
+                "description_en": "An unsuitable or poorly secured ramp can slip during loading or unloading and cause the vehicle to fall.",
                 "recommendations_fr": [
                         "Utiliser uniquement les rampes fournies et homologuées.",
                         "Sécuriser les rampes avec des sangles (et des goupilles si disponibles)."
                 ],
                 "recommendations_en": [
-                        "Utiliser uniquement les rampes fournies et homologuées.",
-                        "Sécuriser les rampes avec des sangles (et des goupilles si disponibles)."
+                    "Use only the supplied, approved ramps.",
+                    "Secure the ramps with straps (and locking pins if available)."
                 ]
         },
         {
@@ -862,16 +862,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Vehicle Movement During Transport",
                 "level": "standard",
                 "description_fr": "Un véhicule mal sanglé peut bouger ou tomber pendant le transport.",
-                "description_en": "Un véhicule mal sanglé peut bouger ou tomber pendant le transport.",
+                "description_en": "A poorly strapped vehicle can shift or fall during transport.",
                 "recommendations_fr": [
                         "Sangler le véhicule en 4 points, 2 à l’avant et 2 à l’arrière, sur les points d’arrimage prévus par Polaris.",
                         "Avant le transport, passer en position P, retirer la clé, et retirer ou sécuriser la machinerie et toute pièce libre.",
                         "Sur une remorque ouverte, charger le véhicule face à la route, ou retirer le toit."
                 ],
                 "recommendations_en": [
-                        "Sangler le véhicule en 4 points, 2 à l’avant et 2 à l’arrière, sur les points d’arrimage prévus par Polaris.",
-                        "Avant le transport, passer en position P, retirer la clé, et retirer ou sécuriser la machinerie et toute pièce libre.",
-                        "Sur une remorque ouverte, charger le véhicule face à la route, ou retirer le toit."
+                    "Strap the vehicle down at 4 points, 2 at the front and 2 at the rear, using the tie-down points specified by Polaris.",
+                    "Before transport, shift into P, remove the key, and remove or secure the rigging and any loose parts.",
+                    "On an open trailer, load the vehicle facing forward, or remove the roof."
                 ]
         },
         {
@@ -882,7 +882,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Fire During Battery Charging",
                 "level": "standard",
                 "description_fr": "Une recharge sans surveillance, avec un chargeur non adapté, un câble abîmé ou une installation électrique inadaptée peut provoquer un départ de feu.",
-                "description_en": "Une recharge sans surveillance, avec un chargeur non adapté, un câble abîmé ou une installation électrique inadaptée peut provoquer un départ de feu.",
+                "description_en": "Unattended charging, an unsuitable charger, a damaged cable or an unsuitable electrical installation can start a fire.",
                 "recommendations_fr": [
                         "Ne jamais laisser le véhicule en charge sans surveillance.",
                         "Recharger uniquement avec le chargeur fourni, branché directement sur une prise protégée par un différentiel, d’au moins 15 A et sans autre appareil.",
@@ -892,12 +892,12 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Recharger loin des matières inflammables, câble placé là où il ne peut pas être écrasé."
                 ],
                 "recommendations_en": [
-                        "Ne jamais laisser le véhicule en charge sans surveillance.",
-                        "Recharger uniquement avec le chargeur fourni, branché directement sur une prise protégée par un différentiel, d’au moins 15 A et sans autre appareil.",
-                        "Ne jamais utiliser de rallonge, de multiprise ni d’adaptateur.",
-                        "Vérifier l’état du câble, des prises et du port de charge avant chaque recharge.",
-                        "Sous la pluie, recharger uniquement sur une prise extérieure étanche.",
-                        "Recharger loin des matières inflammables, câble placé là où il ne peut pas être écrasé."
+                    "Never leave the vehicle charging unattended.",
+                    "Charge only with the supplied charger, plugged directly into a dedicated outlet of at least 15 A protected by a residual-current device (GFCI), with no other appliance connected.",
+                    "Never use an extension cord, power strip or adapter.",
+                    "Check the condition of the cable, plugs and charging port before each charge.",
+                    "In the rain, charge only from a weatherproof outdoor outlet.",
+                    "Charge away from flammable materials, with the cable placed where it cannot be crushed."
                 ]
         },
         {
@@ -908,14 +908,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Fire Following Impact",
                 "level": "standard",
                 "description_fr": "Un choc, un retournement ou une infiltration d’eau peut endommager la batterie sans que ce soit visible, et provoquer un feu plusieurs heures après.",
-                "description_en": "Un choc, un retournement ou une infiltration d’eau peut endommager la batterie sans que ce soit visible, et provoquer un feu plusieurs heures après.",
+                "description_en": "An impact, a rollover or water ingress can damage the battery without any visible sign, and cause a fire several hours later.",
                 "recommendations_fr": [
                         "Après tout choc, retournement ou passage dans l’eau profonde, faire contrôler la batterie par un technicien formé par Belle Vitesse avant de rouler.",
                         "En cas de doute, garer le véhicule à l’extérieur, loin de tout ce qui peut brûler."
                 ],
                 "recommendations_en": [
-                        "Après tout choc, retournement ou passage dans l’eau profonde, faire contrôler la batterie par un technicien formé par Belle Vitesse avant de rouler.",
-                        "En cas de doute, garer le véhicule à l’extérieur, loin de tout ce qui peut brûler."
+                    "After any impact, rollover or deep-water crossing, have the battery checked by a Belle Vitesse-trained technician before driving.",
+                    "If in doubt, park the vehicle outdoors, away from anything that can burn."
                 ]
         },
         {
@@ -926,7 +926,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Thermal Runaway",
                 "level": "major",
                 "description_fr": "Une défaillance de la batterie peut faire monter sa température très vite et provoquer un feu ou une explosion. Un feu de batterie est difficile à éteindre et peut reprendre après avoir été éteint.",
-                "description_en": "Une défaillance de la batterie peut faire monter sa température très vite et provoquer un feu ou une explosion. Un feu de batterie est difficile à éteindre et peut reprendre après avoir été éteint.",
+                "description_en": "A battery failure can cause its temperature to rise very quickly and lead to a fire or explosion. A battery fire is hard to extinguish and can reignite after being put out.",
                 "recommendations_fr": [
                         "En cas de fumée, d’odeur anormale ou d’alerte « DANGER EXIT NOW FIRE » au tableau de bord, arrêter le véhicule et faire descendre tout le monde immédiatement.",
                         "S’éloigner du véhicule et appeler les pompiers (18 ou 112) en précisant qu’il s’agit d’un véhicule électrique.",
@@ -934,10 +934,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Prévoir à proximité du véhicule un extincteur adapté pour un départ de feu sur les accessoires."
                 ],
                 "recommendations_en": [
-                        "En cas de fumée, d’odeur anormale ou d’alerte « DANGER EXIT NOW FIRE » au tableau de bord, arrêter le véhicule et faire descendre tout le monde immédiatement.",
-                        "S’éloigner du véhicule et appeler les pompiers (18 ou 112) en précisant qu’il s’agit d’un véhicule électrique.",
-                        "Ne jamais tenter d’éteindre soi‑même un feu de batterie déclaré.",
-                        "Prévoir à proximité du véhicule un extincteur adapté pour un départ de feu sur les accessoires."
+                    "In case of smoke, an unusual smell or a “DANGER EXIT NOW FIRE” alert on the dashboard, stop the vehicle and get everyone out immediately.",
+                    "Move away from the vehicle and call the fire department (18 or 112 in France), stating that it is an electric vehicle.",
+                    "Never attempt to put out a battery fire yourself once it has started.",
+                    "Keep a suitable fire extinguisher near the vehicle for any fire starting on the accessories."
                 ]
         }
 ]
@@ -954,14 +954,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Driving on Public Open Roads",
                 "level": "major",
                 "description_fr": "Conçu pour les terrains de motocross, le Stark Varg MX 1.2 n’est pas homologué pour circuler sur une voie ouverte au public. Un accident sur la route peut provoquer des blessures graves et ne pas être couvert par l’assurance.",
-                "description_en": "Conçu pour les terrains de motocross, le Stark Varg MX 1.2 n’est pas homologué pour circuler sur une voie ouverte au public. Un accident sur la route peut provoquer des blessures graves et ne pas être couvert par l’assurance.",
+                "description_en": "Designed for motocross tracks, the Stark Varg MX 1.2 is not approved for use on roads open to the public. An accident on the road can cause serious injury and may not be covered by insurance.",
                 "recommendations_fr": [
                         "Ne jamais faire circuler l’eRider sur une voie ouverte au public, y compris pour se déplacer entre deux décors. Tout manquement engage la seule responsabilité de la production.",
                         "Déplacer l’eRider entre deux décors sur une voie fermée à la circulation, ou par transport sur remorque."
                 ],
                 "recommendations_en": [
-                        "Ne jamais faire circuler l’eRider sur une voie ouverte au public, y compris pour se déplacer entre deux décors. Tout manquement engage la seule responsabilité de la production.",
-                        "Déplacer l’eRider entre deux décors sur une voie fermée à la circulation, ou par transport sur remorque."
+                    "Never ride the eRider on a road open to the public, including to move between two sets. Any breach is the sole responsibility of the production.",
+                    "Move the eRider between sets on a road closed to traffic, or transport it on a trailer."
                 ]
         },
         {
@@ -972,7 +972,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Collision with Filmed Subject",
                 "level": "major",
                 "description_fr": "En travelling rapproché, une erreur de trajectoire ou un arrêt imprévu du sujet filmé (acteur, cycliste, véhicule de jeu) peut provoquer une collision et des blessures graves.",
-                "description_en": "En travelling rapproché, une erreur de trajectoire ou un arrêt imprévu du sujet filmé (acteur, cycliste, véhicule de jeu) peut provoquer une collision et des blessures graves.",
+                "description_en": "In close tracking shots, a path error or an unplanned stop by the filmed subject (actor, cyclist, picture vehicle) can cause a collision and serious injury.",
                 "recommendations_fr": [
                         "Respecter une distance de sécurité adaptée à la vitesse et à la distance de freinage.",
                         "Répéter le plan à basse vitesse avant de tourner.",
@@ -980,10 +980,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Garder une communication constante avec la mise en scène, le coordinateur cascade et le responsable du blocage."
                 ],
                 "recommendations_en": [
-                        "Respecter une distance de sécurité adaptée à la vitesse et à la distance de freinage.",
-                        "Répéter le plan à basse vitesse avant de tourner.",
-                        "Schématiser les trajectoires complexes.",
-                        "Garder une communication constante avec la mise en scène, le coordinateur cascade et le responsable du blocage."
+                    "Keep a safe distance appropriate to the speed and braking distance.",
+                    "Rehearse the shot at low speed before shooting.",
+                    "Draw diagrams of complex paths.",
+                    "Maintain constant communication with the director’s team, the stunt coordinator and the lock-off supervisor."
                 ]
         },
         {
@@ -994,7 +994,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Obstacle or Stunt in Path",
                 "level": "major",
                 "description_fr": "À moto, le pilote n’a aucune protection. Une cascade, un véhicule de jeu, une personne ou un objet qui entre dans sa trajectoire peut provoquer une chute ou une collision très graves.",
-                "description_en": "À moto, le pilote n’a aucune protection. Une cascade, un véhicule de jeu, une personne ou un objet qui entre dans sa trajectoire peut provoquer une chute ou une collision très graves.",
+                "description_en": "On a motorcycle, the rider has no protection. A stunt, a picture vehicle, a person or an object entering their path can cause a very serious fall or collision.",
                 "recommendations_fr": [
                         "Garder la trajectoire de la moto entièrement dégagée pendant chaque prise.",
                         "Préparer chaque cascade avec le coordinateur cascade et le pilote, et la répéter à basse vitesse.",
@@ -1002,10 +1002,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Ne jamais introduire un objet ou un effet dans la trajectoire sans l’accord du pilote."
                 ],
                 "recommendations_en": [
-                        "Garder la trajectoire de la moto entièrement dégagée pendant chaque prise.",
-                        "Préparer chaque cascade avec le coordinateur cascade et le pilote, et la répéter à basse vitesse.",
-                        "Garder une distance de sécurité adaptée avec toute cascade ou tout effet spécial.",
-                        "Ne jamais introduire un objet ou un effet dans la trajectoire sans l’accord du pilote."
+                    "Keep the motorcycle’s path completely clear during each take.",
+                    "Prepare each stunt with the stunt coordinator and the rider, and rehearse it at low speed.",
+                    "Keep an appropriate safe distance from any stunt or special effect.",
+                    "Never introduce an object or effect into the path without the rider’s agreement."
                 ]
         },
         {
@@ -1016,7 +1016,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Rider Fall",
                 "level": "major",
                 "description_fr": "Une perte d’adhérence, un freinage brusque ou un obstacle peut faire chuter le pilote. Un freinage avec le seul frein avant peut le faire passer par‑dessus le guidon.",
-                "description_en": "Une perte d’adhérence, un freinage brusque ou un obstacle peut faire chuter le pilote. Un freinage avec le seul frein avant peut le faire passer par‑dessus le guidon.",
+                "description_en": "Loss of grip, sudden braking or an obstacle can cause the rider to fall. Braking with the front brake alone can throw the rider over the handlebars.",
                 "recommendations_fr": [
                         "Confier la conduite uniquement à un pilote expérimenté, validé par Belle Vitesse ou mandaté par le coordinateur cascade.",
                         "Imposer au pilote un casque, des bottes, des gants, un pantalon et une veste de protection, en parfait état.",
@@ -1027,13 +1027,13 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "En cas d’accident, éteindre la moto et porter secours à la victime."
                 ],
                 "recommendations_en": [
-                        "Confier la conduite uniquement à un pilote expérimenté, validé par Belle Vitesse ou mandaté par le coordinateur cascade.",
-                        "Imposer au pilote un casque, des bottes, des gants, un pantalon et une veste de protection, en parfait état.",
-                        "Utiliser les freins avant et arrière ensemble.",
-                        "Adapter la vitesse au terrain et à la visibilité, en tenant compte des distances de freinage plus longues sur sol mouillé.",
-                        "Ne pas rouler de nuit ou par faible luminosité sans éclairage ni réflecteurs.",
-                        "Répéter le plan à basse vitesse.",
-                        "En cas d’accident, éteindre la moto et porter secours à la victime."
+                    "Entrust riding only to an experienced rider approved by Belle Vitesse or appointed by the stunt coordinator.",
+                    "Require the rider to wear a helmet, boots, gloves, protective trousers and jacket, all in perfect condition.",
+                    "Use the front and rear brakes together.",
+                    "Adapt speed to the terrain and visibility, allowing for longer braking distances on wet ground.",
+                    "Do not ride at night or in low light without lights and reflectors.",
+                    "Rehearse the shot at low speed.",
+                    "In the event of an accident, switch off the motorcycle and assist the victim."
                 ]
         },
         {
@@ -1044,16 +1044,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Moving Parts",
                 "level": "standard",
                 "description_fr": "Quand la moto est allumée, la chaîne et les roues peuvent tourner et happer une main, un vêtement ou une sangle.",
-                "description_en": "Quand la moto est allumée, la chaîne et les roues peuvent tourner et happer une main, un vêtement ou une sangle.",
+                "description_en": "When the motorcycle is switched on, the chain and wheels can turn and catch a hand, a piece of clothing or a strap.",
                 "recommendations_fr": [
                         "Ne jamais approcher la chaîne ni les roues quand la moto est allumée.",
                         "Retirer ou attacher les écharpes et vêtements amples avant tout roulage.",
                         "Éteindre complètement la moto avant toute intervention, tout nettoyage ou toute installation."
                 ],
                 "recommendations_en": [
-                        "Ne jamais approcher la chaîne ni les roues quand la moto est allumée.",
-                        "Retirer ou attacher les écharpes et vêtements amples avant tout roulage.",
-                        "Éteindre complètement la moto avant toute intervention, tout nettoyage ou toute installation."
+                    "Never go near the chain or wheels when the motorcycle is switched on.",
+                    "Remove or tie back scarves and loose clothing before any riding.",
+                    "Switch the motorcycle off completely before any work, cleaning or installation."
                 ]
         },
         {
@@ -1064,14 +1064,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Power Modes and Rapid Acceleration",
                 "level": "standard",
                 "description_fr": "Le moteur électrique délivre tout son couple instantanément. Un coup d’accélérateur trop fort peut provoquer une perte de contrôle, un lever de roue avant ou une chute.",
-                "description_en": "Le moteur électrique délivre tout son couple instantanément. Un coup d’accélérateur trop fort peut provoquer une perte de contrôle, un lever de roue avant ou une chute.",
+                "description_en": "The electric motor delivers all its torque instantly. Too much throttle can cause loss of control, a front-wheel lift or a fall.",
                 "recommendations_fr": [
                         "Choisir le mode de puissance adapté au plan et le faire valider par un technicien formé par Belle Vitesse.",
                         "Changer de mode uniquement à l’arrêt ou avec précaution, en prévenant l’équipe."
                 ],
                 "recommendations_en": [
-                        "Choisir le mode de puissance adapté au plan et le faire valider par un technicien formé par Belle Vitesse.",
-                        "Changer de mode uniquement à l’arrêt ou avec précaution, en prévenant l’équipe."
+                    "Choose the power mode suited to the shot and have it approved by a Belle Vitesse-trained technician.",
+                    "Change modes only when stopped or with caution, after warning the crew."
                 ]
         },
         {
@@ -1082,16 +1082,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Unintended Start-Up",
                 "level": "standard",
                 "description_fr": "Si la moto est allumée, un coup d’accélérateur en montant ou en descendant peut la faire partir.",
-                "description_en": "Si la moto est allumée, un coup d’accélérateur en montant ou en descendant peut la faire partir.",
+                "description_en": "If the motorcycle is switched on, a twist of the throttle while getting on or off can set it in motion.",
                 "recommendations_fr": [
                         "Éteindre la moto avec le bouton On/Off dès qu’elle ne roule pas.",
                         "Ne jamais monter ni descendre en tenant la poignée d’accélérateur.",
                         "Ne pas maintenir appuyés les boutons de mode, qui activent le mode Crawl en marche avant ou arrière."
                 ],
                 "recommendations_en": [
-                        "Éteindre la moto avec le bouton On/Off dès qu’elle ne roule pas.",
-                        "Ne jamais monter ni descendre en tenant la poignée d’accélérateur.",
-                        "Ne pas maintenir appuyés les boutons de mode, qui activent le mode Crawl en marche avant ou arrière."
+                    "Switch the motorcycle off with the On/Off button as soon as it is not moving.",
+                    "Never get on or off while holding the throttle grip.",
+                    "Do not hold down the mode buttons, which activate Crawl mode forward or in reverse."
                 ]
         },
         {
@@ -1102,16 +1102,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Loss of Power",
                 "level": "standard",
                 "description_fr": "Une batterie faible, une température hors plage ou une surcharge peut réduire la puissance et l’autonomie, parfois en pleine prise.",
-                "description_en": "Une batterie faible, une température hors plage ou une surcharge peut réduire la puissance et l’autonomie, parfois en pleine prise.",
+                "description_en": "A low battery, an out-of-range temperature or an overload can reduce power and range, sometimes in the middle of a take.",
                 "recommendations_fr": [
                         "Commencer chaque plan avec une batterie suffisamment chargée, et recharger pendant les pauses.",
                         "Arrêter les prises dès que le voyant de puissance limitée s’allume.",
                         "Utiliser la moto de préférence entre 0 et 25 °C."
                 ],
                 "recommendations_en": [
-                        "Commencer chaque plan avec une batterie suffisamment chargée, et recharger pendant les pauses.",
-                        "Arrêter les prises dès que le voyant de puissance limitée s’allume.",
-                        "Utiliser la moto de préférence entre 0 et 25 °C."
+                    "Start each shot with a sufficiently charged battery, and recharge during breaks.",
+                    "Stop shooting as soon as the limited-power warning light comes on.",
+                    "Preferably use the motorcycle between 0 and 25 °C (32 and 77 °F)."
                 ]
         },
         {
@@ -1122,7 +1122,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Undetected Defect Before Driving",
                 "level": "standard",
                 "description_fr": "Un défaut non repéré avant le roulage (serrages, pneus, jantes, freins, poignées) augmente le risque de chute.",
-                "description_en": "Un défaut non repéré avant le roulage (serrages, pneus, jantes, freins, poignées) augmente le risque de chute.",
+                "description_en": "A defect not spotted before riding (fastenings, tires, rims, brakes, grips) increases the risk of a fall.",
                 "recommendations_fr": [
                         "Vérifier avant chaque journée le serrage des écrous et boulons, l’état des pneus et des jantes, les poignées et les freins à l’arrêt.",
                         "Avec des mousses, ne pas dépasser 130 km/h et les regraisser au plus tard toutes les 5 heures d’utilisation.",
@@ -1130,10 +1130,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Faire réparer tout élément défectueux par un technicien qualifié avant de rouler, et retirer du service tout matériel cassé."
                 ],
                 "recommendations_en": [
-                        "Vérifier avant chaque journée le serrage des écrous et boulons, l’état des pneus et des jantes, les poignées et les freins à l’arrêt.",
-                        "Avec des mousses, ne pas dépasser 130 km/h et les regraisser au plus tard toutes les 5 heures d’utilisation.",
-                        "Inspecter aussi le véhicule après chaque journée.",
-                        "Faire réparer tout élément défectueux par un technicien qualifié avant de rouler, et retirer du service tout matériel cassé."
+                    "Before each day, check nut and bolt tightness, tire and rim condition, the grips and the brakes while stationary.",
+                    "With mousse inserts, do not exceed 130 km/h (80 mph) and re-grease them at least every 5 hours of use.",
+                    "Also inspect the motorcycle at the end of each day.",
+                    "Have any defective part repaired by a qualified technician before riding, and take any broken equipment out of service."
                 ]
         },
         {
@@ -1144,14 +1144,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Overloading",
                 "level": "standard",
                 "description_fr": "Au‑delà de la charge maximale prévue par la suspension, pilote et matériel compris, la moto devient instable et le pilote peut perdre le contrôle.",
-                "description_en": "Au‑delà de la charge maximale prévue par la suspension, pilote et matériel compris, la moto devient instable et le pilote peut perdre le contrôle.",
+                "description_en": "Beyond the maximum load the suspension is set up for, rider and equipment included, the motorcycle becomes unstable and the rider may lose control.",
                 "recommendations_fr": [
                         "Ne jamais dépasser la charge maximale prévue par la suspension installée, pilote et matériel compris.",
                         "Réduire la vitesse et anticiper les freinages quand la moto est chargée."
                 ],
                 "recommendations_en": [
-                        "Ne jamais dépasser la charge maximale prévue par la suspension installée, pilote et matériel compris.",
-                        "Réduire la vitesse et anticiper les freinages quand la moto est chargée."
+                    "Never exceed the maximum load the installed suspension is set up for, rider and equipment included.",
+                    "Reduce speed and anticipate braking when the motorcycle is loaded."
                 ]
         },
         {
@@ -1162,14 +1162,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Reckless Driving",
                 "level": "standard",
                 "description_fr": "Une conduite imprudente, ou sous l’emprise de l’alcool, de médicaments ou de drogues, peut provoquer une chute grave.",
-                "description_en": "Une conduite imprudente, ou sous l’emprise de l’alcool, de médicaments ou de drogues, peut provoquer une chute grave.",
+                "description_en": "Reckless riding, or riding under the influence of alcohol, medication or drugs, can cause a serious fall.",
                 "recommendations_fr": [
                         "Interdire toute conduite imprudente.",
                         "Interdire le pilotage sous l’emprise de l’alcool, de médicaments ou de drogues."
                 ],
                 "recommendations_en": [
-                        "Interdire toute conduite imprudente.",
-                        "Interdire le pilotage sous l’emprise de l’alcool, de médicaments ou de drogues."
+                    "Prohibit any reckless riding.",
+                    "Prohibit riding under the influence of alcohol, medication or drugs."
                 ]
         },
         {
@@ -1180,14 +1180,14 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Motorcycle Fall During Rigging Setup",
                 "level": "standard",
                 "description_fr": "Pendant l’installation ou la manipulation du matériel, une moto mal maintenue peut basculer et blesser une personne ou endommager le matériel.",
-                "description_en": "Pendant l’installation ou la manipulation du matériel, une moto mal maintenue peut basculer et blesser une personne ou endommager le matériel.",
+                "description_en": "During installation or equipment handling, a poorly held motorcycle can tip over and injure someone or damage equipment.",
                 "recommendations_fr": [
                         "Maintenir la moto sur le système de docking prévu pendant toute installation ou manipulation de matériel.",
                         "Éteindre complètement la moto avant toute installation."
                 ],
                 "recommendations_en": [
-                        "Maintenir la moto sur le système de docking prévu pendant toute installation ou manipulation de matériel.",
-                        "Éteindre complètement la moto avant toute installation."
+                    "Keep the motorcycle on the dedicated docking stand throughout any installation or equipment handling.",
+                    "Switch the motorcycle off completely before any installation."
                 ]
         },
         {
@@ -1198,7 +1198,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Camera Mount Failure",
                 "level": "standard",
                 "description_fr": "Une caméra ou un support mal fixé peut se détacher, déséquilibrer la moto ou gêner le pilote.",
-                "description_en": "Une caméra ou un support mal fixé peut se détacher, déséquilibrer la moto ou gêner le pilote.",
+                "description_en": "A poorly secured camera or mount can come loose, unbalance the motorcycle or obstruct the rider.",
                 "recommendations_fr": [
                         "Réserver l’installation du support caméra aux personnes habilitées par Belle Vitesse.",
                         "Faire valider chaque installation par un technicien formé par Belle Vitesse.",
@@ -1206,10 +1206,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Vérifier que le matériel ne gêne ni le guidon, ni les commandes, ni la vue du pilote."
                 ],
                 "recommendations_en": [
-                        "Réserver l’installation du support caméra aux personnes habilitées par Belle Vitesse.",
-                        "Faire valider chaque installation par un technicien formé par Belle Vitesse.",
-                        "Élinguer et sécuriser tout élément technique.",
-                        "Vérifier que le matériel ne gêne ni le guidon, ni les commandes, ni la vue du pilote."
+                    "Restrict camera mount installation to people authorized by Belle Vitesse.",
+                    "Have every installation approved by a Belle Vitesse-trained technician.",
+                    "Safety-cable and secure every technical component.",
+                    "Check that the equipment does not obstruct the handlebars, the controls or the rider’s view."
                 ]
         },
         {
@@ -1220,7 +1220,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Motorcycle Imbalance",
                 "level": "standard",
                 "description_fr": "Une caméra ou un bras anti‑vibration installé en déport déséquilibre la moto. Trop à l’arrière, sans contrepoids suffisant à l’avant, il allège la roue avant : elle perd de l’appui, la direction devient floue et le pilote peut perdre le contrôle.",
-                "description_en": "Une caméra ou un bras anti‑vibration installé en déport déséquilibre la moto. Trop à l’arrière, sans contrepoids suffisant à l’avant, il allège la roue avant : elle perd de l’appui, la direction devient floue et le pilote peut perdre le contrôle.",
+                "description_en": "A camera or anti-vibration arm mounted off-center unbalances the motorcycle. Too far back, without enough counterweight at the front, it lightens the front wheel: the wheel loses traction, the steering becomes vague and the rider may lose control.",
                 "recommendations_fr": [
                         "Toujours équilibrer la moto avec des contrepoids cohérents à l’avant ou à l’arrière, selon la position du matériel.",
                         "Limiter le déport du bras anti‑vibration au strict nécessaire.",
@@ -1228,10 +1228,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Faire valider la configuration par un technicien formé par Belle Vitesse, sans dépasser la charge maximale prévue par la suspension installée."
                 ],
                 "recommendations_en": [
-                        "Toujours équilibrer la moto avec des contrepoids cohérents à l’avant ou à l’arrière, selon la position du matériel.",
-                        "Limiter le déport du bras anti‑vibration au strict nécessaire.",
-                        "Avant chaque plan, vérifier à basse vitesse que la direction reste précise et que la roue avant garde son appui.",
-                        "Faire valider la configuration par un technicien formé par Belle Vitesse, sans dépasser la charge maximale prévue par la suspension installée."
+                    "Always balance the motorcycle with appropriate counterweights at the front or rear, depending on where the equipment is mounted.",
+                    "Keep the anti-vibration arm’s offset to the strict minimum.",
+                    "Before each shot, check at low speed that the steering stays precise and the front wheel keeps its traction.",
+                    "Have the configuration approved by a Belle Vitesse-trained technician, without exceeding the maximum load the installed suspension is set up for."
                 ]
         },
         {
@@ -1242,7 +1242,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Electrocution",
                 "level": "standard",
                 "description_fr": "Un contact avec la batterie, le moteur ou les câbles haute tension peut provoquer une électrocution.",
-                "description_en": "Un contact avec la batterie, le moteur ou les câbles haute tension peut provoquer une électrocution.",
+                "description_en": "Contact with the battery, the motor or the high-voltage cables can cause electrocution.",
                 "recommendations_fr": [
                         "Réserver toute intervention sur la batterie et le moteur aux techniciens formés par Belle Vitesse.",
                         "Ne jamais ouvrir la batterie ni le moteur, ni toucher les câbles haute tension.",
@@ -1250,10 +1250,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "N’apporter aucune modification à la moto."
                 ],
                 "recommendations_en": [
-                        "Réserver toute intervention sur la batterie et le moteur aux techniciens formés par Belle Vitesse.",
-                        "Ne jamais ouvrir la batterie ni le moteur, ni toucher les câbles haute tension.",
-                        "Éteindre complètement la moto avant toute intervention.",
-                        "N’apporter aucune modification à la moto."
+                    "Restrict any work on the battery and motor to Belle Vitesse-trained technicians.",
+                    "Never open the battery or the motor, or touch the high-voltage cables.",
+                    "Switch the motorcycle off completely before any work.",
+                    "Make no modifications to the motorcycle."
                 ]
         },
         {
@@ -1264,7 +1264,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Motorcycle Shifting During Transport",
                 "level": "standard",
                 "description_fr": "Une moto mal sanglée ou mal manipulée peut bouger ou tomber pendant le transport.",
-                "description_en": "Une moto mal sanglée ou mal manipulée peut bouger ou tomber pendant le transport.",
+                "description_en": "A poorly strapped or poorly handled motorcycle can shift or fall during transport.",
                 "recommendations_fr": [
                         "Transporter la moto éteinte, sur ses deux roues, sur une remorque horizontale de capacité suffisante.",
                         "Ne jamais soulever la moto avec un engin de levage.",
@@ -1272,10 +1272,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Sangler la moto autour de la fourche et du té inférieur."
                 ],
                 "recommendations_en": [
-                        "Transporter la moto éteinte, sur ses deux roues, sur une remorque horizontale de capacité suffisante.",
-                        "Ne jamais soulever la moto avec un engin de levage.",
-                        "Utiliser le système de docking prévu pour garder la moto stable pendant les manipulations.",
-                        "Sangler la moto autour de la fourche et du té inférieur."
+                    "Transport the motorcycle switched off, on both wheels, on a level trailer of sufficient capacity.",
+                    "Never lift the motorcycle with lifting equipment.",
+                    "Use the dedicated docking stand to keep the motorcycle stable during handling.",
+                    "Strap the motorcycle around the fork and the lower triple clamp."
                 ]
         },
         {
@@ -1286,7 +1286,7 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Fire During Battery Charging",
                 "level": "standard",
                 "description_fr": "Une recharge sans surveillance, sur une prise inadaptée, près de matières inflammables ou avec une batterie humide peut provoquer un départ de feu.",
-                "description_en": "Une recharge sans surveillance, sur une prise inadaptée, près de matières inflammables ou avec une batterie humide peut provoquer un départ de feu.",
+                "description_en": "Unattended charging, an unsuitable outlet, nearby flammable materials or a wet battery can start a fire.",
                 "recommendations_fr": [
                         "Ne jamais laisser la moto en charge sans surveillance, ni la couvrir pendant la charge.",
                         "Recharger dans un endroit sec et ventilé, loin des matières inflammables.",
@@ -1294,10 +1294,10 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                         "Ne pas recharger en dessous de 4 °C, ni une batterie humide ou exposée à l’eau de mer."
                 ],
                 "recommendations_en": [
-                        "Ne jamais laisser la moto en charge sans surveillance, ni la couvrir pendant la charge.",
-                        "Recharger dans un endroit sec et ventilé, loin des matières inflammables.",
-                        "Utiliser une prise reliée à la terre et protégée par un différentiel, et débrancher dès la fin de la charge.",
-                        "Ne pas recharger en dessous de 4 °C, ni une batterie humide ou exposée à l’eau de mer."
+                    "Never leave the motorcycle charging unattended, or cover it while charging.",
+                    "Charge in a dry, ventilated place, away from flammable materials.",
+                    "Use a grounded outlet protected by a residual-current device (GFCI), and unplug as soon as charging is complete.",
+                    "Do not charge below 4 °C (39 °F), or charge a battery that is wet or has been exposed to seawater."
                 ]
         },
         {
@@ -1308,16 +1308,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Fire Following a Crash",
                 "level": "standard",
                 "description_fr": "Une chute ou un choc peut endommager la batterie sans que ce soit visible. Une batterie déformée, bruyante ou anormalement chaude peut prendre feu ou exploser.",
-                "description_en": "Une chute ou un choc peut endommager la batterie sans que ce soit visible. Une batterie déformée, bruyante ou anormalement chaude peut prendre feu ou exploser.",
+                "description_en": "A fall or impact can damage the battery without any visible sign. A battery that is deformed, noisy or abnormally hot can catch fire or explode.",
                 "recommendations_fr": [
                         "Après toute chute, faire contrôler la batterie par un technicien formé par Belle Vitesse avant de rouler ou de recharger.",
                         "Ne jamais utiliser ni recharger une batterie déformée, bruyante ou anormalement chaude.",
                         "Ne jamais ranger en intérieur une moto dont la batterie ou un composant électrique est endommagé."
                 ],
                 "recommendations_en": [
-                        "Après toute chute, faire contrôler la batterie par un technicien formé par Belle Vitesse avant de rouler ou de recharger.",
-                        "Ne jamais utiliser ni recharger une batterie déformée, bruyante ou anormalement chaude.",
-                        "Ne jamais ranger en intérieur une moto dont la batterie ou un composant électrique est endommagé."
+                    "After any fall, have the battery checked by a Belle Vitesse-trained technician before riding or charging.",
+                    "Never use or charge a battery that is deformed, noisy or abnormally hot.",
+                    "Never store a motorcycle indoors if its battery or any electrical component is damaged."
                 ]
         },
         {
@@ -1328,16 +1328,16 @@ DEFAULT_VEHICLE_RISK_ASSESSMENT = {
                 "title_en": "Thermal Runaway",
                 "level": "major",
                 "description_fr": "Une défaillance de la batterie peut faire monter sa température très vite et provoquer un feu ou une explosion. Un feu de batterie est difficile à éteindre et peut reprendre après avoir été éteint.",
-                "description_en": "Une défaillance de la batterie peut faire monter sa température très vite et provoquer un feu ou une explosion. Un feu de batterie est difficile à éteindre et peut reprendre après avoir été éteint.",
+                "description_en": "A battery failure can cause its temperature to rise very quickly and lead to a fire or explosion. A battery fire is hard to extinguish and can reignite after being put out.",
                 "recommendations_fr": [
                         "En cas de fumée, d’odeur anormale ou de chaleur excessive, éteindre la moto et s’en éloigner immédiatement.",
                         "S’éloigner du véhicule et appeler les pompiers (18 ou 112) en précisant qu’il s’agit d’un véhicule électrique.",
                         "Ne jamais tenter d’éteindre soi‑même un feu de batterie déclaré."
                 ],
                 "recommendations_en": [
-                        "En cas de fumée, d’odeur anormale ou de chaleur excessive, éteindre la moto et s’en éloigner immédiatement.",
-                        "S’éloigner du véhicule et appeler les pompiers (18 ou 112) en précisant qu’il s’agit d’un véhicule électrique.",
-                        "Ne jamais tenter d’éteindre soi‑même un feu de batterie déclaré."
+                    "In case of smoke, an unusual smell or excessive heat, switch off the motorcycle and move away from it immediately.",
+                    "Move away from the vehicle and call the fire department (18 or 112 in France), stating that it is an electric vehicle.",
+                    "Never attempt to put out a battery fire yourself once it has started."
                 ]
         }
 ]

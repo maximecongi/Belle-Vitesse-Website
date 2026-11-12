@@ -38,7 +38,7 @@ def resolve_entity_info(
     entity_type = mode_or_type
     class_name = record.__class__.__name__
 
-    if entity_type in ("checkout", "checkin", "incident", "cgl", "safety_rules", "pilot_waiver"):
+    if entity_type in ("checkout", "checkin", "incident", "cgl", "safety_rules", "pilot_waiver", "risk_assessment"):
         pass
     elif entity_type in ("cgl", "cgl_waiver") or class_name == "CglWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "cgl"):
         entity_type = "cgl"

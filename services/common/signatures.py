@@ -168,6 +168,9 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration des Flux ──────────────────────────────────────
 
+# Modes portés par le modèle Waiver (post-traitements : kDrive + e-mail de confirmation).
+WAIVER_MODES = frozenset({"cgl", "safety_rules", "pilot_waiver", "risk_assessment"})
+
 FLOW_CONFIG = {
     "checkout": {
         "model": CheckoutVehicle,
@@ -672,6 +675,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             raise ValueError(f"Erreur d'intégrité : une archive scellée existe déjà pour {document_id} ({commit_err}).")
 
         # 6. Compilation PDF asynchrone via RQ & Post-traitements (kDrive, Emails)
+        is_waiver_mode = mode in WAIVER_MODES
         try:
             from services.common.pdf_tasks import dispatch_pdf_generation
             dispatch_pdf_generation(
@@ -681,9 +685,9 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                 stylesheets=config["stylesheets"],
                 compress=True,
                 filename=filename,
-                entity_type="waiver" if mode in ["cgl", "safety_rules", "pilot_waiver"] else "inspection",
+                entity_type="waiver" if is_waiver_mode else "inspection",
                 entity_id=document_id,
-                post_action="waiver_post_actions" if mode in ["cgl", "safety_rules", "pilot_waiver"] else "inspection_post_actions",
+                post_action="waiver_post_actions" if is_waiver_mode else "inspection_post_actions",
                 extra_context={
                     "mode": mode,
                     "rel_pdf_path": rel_pdf_path,

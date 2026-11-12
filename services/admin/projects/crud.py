@@ -1,4 +1,5 @@
 import json
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 import logging
 import os
 import shutil
@@ -261,6 +262,64 @@ def get_project_form_context():
     }
 
 
+# ── Facturation (montant global HT + montant par matériel) ─────────
+EQUIPMENT_BILLING_PREFIX = "equipment_billing["
+
+
+def _parse_amount(raw, label):
+    """Montant saisi (« 1 250,50 », « 1250.5 € ») → Decimal arrondi au centime ; None si vide."""
+    text = str(raw or "").replace("\u202f", "").replace("\xa0", "").replace(" ", "").replace("€", "").strip()
+    if not text:
+        return None
+    try:
+        amount = Decimal(text.replace(",", ".")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except InvalidOperation:
+        raise ValueError(f"Montant invalide pour « {label} » : {raw}")
+    if amount < 0:
+        raise ValueError(f"Le montant « {label} » ne peut pas être négatif.")
+    return amount
+
+
+def _apply_billing(project, form, veh_ids, head_ids):
+    """
+    Enregistre la facturation saisie : montant global HT et montants par matériel engagé
+    (champs equipment_billing[vehicle:<id>] / equipment_billing[head:<id>]). Le matériel non engagé
+    est ignoré. La somme du matériel ne peut pas dépasser le montant global.
+    """
+    engaged = {f"vehicle:{v}" for v in veh_ids if v} | {f"head:{h}" for h in head_ids if h}
+    per_equipment = {}
+    for name in form.keys():
+        if not name.startswith(EQUIPMENT_BILLING_PREFIX) or not name.endswith("]"):
+            continue
+        key = name[len(EQUIPMENT_BILLING_PREFIX):-1]
+        if key not in engaged:
+            continue
+        amount = _parse_amount(form.get(name), "montant du matériel")
+        if amount:
+            per_equipment[key] = float(amount)
+
+    total = _parse_amount(form.get("billing_amount"), "montant global")
+    if total is not None and sum(per_equipment.values()) > float(total) + 0.005:
+        raise ValueError("La somme facturée pour le matériel dépasse le montant global du projet.")
+    project.billing_amount = total
+    project.equipment_billing = per_equipment or None
+
+
+def _format_amount(value):
+    """Montant pour un champ de saisie : 1250.5 → « 1250.50 », entier → « 1250 »."""
+    if value is None:
+        return ""
+    value = float(value)
+    return f"{value:.0f}" if value == int(value) else f"{value:.2f}"
+
+
+def _billing_form_data(project):
+    return {
+        "billing_amount": _format_amount(project.billing_amount),
+        "equipment_billing": {k: _format_amount(v) for k, v in project.equipment_billing_map.items()},
+    }
+
+
 def _apply_bv_team_roles(project, form):
     """
     Affecte les rôles nominatifs de l'équipe BV (Commercial, Techniciens BV) et le contact
@@ -342,6 +401,7 @@ def create_project(form, user_id=None):
         last_action_by_id=user_id,
     )
     _apply_bv_team_roles(project, form)
+    _apply_billing(project, form, veh_ids, head_ids)
     bv_referent_ids = [
         _parse_int(uid) for uid in (form.getlist("bv_referent_ids") if hasattr(form, 'getlist') else [])
     ]
@@ -432,6 +492,8 @@ def update_project(record_id, form, user_id=None):
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
     _apply_bv_team_roles(project, form)
+    if "billing_amount" in form:  # facturation absente du formulaire (ex. outil MCP) : inchangée
+        _apply_billing(project, form, veh_ids, head_ids)
     project.last_action_by_id = user_id
 
     # Mise à jour des référents BV du projet
@@ -549,6 +611,7 @@ def get_project_for_edit(record_id):
         "head_ids": head_ids,
         "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
         "bv_technician_ids": [u.id for u in (p.bv_technicians or [])],
+        **_billing_form_data(p),
     }
 
 

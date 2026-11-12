@@ -747,6 +747,62 @@ class ProjectsTest(BaseTestCase):
             self.assertIn("— Aucune / Freelance —", html)
             self.assertNotIn("quickContactModal", html)
 
+    def test_project_billing_saved_from_form(self):
+        """Facturation : montant global + montants par matériel engagé (formats français acceptés)."""
+        from models import Vehicle
+        with self.app.app_context():
+            self._login_admin("admin_billing@example.com")
+            prod = Production(name="Prod Facturation")
+            db.session.add_all([prod, Vehicle(id="rec_bill_v", fields={"name": "eRover"}, display_order=0)])
+            db.session.commit()
+            base = {
+                "name": "Projet Facturé", "production_id": str(prod.id),
+                "shoot_start": "2026-11-01", "shoot_end": "2026-11-03",
+                "vehicle_ids": "rec_bill_v", "head_ids": "rec_bill_h",
+            }
+            res = self.client.post("/admin/projects/new", data={
+                **base,
+                "billing_amount": "12 500,50 €",
+                "equipment_billing[vehicle:rec_bill_v]": "8000",
+                "equipment_billing[head:rec_bill_h]": "1 200,5",
+                "equipment_billing[vehicle:rec_not_engaged]": "999",
+            })
+            self.assertEqual(res.status_code, 302)
+            p = Project.query.filter_by(name="Projet Facturé").one()
+            self.assertEqual(float(p.billing_amount), 12500.50)
+            self.assertEqual(p.equipment_billing, {"vehicle:rec_bill_v": 8000.0, "head:rec_bill_h": 1200.5})
+            self.assertEqual(p.billing_other, 3300.0)
+
+            # Pré-remplissage du formulaire d'édition
+            data = get_project_for_edit(p.id)
+            self.assertEqual(data["billing_amount"], "12500.50")
+            self.assertEqual(data["equipment_billing"]["head:rec_bill_h"], "1200.50")
+            html = self.client.get(f"/admin/projects/{p.id}/edit").get_data(as_text=True)
+            self.assertIn('id="pf-section-facturation"', html)
+            self.assertIn('name="equipment_billing[vehicle:rec_bill_v]"', html)
+            self.assertIn('value="8000"', html)
+
+            # Matériel > montant global : refusé, rien ne change
+            self.client.post(f"/admin/projects/{p.id}/edit", data={
+                **base, "billing_amount": "5000", "equipment_billing[vehicle:rec_bill_v]": "8000",
+            })
+            db.session.refresh(p)
+            self.assertEqual(float(p.billing_amount), 12500.50)
+
+            # Mise à jour sans les champs de facturation (ex. outil MCP) : facturation conservée
+            update_project(p.id, {**base, "vehicle_ids": None})
+            db.session.refresh(p)
+            self.assertEqual(float(p.billing_amount), 12500.50)
+
+    def test_project_billing_rejects_invalid_amounts(self):
+        from services.admin.projects.crud import _parse_amount
+        self.assertIsNone(_parse_amount("  ", "x"))
+        self.assertEqual(str(_parse_amount("1\u202f234,567", "x")), "1234.57")
+        with self.assertRaises(ValueError):
+            _parse_amount("douze", "x")
+        with self.assertRaises(ValueError):
+            _parse_amount("-5", "x")
+
     def test_get_project_for_duplicate(self):
         """Vérifie le formatage et le pré-remplissage des données lors de la duplication d'un projet."""
         with self.app.app_context():
