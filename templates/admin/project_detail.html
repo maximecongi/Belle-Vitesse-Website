@@ -582,7 +582,12 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 <div class="project-contact-row">
                     <div class="project-contact-main">
                         <span class="project-contact-name">{{ u.firstname }} {{ u.lastname }}</span>
-                        <span class="project-contact-role">{{ role_label }}</span>
+                        {% set role_parts = role_label.split(' · ') %}
+                        {% set job_parts = role_parts | reject('equalto', 'Référent plateau') | list %}
+                        <span class="project-contact-role">
+                            {%- if job_parts %}<span>{{ job_parts | join(' · ') }}</span>{% endif -%}
+                            {%- if 'Référent plateau' in role_parts %}<span class="badge-pill badge-pill-xs u-bg-project-light u-text-project">Référent plateau</span>{% endif -%}
+                        </span>
                     </div>
                     {% if u.phone or u.mail %}
                     <div class="project-contact-actions">

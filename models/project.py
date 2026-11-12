@@ -266,8 +266,8 @@ class Project(db.Model):
 
         Regroupe tous les membres ayant un rôle sur le projet (Commercial, Techniciens BV, référents plateau).
         Le libellé est uniquement le rôle tenu sur ce projet (jamais le métier de la fiche utilisateur) :
-        rôles nominatifs (Commercial, Technicien BV, Référent plateau), puis rôles tenus en tant que
-        contact du projet (ex. Opérateur Remote Head, Pilote).
+        rôles nominatifs (Commercial, Technicien BV), rôles tenus en tant que contact du projet
+        (ex. Opérateur Remote Head, Pilote), puis « Référent plateau » toujours en dernier.
         Une personne n'apparaît qu'une fois, ses rôles joints par « · ».
         """
         contact_roles = self.contact_roles
@@ -277,6 +277,8 @@ class Project(db.Model):
             for label, c in contact_roles:
                 if label not in labels and self._is_same_person(c, u):
                     labels.append(label)
+            # Le métier d'abord, « Référent plateau » toujours en dernière position
+            labels.sort(key=lambda lbl: lbl == "Référent plateau")
             result.append((" · ".join(labels), u))
         return result
 

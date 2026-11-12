@@ -163,6 +163,6 @@ class ProjectBvRolesTest(BaseTestCase):
 
             roles = {u.id: label for label, u in project.bv_team_roles}
             # Rôle du projet uniquement, jamais le métier de la fiche utilisateur
-            self.assertEqual(roles[referent.id], "Référent plateau · Opérateur Remote Head")
-            self.assertEqual(roles[pilot_user.id], "Référent plateau · Pilote")
+            self.assertEqual(roles[referent.id], "Opérateur Remote Head · Référent plateau")
+            self.assertEqual(roles[pilot_user.id], "Pilote · Référent plateau")
             self.assertEqual([(label, c.id) for label, c in project.key_contacts], [("Production", other.id)])
