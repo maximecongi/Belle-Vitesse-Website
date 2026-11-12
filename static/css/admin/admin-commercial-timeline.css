@@ -34,40 +34,41 @@
 .ctl-badge--danger { background: var(--status-danger-bg); color: var(--status-danger-text); }
 .ctl-badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral-text); }
 
-/* ── Formulaire d'ajout ────────────────────────────────────── */
-.ctl-form {
-    border: 1px solid var(--grey-border, #E0E0E0);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-.ctl-form[hidden] {
-    display: none;
-}
-
+/* ── Modale d'ajout ────────────────────────────────────────── */
 .ctl-form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0 1rem;
 }
 
+.ctl-span-2 {
+    grid-column: 1 / -1;
+}
+
 .ctl-form-grid .form-group {
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.9rem;
 }
 
 .ctl-form-grid .form-group[hidden] {
     display: none;
 }
 
-.ctl-form-summary {
-    grid-column: 1 / -1;
+.ctl-summary-input {
+    resize: vertical;
+    min-height: 4.5rem;
 }
 
 .ctl-form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+    .ctl-form-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 
 /* ── Frise ─────────────────────────────────────────────────── */
@@ -328,4 +329,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Liste déroulante Select2 rattachée à la modale : au-dessus de son contenu */
+#ctlModal .select2-dropdown {
+    z-index: 3001;
 }

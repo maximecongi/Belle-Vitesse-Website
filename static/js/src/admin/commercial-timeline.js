@@ -1,7 +1,7 @@
 /**
  * commercial-timeline.js — Timeline commerciale de la fiche projet.
  * - sélection d'une prise de contact (clic / clavier ←→) et affichage de son détail ;
- * - ouverture / fermeture du formulaire d'ajout ;
+ * - modale d'ajout (focus sur le type à l'ouverture, liste des contacts au-dessus de la modale) ;
  * - champ « Motif de l'abandon » affiché et requis uniquement pour le type « Abandon » ;
  * - positionnement du segment « silence en cours » (data-ctl-start / data-ctl-end → --start / --end).
  * Les points eux-mêmes sont positionnés par data-bars.js (data-pct → --pct).
@@ -45,23 +45,19 @@
             });
         });
 
-        // Formulaire d'ajout
+        // Modale d'ajout (ouverture / fermeture gérées par confirm-dialog.js via data-modal-open/close)
         var form = root.querySelector('[data-ctl-form]');
-        var toggles = root.querySelectorAll('[data-ctl-toggle-form]');
-        function setFormOpen(open) {
-            if (!form) return;
-            form.hidden = !open;
-            toggles.forEach(function (t) {
-                if (t.hasAttribute('aria-expanded')) t.setAttribute('aria-expanded', open ? 'true' : 'false');
+        var modal = document.getElementById('ctlModal');
+        if (modal) {
+            modal.addEventListener('admin-modal:open', function () {
+                var first = form && form.querySelector('[data-ctl-type]');
+                if (first) setTimeout(function () { first.focus(); }, 50);
             });
-            if (open) {
-                var first = form.querySelector('[data-ctl-type]');
-                if (first) first.focus();
-            }
+            modal.addEventListener('admin-modal:close', function () {
+                var $ = window.jQuery;
+                if ($ && $.fn && $.fn.select2) $(modal).find('[data-ctl-contact]').select2('close');
+            });
         }
-        toggles.forEach(function (t) {
-            t.addEventListener('click', function () { setFormOpen(form.hidden); });
-        });
 
         // Motif d'abandon
         var typeSelect = root.querySelector('[data-ctl-type]');
@@ -98,7 +94,8 @@
                 $(contactSelect).select2({
                     width: '100%',
                     placeholder: contactSelect.dataset.placeholder || '',
-                    dropdownParent: $(form)
+                    // Rattachée au voile de la modale : la liste n'est pas rognée par le défilement du corps
+                    dropdownParent: $(modal || form)
                 }).on('change', syncContact);
             } else {
                 contactSelect.addEventListener('change', syncContact);

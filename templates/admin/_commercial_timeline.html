@@ -1,6 +1,6 @@
 {# Timeline commerciale du projet : prises de contact espacées proportionnellement au temps.
    Contexte attendu : project, tl (= commercial_timeline). Réservé aux rôles commerciaux. #}
-{% from "admin/macros.html" import empty_state %}
+{% from "admin/macros.html" import empty_state, admin_modal %}
 <div class="admin-card u-mb-3 ctl" id="commercial-timeline" data-commercial-timeline>
     <div class="ctl-head u-flex u-flex-row u-justify-between u-mb-3">
         <div class="ctl-head-title">
@@ -21,17 +21,18 @@
                 {{ tl.count }} prise{{ 's' if tl.count > 1 else '' }} de contact{% if tl.span_days %} · sur {{ tl.span_days }} j{% endif %}
             </span>
             {% endif %}
-            <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-ctl-toggle-form
-                aria-controls="ctlForm" aria-expanded="false">+ Prise de contact</button>
+            <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-modal-open="ctlModal"
+                aria-haspopup="dialog">+ Prise de contact</button>
         </div>
     </div>
 
-    <!-- Formulaire d'ajout -->
-    <form method="POST" class="ctl-form" id="ctlForm" data-ctl-form hidden
+    <!-- Modale d'ajout d'une prise de contact -->
+    {% call admin_modal('ctlModal', 'Nouvelle prise de contact', 'md') %}
+    <form method="POST" class="ctl-form" id="ctlForm" data-ctl-form
         action="{{ url_for('admin_projects.admin_project_commercial_event_add', record_id=project.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="ctl-form-grid">
-            <div class="form-group">
+            <div class="form-group ctl-span-2">
                 <label class="form-label" for="ctlType">Type</label>
                 <select class="form-input" id="ctlType" name="event_type" required data-ctl-type>
                     {% for group, types in tl.type_groups %}
@@ -52,7 +53,7 @@
                 <label class="form-label" for="ctlTime">Heure <span class="u-text-muted">(facultatif)</span></label>
                 <input type="time" class="form-input" id="ctlTime" name="occurred_time" value="{{ tl.default_time }}">
             </div>
-            <div class="form-group">
+            <div class="form-group ctl-span-2">
                 <label class="form-label" for="ctlContact">Contact</label>
                 <select class="form-input" id="ctlContact" name="contact_id" data-ctl-contact
                     data-placeholder="Rechercher un contact…">
@@ -75,7 +76,7 @@
                 </select>
             </div>
             <!-- Nouveau contact (rattaché à la production du projet) -->
-            <fieldset class="ctl-new-contact" data-ctl-new-contact hidden disabled>
+            <fieldset class="ctl-new-contact ctl-span-2" data-ctl-new-contact hidden disabled>
                 <legend class="form-label">Nouveau contact{% if project.production %} · {{ project.production.name }}{% endif %}</legend>
                 <div class="ctl-form-grid">
                     <div class="form-group">
@@ -96,7 +97,7 @@
                     </div>
                 </div>
             </fieldset>
-            <div class="form-group" data-ctl-lost-field hidden>
+            <div class="form-group ctl-span-2" data-ctl-lost-field hidden>
                 <label class="form-label" for="ctlLostReason">Motif de l'abandon</label>
                 <select class="form-input" id="ctlLostReason" name="lost_reason" disabled>
                     <option value="">Choisir…</option>
@@ -105,17 +106,18 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="form-group ctl-form-summary">
+            <div class="form-group ctl-span-2">
                 <label class="form-label" for="ctlSummary">Résumé</label>
-                <input type="text" class="form-input" id="ctlSummary" name="summary" maxlength="500"
-                    placeholder="Ex. : demande de dispo pour 2 jours de tournage en mars">
+                <textarea class="form-input ctl-summary-input" id="ctlSummary" name="summary" rows="3" maxlength="500"
+                    placeholder="Ex. : demande de dispo pour 2 jours de tournage en mars"></textarea>
             </div>
         </div>
         <div class="ctl-form-actions">
-            <button type="button" class="admin-btn admin-btn-quaternary admin-btn-sm" data-ctl-toggle-form>Annuler</button>
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" data-modal-close="ctlModal">Annuler</button>
             <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm">Ajouter</button>
         </div>
     </form>
+    {% endcall %}
 
     {% if tl.events %}
     <!-- Frise : positions en % (data-pct → --pct), écarts proportionnels au temps -->
@@ -177,8 +179,8 @@
             action="{{ url_for('admin_projects.admin_project_commercial_event_delete', record_id=project.id, event_id=ev.id) }}"
             data-confirm="Supprimer cette prise de contact de la timeline ?" data-confirm-label="Supprimer">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="admin-btn admin-btn-quaternary admin-btn-xs" title="Supprimer">
-                <i data-lucide="trash-2"></i>
+            <button type="submit" class="admin-btn admin-btn-danger admin-btn-xs" title="Supprimer">
+                <i class="u-m-0" data-lucide="trash-2"></i>
             </button>
         </form>
     </div>
