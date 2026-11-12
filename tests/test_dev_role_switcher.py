@@ -66,7 +66,7 @@ class DevRoleSwitcherTestCase(BaseTestCase):
             self.assertEqual(db_user.role, "Super Administrateur")
 
     def test_switch_role_affects_template_context_and_permissions(self):
-        """After switching to Technicien, accessing restricted pages like calendar is blocked by require_roles."""
+        """After switching to Technicien, accessing restricted pages like users is blocked by require_roles."""
         self._login()
         self.app.config["FLASK_ENV"] = "development"
 
@@ -77,8 +77,8 @@ class DevRoleSwitcherTestCase(BaseTestCase):
         # 2. Switch role to Technicien
         self.client.post("/admin/dev/switch-role", data={"role": "Technicien"})
 
-        # 3. Accessing /admin/calendar is now redirected to dashboard (forbidden for role 'technicien')
-        resp2 = self.client.get("/admin/calendar", follow_redirects=False)
+        # 3. Accessing /admin/users is now redirected to dashboard (forbidden for role 'technicien')
+        resp2 = self.client.get("/admin/users", follow_redirects=False)
         self.assertEqual(resp2.status_code, 302)
         self.assertIn("/admin/dashboard", resp2.location)
 

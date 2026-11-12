@@ -61,6 +61,8 @@ class ProjectReportsFeaturesTest(BaseTestCase):
             shoot_end_date=date(2026, 9, 12),
             return_date=date(2026, 9, 13),
         )
+        # Techniciens rattachés à l'équipe BV du projet (périmètre d'accès)
+        project.bv_technicians = [tech, other]
         db.session.add(project)
         db.session.commit()
         self.project_id = project.id

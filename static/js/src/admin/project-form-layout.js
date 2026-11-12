@@ -107,10 +107,11 @@
             const material = checkedNames('input[name="vehicle_ids"]:checked, input[name="head_ids"]:checked');
             setText('pfRecapMaterial', material.join(' · '));
 
-            const referents = Array.from(form.querySelectorAll('select[name="bv_referent_ids"] option:checked'))
+            const selectedNames = name => Array.from(form.querySelectorAll(`select[name="${name}"] option:checked`))
                 .map(opt => shortName(opt.textContent.trim()))
                 .filter(Boolean);
-            setText('pfRecapReferents', referents.join(' · '));
+            setText('pfRecapReferents', selectedNames('bv_referent_ids').join(' · '));
+            setText('pfRecapTechnicians', selectedNames('bv_technician_ids').join(' · '));
 
             let locations = [];
             try { locations = JSON.parse(valueOf('shooting_locations_input') || '[]') || []; } catch (e) { locations = []; }
@@ -137,7 +138,7 @@
                     || shootDates.filter(Boolean).length > 0
                     || Boolean(valueOf('shoot_start_input')),
                 materiel: form.querySelector('input[name="vehicle_ids"]:checked, input[name="head_ids"]:checked') !== null,
-                equipe: form.querySelector('select[name="bv_referent_ids"] option:checked') !== null,
+                equipe: form.querySelector('select[name="bv_referent_ids"] option:checked, select[name="bv_technician_ids"] option:checked') !== null,
                 lieux: locations.some(l => l && String(l.name || '').trim()),
             };
 

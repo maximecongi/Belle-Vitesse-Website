@@ -286,17 +286,29 @@
                     </div>
                 </div>
 
-                <!-- Côté Belle Vitesse : référents plateau + rôles nominatifs (Commercial, Machiniste BV) -->
+                <!-- Côté Belle Vitesse : référents plateau, techniciens BV (multiples) + Commercial -->
                 <div class="pf-team-divider"></div>
                 <div class="pf-subtitle">Côté Belle Vitesse</div>
 
                 <div class="form-group">
                     <label class="form-label" for="bvReferentsSelect">Référents plateau</label>
-                    <select name="bv_referent_ids" id="bvReferentsSelect" class="form-input" multiple
+                    <select name="bv_referent_ids" id="bvReferentsSelect" class="form-input bv-user-tags" multiple
                         data-placeholder="Sélectionner les référents…">
                         {% for u in bv_users %}
                         {% set is_selected = data and data.bv_referent_ids and (u.id in data.bv_referent_ids or (u.id|string) in
                         data.bv_referent_ids) %}
+                        <option value="{{ u.id }}" data-job="{{ u.job or '' }}" {% if is_selected %}selected{% endif %}>{{ u.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bvTechniciansSelect">Techniciens BV</label>
+                    <select name="bv_technician_ids" id="bvTechniciansSelect" class="form-input bv-user-tags" multiple
+                        data-placeholder="Sélectionner les techniciens…">
+                        {% for u in bv_users %}
+                        {% set is_selected = data and data.bv_technician_ids and (u.id in data.bv_technician_ids or (u.id|string) in
+                        data.bv_technician_ids) %}
                         <option value="{{ u.id }}" data-job="{{ u.job or '' }}" {% if is_selected %}selected{% endif %}>{{ u.name }}</option>
                         {% endfor %}
                     </select>
@@ -315,19 +327,6 @@
                             {% endfor %}
                         </select>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Machiniste BV</label>
-                        <select name="bv_grip_user_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner —</option>
-                            {% for u in bv_users %}
-                            <option value="{{ u.id }}" {% if data and data.bv_grip_user_id|string==u.id|string %}selected{% endif %}>
-                                {{ u.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
                 </div>
             </section>
 
@@ -383,6 +382,10 @@
                 <div class="pf-recap-row">
                     <dt>Référents</dt>
                     <dd id="pfRecapReferents">—</dd>
+                </div>
+                <div class="pf-recap-row">
+                    <dt>Techniciens</dt>
+                    <dd id="pfRecapTechnicians">—</dd>
                 </div>
                 <div class="pf-recap-row">
                     <dt>Lieux</dt>

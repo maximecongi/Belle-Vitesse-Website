@@ -9,7 +9,7 @@ from icalendar import Calendar, Event
 from sqlalchemy.orm import joinedload
 
 from extensions import limiter
-from models import CalendarSubscription, Project, db, _utcnow
+from models import CalendarSubscription, Project, User, db, _utcnow
 from utils.database import get_vehicles, get_heads
 
 cal_feed_bp = Blueprint("cal_feed", __name__)
@@ -279,9 +279,14 @@ def calendar_feed(token=None):
         f"user_id={sub.user_id} IP={request.remote_addr}"
     )
 
-    # 3. Récupérer tous les projets avec au moins une date de tournage (et non archivés/supprimés)
+    # 3. Récupérer les projets avec au moins une date de tournage (et non archivés/supprimés).
+    #    Un technicien ne reçoit que les projets dont il fait partie de l'équipe BV.
+    from services.admin.project_access import project_scope_for_user, scope_project_query
+
+    owner = db.session.get(User, sub.user_id)
+    scope = project_scope_for_user(owner)
     projects = (
-        Project.query.filter(Project.deleted_at.is_(None))
+        scope_project_query(Project.query.filter(Project.deleted_at.is_(None)), scope)
         .options(
             joinedload(Project.production),
             joinedload(Project.pilot_contact),
@@ -329,7 +334,7 @@ def calendar_feed(token=None):
     cal.add("version", "2.0")
     cal.add("calscale", "GREGORIAN")
     cal.add("method", "PUBLISH")
-    cal.add("x-wr-calname", "Belle Vitesse — Projets")
+    cal.add("x-wr-calname", "Belle Vitesse — Mes projets" if scope is not None else "Belle Vitesse — Projets")
     cal.add("x-wr-timezone", "Europe/Paris")
     # Suggérer un rafraîchissement toutes les 30 minutes
     cal.add("refresh-interval;value=duration", "PT30M")

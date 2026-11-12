@@ -18,9 +18,9 @@ from utils.entity_resolvers import resolve_inspection, resolve_project
 logger = logging.getLogger(__name__)
 
 
-def list_checkouts(page=None, per_page=10, q=None):
+def list_checkouts(page=None, per_page=10, q=None, scope=None):
     """Récupère les départs par la logique unifiée avec support de la pagination."""
-    return list_inspections_unified("checkout", page=page, per_page=per_page, q=q)
+    return list_inspections_unified("checkout", page=page, per_page=per_page, q=q, scope=scope)
 
 
 def get_checkout_detail(record_id):
@@ -28,9 +28,9 @@ def get_checkout_detail(record_id):
     return get_inspection_detail_unified("checkout", record_id)
 
 
-def get_checkout_form_context():
+def get_checkout_form_context(scope=None):
     """Récupère le contexte du formulaire pour un départ."""
-    return get_unified_form_context(mode="checkout")
+    return get_unified_form_context(mode="checkout", scope=scope)
 
 
 @handle_admin_service_error

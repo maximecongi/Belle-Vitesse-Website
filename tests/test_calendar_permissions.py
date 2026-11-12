@@ -67,12 +67,11 @@ class CalendarPermissionsTestCase(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn("/admin/login", response.location)
 
-    def test_user_role_cannot_access_calendar(self):
-        """User with role 'user' should be forbidden / redirected to dashboard."""
+    def test_technician_role_manages_own_calendar(self):
+        """Un technicien accède à la page calendrier pour gérer son propre lien (flux filtré sur ses projets)."""
         self._login_as(self.user_regular)
         response = self.client.get("/admin/calendar", follow_redirects=False)
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/admin/dashboard", response.location)
+        self.assertEqual(response.status_code, 200)
 
     def test_commercial_sees_only_own_calendar(self):
         """Commercial user should only see their own calendar entry."""

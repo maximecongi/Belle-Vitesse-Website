@@ -133,6 +133,7 @@ class ProjectsTest(BaseTestCase):
 
             proj = Project(name="Project Notes Test",
                            production_id=prod.id, notes="Ancienne consigne")
+            proj.bv_technicians = [user]  # rattaché à l'équipe BV (périmètre d'accès)
             db.session.add(proj)
             db.session.commit()
             proj_id = proj.id

@@ -7,16 +7,27 @@ from services.admin.projects import (
     list_projects,
     update_project,
 )
+from services.admin.project_access import (
+    api_project_scope,
+    can_access_project,
+    install_api_project_scope_guard,
+)
 from utils.jwt_auth import require_api_auth
 
 api_projects_bp = Blueprint("api_projects", __name__)
+
+# Un technicien n'accède qu'aux projets de son équipe BV
+install_api_project_scope_guard(
+    api_projects_bp,
+    lambda view_args, scope: can_access_project(view_args["record_id"], scope) if "record_id" in view_args else None,
+)
 
 
 @api_projects_bp.route("/projects", methods=["GET"])
 @require_api_auth("administrator", "manager", "user")
 def api_list_projects():
     try:
-        result = list_projects()
+        result = list_projects(scope=api_project_scope())
         return jsonify(result)
     except Exception as e:
         current_app.logger.error(f"❌ API list_projects error: {e}")

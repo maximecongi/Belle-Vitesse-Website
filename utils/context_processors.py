@@ -74,8 +74,13 @@ DEFAULT_SETTINGS = {
 # - ACTION_PERMISSIONS : actions ponctuelles (boutons) testées via `can()`.
 # Ces listes DOIVENT refléter les décorateurs `@require_roles` des routes.
 
+# Projets, archives et calendrier ICS : filtrés sur les projets de l'équipe BV du technicien
+# (cf. services.admin.project_access).
 _NAV_TECHNICIEN = {
     "dashboard",
+    "projects",
+    "archives",
+    "calendar",
     "reports",
     "checkouts",
     "checkins",
@@ -138,11 +143,11 @@ _SECTIONS_FULL = {
 
 ROLE_PERMISSIONS = {
     "technicien": {
-        "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
+        "sections": {"dashboard", "tournages", "departs", "retours", "flotte", "tools"},
         "nav": _NAV_TECHNICIEN,
     },
     "user": {
-        "sections": {"dashboard", "departs", "retours", "flotte", "tools"},
+        "sections": {"dashboard", "tournages", "departs", "retours", "flotte", "tools"},
         "nav": _NAV_TECHNICIEN,
     },
     "commercial": {

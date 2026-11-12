@@ -67,7 +67,7 @@ def parse_search_scope(q: str, raw_scope: str) -> tuple[str, set[str]]:
     return q, active_scopes
 
 
-def get_default_suggestions(role_norm: str, is_manager_or_higher: bool) -> list[dict]:
+def get_default_suggestions(role_norm: str, is_manager_or_higher: bool, scope=None) -> list[dict]:
     """Retourne les suggestions logiques au chargement initial du modal Cmd+K (requête vide)."""
     default_suggestions = []
 
@@ -77,9 +77,11 @@ def get_default_suggestions(role_norm: str, is_manager_or_higher: bool) -> list[
             from models.project import Project
 
             today = date.today()
-            all_active_projects = Project.query.filter(
+            from services.admin.project_access import scope_project_query
+
+            all_active_projects = scope_project_query(Project.query.filter(
                 Project.deleted_at.is_(None)
-            ).options(
+            ), scope).options(
                 joinedload(Project.production)
             ).order_by(Project.departure_date.asc()).all()
 
@@ -200,7 +202,7 @@ def search_navigation_and_actions(
         {"title": "Projets (Tous)", "subtitle": "Tournages en préparation ou en cours", "url": url_for(
             "admin_projects.admin_projects_list"), "category": "Navigation", "entity_type": "page", "icon": "clapperboard", "roles": ['all']},
         {"title": "Archives des Projets", "subtitle": "Projets terminés et archivés", "url": url_for(
-            "admin_projects.admin_projects_archives"), "category": "Navigation", "entity_type": "page", "icon": "archive", "roles": ['manager', 'commercial', 'admin']},
+            "admin_projects.admin_projects_archives"), "category": "Navigation", "entity_type": "page", "icon": "archive", "roles": ['all']},
         {"title": "Nouveau Check-out", "subtitle": "Effectuer un contrôle de départ", "url": url_for(
             "admin_checkouts.admin_checkout_new"), "category": "Actions", "entity_type": "checkout", "icon": "truck", "roles": ['all']},
         {"title": "Check-outs (Départs)", "subtitle": "Historique des contrôles de départ", "url": url_for(
@@ -226,7 +228,7 @@ def search_navigation_and_actions(
         {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for(
             "admin_booking.admin_booking"), "category": "Navigation", "entity_type": "page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
         {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for(
-            "admin_calendar.admin_calendar"), "category": "Navigation", "entity_type": "page", "icon": "calendar-range", "roles": ['manager', 'commercial', 'admin']},
+            "admin_calendar.admin_calendar"), "category": "Navigation", "entity_type": "page", "icon": "calendar-range", "roles": ['all']},
         {"title": "Productions", "subtitle": "Annuaire des sociétés clientes", "url": url_for(
             "admin_productions.admin_productions_list"), "category": "Navigation", "entity_type": "production", "icon": "building", "roles": ['manager', 'commercial', 'admin']},
         {"title": "Nouvelle Production", "subtitle": "Créer une société de production", "url": url_for(
@@ -275,14 +277,16 @@ def search_navigation_and_actions(
     return results
 
 
-def search_projects(query_lower: str) -> list[dict]:
+def search_projects(query_lower: str, scope=None) -> list[dict]:
     """Recherche dans les projets et productions associées."""
     try:
         from models.project import Project, Production
 
-        projects_query = Project.query.filter(
+        from services.admin.project_access import scope_project_query
+
+        projects_query = scope_project_query(Project.query.filter(
             Project.deleted_at.is_(None)
-        ).options(
+        ), scope).options(
             joinedload(Project.production)
         ).outerjoin(Production, Project.production_id == Production.id)
 
@@ -337,7 +341,7 @@ def search_projects(query_lower: str) -> list[dict]:
         return []
 
 
-def search_checkouts(query_lower: str) -> list[dict]:
+def search_checkouts(query_lower: str, scope=None) -> list[dict]:
     """Recherche dans les contrôles de départ (Check-out)."""
     try:
         from models.inspection import CheckoutVehicle
@@ -348,6 +352,9 @@ def search_checkouts(query_lower: str) -> list[dict]:
         ).options(
             joinedload(CheckoutVehicle.project)
         ).outerjoin(Project, CheckoutVehicle.project_id == Project.id)
+        from services.admin.project_access import scope_project_query
+
+        co_query = scope_project_query(co_query, scope)
 
         tokens = query_lower.split()
         for t in tokens:
@@ -391,7 +398,7 @@ def search_checkouts(query_lower: str) -> list[dict]:
         return []
 
 
-def search_checkins(query_lower: str) -> list[dict]:
+def search_checkins(query_lower: str, scope=None) -> list[dict]:
     """Recherche dans les contrôles de retour (Check-in)."""
     try:
         from models.inspection import CheckinVehicle
@@ -402,6 +409,9 @@ def search_checkins(query_lower: str) -> list[dict]:
         ).options(
             joinedload(CheckinVehicle.project)
         ).outerjoin(Project, CheckinVehicle.project_id == Project.id)
+        from services.admin.project_access import scope_project_query
+
+        ci_query = scope_project_query(ci_query, scope)
 
         tokens = query_lower.split()
         for t in tokens:
@@ -541,7 +551,7 @@ def search_vehicles(query_lower: str, query_norm: str) -> list[dict]:
         return []
 
 
-def search_incidents(query_lower: str) -> list[dict]:
+def search_incidents(query_lower: str, scope=None) -> list[dict]:
     """Recherche dans les constats et signalements d'incidents."""
     try:
         from models.incident import Incident
@@ -552,6 +562,9 @@ def search_incidents(query_lower: str) -> list[dict]:
         ).options(
             joinedload(Incident.project)
         ).outerjoin(Project, Incident.project_id == Project.id)
+        from services.admin.project_access import scope_incident_query
+
+        inc_query = scope_incident_query(inc_query, scope)
 
         tokens = query_lower.split()
         for t in tokens:
@@ -702,7 +715,7 @@ def search_productions(query_lower: str) -> list[dict]:
         return []
 
 
-def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user") -> dict:
+def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user", user_id=None) -> dict:
     """
     Point d'entrée principal pour la recherche Cmd+K.
     Parse les filtres, exécute les requêtes ciblées et applique le RBAC.
@@ -717,6 +730,11 @@ def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user
         "super administrator", "super administrateur"
     )
 
+    # Périmètre projets : un technicien ne trouve que les projets de son équipe BV
+    from services.admin.project_access import project_scope_for
+
+    project_scope = project_scope_for(user_role, user_id)
+
     q, active_scopes = parse_search_scope(q, raw_scope)
     query_lower = q.lower()
     query_norm = normalize_str(q)
@@ -724,7 +742,7 @@ def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user
     # 1. Requête vide : suggestions par défaut
     if not q:
         return {
-            "results": get_default_suggestions(role_norm, is_manager_or_higher),
+            "results": get_default_suggestions(role_norm, is_manager_or_higher, scope=project_scope),
             "scope": ",".join(sorted(active_scopes)),
             "query": q
         }
@@ -741,18 +759,18 @@ def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user
 
     # 3. Projets
     if "all" in active_scopes or "project" in active_scopes:
-        results.extend(search_projects(query_lower))
+        results.extend(search_projects(query_lower, scope=project_scope))
 
     # 4. Check-outs
     if "all" in active_scopes or bool(active_scopes & {"inspection", "checkout"}):
-        results.extend(search_checkouts(query_lower))
+        results.extend(search_checkouts(query_lower, scope=project_scope))
 
     # 5. Check-ins
     if "all" in active_scopes or bool(active_scopes & {"inspection", "checkin"}):
-        results.extend(search_checkins(query_lower))
+        results.extend(search_checkins(query_lower, scope=project_scope))
 
-    # 6. Décharges (Waivers)
-    if "all" in active_scopes or "waiver" in active_scopes:
+    # 6. Décharges (Waivers) : pages réservées aux rôles à accès complet
+    if project_scope is None and ("all" in active_scopes or "waiver" in active_scopes):
         results.extend(search_waivers(query_lower))
 
     # 7. Véhicules
@@ -761,7 +779,7 @@ def perform_global_search(q: str, raw_scope: str = "all", user_role: str = "user
 
     # 8. Incidents
     if "all" in active_scopes or "incident" in active_scopes:
-        results.extend(search_incidents(query_lower))
+        results.extend(search_incidents(query_lower, scope=project_scope))
 
     # 9. Contacts (RBAC Manager / Commercial)
     if (is_manager_or_higher or role_norm == "commercial") and ("all" in active_scopes or "contact" in active_scopes):

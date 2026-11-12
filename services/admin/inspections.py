@@ -76,7 +76,7 @@ def get_inspection_config(mode):
 
 # ── Opérations Cœur (Unifiées) ───────────────────────────────────
 
-def list_inspections_unified(mode, page=None, per_page=10, q=None):
+def list_inspections_unified(mode, page=None, per_page=10, q=None, scope=None):
     """
     Récupérateur générique pour les listes de départs (Checkout) ou de retours (Checkin).
     Calcule également les statistiques pour le tableau de bord et gère la pagination serveur.
@@ -85,20 +85,22 @@ def list_inspections_unified(mode, page=None, per_page=10, q=None):
     record_model = config["model"]
     resp_attr = config["responsible_attr"]
 
-    base_query = record_model.query.join(Project).filter(
+    from services.admin.project_access import scope_project_query
+
+    base_query = scope_project_query(record_model.query.join(Project).filter(
         record_model.deleted_at.is_(None),
         Project.deleted_at.is_(None)
-    )
+    ), scope)
 
-    # Calcul des statistiques globales sur l'ensemble des enregistrements
-    stats_query = db.session.query(
+    # Calcul des statistiques globales sur l'ensemble des enregistrements (du périmètre)
+    stats_query = scope_project_query(db.session.query(
         db.func.count(record_model.id),
         db.func.sum(db.case((record_model.status == "signed", 1), else_=0)),
         db.func.sum(db.case((record_model.status == "completed", 1), else_=0)),
-    ).join(Project).filter(
+    ).select_from(record_model).join(Project).filter(
         record_model.deleted_at.is_(None),
         Project.deleted_at.is_(None)
-    ).first()
+    ), scope).first()
 
     total_stats = stats_query[0] or 0
     signed = int(stats_query[1] or 0)
@@ -735,12 +737,15 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     return data
 
 
-def get_unified_form_context(mode="checkout"):
+def get_unified_form_context(mode="checkout", scope=None):
     """
     Unifie la récupération du contexte pour les formulaires de départ et de retour.
     Gère les blocages (interdire un nouveau départ si un retour n'a pas été effectué).
     """
-    projects = Project.query.filter(Project.deleted_at.is_(None)).options(joinedload(
+    from services.admin.project_access import scope_project_query
+
+    # Projets proposés dans le formulaire : limités à l'équipe BV pour un technicien
+    projects = scope_project_query(Project.query.filter(Project.deleted_at.is_(None)), scope).options(joinedload(
         Project.production)).order_by(Project.name).all()
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
@@ -793,8 +798,9 @@ def get_unified_form_context(mode="checkout"):
                             break
                     if not has_checkin:
                         # Si non rendu, ce projet bloque un nouveau départ pour ce véhicule
+                        # (projet hors périmètre d'un technicien : nom masqué)
                         blocking_projects[vid] = project_names.get(
-                            pid, "Projet inconnu")
+                            pid, "Autre projet")
 
     # Enrichissement des données véhicules avec les statuts et blocages
     for v in vehicles:

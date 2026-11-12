@@ -7,16 +7,36 @@ from services.admin.checkouts import (
     list_checkouts,
     update_checkout,
 )
+from services.admin.project_access import (
+    api_project_scope,
+    can_access_project,
+    install_api_project_scope_guard,
+)
 from utils.jwt_auth import require_api_auth
 
 api_checkouts_bp = Blueprint("api_checkouts", __name__)
+
+
+def _record_in_scope(view_args, scope):
+    """Un technicien n'accède qu'aux contrôles des projets de son équipe BV."""
+    if "record_id" not in view_args:
+        return None
+    from models import CheckoutVehicle as Model, db
+
+    record = db.session.get(Model, view_args["record_id"])
+    if record is None:
+        return None  # 404 gérée par la vue
+    return bool(record.project_id) and can_access_project(record.project_id, scope)
+
+
+install_api_project_scope_guard(api_checkouts_bp, _record_in_scope)
 
 
 @api_checkouts_bp.route("/checkouts", methods=["GET"])
 @require_api_auth("administrator", "manager", "user")
 def api_list_checkouts():
     try:
-        result = list_checkouts()
+        result = list_checkouts(scope=api_project_scope())
         return jsonify(result)
     except Exception as e:
         current_app.logger.error(f"❌ API list_checkouts error: {e}")

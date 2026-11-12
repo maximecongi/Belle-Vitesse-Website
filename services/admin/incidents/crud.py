@@ -64,12 +64,19 @@ def _format_date(val):
 
 # ── Services Métier Incidents ────────────────────────────────────
 
-def list_incidents(status=None, severity=None, category=None, project_id=None, query=None, limit=None, offset=None, page=None, per_page=10):
+def list_incidents(status=None, severity=None, category=None, project_id=None, query=None, limit=None, offset=None, page=None, per_page=10, scope=None):
     """
     Récupère la liste des incidents actifs (non supprimés) avec calcul des indicateurs KPI et filtres.
     Supporte la pagination serveur avec l'objet Pagination.
     """
+    from services.admin.project_access import scope_incident_query
+
+    # Périmètre : un technicien ne voit que les incidents de ses projets (ou signalés par lui hors projet)
     base_query = Incident.query.filter(Incident.deleted_at.is_(None))
+    if scope is not None:
+        base_query = scope_incident_query(
+            base_query.outerjoin(Project, Incident.project_id == Project.id), scope
+        )
 
     # Calcul des statistiques globales sur l'ensemble des incidents actifs via agrégation SQL directe
     active_statuses = ("signale", "en_expertise", "en_reparation", "assurance")
@@ -86,9 +93,14 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
                 active_statuses), Incident.estimated_cost), else_=0)),
             db.func.sum(db.func.coalesce(Incident.actual_cost, 0)),
         )
+        .select_from(Incident)
         .filter(Incident.deleted_at.is_(None))
-        .first()
     )
+    if scope is not None:
+        stats_row = scope_incident_query(
+            stats_row.outerjoin(Project, Incident.project_id == Project.id), scope
+        )
+    stats_row = stats_row.first()
 
     stats = {
         "total": stats_row[0] or 0,
@@ -979,7 +991,7 @@ def delete_incident(record_id, confirm=True):
     return {"success": True, "message": f"Incident {incident.incident_number} supprimé avec succès."}
 
 
-def get_incident_form_context():
+def get_incident_form_context(scope=None):
     """
     Données de référence pour les sélecteurs de formulaires (projets, véhicules, utilisateurs, constantes).
     """
@@ -992,8 +1004,11 @@ def get_incident_form_context():
         )
         .filter(Project.deleted_at.is_(None))
         .order_by(Project.departure_date.desc())
-        .all()
     )
+    # Un technicien ne peut rattacher un incident qu'aux projets de son équipe BV
+    from services.admin.project_access import scope_project_query
+
+    projects = scope_project_query(projects, scope).all()
 
     # Utilisateurs de l'équipe
     users = User.query.order_by(User.lastname, User.firstname).all()

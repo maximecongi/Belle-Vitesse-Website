@@ -6,6 +6,8 @@ utilisé ou non. Trois états : non pointé (aucune ligne), utilisé, non utilis
 Les données servent à la facturation au réel, aux statistiques flotte et à la maintenance.
 """
 import logging
+import re
+import unicodedata
 from datetime import date, datetime, timezone
 
 from flask import current_app, render_template
@@ -265,6 +267,12 @@ def build_usage_export_context(project_id):
     }
 
 
+def _filename_slug(text) -> str:
+    """Nom lisible et sûr pour un fichier : sans accents, espaces et ponctuation remplacés par « - »."""
+    ascii_text = unicodedata.normalize("NFKD", str(text or "")).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^A-Za-z0-9]+", "-", ascii_text).strip("-")[:80].rstrip("-")
+
+
 def generate_equipment_usage_pdf(project_id, base_url=None):
     """Compile le relevé d'utilisation du matériel en PDF. Retourne (bytes, nom de fichier)."""
     ctx = build_usage_export_context(project_id)
@@ -279,7 +287,7 @@ def generate_equipment_usage_pdf(project_id, base_url=None):
         is_preview=False,
         **ctx,
     )
-    filename = f"Releve-utilisation-{project.project_id or project.id}.pdf"
+    filename = f"Releve-utilisation-{_filename_slug(project.name) or project.project_id or project.id}.pdf"
     pdf = render_pdf_from_template(
         html_content=html,
         base_url=base_url or "http://localhost",

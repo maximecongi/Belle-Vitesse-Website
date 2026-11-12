@@ -27,7 +27,9 @@ api_bp = Blueprint('admin_api', __name__, url_prefix='/admin')
 @require_roles('administrator', 'manager', 'commercial', 'user')
 def admin_api_events():
     try:
-        events = get_calendar_events()
+        from services.admin.project_access import session_project_scope
+
+        events = get_calendar_events(scope=session_project_scope())
         return jsonify(events)
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_api_events : {e}")
@@ -38,8 +40,11 @@ def _handle_status_update(model, record_id):
     from models import db
     from services.admin.status_mapping import get_inspection_key
     try:
+        from services.admin.project_access import can_access_project, session_project_scope
+
         record = db.session.get(model, record_id)
-        if not record:
+        scope = session_project_scope()
+        if not record or (scope is not None and not can_access_project(record.project_id, scope)):
             return jsonify({"error": "Not found"}), 404
 
         if request.method == "POST":
@@ -167,7 +172,7 @@ def admin_api_search():
     user_role = session.get('admin_user_role', 'user')
     q = request.args.get('q', '').strip()
     raw_scope = request.args.get('scope', 'all').strip().lower()
-    return jsonify(perform_global_search(q, raw_scope, user_role))
+    return jsonify(perform_global_search(q, raw_scope, user_role, user_id=session.get('admin_user_id')))
 
 
 # ── Pages épinglées (⌘ + ;) ───────────────────────────────────

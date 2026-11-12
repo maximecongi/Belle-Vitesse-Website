@@ -1,6 +1,7 @@
 """
 Routes admin pour la gestion des abonnements calendrier ICS.
-Accessible aux administrateurs et managers.
+Chaque membre gère son propre lien ; le flux d'un technicien ne contient que les projets de son
+équipe BV (cf. routes.public.calendar_feed). Seul le Super Administrateur gère les liens des autres.
 """
 import base64
 import io
@@ -54,10 +55,12 @@ def _get_target_user_id(request_form):
 
 
 calendar_bp = Blueprint('admin_calendar', __name__, url_prefix='/admin')
+
+_CALENDAR_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
 """Initialise les routes de gestion des abonnements calendrier."""
 
 @calendar_bp.route("/calendar", endpoint="admin_calendar")
-@require_roles("administrateur", "manager", "commercial")
+@require_roles(*_CALENDAR_ROLES)
 def admin_calendar():
     """Page de gestion des abonnements calendrier ICS."""
     user_role = normalize_role(session.get("admin_user_role"))
@@ -100,7 +103,7 @@ def admin_calendar():
     )
 
 @calendar_bp.route("/calendar/generate", methods=["POST"], endpoint="admin_calendar_generate")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_CALENDAR_ROLES)
 def admin_calendar_generate():
     """Crée un nouveau token calendrier pour un utilisateur."""
     user_id = _get_target_user_id(request.form)
@@ -127,7 +130,7 @@ def admin_calendar_generate():
     return redirect(url_for("admin_calendar.admin_calendar"))
 
 @calendar_bp.route("/calendar/revoke", methods=["POST"], endpoint="admin_calendar_revoke")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_CALENDAR_ROLES)
 def admin_calendar_revoke():
     """Révoque le token calendrier actif d'un utilisateur."""
     user_id = _get_target_user_id(request.form)
@@ -145,7 +148,7 @@ def admin_calendar_revoke():
     return redirect(url_for("admin_calendar.admin_calendar"))
 
 @calendar_bp.route("/calendar/regenerate", methods=["POST"], endpoint="admin_calendar_regenerate")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_CALENDAR_ROLES)
 def admin_calendar_regenerate():
     """Régénère le token calendrier d'un utilisateur (révoque + recrée)."""
     user_id = _get_target_user_id(request.form)
@@ -173,7 +176,7 @@ def admin_calendar_regenerate():
     return redirect(url_for("admin_calendar.admin_calendar"))
 
 @calendar_bp.route("/calendar/send-email", methods=["POST"], endpoint="admin_calendar_send_email")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_CALENDAR_ROLES)
 def admin_calendar_send_email():
     """Envoie manuellement le lien calendrier par email."""
     user_id = _get_target_user_id(request.form)

@@ -8,9 +8,30 @@ from flask import Blueprint, current_app, jsonify, request
 
 from models import Incident
 from services.admin.incidents import get_incident_detail, list_incidents
+from services.admin.project_access import (
+    api_project_scope,
+    can_access_incident,
+    install_api_project_scope_guard,
+    scope_incident_query,
+)
 from utils.jwt_auth import require_api_auth
 
 api_incidents_bp = Blueprint("api_incidents", __name__)
+
+
+def _incident_in_scope(view_args, scope):
+    """Un technicien n'accède qu'aux incidents de ses projets (ou signalés par lui hors projet)."""
+    if "record_id" not in view_args:
+        return None
+    from models import db
+
+    incident = db.session.get(Incident, view_args["record_id"])
+    if incident is None:
+        return None  # 404 gérée par la vue
+    return can_access_incident(incident, scope)
+
+
+install_api_project_scope_guard(api_incidents_bp, _incident_in_scope)
 
 
 @api_incidents_bp.route("/incidents", methods=["GET"])
@@ -44,6 +65,7 @@ def api_list_incidents():
             query=query_val,
             page=page_val,
             per_page=per_page_val,
+            scope=api_project_scope(),
         )
 
         pagination = result.get("pagination")
@@ -91,6 +113,13 @@ def api_get_incidents_stats():
     """
     try:
         base_query = Incident.query.filter(Incident.deleted_at.is_(None))
+        scope = api_project_scope()
+        if scope is not None:
+            from models import Project
+
+            base_query = scope_incident_query(
+                base_query.outerjoin(Project, Incident.project_id == Project.id), scope
+            )
 
         total = base_query.count()
         critical_count = base_query.filter(Incident.severity == "critique").count()

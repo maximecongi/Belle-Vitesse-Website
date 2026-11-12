@@ -177,7 +177,7 @@
                 {% endcall %}
 
                 {% call nav_group('Flotte', 'flotte', 'car', ['fleet', 'safety_rules_config', 'risk_assessment_config', 'checkpoints']) %}
-                {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Véhicules', 'fleet') }}
+                {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Matériel', 'fleet') }}
                 {{ nav_item(url_for('admin_fleet.admin_safety_rules_config'), 'Modèles de règles (BVSR)', 'safety_rules_config') }}
                 {{ nav_item(url_for('admin_fleet.admin_risk_assessment_config'), "Modèles d'analyse (BVRA)", 'risk_assessment_config') }}
                 {{ nav_item(url_for('admin_checkpoints.admin_checkpoints_list'), 'Points de contrôle', 'checkpoints') }}

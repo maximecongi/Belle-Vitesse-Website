@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, jsonify
 
 from services.admin.calendar import get_calendar_events
+from services.admin.project_access import api_project_scope
 from utils.jwt_auth import require_api_auth
 
 api_dashboard_bp = Blueprint("api_dashboard", __name__)
@@ -10,7 +11,7 @@ api_dashboard_bp = Blueprint("api_dashboard", __name__)
 @require_api_auth("administrator", "manager", "user")
 def api_calendar_events():
     try:
-        events = get_calendar_events()
+        events = get_calendar_events(scope=api_project_scope())
         return jsonify(events)
     except Exception as e:
         current_app.logger.error(f"❌ API calendar events error: {e}")

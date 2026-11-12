@@ -30,6 +30,11 @@ from services.admin import (
     update_checkin,
     update_checkout,
 )
+from services.admin.project_access import (
+    can_access_project,
+    install_project_scope_guard,
+    session_project_scope,
+)
 from utils.decorators import require_preview_access, require_roles
 
 
@@ -69,6 +74,19 @@ def _get_admin_inspection_config(mode):
     raise ValueError(f"Unknown admin inspection mode: {mode}")
 
 
+def _inspection_in_scope(mode, view_args, scope):
+    """Vrai/Faux selon que l'inspection ciblée par l'URL appartient au périmètre ; None si aucune cible."""
+    from utils.entity_resolvers import resolve_inspection
+
+    target = view_args.get("record_id") or view_args.get("inspection_code")
+    if target is None:
+        return None
+    record = resolve_inspection(mode, target)
+    if record is None:
+        return None  # 404 gérée par la vue
+    return bool(record.project_id) and can_access_project(record.project_id, scope)
+
+
 def register_admin_inspection_routes(app_or_bp, mode):
     """
     Enregistre l'ensemble des routes d'administration pour les inspections (checkout ou checkin).
@@ -101,6 +119,10 @@ def register_admin_inspection_routes(app_or_bp, mode):
 
     base_path = f"/{plural}" if isinstance(app_or_bp, Blueprint) else f"/admin/{plural}"
 
+    # Périmètre : un technicien n'accède qu'aux fiches des projets de son équipe BV
+    if isinstance(app_or_bp, Blueprint):
+        install_project_scope_guard(app_or_bp, lambda view_args, scope: _inspection_in_scope(mode, view_args, scope))
+
     # 1. Liste des inspections
     @app_or_bp.route(f"{base_path}", endpoint=endpoint_list)
     @require_roles('administrator', 'manager', 'user')
@@ -110,7 +132,9 @@ def register_admin_inspection_routes(app_or_bp, mode):
             per_page = request.args.get("per_page", 10, type=int)
             q = request.args.get("q", "").strip()
 
-            result = list_func(page=page, per_page=per_page, q=q if q else None)
+            result = list_func(
+                page=page, per_page=per_page, q=q if q else None, scope=session_project_scope()
+            )
             return render_template(
                 template_list,
                 pagination=result.get("pagination"),
@@ -155,7 +179,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
     @app_or_bp.route(f"{base_path}/new", methods=["GET", "POST"], endpoint=endpoint_new)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_new():
-        context = get_context_func()
+        context = get_context_func(scope=session_project_scope())
         initial_data = {}
 
         if request.method == "GET":
@@ -188,7 +212,7 @@ def register_admin_inspection_routes(app_or_bp, mode):
     @app_or_bp.route(f"{base_path}/<int:record_id>/edit", methods=["GET", "POST"], endpoint=endpoint_edit)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_edit(record_id):
-        context = get_context_func()
+        context = get_context_func(scope=session_project_scope())
 
         try:
             data = get_detail_func(record_id)

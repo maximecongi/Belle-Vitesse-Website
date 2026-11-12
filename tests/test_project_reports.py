@@ -55,6 +55,8 @@ class ProjectReportsTest(BaseTestCase):
             return_date=date(2026, 9, 13),
             notes="Besoins caméra spéciaux"
         )
+        # Technicien rattaché à l'équipe BV du projet (périmètre d'accès)
+        project.bv_technicians = [tech_user]
         db.session.add(project)
         db.session.commit()
 

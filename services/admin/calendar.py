@@ -9,17 +9,18 @@ from models import Project
 logger = logging.getLogger(__name__)
 
 
-def get_calendar_events():
+def get_calendar_events(scope=None):
     """
     Récupère tous les projets et les formate comme événements FullCalendar unifiés
     reliant départ, tournage et retour par un trait de continuité,
     en respectant le Design System de Belle Vitesse.
     """
-    records = (
-        Project.query.options(joinedload(Project.production))
-        .filter(Project.deleted_at.is_(None))
-        .all()
-    )
+    from services.admin.project_access import scope_project_query
+
+    records = scope_project_query(
+        Project.query.options(joinedload(Project.production)).filter(Project.deleted_at.is_(None)),
+        scope,
+    ).all()
     events = []
 
     for r in records:

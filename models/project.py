@@ -66,6 +66,12 @@ project_bv_referents = db.Table(
     db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
 )
 
+project_bv_technicians = db.Table(
+    "project_bv_technicians",
+    db.Column("project_id", db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+)
+
 project_vehicles = db.Table(
     "project_vehicles",
     db.Column("project_id", db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
@@ -96,8 +102,6 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     # Équipe Belle Vitesse (utilisateurs internes)
     commercial_user_id = db.Column(db.Integer, db.ForeignKey(
-        "users.id", ondelete="SET NULL"), nullable=True, index=True)
-    bv_grip_user_id = db.Column(db.Integer, db.ForeignKey(
         "users.id", ondelete="SET NULL"), nullable=True, index=True)
     # Opérateur Remote Head (contact) : uniquement pertinent si au moins une tête est assignée
     remote_head_operator_contact_id = db.Column(db.Integer, db.ForeignKey(
@@ -161,9 +165,6 @@ class Project(db.Model):
     # Commercial Belle Vitesse en charge du projet
     commercial_user = db.relationship(
         "User", foreign_keys=[commercial_user_id], lazy=True)
-    # Machiniste Belle Vitesse affecté au projet
-    bv_grip_user = db.relationship(
-        "User", foreign_keys=[bv_grip_user_id], lazy=True)
     # Contact Opérateur Remote Head du projet
     remote_head_operator_contact = db.relationship(
         "Contact", foreign_keys=[remote_head_operator_contact_id], backref="remote_head_operator_projects", lazy=True)
@@ -200,6 +201,14 @@ class Project(db.Model):
         secondary=project_bv_referents,
         backref=db.backref("referred_projects", lazy="dynamic"),
         lazy="joined",
+    )
+    # Techniciens Belle Vitesse affectés au tournage (plusieurs possibles)
+    bv_technicians = db.relationship(
+        "User",
+        secondary=project_bv_technicians,
+        backref=db.backref("technician_projects", lazy="dynamic"),
+        order_by="User.firstname",
+        lazy="selectin",
     )
 
     @property
@@ -240,23 +249,25 @@ class Project(db.Model):
     def _bv_members(self) -> list:
         """Membres BV du projet (sans doublon) avec leurs rôles nominatifs : liste de (User, [libellés])."""
         grouped = {}
-        for label, u in (("Commercial", self.commercial_user), ("Machiniste BV", self.bv_grip_user)):
+        nominative = [("Commercial", self.commercial_user)]
+        nominative += [("Technicien BV", u) for u in (self.bv_technicians or [])]
+        nominative += [("Référent plateau", u) for u in (self.bv_referents or [])]
+        for label, u in nominative:
             if u is None:
                 continue
             labels = grouped.setdefault(u.id, (u, []))[1]
             if label not in labels:
                 labels.append(label)
-        for u in self.bv_referents or []:
-            grouped.setdefault(u.id, (u, []))
         return list(grouped.values())
 
     @property
     def bv_team_roles(self) -> list:
         """Équipe BV du projet : liste de (libellé(s) de rôle, User), dans l'ordre d'affichage.
 
-        Regroupe tous les membres ayant un rôle sur le projet (Commercial, Machiniste BV, référents plateau).
-        Le libellé est toujours le rôle réel sur le tournage : rôles nominatifs, puis rôles tenus en tant
-        que contact du projet (ex. Opérateur Remote Head, Pilote) ; à défaut, le métier (User.job).
+        Regroupe tous les membres ayant un rôle sur le projet (Commercial, Techniciens BV, référents plateau).
+        Le libellé est uniquement le rôle tenu sur ce projet (jamais le métier de la fiche utilisateur) :
+        rôles nominatifs (Commercial, Technicien BV, Référent plateau), puis rôles tenus en tant que
+        contact du projet (ex. Opérateur Remote Head, Pilote).
         Une personne n'apparaît qu'une fois, ses rôles joints par « · ».
         """
         contact_roles = self.contact_roles
@@ -266,8 +277,6 @@ class Project(db.Model):
             for label, c in contact_roles:
                 if label not in labels and self._is_same_person(c, u):
                     labels.append(label)
-            if not labels:
-                labels = [(u.job or "").strip() or "Équipe Belle Vitesse"]
             result.append((" · ".join(labels), u))
         return result
 
@@ -665,7 +674,7 @@ class Project(db.Model):
             "first_ac_contact_id": self.first_ac_contact_id,
             "key_grip_contact_id": self.key_grip_contact_id,
             "commercial_user_id": self.commercial_user_id,
-            "bv_grip_user_id": self.bv_grip_user_id,
+            "bv_technician_ids": [u.id for u in (self.bv_technicians or [])],
             "remote_head_operator_contact_id": self.remote_head_operator_contact_id,
             "departure_date": self.departure_date.isoformat() if self.departure_date else None,
             "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,

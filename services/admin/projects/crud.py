@@ -33,14 +33,18 @@ def list_projects(
     q: Optional[str] = None,
     page: Optional[int] = None,
     per_page: int = 10,
+    scope: Optional[int] = None,
 ):
     """
     Récupère les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
+    `scope` (cf. services.admin.project_access) restreint aux projets de l'équipe BV d'un utilisateur.
     Supporte le filtrage SQL (archives, recherche textuelle) et la pagination serveur.
     Si `page` est spécifié, retourne une instance `Pagination`.
     Si `page` est None, retourne la liste complète (rétrocompatibilité totale).
     """
-    query = Project.query.filter(Project.deleted_at.is_(None))
+    from services.admin.project_access import scope_project_query
+
+    query = scope_project_query(Project.query.filter(Project.deleted_at.is_(None)), scope)
 
     today = date.today()
 
@@ -218,11 +222,17 @@ def get_project_form_context():
 
 def _apply_bv_team_roles(project, form, head_ids):
     """
-    Affecte les rôles nominatifs de l'équipe BV (Commercial, Machiniste BV) et le contact
+    Affecte les rôles nominatifs de l'équipe BV (Commercial, Techniciens BV) et le contact
     Opérateur Remote Head, conservé uniquement si au moins une tête est assignée au projet.
     """
     project.commercial_user_id = _parse_int(form.get("commercial_user_id"))
-    project.bv_grip_user_id = _parse_int(form.get("bv_grip_user_id"))
+    technician_ids = [
+        _parse_int(uid) for uid in (form.getlist("bv_technician_ids") if hasattr(form, 'getlist') else [])
+    ]
+    technician_ids = [uid for uid in technician_ids if uid is not None]
+    project.bv_technicians = (
+        User.query.filter(User.id.in_(technician_ids)).all() if technician_ids else []
+    )
     has_head = any(str(h).strip() for h in (head_ids or []))
     project.remote_head_operator_contact_id = (
         _parse_int(form.get("remote_head_operator_contact_id")) if has_head else None
@@ -495,12 +505,12 @@ def get_project_for_edit(record_id):
         "first_ac_contact_id": str(p.first_ac_contact_id) if p.first_ac_contact_id else "",
         "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
         "commercial_user_id": str(p.commercial_user_id) if p.commercial_user_id else "",
-        "bv_grip_user_id": str(p.bv_grip_user_id) if p.bv_grip_user_id else "",
         "remote_head_operator_contact_id": str(p.remote_head_operator_contact_id) if p.remote_head_operator_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
         "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
+        "bv_technician_ids": [u.id for u in (p.bv_technicians or [])],
     }
 
 
@@ -546,12 +556,12 @@ def get_project_for_duplicate(record_id):
         "first_ac_contact_id": str(p.first_ac_contact_id) if p.first_ac_contact_id else "",
         "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
         "commercial_user_id": str(p.commercial_user_id) if p.commercial_user_id else "",
-        "bv_grip_user_id": str(p.bv_grip_user_id) if p.bv_grip_user_id else "",
         "remote_head_operator_contact_id": str(p.remote_head_operator_contact_id) if p.remote_head_operator_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
         "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
+        "bv_technician_ids": [u.id for u in (p.bv_technicians or [])],
         "source_project_id": p.id,
         "source_project_name": p.name,
     }

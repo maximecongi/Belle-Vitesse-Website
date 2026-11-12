@@ -26,6 +26,11 @@ from services.admin.incidents import (
     sign_incident_prod,
     generate_incident_token,
 )
+from services.admin.project_access import (
+    can_access_incident,
+    install_project_scope_guard,
+    session_project_scope,
+)
 from utils.decorators import require_roles
 from utils.entity_resolvers import resolve_incident
 from utils.navigation import redirect_back_or, redirect_keep_return
@@ -33,6 +38,20 @@ from utils.navigation import redirect_back_or, redirect_keep_return
 
 
 incidents_bp = Blueprint('admin_incidents', __name__, url_prefix='/admin')
+
+
+def _incident_in_scope(view_args, scope):
+    """Un technicien n'accède qu'aux incidents de ses projets (ou signalés par lui hors projet)."""
+    target = view_args.get("record_id") or view_args.get("incident_code")
+    if target is None:
+        return None
+    incident = resolve_incident(target)
+    if incident is None:
+        return None  # 404 gérée par la vue
+    return can_access_incident(incident, scope)
+
+
+install_project_scope_guard(incidents_bp, _incident_in_scope)
 # ── Gestion des Incidents de Tournage ─────────────────────────
 
 @incidents_bp.route("/incidents")
@@ -56,6 +75,7 @@ def admin_incidents_list():
             query=query_filter,
             page=page,
             per_page=per_page,
+            scope=session_project_scope(),
         )
         form_context = get_incident_filter_options()
 
@@ -88,7 +108,7 @@ def admin_incidents_list():
                 "total_actual_cost": 0,
             },
             filters={},
-            context=get_incident_form_context(),
+            context=get_incident_form_context(scope=session_project_scope()),
         )
 
 @incidents_bp.route("/incidents/<int:record_id>")
@@ -116,7 +136,7 @@ def admin_incident_detail_by_code(incident_code):
 @incidents_bp.route("/incidents/new", methods=["GET", "POST"])
 @require_roles("administrator", "manager", "user")
 def admin_incident_new():
-    context = get_incident_form_context()
+    context = get_incident_form_context(scope=session_project_scope())
 
     if request.method == "POST":
         try:
@@ -179,7 +199,7 @@ def admin_incident_edit(record_id):
         abort(404)
 
     is_sealed = bool(data.get("is_sealed", False))
-    context = get_incident_form_context()
+    context = get_incident_form_context(scope=session_project_scope())
 
     if request.method == "POST":
         try:

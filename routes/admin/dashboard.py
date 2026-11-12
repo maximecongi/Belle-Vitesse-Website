@@ -10,6 +10,7 @@ from services.admin import (
     list_projects,
 )
 from services.admin.equipment_stats import projects_pending_usage
+from services.admin.project_access import session_project_scope
 from utils.context_processors import role_can
 from utils.decorators import require_roles, session_is_admin
 from utils.formatting import get_today_paris_iso
@@ -25,7 +26,8 @@ dashboard_bp = Blueprint("admin_dashboard", __name__, url_prefix="/admin")
 @require_roles('administrator', 'manager', 'commercial', 'user')
 def admin_dashboard():
     try:
-        projects_data = list_projects()
+        # Un technicien ne voit que les projets de son équipe BV
+        projects_data = list_projects(scope=session_project_scope())
         today_iso = get_today_paris_iso()
 
         # Regroupe les projets ayant une activité aujourd'hui

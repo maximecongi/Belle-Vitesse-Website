@@ -7,16 +7,36 @@ from services.admin.checkins import (
     list_checkins,
     update_checkin,
 )
+from services.admin.project_access import (
+    api_project_scope,
+    can_access_project,
+    install_api_project_scope_guard,
+)
 from utils.jwt_auth import require_api_auth
 
 api_checkins_bp = Blueprint("api_checkins", __name__)
+
+
+def _record_in_scope(view_args, scope):
+    """Un technicien n'accède qu'aux contrôles des projets de son équipe BV."""
+    if "record_id" not in view_args:
+        return None
+    from models import CheckinVehicle as Model, db
+
+    record = db.session.get(Model, view_args["record_id"])
+    if record is None:
+        return None  # 404 gérée par la vue
+    return bool(record.project_id) and can_access_project(record.project_id, scope)
+
+
+install_api_project_scope_guard(api_checkins_bp, _record_in_scope)
 
 
 @api_checkins_bp.route("/checkins", methods=["GET"])
 @require_api_auth("administrator", "manager", "user")
 def api_list_checkins():
     try:
-        result = list_checkins()
+        result = list_checkins(scope=api_project_scope())
         return jsonify(result)
     except Exception as e:
         current_app.logger.error(f"❌ API list_checkins error: {e}")

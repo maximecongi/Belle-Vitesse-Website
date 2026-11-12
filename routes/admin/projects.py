@@ -42,16 +42,35 @@ from services.admin.equipment_usage import (
     generate_equipment_usage_pdf,
     set_equipment_usage,
 )
+from services.admin.project_access import (
+    can_access_project,
+    install_project_scope_guard,
+    session_project_scope,
+)
 from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
 
 
 projects_bp = Blueprint("admin_projects", __name__, url_prefix="/admin")
+
+
+def _project_access_from_url(view_args, scope):
+    """Les techniciens n'accèdent qu'aux projets de leur équipe BV (fiche, notes, rapports, pointage…)."""
+    target = view_args.get("record_id") or view_args.get("project_code")
+    if target is None:
+        return None
+    return can_access_project(target, scope)
+
+
+install_project_scope_guard(projects_bp, _project_access_from_url)
+
+# Rôles autorisés à consulter les listes de projets (filtrées pour les techniciens)
+_LIST_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
 # ── CRUD Projets ──────────────────────────────────────────────
 
 
 @projects_bp.route("/projects")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_LIST_ROLES)
 def admin_projects_list():
     try:
         q = request.args.get("q", "").strip()
@@ -59,7 +78,8 @@ def admin_projects_list():
         per_page = request.args.get("per_page", 10, type=int)
 
         pagination = list_projects(
-            is_archive=False, q=q if q else None, page=page, per_page=per_page
+            is_archive=False, q=q if q else None, page=page, per_page=per_page,
+            scope=session_project_scope(),
         )
         return render_template(
             "admin/projects_list.html",
@@ -76,7 +96,7 @@ def admin_projects_list():
 
 
 @projects_bp.route("/projects/archives")
-@require_roles("administrator", "manager", "commercial")
+@require_roles(*_LIST_ROLES)
 def admin_projects_archives():
     try:
         q = request.args.get("q", "").strip()
@@ -84,7 +104,8 @@ def admin_projects_archives():
         per_page = request.args.get("per_page", 10, type=int)
 
         pagination = list_projects(
-            is_archive=True, q=q if q else None, page=page, per_page=per_page
+            is_archive=True, q=q if q else None, page=page, per_page=per_page,
+            scope=session_project_scope(),
         )
         return render_template(
             "admin/projects_list.html",
@@ -620,6 +641,7 @@ def admin_reports_search():
         category=filters["category"],
         page=request.args.get("page", 1, type=int),
         per_page=20,
+        scope=session_project_scope(),
     )
     return render_template(
         "admin/reports_search.html",

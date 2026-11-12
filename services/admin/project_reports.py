@@ -452,7 +452,7 @@ def _plain_snippet(content, query=None, width=180):
     return ("…" if start > 0 else "") + snippet + ("…" if start + width < len(plain) else "")
 
 
-def search_reports(query=None, category=None, project_id=None, page=1, per_page=20):
+def search_reports(query=None, category=None, project_id=None, page=1, per_page=20, scope=None):
     """
     Recherche plein texte dans les rapports actifs des projets non supprimés
     (titre, contenu, auteur, poste), filtrable par catégorie et par projet. Retourne une Pagination.
@@ -460,6 +460,9 @@ def search_reports(query=None, category=None, project_id=None, page=1, per_page=
     q = ProjectReport.active().join(Project).filter(Project.deleted_at.is_(None)).options(
         joinedload(ProjectReport.project), joinedload(ProjectReport.user)
     )
+    from services.admin.project_access import scope_project_query
+
+    q = scope_project_query(q, scope)
     if project_id:
         project = resolve_project(project_id)
         q = q.filter(ProjectReport.project_id == (project.id if project else -1))

@@ -75,6 +75,11 @@ def require_api_auth(*allowed_roles):
 
             g.current_user = user
             g.api_user_role = user_role
+
+            # Périmètre projets : un technicien n'accède qu'aux projets de son équipe BV
+            from services.admin.project_access import check_api_project_scope
+            if not check_api_project_scope():
+                return jsonify({"error": "Not found"}), 404
             return f(*args, **kwargs)
         return decorated_function
     return decorator

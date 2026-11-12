@@ -42,20 +42,28 @@
             });
         }
 
-        // 2 bis. Référents plateau : menu à choix multiples (métier affiché en gris dans la liste)
-        const $bvReferents = $('#bvReferentsSelect');
-        if ($.fn.select2 && $bvReferents.length) {
-            $bvReferents.select2({
-                width: '100%',
-                placeholder: $bvReferents.data('placeholder') || '',
-                closeOnSelect: false,
-                templateResult: function (opt) {
-                    if (!opt.id) return opt.text;
-                    const job = $(opt.element).data('job');
-                    const $row = $('<span class="bv-referent-option"></span>').text(opt.text);
-                    if (job) $row.append($('<span class="bv-referent-option-job"></span>').text(job));
-                    return $row;
-                }
+        // 2 bis. Référents plateau / Techniciens BV : étiquettes à choix multiples (métier affiché en gris dans la liste)
+        if ($.fn.select2) {
+            $('.bv-user-tags').each(function () {
+                const $tags = $(this);
+                $tags.select2({
+                    width: '100%',
+                    placeholder: $tags.data('placeholder') || '',
+                    closeOnSelect: false,
+                    templateResult: function (opt) {
+                        if (!opt.id) return opt.text;
+                        const job = $(opt.element).data('job');
+                        const $row = $('<span class="bv-referent-option"></span>').text(opt.text);
+                        if (job) $row.append($('<span class="bv-referent-option-job"></span>').text(job));
+                        return $row;
+                    }
+                });
+                // Menu laissé ouvert après sélection : vider la recherche et réafficher la liste complète
+                $tags.on('select2:select', function () {
+                    const s2 = $tags.data('select2');
+                    if (!s2) return;
+                    s2.$container.find('.select2-search__field').val('').trigger('input');
+                });
             });
         }
 

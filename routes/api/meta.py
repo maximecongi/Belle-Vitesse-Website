@@ -39,7 +39,9 @@ def api_inspection_context():
     """Get all context data needed to start a new inspection (projects, users, vehicles, checkpoints)."""
     try:
         # We can detect mode via query param if needed, but get_unified_form_context returns both
-        context = get_unified_form_context(mode="checkout")
+        from services.admin.project_access import api_project_scope
+
+        context = get_unified_form_context(mode="checkout", scope=api_project_scope())
         return jsonify(context)
     except Exception as e:
         current_app.logger.error(f"❌ API inspection_context error: {e}")
