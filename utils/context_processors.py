@@ -181,6 +181,8 @@ ACTION_PERMISSIONS = {
     "project_duplicate": _ROLES_SALES,
     "project_delete": _ROLES_SALES,
     "project_kdrive_resync": _ROLES_MANAGEMENT,
+    # Timeline commerciale (prises de contact, devis, factures, abandon)
+    "project_commercial_timeline": _ROLES_SALES,
     # Flotte (configuration)
     "fleet_safety_rules_config": _ROLES_MANAGEMENT,
     "fleet_risk_assessment_config": _ROLES_MANAGEMENT,

@@ -1,0 +1,331 @@
+/* ==========================================================================
+   Timeline commerciale du projet (fiche projet)
+   Frise horizontale : chaque élément positionné reçoit --pct (data-pct, cf. data-bars.js)
+   ========================================================================== */
+
+.ctl {
+    --ctl-line-y: 46px;
+    --ctl-dot-size: 30px;
+    --ctl-line-color: #D1D5DB;
+}
+
+/* ── En-tête ───────────────────────────────────────────────── */
+.ctl-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.ctl-head-title,
+.ctl-head-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ctl-badge--project { background: var(--entity-project-bg); color: var(--entity-project-text); }
+.ctl-badge--warning { background: var(--status-warning-bg); color: var(--status-warning-text); }
+.ctl-badge--success { background: var(--status-success-bg); color: var(--status-success-text); }
+.ctl-badge--info { background: var(--status-info-bg); color: var(--status-info-text); }
+.ctl-badge--danger { background: var(--status-danger-bg); color: var(--status-danger-text); }
+.ctl-badge--neutral { background: var(--status-neutral-bg); color: var(--status-neutral-text); }
+
+/* ── Formulaire d'ajout ────────────────────────────────────── */
+.ctl-form {
+    border: 1px solid var(--grey-border, #E0E0E0);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.ctl-form[hidden] {
+    display: none;
+}
+
+.ctl-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0 1rem;
+}
+
+.ctl-form-grid .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.ctl-form-grid .form-group[hidden] {
+    display: none;
+}
+
+.ctl-form-summary {
+    grid-column: 1 / -1;
+}
+
+.ctl-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* ── Frise ─────────────────────────────────────────────────── */
+.ctl-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 calc(var(--ctl-dot-size) / 2 + 28px);
+}
+
+.ctl-track {
+    position: relative;
+    height: 92px;
+    min-width: 480px;
+}
+
+.ctl-track--dense { min-width: 900px; }
+.ctl-track--xdense { min-width: 1500px; }
+
+.ctl-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--ctl-line-y);
+    height: 2px;
+    margin-top: -1px;
+    background: var(--ctl-line-color);
+}
+
+/* Silence en cours (dernier contact → aujourd'hui) : tirets */
+.ctl-pending {
+    position: absolute;
+    top: var(--ctl-line-y);
+    left: var(--start, 0%);
+    width: calc(var(--end, 100%) - var(--start, 0%));
+    height: 2px;
+    margin-top: -1px;
+    background: repeating-linear-gradient(90deg, var(--ctl-line-color) 0 6px, white 6px 11px);
+}
+
+/* Éléments centrés sur leur position */
+.ctl-dot,
+.ctl-date,
+.ctl-gap,
+.ctl-break,
+.ctl-today {
+    position: absolute;
+    left: var(--pct, 0%);
+    transform: translateX(-50%);
+}
+
+/* Durée d'un intervalle (au-dessus de la ligne) */
+.ctl-gap {
+    top: 8px;
+    font-size: 0.7rem;
+    color: var(--status-neutral);
+    white-space: nowrap;
+}
+
+.ctl-gap--break {
+    font-weight: 600;
+    color: var(--status-neutral-text);
+}
+
+.ctl-gap--pending {
+    color: var(--status-warning-text);
+}
+
+/* Coupure « ≈ » d'un long silence (intervalle compressé) */
+.ctl-break {
+    top: var(--ctl-line-y);
+    margin-top: -0.7rem;
+    padding: 0 0.3rem;
+    background: white;
+    font-size: 1rem;
+    line-height: 1.4rem;
+    font-weight: 700;
+    color: var(--status-neutral);
+}
+
+/* Points */
+.ctl-dot {
+    top: var(--ctl-line-y);
+    width: var(--ctl-dot-size);
+    height: var(--ctl-dot-size);
+    margin-top: calc(var(--ctl-dot-size) / -2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 2px solid white;
+    border-radius: 50%;
+    background: var(--ctl-dot-bg);
+    color: var(--ctl-dot-fg);
+    box-shadow: 0 0 0 1px var(--ctl-dot-ring);
+    cursor: pointer;
+    z-index: 1;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ctl-dot .lucide,
+.ctl-dot svg.lucide {
+    width: 14px;
+    height: 14px;
+}
+
+.ctl-dot:hover,
+.ctl-dot:focus-visible {
+    transform: translateX(-50%) scale(1.15);
+    z-index: 2;
+    outline: none;
+}
+
+.ctl-dot.is-selected {
+    box-shadow: 0 0 0 3px var(--ctl-dot-ring);
+    z-index: 2;
+}
+
+/* Familles de couleur (Design System BV) */
+.ctl-dot--project { --ctl-dot-bg: var(--entity-project-bg); --ctl-dot-fg: var(--entity-project-text); --ctl-dot-ring: var(--entity-project); }
+.ctl-dot--info { --ctl-dot-bg: var(--status-info-bg); --ctl-dot-fg: var(--status-info-text); --ctl-dot-ring: var(--status-info); }
+.ctl-dot--neutral { --ctl-dot-bg: var(--status-neutral-bg); --ctl-dot-fg: var(--status-neutral-text); --ctl-dot-ring: var(--status-neutral); }
+.ctl-dot--warning { --ctl-dot-bg: var(--status-warning-bg); --ctl-dot-fg: var(--status-warning-text); --ctl-dot-ring: var(--status-warning); }
+.ctl-dot--success { --ctl-dot-bg: var(--status-success-bg); --ctl-dot-fg: var(--status-success-text); --ctl-dot-ring: var(--status-success); }
+.ctl-dot--danger { --ctl-dot-bg: var(--status-danger-bg); --ctl-dot-fg: var(--status-danger-text); --ctl-dot-ring: var(--status-danger); }
+
+/* Dates sous la ligne */
+.ctl-date {
+    top: calc(var(--ctl-line-y) + var(--ctl-dot-size) / 2 + 6px);
+    font-size: 0.72rem;
+    color: var(--status-neutral-text);
+    white-space: nowrap;
+}
+
+/* Repère « aujourd'hui » */
+.ctl-today {
+    top: calc(var(--ctl-line-y) - 9px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ctl-today-mark {
+    width: 2px;
+    height: 18px;
+    background: var(--status-warning);
+}
+
+.ctl-today-label {
+    margin-top: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--status-warning-text);
+    white-space: nowrap;
+}
+
+/* ── Détail de la prise de contact sélectionnée ────────────── */
+.ctl-detail {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--status-neutral-bg);
+    border-radius: 8px;
+}
+
+.ctl-detail[hidden] {
+    display: none;
+}
+
+.ctl-detail-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--ctl-dot-bg);
+    color: var(--ctl-dot-fg);
+}
+
+.ctl-detail-icon .lucide,
+.ctl-detail-icon svg.lucide {
+    width: 14px;
+    height: 14px;
+}
+
+.ctl-detail-body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.ctl-detail-body .u-text-sm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.ctl-detail-title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ctl-detail-summary {
+    margin: 0;
+    font-size: 0.875rem;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.ctl-lost-reason {
+    color: var(--status-danger-text);
+    font-weight: 600;
+}
+
+/* Nouveau contact saisi à la volée (pleine largeur du formulaire) */
+.ctl-new-contact {
+    grid-column: 1 / -1;
+    margin: 0 0 0.75rem;
+    padding: 0.75rem 1rem 0;
+    border: 1px dashed var(--grey-border, #E0E0E0);
+    border-radius: 8px;
+    min-width: 0;
+}
+
+.ctl-new-contact[hidden] {
+    display: none;
+}
+
+.ctl-new-contact legend {
+    padding: 0 0.25rem;
+}
+
+/* Les colonnes de la grille ne s'élargissent pas selon leur contenu (libellés de contact longs) */
+.ctl-form-grid > * {
+    min-width: 0;
+}
+
+/* .form-group est une grille : sa colonne interne ne doit pas grandir avec le libellé du contact */
+.ctl-form-grid .form-group {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+/* Select2 du contact : contenu dans sa colonne, libellé tronqué par des points de suspension */
+.ctl-form .select2-container {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+.ctl-form .select2-selection__rendered {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

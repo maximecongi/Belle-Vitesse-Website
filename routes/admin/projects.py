@@ -47,6 +47,13 @@ from services.admin.project_access import (
     install_project_scope_guard,
     session_project_scope,
 )
+from services.admin.commercial_timeline import (
+    CommercialEventNotFoundError,
+    add_commercial_event,
+    build_commercial_timeline,
+    delete_commercial_event,
+)
+from utils.context_processors import resolve_user_role, role_can
 from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
 
@@ -271,6 +278,11 @@ def admin_project_detail(record_id):
         if not context:
             abort(404)
 
+        # Timeline commerciale : réservée aux rôles commerciaux (jamais exposée aux techniciens)
+        context["commercial_timeline"] = (
+            build_commercial_timeline(context["project"]) if _can_see_commercial_timeline() else None
+        )
+
         return render_template("admin/project_detail.html", **context)
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_project_detail : {e}")
@@ -421,6 +433,69 @@ def admin_project_equipment_usage_export(record_id):
 
 
 # ── Rapports d'équipe ──────────────────────────────────────────
+
+# ── Timeline commerciale (prises de contact) ──────────────────
+_COMMERCIAL_ROLES = ("administrator", "manager", "commercial")
+
+
+def _can_see_commercial_timeline():
+    role = resolve_user_role({}, session.get("admin_user_role", ""))
+    return role_can(role, "project_commercial_timeline", is_admin=session_is_admin())
+
+
+def _commercial_redirect(record_id):
+    return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#commercial-timeline")
+
+
+@projects_bp.route("/projects/<int:record_id>/commercial-events", methods=["POST"])
+@require_roles(*_COMMERCIAL_ROLES)
+def admin_project_commercial_event_add(record_id):
+    form = request.form
+    try:
+        add_commercial_event(
+            record_id,
+            event_type=form.get("event_type", ""),
+            date_str=form.get("occurred_date", ""),
+            time_str=form.get("occurred_time", ""),
+            contact_id=form.get("contact_id") or None,
+            summary=form.get("summary", ""),
+            lost_reason=form.get("lost_reason") or None,
+            user_id=session.get("admin_user_id"),
+            new_contact={
+                "first_name": form.get("new_contact_first_name"),
+                "last_name": form.get("new_contact_last_name"),
+                "phone": form.get("new_contact_phone"),
+                "mail": form.get("new_contact_mail"),
+            },
+        )
+        flash("Prise de contact ajoutée à la timeline.", "success")
+    except CommercialEventNotFoundError:
+        abort(404)
+    except ValueError as ve:
+        flash(str(ve), "error")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur ajout prise de contact projet {record_id} : {e}")
+        flash("Erreur lors de l'enregistrement de la prise de contact.", "error")
+    return _commercial_redirect(record_id)
+
+
+@projects_bp.route(
+    "/projects/<int:record_id>/commercial-events/<int:event_id>/delete", methods=["POST"]
+)
+@require_roles(*_COMMERCIAL_ROLES)
+def admin_project_commercial_event_delete(record_id, event_id):
+    try:
+        delete_commercial_event(record_id, event_id)
+        flash("Prise de contact supprimée.", "success")
+    except CommercialEventNotFoundError as nf:
+        flash(str(nf), "error")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur suppression prise de contact {event_id} : {e}")
+        flash("Erreur lors de la suppression de la prise de contact.", "error")
+    return _commercial_redirect(record_id)
+
 
 _REPORT_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
 

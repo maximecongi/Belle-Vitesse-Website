@@ -1,0 +1,191 @@
+{# Timeline commerciale du projet : prises de contact espacées proportionnellement au temps.
+   Contexte attendu : project, tl (= commercial_timeline). Réservé aux rôles commerciaux. #}
+{% from "admin/macros.html" import empty_state %}
+<div class="admin-card u-mb-3 ctl" id="commercial-timeline" data-commercial-timeline>
+    <div class="ctl-head u-flex u-flex-row u-justify-between u-mb-3">
+        <div class="ctl-head-title">
+            <h2 class="admin-card-title u-m-0">Timeline commerciale</h2>
+            {% if tl.status_label %}
+            <span class="badge-pill ctl-badge ctl-badge--{{ tl.status_variant }}">{{ tl.status_label }}</span>
+            {% endif %}
+            {% if tl.followup_days %}
+            <span class="badge-pill ctl-badge ctl-badge--warning"
+                title="Devis envoyé sans réponse du client depuis {{ tl.followup_days }} jours">
+                <i data-lucide="bell-ring"></i> Relance conseillée · {{ tl.followup_days }} j sans réponse
+            </span>
+            {% endif %}
+        </div>
+        <div class="ctl-head-actions">
+            {% if tl.count %}
+            <span class="u-text-xs u-text-muted">
+                {{ tl.count }} prise{{ 's' if tl.count > 1 else '' }} de contact{% if tl.span_days %} · sur {{ tl.span_days }} j{% endif %}
+            </span>
+            {% endif %}
+            <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-ctl-toggle-form
+                aria-controls="ctlForm" aria-expanded="false">+ Prise de contact</button>
+        </div>
+    </div>
+
+    <!-- Formulaire d'ajout -->
+    <form method="POST" class="ctl-form" id="ctlForm" data-ctl-form hidden
+        action="{{ url_for('admin_projects.admin_project_commercial_event_add', record_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="ctl-form-grid">
+            <div class="form-group">
+                <label class="form-label" for="ctlType">Type</label>
+                <select class="form-input" id="ctlType" name="event_type" required data-ctl-type>
+                    {% for group, types in tl.type_groups %}
+                    <optgroup label="{{ group }}">
+                        {% for key, label in types %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="ctlDate">Date</label>
+                <input type="date" class="form-input" id="ctlDate" name="occurred_date" required
+                    value="{{ tl.default_date }}" max="{{ tl.max_date }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="ctlTime">Heure <span class="u-text-muted">(facultatif)</span></label>
+                <input type="time" class="form-input" id="ctlTime" name="occurred_time" value="{{ tl.default_time }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="ctlContact">Contact</label>
+                <select class="form-input" id="ctlContact" name="contact_id" data-ctl-contact
+                    data-placeholder="Rechercher un contact…">
+                    <option value="">—</option>
+                    <option value="{{ tl.new_contact_value }}">+ Nouveau contact</option>
+                    {% if tl.contact_choices.project %}
+                    <optgroup label="Contacts du projet">
+                        {% for cid, clabel in tl.contact_choices.project %}
+                        <option value="{{ cid }}">{{ clabel }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                    {% if tl.contact_choices.others %}
+                    <optgroup label="Tous les contacts">
+                        {% for cid, clabel in tl.contact_choices.others %}
+                        <option value="{{ cid }}">{{ clabel }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
+                </select>
+            </div>
+            <!-- Nouveau contact (rattaché à la production du projet) -->
+            <fieldset class="ctl-new-contact" data-ctl-new-contact hidden disabled>
+                <legend class="form-label">Nouveau contact{% if project.production %} · {{ project.production.name }}{% endif %}</legend>
+                <div class="ctl-form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="ctlNewFirst">Prénom</label>
+                        <input type="text" class="form-input" id="ctlNewFirst" name="new_contact_first_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ctlNewLast">Nom</label>
+                        <input type="text" class="form-input" id="ctlNewLast" name="new_contact_last_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ctlNewPhone">Téléphone</label>
+                        <input type="tel" class="form-input" id="ctlNewPhone" name="new_contact_phone">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="ctlNewMail">Mail</label>
+                        <input type="email" class="form-input" id="ctlNewMail" name="new_contact_mail">
+                    </div>
+                </div>
+            </fieldset>
+            <div class="form-group" data-ctl-lost-field hidden>
+                <label class="form-label" for="ctlLostReason">Motif de l'abandon</label>
+                <select class="form-input" id="ctlLostReason" name="lost_reason" disabled>
+                    <option value="">Choisir…</option>
+                    {% for key, label in tl.lost_reasons %}
+                    <option value="{{ key }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group ctl-form-summary">
+                <label class="form-label" for="ctlSummary">Résumé</label>
+                <input type="text" class="form-input" id="ctlSummary" name="summary" maxlength="500"
+                    placeholder="Ex. : demande de dispo pour 2 jours de tournage en mars">
+            </div>
+        </div>
+        <div class="ctl-form-actions">
+            <button type="button" class="admin-btn admin-btn-quaternary admin-btn-sm" data-ctl-toggle-form>Annuler</button>
+            <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm">Ajouter</button>
+        </div>
+    </form>
+
+    {% if tl.events %}
+    <!-- Frise : positions en % (data-pct → --pct), écarts proportionnels au temps -->
+    <div class="ctl-scroll">
+        <div class="ctl-track{% if tl.count > 24 %} ctl-track--xdense{% elif tl.count > 12 %} ctl-track--dense{% endif %}">
+            <div class="ctl-line"></div>
+            {% for seg in tl.segments %}
+            {% if seg.is_pending %}
+            <div class="ctl-pending" data-ctl-start="{{ seg.start_pct }}" data-ctl-end="{{ seg.end_pct }}"></div>
+            {% endif %}
+            {% if seg.is_break %}
+            <span class="ctl-break" data-pct="{{ seg.mid_pct }}" aria-hidden="true">≈</span>
+            {% endif %}
+            {% if seg.show_label %}
+            <span class="ctl-gap{% if seg.is_break %} ctl-gap--break{% endif %}{% if seg.is_pending %} ctl-gap--pending{% endif %}"
+                data-pct="{{ seg.mid_pct }}">{{ seg.label }}{% if seg.is_pending %} sans contact{% endif %}</span>
+            {% endif %}
+            {% endfor %}
+
+            {% for ev in tl.events %}
+            <button type="button" class="ctl-dot ctl-dot--{{ ev.family }}{% if loop.last %} is-selected{% endif %}"
+                data-pct="{{ ev.pct }}" data-ctl-event="{{ ev.id }}" aria-pressed="{{ 'true' if loop.last else 'false' }}"
+                aria-label="{{ ev.label }} — {{ ev.date_full }}" title="{{ ev.label }} — {{ ev.date_full }}">
+                <i data-lucide="{{ ev.icon }}"></i>
+            </button>
+            {% if ev.show_date %}
+            <span class="ctl-date" data-pct="{{ ev.pct }}">{{ ev.date_short }}</span>
+            {% endif %}
+            {% endfor %}
+
+            {% if tl.today_pct is not none %}
+            <span class="ctl-today" data-pct="{{ tl.today_pct }}" title="Aujourd'hui">
+                <span class="ctl-today-mark"></span>
+                <span class="ctl-today-label">Aujourd'hui</span>
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Détail de la prise de contact sélectionnée -->
+    {% for ev in tl.events %}
+    <div class="ctl-detail" data-ctl-detail="{{ ev.id }}" {% if not loop.last %}hidden{% endif %}>
+        <span class="ctl-detail-icon ctl-dot--{{ ev.family }}"><i data-lucide="{{ ev.icon }}"></i></span>
+        <div class="ctl-detail-body">
+            <div class="ctl-detail-title">
+                <strong>{{ ev.label }}</strong>
+                <span class="u-text-xs u-text-muted">{{ ev.date_full }}</span>
+            </div>
+            {% if ev.contact_name or ev.lost_reason_label %}
+            <div class="u-text-sm">
+                {% if ev.contact_name %}<span>Contact : {{ ev.contact_name }}</span>{% endif %}
+                {% if ev.lost_reason_label %}<span class="ctl-lost-reason">Motif : {{ ev.lost_reason_label }}</span>{% endif %}
+            </div>
+            {% endif %}
+            {% if ev.summary %}<p class="ctl-detail-summary">{{ ev.summary }}</p>{% endif %}
+            {% if ev.author_name %}<span class="u-text-xs u-text-muted">Saisi par {{ ev.author_name }}</span>{% endif %}
+        </div>
+        <form method="POST" class="u-m-0"
+            action="{{ url_for('admin_projects.admin_project_commercial_event_delete', record_id=project.id, event_id=ev.id) }}"
+            data-confirm="Supprimer cette prise de contact de la timeline ?" data-confirm-label="Supprimer">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="admin-btn admin-btn-quaternary admin-btn-xs" title="Supprimer">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    {{ empty_state('route', "Aucune prise de contact enregistrée",
+    "Ajoutez la première demande, les mails, appels, devis et factures pour suivre la vie commerciale du projet.",
+    class_name='empty-state-sm') }}
+    {% endif %}
+</div>

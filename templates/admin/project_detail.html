@@ -48,6 +48,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
 {% endif %}
 {% endblock %}
 
+{% block extra_js %}
+{% if commercial_timeline %}
+<!-- Recherche dans la liste des contacts de la timeline commerciale -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 {% if is_print %}
 <div data-auto-print="true" class="u-d-none"></div>
@@ -95,6 +103,11 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
         </div>
     </div>
 </div>
+
+<!-- ═══════════ 1 bis. TIMELINE COMMERCIALE (rôles commerciaux uniquement) ═══════════ -->
+{% if commercial_timeline %}
+{% with tl = commercial_timeline %}{% include "admin/_commercial_timeline.html" %}{% endwith %}
+{% endif %}
 
 <!-- ═══════════ 2. HUB PROJET : COLONNE PRINCIPALE (2/3) + COLONNE LATÉRALE (1/3) ═══════════ -->
 <div class="u-grid u-grid-2-1 u-gap-3 u-mb-3 u-grid-align-start project-hub-layout">

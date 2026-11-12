@@ -122,6 +122,9 @@ class Project(db.Model):
     # Statuts d'homologation route des véhicules pour ce projet ex: {"rec_erover": false, "rec_ecar": true}
     vehicle_road_legal_statuses = db.Column(db.JSON, nullable=True)
     notes = db.Column(db.Text)  # Demandes spécifiques
+    # Statut commercial déduit de la timeline des prises de contact (cf. models/commercial_event.py).
+    # NULL = projet antérieur au suivi commercial (aucun badge affiché).
+    commercial_status = db.Column(db.String(20), nullable=True, default="prospect", index=True)
 
     # Soft-delete support
     deleted_at = db.Column(db.DateTime, nullable=True)
