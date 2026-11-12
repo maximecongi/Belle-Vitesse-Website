@@ -74,9 +74,12 @@
             if (!pills) return;
             const items = [];
             if (dep) items.push(['dep', 'truck', dayLabel(dep)]);
-            if (shootStart) {
-                const extra = isPunctual && shootDates.length > 1 ? ` +${shootDates.length - 1}` : '';
-                items.push(['shoot', 'clapperboard', dayLabel(shootStart) + extra]);
+            if (isPunctual && shootDates.length) {
+                // Dates ponctuelles : seulement le nombre de jours de tournage
+                const n = shootDates.length;
+                items.push(['shoot', 'clapperboard', `${n} date${n > 1 ? 's' : ''}`]);
+            } else if (shootStart) {
+                items.push(['shoot', 'clapperboard', dayLabel(shootStart)]);
             }
             if (ret) items.push(['ret', 'package-check', dayLabel(ret)]);
             pills.innerHTML = items.map(([type, icon, label]) =>
