@@ -1088,3 +1088,28 @@ body.pdf-body {
     page-break-after: always !important;
     break-after: page !important;
 }
+
+/* ── Filigrane de document (macro pdf_watermark) : « Aperçu non signé », nom du signataire
+   (copie signataire) ou « Belle Vitesse » (archive). position: fixed = répété sur chaque
+   page sous WeasyPrint. Au-dessus du contenu (sinon masqué par les encadrés à fond)
+   mais assez transparent pour rester lisible. */
+.pdf-watermark {
+    position: fixed;
+    top: 42%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    transform: rotate(-30deg);
+    white-space: nowrap;
+    color: rgba(0, 0, 0, 0.07);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.pdf-watermark-label {
+    font-size: 40pt;
+    font-weight: 800;
+    letter-spacing: 3pt;
+    text-transform: uppercase;
+    line-height: 1.1;
+}

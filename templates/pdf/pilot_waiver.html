@@ -148,6 +148,11 @@ show_print=True
 </section>
 {% endblock %}
 
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(waiver.status == 'signed'), signer_names=[waiver.signer_name]) }}
+{% endblock %}
+
 {% block pdf_signatures %}
 {% set target_url = verification_url or ((base_url ~ '/pilot-attestation/verify/' ~ waiver.waiver_id) if base_url else
 ('/pilot-attestation/verify/' ~ waiver.waiver_id)) %}

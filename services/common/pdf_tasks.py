@@ -61,6 +61,33 @@ def task_render_pdf_to_file(
             f.write(pdf_bytes)
 
         file_hash = compute_pdf_hash(pdf_bytes)
+
+        # Copie signataire (filigrane à son nom) : compilée à côté de l'archive, jamais synchronisée
+        # vers kDrive ni envoyée à l'archive mail. L'archive (output_file_path) reste la référence BV.
+        signer_file_path, signer_file_hash = None, None
+        signer_html = (extra_context or {}).get("signer_html_content")
+        if signer_html:
+            try:
+                from utils.document_utils import signer_copy_path
+                signer_bytes = render_pdf_from_template(
+                    html_content=signer_html,
+                    base_url=resolved_base_url,
+                    stylesheets=stylesheets,
+                    compress=compress,
+                    filename=os.path.basename(signer_copy_path(doc_filename)),
+                )
+                signer_file_path = signer_copy_path(output_file_path)
+                with open(signer_file_path, "wb") as f:
+                    f.write(signer_bytes)
+                signer_file_hash = compute_pdf_hash(signer_bytes)
+            except Exception as signer_err:
+                # La copie signataire ne doit jamais bloquer l'archive : repli sur l'archive pour l'envoi.
+                logger.error(
+                    f"❌ [PDF Job] Copie signataire non générée pour {doc_filename} : {signer_err}",
+                    exc_info=True,
+                )
+                signer_file_path, signer_file_hash = None, None
+
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output")
         )
@@ -100,6 +127,7 @@ def task_render_pdf_to_file(
                 return False
 
             signed_doc.pdf_file_hash = file_hash
+            signed_doc.signer_pdf_file_hash = signer_file_hash
             latest_doc = WaiverSignedDocument.query.filter_by(
                 waiver_id=str(entity_id)
             ).order_by(WaiverSignedDocument.version.desc()).first()
@@ -122,7 +150,11 @@ def task_render_pdf_to_file(
                     (extra_context or {}).get("current_hash"),
                     (extra_context or {}).get("snapshot", {}),
                 )
-                _send_waiver_confirmation_email(mode, waiver, output_file_path)
+                # Signataire : sa copie nominative ; archive mail : l'exemplaire « Belle Vitesse »
+                _send_waiver_confirmation_email(
+                    mode, waiver, signer_file_path or output_file_path,
+                    archive_pdf_path=output_file_path,
+                )
 
         elif entity_type == "inspection" and entity_id:
             from sqlalchemy import or_
@@ -202,6 +234,7 @@ def task_render_pdf_to_file(
                         )
                         return False
                     signed_doc.pdf_file_hash = file_hash
+                    signed_doc.signer_pdf_file_hash = signer_file_hash
                 inc.signed_pdf_path = rel_pdf_path
                 inc.pdf_file_hash = file_hash
                 db.session.commit()
@@ -224,9 +257,12 @@ def task_render_pdf_to_file(
                             exc_info=True,
                         )
 
-                    # 2. Expédition sécurisée des e-mails certifiés avec le PDF scellé attaché
+                    # 2. Expédition des e-mails : copie signataire à la production, archive BV une seule fois
                     try:
-                        from utils.mailer import send_incident_signed_confirmation_email
+                        from utils.mailer import (
+                            send_incident_signed_archive_email,
+                            send_incident_signed_confirmation_email,
+                        )
                         recipient_emails = set()
                         to_email = (extra_context or {}).get("to_email")
                         if to_email and str(to_email).strip():
@@ -236,7 +272,10 @@ def task_render_pdf_to_file(
                                 recipient_emails.add(str(t_email).strip())
 
                         for recipient in recipient_emails:
-                            send_incident_signed_confirmation_email(inc, recipient, output_file_path)
+                            send_incident_signed_confirmation_email(
+                                inc, recipient, signer_file_path or output_file_path, bcc_archive=False
+                            )
+                        send_incident_signed_archive_email(inc, output_file_path)
                     except Exception as mail_err:
                         logger.error(
                             f"❌ [PDF Job] Erreur envoi confirmation email incident {inc.incident_number} : {mail_err}",

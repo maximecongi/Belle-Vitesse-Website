@@ -131,6 +131,20 @@ def compute_pdf_hash(pdf_bytes: bytes) -> str:
     return hashlib.sha256(pdf_bytes).hexdigest()
 
 
+SIGNER_COPY_SUFFIX = "_signataire"
+
+
+def signer_copy_path(pdf_path: str) -> str:
+    """
+    Chemin de la copie signataire (filigrane au nom du signataire) d'un PDF d'archive.
+    'a/BVSR-X_ab12.pdf' -> 'a/BVSR-X_ab12_signataire.pdf'. Fonctionne sur chemins absolus ou relatifs.
+    """
+    if not pdf_path:
+        return pdf_path
+    root, ext = os.path.splitext(pdf_path)
+    return f"{root}{SIGNER_COPY_SUFFIX}{ext or '.pdf'}"
+
+
 def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
     """Vérifie qu'un fichier PDF correspond à l'empreinte enregistrée."""
     if not expected_hash:

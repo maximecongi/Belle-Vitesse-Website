@@ -271,8 +271,12 @@ def handle_document_verify(mode_config, identifier):
             elif not signed_doc.pdf_file_hash:
                 pdf_error = "Pas d'empreinte enregistrée pour ce document."
             else:
-                pdf_valid = verify_pdf_hash(
-                    uploaded_file.read(), signed_doc.pdf_file_hash)
+                # Deux exemplaires authentiques : archive BV ou copie remise au signataire
+                uploaded_bytes = uploaded_file.read()
+                signer_hash = getattr(signed_doc, "signer_pdf_file_hash", None)
+                pdf_valid = verify_pdf_hash(uploaded_bytes, signed_doc.pdf_file_hash) or bool(
+                    signer_hash and verify_pdf_hash(uploaded_bytes, signer_hash)
+                )
 
     # 2. Vérification automatique du PDF physique réellement stocké sur disque
     output_base = current_app.config.get(

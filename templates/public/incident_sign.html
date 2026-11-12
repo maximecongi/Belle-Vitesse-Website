@@ -61,7 +61,7 @@
             </p>
             {% if incident.signed_pdf_path %}
             <div class="u-mt-4 u-text-center">
-                <a href="{{ incident.signed_pdf_url or ('/incidents/document/' + incident.signed_pdf_path) }}"
+                <a href="{{ incident.signer_pdf_url or incident.signed_pdf_url or ('/incidents/document/' + incident.signed_pdf_path) }}"
                     target="_blank" class="public-doc-btn public-doc-btn--primary">
                     <i data-lucide="file-down"></i>
                     <span>Télécharger le PDF Scellé Authentique</span>

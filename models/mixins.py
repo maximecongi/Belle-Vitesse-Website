@@ -37,7 +37,8 @@ class TokenMixin:
 class SignedDocumentMixin:
     """Base pour tous les documents signés archivés."""
     hash = db.Column(db.String(255), nullable=False)  # Empreinte de l'intégrité des données
-    pdf_file_hash = db.Column(db.String(64))  # Hash SHA-256 du fichier PDF binaire
+    pdf_file_hash = db.Column(db.String(64))  # Hash SHA-256 du PDF d'archive (filigrane « Belle Vitesse »)
+    signer_pdf_file_hash = db.Column(db.String(64))  # Hash SHA-256 de la copie signataire (filigrane à son nom)
     data_snapshot = db.Column(db.JSON, nullable=False)  # Copie conforme des données au moment de la signature
     signature = db.Column(db.String(255), nullable=True)  # Chemin relatif du fichier signature PNG
     pdf_url = db.Column(db.Text)  # URL (ou chemin) vers le fichier PDF

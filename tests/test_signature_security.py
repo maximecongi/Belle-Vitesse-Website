@@ -425,6 +425,18 @@ class SignatureSecurityHardeningTest(BaseTestCase):
             html_tamp = res_post_tamp.get_data(as_text=True)
             self.assertIn("Fichier PDF non authentique", html_tamp)
 
+            # 3. Copie signataire (filigrane à son nom) -> également reconnue authentique
+            signer_pdf_content = b"%PDF-1.4 signer copy watermarked Alice Dupont"
+            signed_doc.signer_pdf_file_hash = compute_pdf_hash(signer_pdf_content)
+            db.session.commit()
+            res_post_signer = self.client.post(
+                verify_url,
+                data={"pdf": (io.BytesIO(signer_pdf_content), "copie_signataire.pdf")},
+                content_type="multipart/form-data"
+            )
+            self.assertEqual(res_post_signer.status_code, 200)
+            self.assertIn("Fichier PDF authentique", res_post_signer.get_data(as_text=True))
+
     def test_link_opened_event_persisted_in_independent_session(self):
         """Vérifie que la consultation GET d'un lien de signature enregistre et persiste l'événement link_opened."""
         with self.app.app_context():

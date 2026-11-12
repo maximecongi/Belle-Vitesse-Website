@@ -168,6 +168,11 @@
 {% endif %}
 {% endblock %}
 
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(incident.bv_signed_at is not none and incident.prod_signed_at is not none), signer_names=[incident.prod_signer_name]) }}
+{% endblock %}
+
 {% block pdf_signatures %}
 {{ pdf_contradictory_signatures_and_seal(
     doc_id=incident.incident_number,

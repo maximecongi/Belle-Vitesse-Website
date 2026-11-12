@@ -603,11 +603,13 @@ def send_risk_assessment_invitation_email(to_email, recipient_name, project_name
     )
 
 
-def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe (CCI archive/admin)."""
-    archive_mail = os.getenv("ARCHIVE_EMAIL") or os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
-    current_app.logger.info(
-        f"🚀 Sending signed document PDF to {to_email} (BCC/CCI archive: {archive_mail})")
+def _archive_mail_address():
+    """Adresse de l'archive mail BV (ARCHIVE_EMAIL, repli SUPER_ADMIN_MAIL)."""
+    return (os.getenv("ARCHIVE_EMAIL") or os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com") or "").strip()
+
+
+def _waiver_signed_email_parts(recipient_name, project_name, production_name=None, waiver_type=None):
+    """Sujet, texte et contexte communs à l'e-mail signataire et à l'e-mail d'archive d'une décharge signée."""
     if waiver_type == "cgl":
         doc_desc = "les Conditions Générales de Location (CGL) signées"
         subject_desc = "Conditions Générales de Location (CGL) signées"
@@ -637,20 +639,56 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
     )
     context["doc_title"] = doc_title
     context["subject_desc"] = subject_desc
+    return f"{subject_desc} - {project_name}", text_content, context
+
+
+def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None,
+                             waiver_type=None, bcc_archive=True):
+    """
+    Envoie au signataire le PDF signé (CGL, BVSR, BVPA, BVRA) en pièce jointe.
+    bcc_archive=True : ancien comportement, l'archive reçoit le même PDF en CCI.
+    bcc_archive=False : l'archive reçoit son propre exemplaire via send_waiver_signed_archive_email.
+    """
+    archive_mail = _archive_mail_address()
+    current_app.logger.info(
+        f"🚀 Sending signed document PDF to {to_email}"
+        + (f" (BCC/CCI archive: {archive_mail})" if bcc_archive else ""))
+    subject, text_content, context = _waiver_signed_email_parts(
+        recipient_name, project_name, production_name, waiver_type)
 
     bcc_recipients = []
-    if archive_mail and archive_mail.strip().lower() != (to_email or "").strip().lower():
-        bcc_recipients.append(archive_mail.strip())
+    if bcc_archive and archive_mail and archive_mail.lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(archive_mail)
 
     return EmailService.send_templated_email(
         to_email=to_email,
-        subject=f"{subject_desc} - {project_name}",
+        subject=subject,
         template_name="emails/waiver_signed_confirmation.html",
         context=context,
         text_content=text_content,
         sender_type="contact",
         cc=None,
         bcc=bcc_recipients if bcc_recipients else None,
+        attachments=[pdf_path] if pdf_path else None,
+        timeout=15,
+    )
+
+
+def send_waiver_signed_archive_email(recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
+    """Envoie à l'archive mail BV l'exemplaire d'archive (filigrane « Belle Vitesse ») d'une décharge signée."""
+    archive_mail = _archive_mail_address()
+    if not archive_mail:
+        return False
+    current_app.logger.info(f"🗄️ Sending signed document archive copy to {archive_mail}")
+    subject, text_content, context = _waiver_signed_email_parts(
+        recipient_name, project_name, production_name, waiver_type)
+    return EmailService.send_templated_email(
+        to_email=archive_mail,
+        subject=f"[Archive] {subject}",
+        template_name="emails/waiver_signed_confirmation.html",
+        context=context,
+        text_content=text_content,
+        sender_type="contact",
         attachments=[pdf_path] if pdf_path else None,
         timeout=15,
     )
@@ -786,17 +824,11 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
     )
 
 
-def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
-    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe (CCI archive/admin)."""
-    archive_mail = os.getenv("ARCHIVE_EMAIL") or os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
-    current_app.logger.info(
-        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email} (BCC/CCI archive: {archive_mail})"
-    )
-
+def _incident_signed_email_parts(incident):
+    """Sujet, texte et contexte communs à l'e-mail production et à l'e-mail d'archive d'un constat scellé."""
     context = _build_incident_email_context(incident)
     project_name = context["project_name"]
     incident_num = context["incident_number"]
-
     text_content = (
         f"Bonjour,\n\n"
         f"Le constat d'incident {incident_num} relatif au projet '{project_name}' a été "
@@ -805,20 +837,55 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         f"Bien cordialement,\n"
         f"L'équipe Belle Vitesse"
     )
+    return f"Constat scellé et signé - {incident_num} ({project_name})", text_content, context
+
+
+def send_incident_signed_confirmation_email(incident, to_email, pdf_path, bcc_archive=True):
+    """
+    Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe.
+    bcc_archive=True : ancien comportement, l'archive reçoit le même PDF en CCI.
+    bcc_archive=False : l'archive reçoit son propre exemplaire via send_incident_signed_archive_email.
+    """
+    archive_mail = _archive_mail_address()
+    current_app.logger.info(
+        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
+        + (f" (BCC/CCI archive: {archive_mail})" if bcc_archive else "")
+    )
+    subject, text_content, context = _incident_signed_email_parts(incident)
 
     bcc_recipients = []
-    if archive_mail and archive_mail.strip().lower() != (to_email or "").strip().lower():
-        bcc_recipients.append(archive_mail.strip())
+    if bcc_archive and archive_mail and archive_mail.lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(archive_mail)
 
     return EmailService.send_templated_email(
         to_email=to_email,
-        subject=f"Constat scellé et signé - {incident_num} ({project_name})",
+        subject=subject,
         template_name="emails/incident_signed_confirmation.html",
         context=context,
         text_content=text_content,
         sender_type="contact",
         cc=None,
         bcc=bcc_recipients if bcc_recipients else None,
+        attachments=[pdf_path] if pdf_path else None,
+        timeout=15,
+    )
+
+
+def send_incident_signed_archive_email(incident, pdf_path):
+    """Envoie à l'archive mail BV l'exemplaire d'archive (filigrane « Belle Vitesse ») d'un constat scellé."""
+    archive_mail = _archive_mail_address()
+    if not archive_mail:
+        return False
+    current_app.logger.info(
+        f"🗄️ Envoi de l'exemplaire d'archive du constat {incident.incident_number} à {archive_mail}")
+    subject, text_content, context = _incident_signed_email_parts(incident)
+    return EmailService.send_templated_email(
+        to_email=archive_mail,
+        subject=f"[Archive] {subject}",
+        template_name="emails/incident_signed_confirmation.html",
+        context=context,
+        text_content=text_content,
+        sender_type="contact",
         attachments=[pdf_path] if pdf_path else None,
         timeout=15,
     )

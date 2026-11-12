@@ -475,6 +475,11 @@ company_name=company_name
 </section>
 {% endblock %}
 
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(waiver.status == 'signed'), signer_names=[waiver.signer_name]) }}
+{% endblock %}
+
 {% block pdf_signatures %}
 {% set target_url = verification_url or ((base_url ~ '/risk-assessment/verify/' ~ waiver.waiver_id) if base_url else ('/risk-assessment/verify/' ~ waiver.waiver_id)) %}
 {{ pdf_signature_and_seal(

@@ -146,6 +146,91 @@ class PDFTasksRQTestCase(BaseTestCase):
             db.session.delete(prod)
             db.session.commit()
 
+    def test_task_render_pdf_builds_signer_copy_and_splits_emails(self):
+        """
+        Double exemplaire : archive « Belle Vitesse » + copie signataire à son nom.
+        Le signataire reçoit sa copie (sans CCI), l'archive mail reçoit l'exemplaire d'archive.
+        Les deux empreintes sont enregistrées et distinctes.
+        """
+        from utils.document_utils import compute_pdf_hash, signer_copy_path
+
+        prod = Production(name="Production Test Copie")
+        db.session.add(prod)
+        db.session.commit()
+        project = Project(name="Projet Test Copie", production_id=prod.id)
+        db.session.add(project)
+        db.session.commit()
+        waiver = SafetyRulesWaiver(
+            waiver_id="BVSR-TESTCOPY1",
+            project_id=project.id,
+            signer_first_name="Jean",
+            signer_last_name="Dupont",
+            signer_email="jean@prod.test",
+            status="signed",
+        )
+        db.session.add(waiver)
+        signed_doc = WaiverSignedDocument(
+            waiver_id="BVSR-TESTCOPY1",
+            hash="hmac-hash-copy",
+            pdf_file_hash="",
+            data_snapshot={"signer": "Jean Dupont"},
+            pdf_url="/safety-rules/document/BVSR-TESTCOPY1.pdf",
+        )
+        db.session.add(signed_doc)
+        db.session.commit()
+
+        with tempfile.TemporaryDirectory() as tmp_dir, \
+                patch.dict(os.environ, {"ARCHIVE_EMAIL": "archive@bellevitesse.com"}), \
+                patch("utils.mailer.EmailService.send_templated_email") as mock_send, \
+                patch("services.common.signatures._dispatch_kdrive_document_bundle") as mock_kdrive, \
+                patch("services.common.pdf_tasks.render_pdf_from_template",
+                      side_effect=lambda **kw: b"%PDF-1.7\n" + kw["html_content"].encode()):
+            # WeasyPrint est simulé dans les tests : rendu factice dépendant du HTML
+            output_file = os.path.join(tmp_dir, "BVSR-TESTCOPY1.pdf")
+            success = task_render_pdf_to_file(
+                html_content="<h1>Archive</h1><p>Belle Vitesse</p>",
+                output_file_path=output_file,
+                filename="BVSR-TESTCOPY1.pdf",
+                compress=False,
+                entity_type="waiver",
+                entity_id="BVSR-TESTCOPY1",
+                post_action="waiver_post_actions",
+                extra_context={
+                    "mode": "safety_rules",
+                    "current_hash": "hmac-hash-copy",
+                    "signer_html_content": "<h1>Copie</h1><p>Jean Dupont</p>",
+                },
+            )
+            self.assertTrue(success)
+
+            signer_file = signer_copy_path(output_file)
+            self.assertTrue(os.path.exists(output_file))
+            self.assertTrue(os.path.exists(signer_file))
+
+            doc = WaiverSignedDocument.query.filter_by(waiver_id="BVSR-TESTCOPY1").first()
+            with open(output_file, "rb") as f:
+                self.assertEqual(doc.pdf_file_hash, compute_pdf_hash(f.read()))
+            with open(signer_file, "rb") as f:
+                self.assertEqual(doc.signer_pdf_file_hash, compute_pdf_hash(f.read()))
+            self.assertNotEqual(doc.pdf_file_hash, doc.signer_pdf_file_hash)
+
+            # kDrive : uniquement l'archive
+            self.assertTrue(mock_kdrive.call_args.args[2].endswith("BVSR-TESTCOPY1.pdf"))
+
+            # E-mails : signataire (copie nominative, sans CCI) puis archive (exemplaire BV)
+            calls = {c.kwargs["to_email"]: c.kwargs for c in mock_send.call_args_list}
+            self.assertEqual(set(calls), {"jean@prod.test", "archive@bellevitesse.com"})
+            self.assertEqual(calls["jean@prod.test"]["attachments"], [signer_file])
+            self.assertIsNone(calls["jean@prod.test"]["bcc"])
+            self.assertEqual(calls["archive@bellevitesse.com"]["attachments"], [output_file])
+            self.assertTrue(calls["archive@bellevitesse.com"]["subject"].startswith("[Archive] "))
+
+        db.session.delete(doc)
+        db.session.delete(waiver)
+        db.session.delete(project)
+        db.session.delete(prod)
+        db.session.commit()
+
     def test_task_render_pdf_updates_inspection_entity(self):
         """Vérifie que la tâche worker met à jour les chemins et hashes de l'entité inspection."""
         from models.inspection import CheckoutVehicle

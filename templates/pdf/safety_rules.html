@@ -174,9 +174,7 @@ company_name=company_name
 </section>
 
 <!-- ═══════════ VEHICLE SAFETY RULES (ENGLISH - SAUT DE PAGE) ═══════════ -->
-<div class="bvsr-page-break"></div>
-
-<section class="pdf-section bvsr-section">
+<section class="pdf-section bvsr-section bvsr-page-break">
     <h2 class="pdf-section-title">Vehicle Safety Rules</h2>
 
     <div class="bvsr-rules-container">
@@ -237,6 +235,11 @@ company_name=company_name
         </div>
     </div>
 </section>
+{% endblock %}
+
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(waiver.status == 'signed'), signer_names=[waiver.signer_name]) }}
 {% endblock %}
 
 {% block pdf_signatures %}

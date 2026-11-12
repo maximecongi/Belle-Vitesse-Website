@@ -1,4 +1,4 @@
-{% from "pdf/macros.html" import pdf_preview_toolbar, pdf_header, pdf_title_banner, pdf_section_title, pdf_party_card, pdf_info_grid, pdf_mission_scope, pdf_context_box, pdf_signature_and_seal, pdf_contradictory_signatures_and_seal, pdf_footer, pdf_badge, pdf_vehicles_list, pf with context %}
+{% from "pdf/macros.html" import pdf_preview_toolbar, pdf_header, pdf_title_banner, pdf_section_title, pdf_party_card, pdf_info_grid, pdf_mission_scope, pdf_context_box, pdf_signature_and_seal, pdf_contradictory_signatures_and_seal, pdf_footer, pdf_badge, pdf_vehicles_list, pdf_watermark, pf with context %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -38,9 +38,11 @@
     {% endif %}
     {% endblock %}
 
-    {% if form_preview %}
-    <div class="pf-watermark" aria-hidden="true">APERÇU — NON SIGNÉ</div>
-    {% endif %}
+    {# ── Filigrane : surchargé par les documents à signer (aperçu non signé / copie
+       signataire / archive Belle Vitesse, cf. macro pdf_watermark) ── #}
+    {% block pdf_watermark %}
+    {% if form_preview %}{{ pdf_watermark() }}{% endif %}
+    {% endblock %}
 
     <div class="cgl-document pdf-document {% block document_class %}{% endblock %}">
 

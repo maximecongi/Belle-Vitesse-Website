@@ -50,7 +50,7 @@ from utils.document_utils import (
     generate_document_verification_token,
     render_pdf_from_template,
 )
-from utils.mailer import send_waiver_signed_email
+from utils.mailer import send_waiver_signed_archive_email, send_waiver_signed_email
 from utils.request_utils import resolve_base_url
 from utils.signature_storage import (
     save_signature_image,
@@ -598,7 +598,13 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
         file_path = os.path.join(pdf_dir, filename)
 
-        html_content = render_template(config["template"], **render_ctx)
+        # Deux exemplaires : archive BV (filigrane « Belle Vitesse » : app, kDrive, mail d'archive)
+        # et, pour les décharges, copie signataire (filigrane à son nom, envoyée par e-mail).
+        html_content = render_template(config["template"], **render_ctx, watermark_copy="archive")
+        signer_html_content = (
+            render_template(config["template"], **render_ctx, watermark_copy="signer")
+            if mode in WAIVER_MODES else None
+        )
 
         # 4. Stockage physique
         rel_pdf_path = os.path.relpath(file_path, output_base)
@@ -693,6 +699,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                     "rel_pdf_path": rel_pdf_path,
                     "current_hash": current_hash,
                     "snapshot": snapshot,
+                    "signer_html_content": signer_html_content,
                 },
             )
         except Exception as queue_err:
@@ -977,8 +984,12 @@ def _dispatch_kdrive_document_bundle(mode, record, rel_pdf_path, base_url, curre
             logger.error(f"❌ Erreur dispatch kDrive ({mode}) : {k_err}")
 
 
-def _send_waiver_confirmation_email(mode, waiver, pdf_path):
-    """Envoie une confirmation par e-mail avec le PDF en pièce jointe au signataire."""
+def _send_waiver_confirmation_email(mode, waiver, pdf_path, archive_pdf_path=None):
+    """
+    Envoie au signataire sa copie PDF (pdf_path) et, si archive_pdf_path est fourni,
+    l'exemplaire d'archive « Belle Vitesse » séparément à l'adresse d'archive
+    (sinon, ancien comportement : même PDF en CCI à l'archive).
+    """
     try:
         recipient_email = getattr(waiver, "signer_email", None)
         recipient_name = getattr(waiver, "signer_name", None)
@@ -1008,18 +1019,30 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
         elif getattr(waiver, "production_name", None):
             prod_name = waiver.production_name
 
+        project_name = waiver.project_name or (p.name if p else "—")
         if recipient_email:
             send_waiver_signed_email(
                 recipient_email,
                 recipient_name,
-                waiver.project_name or (p.name if p else "—"),
+                project_name,
                 pdf_path,
                 production_name=prod_name,
                 waiver_type=mode,
+                bcc_archive=archive_pdf_path is None,
             )
         else:
             logger.warning(
                 f"⚠️ Aucun e-mail destinataire trouvé pour la confirmation {mode} #{getattr(waiver, 'id', '')}"
+            )
+
+        # L'archive BV reçoit toujours son exemplaire, même sans destinataire signataire
+        if archive_pdf_path:
+            send_waiver_signed_archive_email(
+                recipient_name,
+                project_name,
+                archive_pdf_path,
+                production_name=prod_name,
+                waiver_type=mode,
             )
     except Exception as e:
         logger.error(f"❌ Erreur e-mail ({mode} {getattr(waiver, 'id', '')}) : {e}")
@@ -1094,7 +1117,9 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         "signed_at_str": (incident.prod_signed_at or _utcnow()).strftime("%d/%m/%Y %H:%M"),
     }
 
-    html = render_template("pdf/incident_report.html", **render_ctx)
+    # Archive BV (filigrane « Belle Vitesse ») + copie signataire production (filigrane à son nom)
+    html = render_template("pdf/incident_report.html", **render_ctx, watermark_copy="archive")
+    signer_html = render_template("pdf/incident_report.html", **render_ctx, watermark_copy="signer")
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
@@ -1190,6 +1215,7 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
             "snapshot": incident.to_dict(),
             "resolved_base_url": base_url,
             "recipient_emails": list(dict.fromkeys(recipient_emails)),
+            "signer_html_content": signer_html,
         },
     )
 

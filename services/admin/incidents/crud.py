@@ -451,6 +451,20 @@ def resolve_incident_equipments(inc, vehicle_data=None):
     return equipments
 
 
+def _signer_copy_url(signed_pdf_path):
+    """URL sécurisée de la copie signataire d'un constat scellé, si le fichier existe (sinon None)."""
+    if not signed_pdf_path:
+        return None
+    from flask import current_app
+    from utils.document_utils import signer_copy_path
+
+    rel = signer_copy_path(signed_pdf_path)
+    output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    if not os.path.exists(os.path.join(output_base, rel)):
+        return None
+    return f"/incidents/document/{rel}?t={generate_pdf_access_token(rel)}"
+
+
 def get_incident_detail(record_id):
     """
     Récupère le détail exhaustif d'un incident par son ID ou numéro.
@@ -606,6 +620,8 @@ def get_incident_detail(record_id):
             f"/incidents/document/{inc.signed_pdf_path}?t={generate_pdf_access_token(inc.signed_pdf_path)}"
             if inc.signed_pdf_path else None
         ),
+        # Copie signataire (filigrane au nom du représentant production), pour la page publique
+        "signer_pdf_url": _signer_copy_url(inc.signed_pdf_path),
         "hash": inc.hash,
         "pdf_file_hash": inc.pdf_file_hash,
         "created_at": _format_date(inc.created_at),

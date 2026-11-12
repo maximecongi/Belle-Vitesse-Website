@@ -222,6 +222,29 @@ Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
 {% endmacro %}
 
 
+{# ── Filigrane de document ───────────────────────────────────────────────────
+   Répété sur chaque page (position: fixed sous WeasyPrint). Trois variantes :
+   - document non signé                         → « Aperçu non signé »
+   - signé, rendu avec watermark_copy='signer'  → prénom et nom du signataire (copie envoyée au signataire)
+   - signé, tout autre rendu                    → « Belle Vitesse » (archive : app, kDrive, mail d'archive)
+   is_signed : même expression que le bloc de scellement du template.
+   signer_names : signataires dont le nom figure sur la copie signataire (vides ou « — » ignorés). #}
+{% macro pdf_watermark(is_signed=False, signer_names=None) %}
+{%- if not is_signed -%}
+<div class="pdf-watermark" aria-hidden="true"><div class="pdf-watermark-label">Aperçu non signé</div></div>
+{%- elif watermark_copy is defined and watermark_copy == 'signer' -%}
+{%- set names = [] -%}
+{%- for n in (signer_names or []) -%}
+{%- set n = (n or '')|string|trim -%}
+{%- if n and n != '—' and n not in names -%}{%- set _ = names.append(n) -%}{%- endif -%}
+{%- endfor -%}
+<div class="pdf-watermark pdf-watermark--signer" aria-hidden="true"><div class="pdf-watermark-label">{{ names|join(' · ') if names else 'Exemplaire signataire' }}</div></div>
+{%- else -%}
+<div class="pdf-watermark pdf-watermark--archive" aria-hidden="true"><div class="pdf-watermark-label">Belle Vitesse</div></div>
+{%- endif -%}
+{% endmacro %}
+
+
 {# ── 7. Bloc de Scellement & Signature Électronique (Exact CGL) ───────────── #}
 {% macro pdf_signature_and_seal(
 doc_id,

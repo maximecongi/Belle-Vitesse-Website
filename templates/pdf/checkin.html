@@ -182,6 +182,11 @@ company_name=company_name
 </section>
 {% endblock %}
 
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(data.status_id == 'signed'), signer_names=[data.controller.name if (data.controller and data.controller.name) else (data.controller if data.controller is string else '')]) }}
+{% endblock %}
+
 {% block pdf_signatures %}
 {% set controller_display_name = data.controller.name if (data.controller and data.controller.name) else
 (data.controller if (data.controller is string) else 'Responsable Contrôle') %}

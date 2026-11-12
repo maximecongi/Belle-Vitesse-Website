@@ -131,9 +131,12 @@ def _cleanup_waiver_assets(mode: str, waiver: Waiver):
     from flask import current_app
     config = _get_waiver_config(mode)
 
-    files_to_delete = [waiver.signed_pdf_path] + [
-        getattr(waiver, f, None) for f in config["attachment_fields"]
-    ]
+    from utils.document_utils import signer_copy_path
+
+    files_to_delete = [
+        waiver.signed_pdf_path,
+        signer_copy_path(waiver.signed_pdf_path),  # copie signataire générée à côté de l'archive
+    ] + [getattr(waiver, f, None) for f in config["attachment_fields"]]
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output")

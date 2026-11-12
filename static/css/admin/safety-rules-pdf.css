@@ -402,9 +402,11 @@
 }
 
 /* ── 6. Sections des Règles de Sécurité (Design Épuré & Minimaliste) ─────── */
+/* Pas de page-break-inside: avoid ici : une section (FR ou EN) dépasse une page,
+   WeasyPrint la repousserait en entier sur la page suivante et laisserait une page vide.
+   Les éléments indivisibles (bandeaux, lignes, bloc équipements) ont leurs propres règles. */
 .bvsr-section {
     margin-bottom: 16pt;
-    page-break-inside: avoid;
 }
 
 .bvsr-rules-container {
@@ -517,6 +519,7 @@
 
 .bvsr-page-break {
     page-break-before: always;
+    break-before: page;
 }
 
 /* ── Rétro-compatibilité grille bilingue pour interfaces annexes ──────────── */

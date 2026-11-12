@@ -77,7 +77,8 @@ class SignPdfPreviewTest(BaseTestCase):
         # Champ vide : placeholder cliquable
         self.assertIn("pf-mark--empty", html)
         self.assertIn(f'href="{FIELD_URL}siret">[SIRET]</a>', html)
-        self.assertIn("APERÇU — NON SIGNÉ", html)
+        self.assertIn('class="pdf-watermark"', html)
+        self.assertIn('<div class="pdf-watermark-label">Aperçu non signé</div>', html)
         self.assertIn("css/pdf/form-preview.css", html)
 
         # Rien n'a été persisté
@@ -145,6 +146,47 @@ class SignPdfPreviewTest(BaseTestCase):
         self.assertIn('data-pf-field="production_name"', html)
         self.assertIn("pdf.js/3.11.174/pdf.min.js", html)
 
+    def _render_cgl(self, status, variants):
+        """Rend la CGL au statut donné pour chaque jeu de variables de rendu (une seule création de jeton)."""
+        token, waiver_id = self._cgl_token()
+        with self.app.app_context(), self.app.test_request_context("/"):
+            from flask import render_template
+            from services.common.signatures import build_document_render_context
+            cgl = CglWaiver.query.filter_by(waiver_id=waiver_id).first()
+            cgl.status = status
+            cgl.production_representative = "Alice Martin"
+            ctx = build_document_render_context("cgl", cgl)
+            htmls = [render_template("pdf/cgl.html", **ctx, **kw) for kw in variants]
+            db.session.rollback()
+        return htmls
+
+    def test_watermark_variants(self):
+        """Aperçu non signé (sans nom) / copie signataire (nom) / archive BV (« Belle Vitesse »)."""
+        name_mark = '<div class="pdf-watermark-label">Alice Martin</div>'
+        bv_mark = '<div class="pdf-watermark-label">Belle Vitesse</div>'
+        preview_mark = '<div class="pdf-watermark-label">Aperçu non signé</div>'
+
+        # Non signé, même si un rendu « signataire » est demandé : aperçu sans nom
+        for html in self._render_cgl("pending", [{}, {"watermark_copy": "signer"}]):
+            self.assertIn(preview_mark, html)
+            self.assertNotIn(name_mark, html)
+            self.assertNotIn(bv_mark, html)
+
+    def test_watermark_signed_copies(self):
+        name_mark = '<div class="pdf-watermark-label">Alice Martin</div>'
+        bv_mark = '<div class="pdf-watermark-label">Belle Vitesse</div>'
+        signer, archive, default = self._render_cgl(
+            "signed", [{"watermark_copy": "signer"}, {"watermark_copy": "archive"}, {}])
+        # Copie signataire : nom du signataire
+        self.assertIn(name_mark, signer)
+        self.assertNotIn(bv_mark, signer)
+        # Archive BV, et tout rendu signé sans précision : « Belle Vitesse »
+        for html in (archive, default):
+            self.assertIn(bv_mark, html)
+            self.assertNotIn(name_mark, html)
+        for html in (signer, archive, default):
+            self.assertNotIn("Aperçu non signé", html)
+
     def test_final_render_has_no_preview_markup(self):
         """Le PDF scellé (sans form_preview) ne doit contenir aucun surlignage ni lien d'aperçu."""
         token, waiver_id = self._cgl_token()
@@ -154,11 +196,13 @@ class SignPdfPreviewTest(BaseTestCase):
             cgl = CglWaiver.query.filter_by(waiver_id=waiver_id).first()
             cgl.production_name = "Lumière Films SAS"
             cgl.sign_data = {"order_ref": "BVBC-42"}
+            cgl.status = "signed"  # le scellement passe le statut à 'signed' avant le rendu
             html = render_template("pdf/cgl.html", **build_document_render_context("cgl", cgl))
             db.session.rollback()
         self.assertNotIn("pf-mark", html)
         self.assertNotIn("preview.invalid", html)
-        self.assertNotIn("APERÇU — NON SIGNÉ", html)
+        self.assertNotIn("Aperçu non signé", html)
+        self.assertIn('<div class="pdf-watermark-label">Belle Vitesse</div>', html)
         self.assertNotIn("form-preview.css", html)
         # Correctifs : raison sociale saisie et réf. commande présentes dans le PDF final
         self.assertIn("Lumière Films SAS", html)

@@ -292,6 +292,11 @@ company_name=company_name
 </section>
 {% endblock %}
 
+{# Filigrane (aperçu / copie signataire / archive BV) : même condition is_signed que le bloc de scellement #}
+{% block pdf_watermark %}
+{{ pdf_watermark(is_signed=(cgl.status == 'signed'), signer_names=[cgl.production_representative]) }}
+{% endblock %}
+
 {% block pdf_signatures %}
 {% set target_url = verification_url or ((base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url
 else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id))) %}
