@@ -3025,22 +3025,22 @@ body.has-admin-savebar .admin-content {
    (services/admin/equipment_colors.py). Chaque classe pose --usage-color (aplat) et --usage-ink
    (texte / filet lisible sur fond blanc : plus foncé pour les teintes claires).
    ══════════════════════════════════════════════════════════════════ */
-.eq-color-red { --usage-color: #D7261E; --usage-ink: #D7261E; }
-.eq-color-blue { --usage-color: #0CB8FF; --usage-ink: #0077A8; }
-.eq-color-yellow { --usage-color: #FFDD34; --usage-ink: #8A6D00; }
-.eq-color-green { --usage-color: #008006; --usage-ink: #008006; }
-.eq-color-orange { --usage-color: #EF6500; --usage-ink: #C25200; }
-.eq-color-purple { --usage-color: #760083; --usage-ink: #760083; }
-.eq-color-pink { --usage-color: #FF6CC6; --usage-ink: #C2187A; }
-.eq-color-neon_yellow { --usage-color: #FFFD40; --usage-ink: #7A7800; }
-.eq-color-neon_green { --usage-color: #2DDB00; --usage-ink: #1F8A00; }
-.eq-color-neon_pink { --usage-color: #FF309B; --usage-ink: #C8106F; }
-.eq-color-neon_orange { --usage-color: #F35800; --usage-ink: #C24600; }
-.eq-color-neon_blue { --usage-color: #007CCB; --usage-ink: #007CCB; }
-.eq-color-brown { --usage-color: #7C4400; --usage-ink: #7C4400; }
-.eq-color-dark_blue { --usage-color: #0021A3; --usage-ink: #0021A3; }
-.eq-color-dark_green { --usage-color: #013220; --usage-ink: #013220; }
-.eq-color-cream { --usage-color: #FFB87C; --usage-ink: #A85A12; }
+.eq-color-red { --usage-color: #B91C1C; --usage-ink: #991B1B; }
+.eq-color-blue { --usage-color: #38BDF8; --usage-ink: #0369A1; }
+.eq-color-yellow { --usage-color: #FACC15; --usage-ink: #854D0E; }
+.eq-color-green { --usage-color: #15803D; --usage-ink: #14532D; }
+.eq-color-orange { --usage-color: #EA580C; --usage-ink: #9A3412; }
+.eq-color-purple { --usage-color: #7E22CE; --usage-ink: #6B21A8; }
+.eq-color-pink { --usage-color: #F9A8D4; --usage-ink: #BE185D; }
+.eq-color-neon_yellow { --usage-color: #BEF264; --usage-ink: #4D7C0F; }
+.eq-color-neon_green { --usage-color: #22C55E; --usage-ink: #15803D; }
+.eq-color-neon_pink { --usage-color: #DB2777; --usage-ink: #9D174D; }
+.eq-color-neon_orange { --usage-color: #FB923C; --usage-ink: #C2410C; }
+.eq-color-neon_blue { --usage-color: #2563EB; --usage-ink: #1D4ED8; }
+.eq-color-brown { --usage-color: #78350F; --usage-ink: #78350F; }
+.eq-color-dark_blue { --usage-color: #172554; --usage-ink: #172554; }
+.eq-color-dark_green { --usage-color: #064E3B; --usage-ink: #064E3B; }
+.eq-color-cream { --usage-color: #FED7AA; --usage-ink: #9A3412; }
 
 .eq-color-dot {
     width: 10px;

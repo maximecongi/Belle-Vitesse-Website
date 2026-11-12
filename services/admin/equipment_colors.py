@@ -15,30 +15,31 @@ from models import Head, Vehicle, db
 
 logger = logging.getLogger(__name__)
 
-# Palette fermée : coloris du gaffer 25 mm x 50 m vendu par Cinéboutique, gamme standard + gamme fluo
-# (marquage physique du matériel),
-# noir, blanc et gris (gris, argent) exclus.
-# Codes hexadécimaux repris des pastilles de la fiche produit (le rouge, affiché en texture, est approché).
+# Palette fermée : coloris du gaffer 25 mm x 50 m vendu par Cinéboutique (marquage physique du matériel),
+# noir et blanc exclus. Noms inchangés ; teintes recalées sur les gammes du design system de l'ERP
+# (mêmes familles que --entity-* / --status-*) et ajustées pour rester distinguables deux à deux
+# (écart OKLab minimal ≈ 11, contre 2,4 entre Orange et Orange fluo avec les codes bruts du fabricant).
 # (clé, libellé, hexadécimal). L'ordre sert à l'attribution automatique (couleurs les plus distinctes d'abord).
-# Les classes CSS correspondantes sont .eq-color-<clé> (css/admin/admin-components.css).
+# Les classes CSS correspondantes sont .eq-color-<clé> (css/admin/admin-components.css), avec une encre
+# (--usage-ink) foncée de la même famille pour le texte sur fond teinté.
 # Une couleur enregistrée hors palette (ancienne palette) est réattribuée automatiquement.
 EQUIPMENT_COLORS = [
-    ("red", "Rouge", "#D7261E"),
-    ("blue", "Bleu", "#0CB8FF"),
-    ("yellow", "Jaune", "#FFDD34"),
-    ("green", "Vert", "#008006"),
-    ("orange", "Orange", "#EF6500"),
-    ("purple", "Violet", "#760083"),
-    ("pink", "Rose", "#FF6CC6"),
-    ("neon_yellow", "Jaune fluo", "#FFFD40"),
-    ("neon_green", "Vert fluo", "#2DDB00"),
-    ("neon_pink", "Rose fluo", "#FF309B"),
-    ("neon_orange", "Orange fluo", "#F35800"),
-    ("neon_blue", "Bleu fluo", "#007CCB"),
-    ("brown", "Marron", "#7C4400"),
-    ("dark_blue", "Bleu foncé", "#0021A3"),
-    ("dark_green", "Vert foncé", "#013220"),
-    ("cream", "Crème", "#FFB87C"),
+    ("red", "Rouge", "#B91C1C"),
+    ("blue", "Bleu", "#38BDF8"),
+    ("yellow", "Jaune", "#FACC15"),
+    ("green", "Vert", "#15803D"),
+    ("orange", "Orange", "#EA580C"),
+    ("purple", "Violet", "#7E22CE"),
+    ("pink", "Rose", "#F9A8D4"),
+    ("neon_yellow", "Jaune fluo", "#BEF264"),
+    ("neon_green", "Vert fluo", "#22C55E"),
+    ("neon_pink", "Rose fluo", "#DB2777"),
+    ("neon_orange", "Orange fluo", "#FB923C"),
+    ("neon_blue", "Bleu fluo", "#2563EB"),
+    ("brown", "Marron", "#78350F"),
+    ("dark_blue", "Bleu foncé", "#172554"),
+    ("dark_green", "Vert foncé", "#064E3B"),
+    ("cream", "Crème", "#FED7AA"),
 ]
 COLOR_KEYS = [key for key, _, _ in EQUIPMENT_COLORS]
 COLOR_LABELS = {key: label for key, label, _ in EQUIPMENT_COLORS}

@@ -42,4 +42,4 @@ from models.kdrive import KDriveObject
 from models.signature_event import SignatureEvent
 
 from models.user_pin import UserPin
-from models.equipment_usage import ProjectEquipmentUsage
+from models.equipment_usage import ProjectEquipmentUsage, ProjectEquipmentUsageLog

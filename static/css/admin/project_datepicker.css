@@ -726,8 +726,8 @@
 }
 
 .pdp-interval-badge {
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--entity-checkout-bg);
+    color: var(--entity-checkout-text);
     font-size: 0.75rem;
     font-weight: 700;
     padding: 0.2rem 0.5rem;
@@ -766,21 +766,21 @@
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    border: 1px solid #cbd5e1;
-    background: #ffffff;
+    border: 1px solid var(--entity-checkout-border);
+    background: var(--entity-checkout-bg);
     font-size: 0.78rem;
     font-weight: 600;
     padding: 0.35rem 0.75rem;
     border-radius: 6px;
     cursor: pointer;
-    color: #64748b;
+    color: var(--entity-checkout-text);
     transition: all 0.15s ease;
 }
 
 .pdp-interval-btn.btn-immob:hover {
-    border-color: #94a3b8;
-    color: #334155;
-    background: #f8fafc;
+    border-color: var(--entity-checkout-border);
+    color: var(--entity-checkout-text);
+    background: #c2ead0;
 }
 
 .pdp-interval-btn.btn-immob.active {
@@ -1119,6 +1119,7 @@
     border-color: #FECACA;
     color: #991b1b;
 }
+
 /* ══════════════════════════════════════════════════════════════════
    POINTAGE DU MATÉRIEL PAR JOUR DE TOURNAGE (hub projet)
    Couleur fixe par matériel : variable --usage-color posée par .eq-color-<clé>.
@@ -1241,7 +1242,7 @@
     color: #9CA3AF !important;
 }
 
-.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-unused > span:first-child {
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-unused>span:first-child {
     text-decoration: line-through;
 }
 
@@ -1314,11 +1315,30 @@
     visibility: hidden;
 }
 
+/* Puce active : même langage que les cases « utilisé » du calendrier (fond pâle teinté de la couleur
+   du matériel, texte foncé de la même teinte). Pas de bordure colorée : la forme arrondie est conservée
+   (charte BV : bordure colorée = angles droits), la bordure prend la teinte du fond. */
 .pdu-chip.is-active {
-    color: #ffffff;
-    background: var(--grey-1, #151515);
-    border-color: var(--grey-1, #151515);
+    --chip-tint: color-mix(in srgb, var(--usage-color, #334155) 16%, #ffffff);
+    color: var(--usage-ink, var(--usage-color, #334155));
+    background: var(--chip-tint);
+    border-color: var(--chip-tint);
     font-weight: 600;
+}
+
+.pdu-chip.is-active:hover {
+    border-color: var(--chip-tint);
+    filter: brightness(0.98);
+}
+
+.pdu-chip.is-active .pdu-chip-count {
+    opacity: 0.85;
+}
+
+/* « Tout le matériel » actif : teinte neutre (ardoise) */
+.pdu-chip--all.is-active {
+    --chip-tint: #E2E8F0;
+    color: #0F172A;
 }
 
 .pdu-chip .lucide {
@@ -1336,7 +1356,7 @@
 }
 
 .pdu-chip.is-active .pdu-chip-swatch {
-    box-shadow: 0 0 0 2px #ffffff;
+    box-shadow: none;
 }
 
 .pdu-chip-count {

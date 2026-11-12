@@ -11,6 +11,7 @@ from mcp_server.tools import system
 from mcp_server.tools import vehicles
 from mcp_server.tools import incidents
 from mcp_server.tools import waivers
+from mcp_server.tools import equipment_usage
 
 __all__ = [
     "projects",
@@ -25,4 +26,5 @@ __all__ = [
     "vehicles",
     "incidents",
     "waivers",
+    "equipment_usage",
 ]

@@ -42,6 +42,10 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                 {% if evt.type in ('project', 'project_mission') %}
                 {{ shoot_status_badge(evt.status) }}
+                {% if evt.used_days %}
+                <span class="badge-pill" data-val="neutral" title="Jours de tournage pointés « utilisé » pour ce véhicule">
+                    <i data-lucide="list-checks"></i> {{ evt.used_days }} j utilisé{{ 's' if evt.used_days > 1 else '' }}</span>
+                {% endif %}
                 {% if evt.has_incidents %}
                 <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.incident_count
                     }} incident{{ 's' if
@@ -243,6 +247,64 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 
     </div>
 </div>
+
+{% if usage_stats %}
+<!-- ═══════════ UTILISATION RÉELLE (pointage des jours de tournage) ═══════════ -->
+<div class="admin-card u-mb-4 vehicle-usage-card" id="utilisation">
+    <div class="admin-card-title admin-card-header u-flex-wrap u-gap-2">
+        <span>Utilisation</span>
+        <div class="u-flex u-align-center u-gap-1">
+            {% if usage_stats.prev_year %}
+            <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=vehicle.id, year=usage_stats.prev_year) }}#utilisation"
+                class="admin-btn admin-btn-xs admin-btn-quaternary" title="Année {{ usage_stats.prev_year }}">
+                <i data-lucide="chevron-left"></i></a>
+            {% endif %}
+            <span class="u-text-sm u-font-semibold">{{ usage_stats.year }}</span>
+            {% if usage_stats.next_year %}
+            <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=vehicle.id, year=usage_stats.next_year) }}#utilisation"
+                class="admin-btn admin-btn-xs admin-btn-quaternary" title="Année {{ usage_stats.next_year }}">
+                <i data-lucide="chevron-right"></i></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="vehicle-usage-layout">
+        <div class="vehicle-usage-kpis">
+            <div class="vehicle-usage-kpi">
+                <span class="u-text-xs u-text-muted">Jours utilisés en {{ usage_stats.year }}</span>
+                <strong>{{ usage_stats.used_year }}</strong>
+            </div>
+            <div class="vehicle-usage-kpi">
+                <span class="u-text-xs u-text-muted">12 derniers mois</span>
+                <strong>{{ usage_stats.used_12m }}</strong>
+            </div>
+            <div class="vehicle-usage-kpi" title="Jours utilisés / jours de tournage pointés (utilisé ou non utilisé), tous projets confondus">
+                <span class="u-text-xs u-text-muted">Taux d'utilisation</span>
+                <strong>{% if usage_stats.usage_rate is not none %}{{ usage_stats.usage_rate }}<small>%</small>{% else %}—{% endif %}</strong>
+                <span class="u-text-2xs u-text-muted">{{ usage_stats.used_total }} utilisé{{ 's' if usage_stats.used_total > 1 else '' }} · {{ usage_stats.unused_total }} non utilisé{{ 's' if usage_stats.unused_total > 1 else '' }}</span>
+            </div>
+        </div>
+
+        <!-- Jours utilisés par mois : une seule série (pas de légende), détail au survol -->
+        <figure class="vehicle-usage-chart" aria-label="Jours utilisés par mois en {{ usage_stats.year }}">
+            <div class="vehicle-usage-columns">
+                {% for m in usage_stats.months %}
+                <div class="vehicle-usage-col{% if m.is_current %} is-current{% endif %}"
+                    title="{{ m.label_full|capitalize }} : {{ m.count }} jour{{ 's' if m.count > 1 else '' }} utilisé{{ 's' if m.count > 1 else '' }}"
+                    aria-label="{{ m.label_full }} : {{ m.count }} jour{{ 's' if m.count > 1 else '' }}">
+                    <span class="vehicle-usage-col-value">{{ m.count if m.count else '' }}</span>
+                    <span class="vehicle-usage-col-track"><span class="vehicle-usage-col-bar" data-pct="{{ m.pct if m.count else 0 }}"></span></span>
+                    <span class="vehicle-usage-col-label">{{ m.label }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% if not usage_stats.used_year %}
+            <figcaption class="u-text-xs u-text-muted u-mt-2">Aucun jour pointé « utilisé » en {{ usage_stats.year }}.</figcaption>
+            {% endif %}
+        </figure>
+    </div>
+</div>
+{% endif %}
 
 <!-- ═══════════ CONTRÔLES & COMMUTATEUR DE VUE ═══════════ -->
 <div class="admin-card u-mb-4 u-p-3">

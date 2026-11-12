@@ -60,6 +60,12 @@ EXPECTED_JOBS = [
         "expected_freq": "Tous les jours à 8h00",
         "tolerance_hours": 26,  # 24h + 2h margin
     },
+    {
+        "job_name": "remind_equipment_usage",
+        "display_name": "Résumé quotidien du pointage du matériel",
+        "expected_freq": "Tous les jours à 8h15",
+        "tolerance_hours": 26,  # 24h + 2h margin
+    },
 ]
 
 

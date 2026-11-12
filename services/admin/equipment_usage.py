@@ -11,7 +11,7 @@ from datetime import date, datetime, timezone
 from flask import current_app, render_template
 
 from models import db
-from models.equipment_usage import EQUIPMENT_TYPES, ProjectEquipmentUsage
+from models.equipment_usage import EQUIPMENT_TYPES, ProjectEquipmentUsage, ProjectEquipmentUsageLog
 from services.admin.equipment_colors import DEFAULT_COLOR, get_color_map
 from utils.database import get_heads, get_vehicles
 from utils.document_utils import render_pdf_from_template
@@ -154,11 +154,12 @@ def _parse_day(value) -> date:
         raise EquipmentUsageError("Jour invalide (format attendu : AAAA-MM-JJ).")
 
 
-def set_equipment_usage(project_id, changes, user_id=None) -> dict:
+def set_equipment_usage(project_id, changes, user_id=None, source="web") -> dict:
     """
     Applique un lot de pointages. `changes` : liste de dicts
     {"equipment_type": "vehicle"|"head", "equipment_id": str, "date": "AAAA-MM-JJ", "state": "used"|"unused"|"none"}.
-    Le lot est validé intégralement avant écriture (tout ou rien). Retourne l'état à jour.
+    Le lot est validé intégralement avant écriture (tout ou rien). Chaque changement réel est
+    tracé dans l'historique (ProjectEquipmentUsageLog, `source` = 'web' ou 'mcp'). Retourne l'état à jour.
     """
     project = resolve_project(project_id)
     if not project or project.deleted_at is not None:
@@ -198,6 +199,13 @@ def set_equipment_usage(project_id, changes, user_id=None) -> dict:
     try:
         for (eq_type, eq_id, day), state in normalized.items():
             entry = existing.get((eq_type, eq_id, day))
+            old_state = STATE_NONE if entry is None else (STATE_USED if entry.used else STATE_UNUSED)
+            if old_state != state:
+                # Historique : uniquement les changements réels
+                db.session.add(ProjectEquipmentUsageLog(
+                    project_id=project.id, equipment_type=eq_type, equipment_id=eq_id, usage_date=day,
+                    old_state=old_state, new_state=state, user_id=user_id, source=source,
+                ))
             if state == STATE_NONE:
                 if entry is not None:
                     db.session.delete(entry)

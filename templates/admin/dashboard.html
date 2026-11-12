@@ -300,4 +300,32 @@
     {{ empty_state('calendar-check', "Aucun départ ou retour prévu aujourd'hui") }}
 </div>
 {% endif %}
+
+{% if pending_usage %}
+<!-- ═══════════ PROJETS À POINTER (administrateurs) ═══════════ -->
+{% set pending_days_total = pending_usage|sum(attribute='pending_days') %}
+<h2 class="dashboard-section-header" id="projets-a-pointer">Projets à pointer</h2>
+<div class="admin-card dashboard-usage-pending">
+    <div class="admin-card-title admin-card-header u-flex-wrap u-gap-2">
+        <span>Matériel non pointé sur des jours de tournage passés</span>
+        <span class="badge-pill u-bg-warning-light u-text-warning u-text-xs">{{ pending_days_total }} jour{{ 's' if pending_days_total > 1 else '' }}</span>
+    </div>
+    <ul class="usage-pending-list">
+        {% for p in pending_usage[:8] %}
+        <li>
+            <a href="{{ url_for('admin_projects.admin_project_detail', record_id=p.id) }}#pointage" class="usage-pending-row">
+                <span class="usage-pending-main">
+                    <span class="u-font-semibold u-text-sm">{{ p.name }}</span>
+                    <span class="u-text-xs u-text-muted">{{ p.production }}{% if p.last_day %} · dernier jour {{ p.last_day.strftime('%d/%m/%Y') }}{% endif %}</span>
+                </span>
+                <span class="badge-pill u-bg-warning-light u-text-warning u-text-xs">{{ p.pending_days }} j</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% if pending_usage|length > 8 %}
+    <p class="u-text-xs u-text-muted u-mt-2 u-mb-0">+ {{ pending_usage|length - 8 }} autre{{ 's' if pending_usage|length - 8 > 1 else '' }} projet{{ 's' if pending_usage|length - 8 > 1 else '' }} à pointer.</p>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

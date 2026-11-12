@@ -1389,3 +1389,210 @@
     flex: 1;
     min-width: 0;
 }
+
+/* ── Fiche véhicule : utilisation réelle (pointage) ──
+   Une seule série : colonnes neutres (encre ERP), valeur affichée au-dessus des mois non nuls,
+   hauteur via --pct (data-bars.js). */
+.vehicle-usage-layout {
+    display: grid;
+    grid-template-columns: minmax(180px, 220px) 1fr;
+    gap: 1.5rem;
+    align-items: end;
+}
+
+@media (max-width: 760px) {
+    .vehicle-usage-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.vehicle-usage-kpis {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.vehicle-usage-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.vehicle-usage-kpi strong {
+    font-size: 1.5rem;
+    line-height: 1.15;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.vehicle-usage-kpi strong small {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-left: 1px;
+}
+
+.vehicle-usage-chart {
+    margin: 0;
+}
+
+.vehicle-usage-columns {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    align-items: end;
+}
+
+.vehicle-usage-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.vehicle-usage-col-value {
+    min-height: 1em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+}
+
+.vehicle-usage-col-track {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    height: 120px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.vehicle-usage-col-bar {
+    display: block;
+    width: 100%;
+    max-width: 28px;
+    margin: 0 auto;
+    height: var(--pct, 0%);
+    background: #334155;
+    border-radius: 2px 2px 0 0;
+}
+
+.vehicle-usage-col-label {
+    font-size: 0.68rem;
+    color: #94a3b8;
+}
+
+.vehicle-usage-col.is-current .vehicle-usage-col-label {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   UTILISATION DU MATÉRIEL — page Flotte (administrateurs)
+   Barres neutres (encre ERP) : l'identité du matériel est portée par sa pastille de couleur.
+   Largeurs via --pct (static/js/src/admin/data-bars.js).
+   ══════════════════════════════════════════════════════════════════ */
+.fleet-usage-grid {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(320px, 2.4fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 800px) {
+    .fleet-usage-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fleet-usage-kpi-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 0.4rem;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+}
+
+.fleet-usage-kpi-value span {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: 2px;
+}
+
+.fleet-usage-kpi-value.is-empty {
+    color: #94a3b8;
+}
+
+.fleet-usage-meter {
+    height: 6px;
+    margin-top: 0.75rem;
+    background: #f1f5f9;
+    overflow: hidden;
+}
+
+.fleet-usage-meter-fill {
+    display: block;
+    height: 100%;
+    width: var(--pct, 0%);
+    background: #334155;
+}
+
+/* Classement horizontal */
+.usage-ranking-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.usage-ranking-row {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.9fr) 1.6fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    font-size: 0.8rem;
+}
+
+.usage-ranking-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.usage-ranking-name a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.usage-ranking-name a:hover {
+    text-decoration: underline;
+}
+
+.usage-ranking-track {
+    display: block;
+    height: 8px;
+    background: #f1f5f9;
+}
+
+.usage-ranking-bar {
+    display: block;
+    height: 100%;
+    width: var(--pct, 0%);
+    background: #334155;
+    border-radius: 0 2px 2px 0;
+}
+
+.usage-ranking-value {
+    font-weight: 600;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+    min-width: 3ch;
+    text-align: right;
+}
+

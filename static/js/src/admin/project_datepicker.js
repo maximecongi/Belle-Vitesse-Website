@@ -490,7 +490,7 @@
                         <div class="pdp-interval-actions">
                             <button type="button" class="pdp-interval-btn btn-immob ${inter.is_immobilized ? 'active' : ''}" data-key="${inter.key}" data-immob="${!inter.is_immobilized}" title="${inter.is_immobilized ? 'Véhicule immobilisé sur place (cliquez pour désactiver)' : 'Cliquez pour immobiliser le véhicule entre ces dates'}">
                                 <i data-lucide="${inter.is_immobilized ? 'lock' : 'lock-open'}"></i>
-                                <span>${inter.is_immobilized ? 'Immobilisé' : 'Non immobilisé'}</span>
+                                <span>${inter.is_immobilized ? 'Immobilisé' : 'Libéré'}</span>
                             </button>
                         </div>
                     </div>
@@ -499,7 +499,7 @@
 
             container.innerHTML = `
                 <div class="pdp-intervals-header">
-                    <span class="pdp-intervals-title"><i data-lucide="sliders"></i> Gestion d'immobilisation par intervalle</span>
+                    <span class="pdp-intervals-title">Gestion d'immobilisation par intervalle</span>
                     <span class="pdp-intervals-subtitle">${intervals.length} période(s) intermédiaire(s) configurables</span>
                 </div>
                 <div class="pdp-intervals-list">
@@ -620,7 +620,7 @@
                             immobEl.innerHTML = `<i data-lucide="lock"></i> ${immobCount} immobilisé(s)`;
                             immobEl.classList.remove('empty');
                         } else {
-                            immobEl.innerHTML = `<span class="empty">Non immobilisé</span>`;
+                            immobEl.innerHTML = `<span class="empty">Libéré</span>`;
                             immobEl.classList.add('empty');
                         }
                     } else if (intervals.length === 1) {
@@ -628,7 +628,7 @@
                             immobEl.innerHTML = '<i data-lucide="lock"></i> Immobilisé sur place';
                             immobEl.classList.remove('empty');
                         } else {
-                            immobEl.innerHTML = '<span class="empty">Non immobilisé</span>';
+                            immobEl.innerHTML = '<span class="empty">Libéré</span>';
                             immobEl.classList.add('empty');
                         }
                     } else {
@@ -636,7 +636,7 @@
                             immobEl.innerHTML = '<i data-lucide="lock"></i> Immobilisé sur place';
                             immobEl.classList.remove('empty');
                         } else {
-                            immobEl.innerHTML = '<span class="empty">Non immobilisé</span>';
+                            immobEl.innerHTML = '<span class="empty">Libéré</span>';
                             immobEl.classList.add('empty');
                         }
                     }

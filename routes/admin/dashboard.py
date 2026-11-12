@@ -3,12 +3,15 @@ from flask import (
     Blueprint,
     current_app,
     render_template,
+    session,
 )
 
 from services.admin import (
     list_projects,
 )
-from utils.decorators import require_roles
+from services.admin.equipment_stats import projects_pending_usage
+from utils.context_processors import role_can
+from utils.decorators import require_roles, session_is_admin
 from utils.formatting import get_today_paris_iso
 
 dashboard_bp = Blueprint("admin_dashboard", __name__, url_prefix="/admin")
@@ -45,7 +48,15 @@ def admin_dashboard():
         current_app.logger.error(f"❌ Erreur lors du chargement des données du tableau de bord : {e}")
         agenda = []
 
-    return render_template("admin/dashboard.html", agenda=agenda)
+    # Projets à pointer (pointage du matériel) : réservé aux administrateurs
+    pending_usage = []
+    if role_can(session.get("admin_user_role"), "equipment_usage_admin", is_admin=session_is_admin()):
+        try:
+            pending_usage = projects_pending_usage()
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur lors du calcul des projets à pointer : {e}")
+
+    return render_template("admin/dashboard.html", agenda=agenda, pending_usage=pending_usage)
 
 
 def init_dashboard_routes(app):

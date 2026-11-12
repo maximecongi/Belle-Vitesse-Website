@@ -1,0 +1,45 @@
+{% extends "emails/base_transactional.html" %}
+
+{% block title %}Pointage du matériel à compléter — Belle Vitesse{% endblock %}
+
+{% block content %}
+<h1 class="dot-before">Pointage du matériel à compléter</h1>
+
+<p>
+    {{ projects|length }} projet{{ 's' if projects|length > 1 else '' }} {{ 'ont' if projects|length > 1 else 'a' }}
+    des jours de tournage passés dont le matériel n'est pas entièrement pointé
+    ({{ total_days }} jour{{ 's' if total_days > 1 else '' }} au total).
+    Le pointage sert à la facturation au réel et aux statistiques de la flotte.
+</p>
+
+<table class="email-table">
+    <thead>
+        <tr>
+            <th>Projet</th>
+            <th>Dernier jour</th>
+            <th>À pointer</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in projects %}
+        <tr>
+            <td>
+                <a href="{{ p.url }}"><strong>{{ p.name }}</strong></a><br>
+                <span class="text-muted">{{ p.production }}</span>
+            </td>
+            <td>{{ p.last_day_fr }}</td>
+            <td><span class="badge badge-warning">{{ p.pending_days }} jour{{ 's' if p.pending_days > 1 else '' }}</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p style="text-align: center; margin-top: 24px;">
+    <a href="{{ dashboard_url }}" class="button">Voir le tableau de bord</a>
+</p>
+
+<p class="text-muted">
+    Résumé quotidien envoyé aux administrateurs et managers. Seuls les projets dont le dernier jour de
+    tournage date de moins de {{ window_days }} jours sont listés.
+</p>
+{% endblock %}

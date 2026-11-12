@@ -66,6 +66,8 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/selects.js",
     "js/src/admin/tables.js",
     "js/src/admin/charts.js",
+    "js/src/admin/data-bars.js",
+    "js/src/admin/usage-period-toggle.js",
     "js/src/admin/calendar.js",
     "js/src/admin/admin-booking.js",
     "js/src/admin/admin-pricing.js",

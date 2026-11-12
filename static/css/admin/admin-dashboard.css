@@ -330,3 +330,38 @@ form.today-row-waiver-link {
     padding: 0.6rem 0.8rem;
     border-radius: 8px;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJETS À POINTER (pointage du matériel, administrateurs)
+   ══════════════════════════════════════════════════════════════════ */
+.usage-pending-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Projets à pointer */
+.usage-pending-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    color: inherit;
+    text-decoration: none;
+}
+
+.usage-pending-list li:last-child .usage-pending-row {
+    border-bottom: none;
+}
+
+.usage-pending-row:hover .u-font-semibold {
+    text-decoration: underline;
+}
+
+.usage-pending-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}

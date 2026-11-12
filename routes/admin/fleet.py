@@ -45,8 +45,24 @@ def admin_fleet_list():
                 "image_url": extract_head_image(f),
                 "color": colors.get(("head", str(h["id"])), DEFAULT_COLOR),
             })
+        # Utilisation du matériel (pointage) : réservé aux administrateurs
+        usage = None
+        if role_can(session.get("admin_user_role"), "equipment_usage_admin", is_admin=session_is_admin()):
+            try:
+                from services.admin.equipment_stats import USAGE_PERIODS, fleet_usage_ranking, pointing_rate
+                # Les deux périodes sont calculées d'emblée : la bascule se fait sans recharger la page
+                selected = request.args.get("usage_period", "30d")
+                usage = {
+                    "period": selected if selected in USAGE_PERIODS else "30d",
+                    "rankings": [fleet_usage_ranking(key) for key in USAGE_PERIODS],
+                    "pointing": pointing_rate(),
+                }
+            except Exception as e:
+                logger.warning(f"Statistiques d'utilisation de la flotte indisponibles : {e}")
+
         return render_template(
             "admin/fleet_list.html",
+            usage=usage,
             vehicles=vehicles,
             heads=heads,
             stats=data["stats"],
@@ -95,8 +111,22 @@ def admin_vehicle_timeline(vehicle_id):
             flash("Véhicule introuvable ou inexistant.", "error")
             return redirect(url_for("admin_fleet.admin_fleet_list"))
 
+        # Utilisation réelle (pointage des jours de tournage)
+        usage_stats = None
+        try:
+            from services.admin.equipment_stats import equipment_usage_stats
+            usage_stats = equipment_usage_stats(
+                "vehicle", timeline_data["vehicle"]["id"], year=request.args.get("year", type=int)
+            )
+            for m in timeline_data.get("missions", []):
+                if m.get("type") == "project_mission":
+                    m["used_days"] = usage_stats["per_project"].get(m.get("project_id"), 0)
+        except Exception as e:
+            logger.warning(f"Statistiques d'utilisation indisponibles pour {vehicle_id} : {e}")
+
         return render_template(
             "admin/vehicle_timeline.html",
+            usage_stats=usage_stats,
             vehicle=timeline_data["vehicle"],
             events=timeline_data["events"],
             missions=timeline_data.get("missions", []),
