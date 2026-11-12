@@ -1372,11 +1372,23 @@ input[type="checkbox"]:checked {
     font-weight: 400;
 }
 
+/* Zone de saisie inline : occupe la place restante (sinon le placeholder, rendu dans un
+   <textarea> à width:100% d'un conteneur non étiré, passe sur deux lignes) */
+.select2-container--default .select2-selection--multiple .select2-search--inline {
+    flex: 1 1 auto;
+    min-width: 6rem;
+}
+
 .select2-container--default .select2-search--inline .select2-search__field {
     height: 28px;
     margin: 0 0 0 0.35rem;
+    padding: 0;
     font-family: inherit;
     font-size: 0.9rem;
+    line-height: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    resize: none;
 }
 
 /* Address Autocomplete Styles */
@@ -3004,4 +3016,163 @@ body.has-admin-savebar .admin-content {
 
 .admin-pin-remove {
     margin-right: auto;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   COULEURS FIXES DU MATÉRIEL (véhicules / têtes)
+   Palette fermée = coloris du gaffer Cinéboutique, identique à EQUIPMENT_COLORS
+   (services/admin/equipment_colors.py). Chaque classe pose --usage-color (aplat) et --usage-ink
+   (texte / filet lisible sur fond blanc : plus foncé pour les teintes claires).
+   ══════════════════════════════════════════════════════════════════ */
+.eq-color-red { --usage-color: #D7261E; --usage-ink: #D7261E; }
+.eq-color-blue { --usage-color: #0CB8FF; --usage-ink: #0077A8; }
+.eq-color-yellow { --usage-color: #FFDD34; --usage-ink: #8A6D00; }
+.eq-color-green { --usage-color: #008006; --usage-ink: #008006; }
+.eq-color-orange { --usage-color: #EF6500; --usage-ink: #C25200; }
+.eq-color-purple { --usage-color: #760083; --usage-ink: #760083; }
+.eq-color-pink { --usage-color: #FF6CC6; --usage-ink: #C2187A; }
+.eq-color-neon_yellow { --usage-color: #FFFD40; --usage-ink: #7A7800; }
+.eq-color-neon_green { --usage-color: #2DDB00; --usage-ink: #1F8A00; }
+.eq-color-neon_pink { --usage-color: #FF309B; --usage-ink: #C8106F; }
+.eq-color-neon_orange { --usage-color: #F35800; --usage-ink: #C24600; }
+.eq-color-neon_blue { --usage-color: #007CCB; --usage-ink: #007CCB; }
+.eq-color-brown { --usage-color: #7C4400; --usage-ink: #7C4400; }
+.eq-color-dark_blue { --usage-color: #0021A3; --usage-ink: #0021A3; }
+.eq-color-dark_green { --usage-color: #013220; --usage-ink: #013220; }
+.eq-color-cream { --usage-color: #FFB87C; --usage-ink: #A85A12; }
+
+.eq-color-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    display: inline-block;
+    border-radius: 50%;
+    background: var(--usage-color, #475569);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Sélecteur de couleur (page Flotte) ── */
+.eq-color-picker {
+    position: relative;
+    display: inline-flex;
+}
+
+.eq-color-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.25rem 0.6rem;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.eq-color-trigger:hover,
+.eq-color-trigger[aria-expanded="true"] {
+    border-color: #cbd5e1;
+}
+
+.eq-color-trigger:focus {
+    outline: none;
+}
+
+.eq-color-trigger:focus-visible {
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.35);
+}
+
+.eq-color-trigger.is-static {
+    cursor: default;
+}
+
+.eq-color-trigger .lucide {
+    width: 13px;
+    height: 13px;
+    color: #94a3b8;
+}
+
+.eq-color-trigger.is-saving {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.eq-color-trigger > .eq-color-dot {
+    width: 10px;
+    height: 10px;
+}
+
+.eq-color-popover {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(6, 22px);
+    gap: 6px;
+    padding: 0.6rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.eq-color-popover[hidden] {
+    display: none;
+}
+
+.eq-color-swatch {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--usage-color, #475569);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.eq-color-swatch:hover {
+    transform: scale(1.12);
+}
+
+/* Couleur déjà portée par un autre matériel : non sélectionnable */
+.eq-color-swatch.is-taken {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Matériel sans couleur (choisi pour libérer la couleur, ou palette épuisée) */
+.eq-color-none { --usage-color: #E5E7EB; --usage-ink: #9CA3AF; }
+
+/* Pastille « Sans couleur » du sélecteur : fond blanc barré de rouge, toujours active (jamais grisée) */
+.eq-color-swatch.eq-color-none,
+.eq-color-swatch.eq-color-none.is-taken,
+.eq-color-swatch.eq-color-none:disabled {
+    background: linear-gradient(135deg, transparent 44%, #DC2626 44%, #DC2626 56%, transparent 56%), #ffffff;
+    box-shadow: inset 0 0 0 1px #9CA3AF;
+    opacity: 1;
+    cursor: pointer;
+}
+
+.eq-color-swatch.eq-color-none.is-selected {
+    box-shadow: inset 0 0 0 1px #9CA3AF, 0 0 0 2px #ffffff, 0 0 0 4px var(--grey-1, #151515);
+}
+
+.eq-color-swatch.is-selected {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 0 0 2px #ffffff, 0 0 0 4px var(--grey-1, #151515);
+}
+
+.eq-color-swatch:focus-visible {
+    outline: 2px solid var(--grey-1, #151515);
+    outline-offset: 2px;
 }

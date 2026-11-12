@@ -4,9 +4,21 @@ Fournit la vue du parc (/admin/fleet) et la timeline détaillée par véhicule (
 """
 
 import logging
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from services.admin.equipment_colors import (
+    DEFAULT_COLOR,
+    COLOR_LABELS,
+    EquipmentColorError,
+    get_color_map,
+    get_color_owners,
+    palette,
+    set_equipment_color,
+)
 from services.admin.fleet import get_fleet_overview, get_vehicle_timeline
-from utils.decorators import require_roles
+from utils.context_processors import role_can
+from utils.database import get_heads
+from utils.decorators import require_roles, session_is_admin
+from utils.image_utils import extract_head_image
 
 logger = logging.getLogger(__name__)
 
@@ -19,13 +31,56 @@ def admin_fleet_list():
     """Tableau de bord de la flotte et état opérationnel du parc."""
     try:
         data = get_fleet_overview()
+        colors = get_color_map()
+        vehicles = data["vehicles"]
+        for v in vehicles:
+            v["color"] = colors.get(("vehicle", str(v.get("id"))), DEFAULT_COLOR)
+        heads = []
+        for h in get_heads() or []:
+            f = h.get("fields") or {}
+            heads.append({
+                "id": h["id"],
+                "name": f.get("name") or "Tête",
+                "brand": f.get("brand") or "",
+                "image_url": extract_head_image(f),
+                "color": colors.get(("head", str(h["id"])), DEFAULT_COLOR),
+            })
         return render_template(
-            "admin/fleet_list.html", vehicles=data["vehicles"], stats=data["stats"]
+            "admin/fleet_list.html",
+            vehicles=vehicles,
+            heads=heads,
+            stats=data["stats"],
+            color_palette=palette(),
+            color_labels=COLOR_LABELS,
+            color_owners=get_color_owners(),
         )
     except Exception as e:
         logger.error(f"❌ Erreur lors du chargement de la flotte : {e}", exc_info=True)
         flash(f"Erreur lors du chargement du parc de véhicules : {e}", "error")
         return redirect(url_for("admin_dashboard.admin_dashboard"))
+
+
+@fleet_bp.route(
+    "/fleet/equipment-color", methods=["POST"], endpoint="admin_equipment_color"
+)
+@require_roles("administrator", "manager", "commercial")
+def admin_equipment_color():
+    """Change la couleur d'identification fixe d'un véhicule ou d'une tête (JSON)."""
+    if not role_can(session.get("admin_user_role"), "fleet_equipment_color", is_admin=session_is_admin()):
+        return jsonify({"status": "error", "message": "Action non autorisée."}), 403
+    payload = request.get_json(silent=True) or {}
+    try:
+        color = set_equipment_color(
+            payload.get("equipment_type"), payload.get("equipment_id"), payload.get("color")
+        )
+        return jsonify({"status": "success", "color": color, "label": COLOR_LABELS[color]}), 200
+    except LookupError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except EquipmentColorError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        logger.error(f"❌ Erreur changement de couleur du matériel : {e}", exc_info=True)
+        return jsonify({"status": "error", "message": "Erreur serveur."}), 500
 
 
 @fleet_bp.route(

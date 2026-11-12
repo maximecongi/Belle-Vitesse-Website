@@ -94,6 +94,12 @@ def _format_project_admin(p, vehicle_map, heads_map):
     shoot_status_color = status_info["color"]
     shoot_dates_label = status_info["dates_label"]
 
+    from services.admin.equipment_usage import pending_usage_count
+    try:
+        usage_pending = pending_usage_count(p, today_date)
+    except Exception:
+        usage_pending = 0
+
     return {
         "id": p.id,
         "project_id": p.project_id,
@@ -102,6 +108,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "shoot_status_label": shoot_status_label,
         "shoot_status_id": shoot_status_id,
         "shoot_status_color": shoot_status_color,
+        "usage_pending": usage_pending,
         "production": p.production.name if p.production else "—",
         "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
         "raw_departure_date": str(p.departure_date) if p.departure_date else "",
@@ -123,6 +130,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "dop_contact_name": f"{p.dop_contact.first_name} {p.dop_contact.last_name}" if p.dop_contact else "—",
         "first_ac_contact_name": f"{p.first_ac_contact.first_name} {p.first_ac_contact.last_name}" if p.first_ac_contact else "—",
         "key_grip_contact_name": f"{p.key_grip_contact.first_name} {p.key_grip_contact.last_name}" if p.key_grip_contact else "—",
+        "remote_head_operator_contact_name": f"{p.remote_head_operator_contact.first_name} {p.remote_head_operator_contact.last_name}" if p.remote_head_operator_contact else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "heads": [{
             "id": hid,

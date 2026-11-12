@@ -1,0 +1,39 @@
+{#
+Sélecteur de la couleur d'identification fixe d'un véhicule / d'une tête (palette fermée EQUIPMENT_COLORS).
+Comportement : static/js/src/admin/equipment-color.js. Sans permission : simple pastille en lecture seule.
+Une couleur = un seul matériel : owners ({clé: {type, id, name}}) grise les couleurs portées par un autre matériel.
+#}
+{% macro equipment_color_picker(eq_type, eq_id, eq_name, color, palette, labels, editable=False, class_name='', owners=None) %}
+<div class="eq-color-picker {{ class_name }}" data-eq-color-picker data-equipment-type="{{ eq_type }}"
+    data-equipment-id="{{ eq_id }}" data-equipment-name="{{ eq_name }}" data-url="{{ url_for('admin_fleet.admin_equipment_color') }}">
+    {% if editable %}
+    <button type="button" class="eq-color-trigger eq-color-{{ color }}" data-eq-color-toggle aria-haspopup="true"
+        aria-expanded="false" title="Couleur de {{ eq_name }} (modifier)">
+        <span class="eq-color-dot"></span>
+        <span class="eq-color-label" data-eq-color-label>{{ labels.get(color, color) }}</span>
+        <i data-lucide="chevron-down"></i>
+    </button>
+    <div class="eq-color-popover" data-eq-color-popover hidden role="group"
+        aria-label="Couleur de {{ eq_name }}">
+        <button type="button" class="eq-color-swatch eq-color-none{% if color == 'none' %} is-selected{% endif %}"
+            data-eq-color-choice="none" data-eq-color-name="{{ labels.get('none', 'Sans couleur') }}"
+            title="Sans couleur (libère la couleur)" aria-label="Sans couleur (libère la couleur)"
+            aria-pressed="{{ 'true' if color == 'none' else 'false' }}"></button>
+        {% for c in palette %}
+        {% set owner = (owners or {}).get(c.key) %}
+        {% set taken = owner and not (owner.type == eq_type and owner.id|string == eq_id|string) %}
+        <button type="button" class="eq-color-swatch eq-color-{{ c.key }}{% if c.key == color %} is-selected{% endif %}{% if taken %} is-taken{% endif %}"
+            data-eq-color-choice="{{ c.key }}" data-eq-color-name="{{ c.label }}"
+            title="{{ c.label }}{% if taken %} — utilisée par {{ owner.name }}{% endif %}"
+            aria-label="{{ c.label }}{% if taken %} (utilisée par {{ owner.name }}){% endif %}"
+            aria-pressed="{{ 'true' if c.key == color else 'false' }}" {% if taken %}disabled{% endif %}></button>
+        {% endfor %}
+    </div>
+    {% else %}
+    <span class="eq-color-trigger is-static eq-color-{{ color }}" title="Couleur de {{ eq_name }}">
+        <span class="eq-color-dot"></span>
+        <span class="eq-color-label">{{ labels.get(color, color) }}</span>
+    </span>
+    {% endif %}
+</div>
+{% endmacro %}

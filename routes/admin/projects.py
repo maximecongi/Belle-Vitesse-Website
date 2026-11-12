@@ -37,6 +37,11 @@ from services.admin.project_reports import (
     restore_project_report,
     search_reports,
 )
+from services.admin.equipment_usage import (
+    EquipmentUsageError,
+    generate_equipment_usage_pdf,
+    set_equipment_usage,
+)
 from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
 
@@ -354,6 +359,44 @@ def admin_project_vehicle_toggle_road_legal(record_id, vehicle_id):
         db.session.rollback()
         current_app.logger.error(f"❌ Erreur toggle road legal : {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# ── Pointage du matériel par jour de tournage ──────────────────
+
+_USAGE_ROLES = ("administrator", "manager", "commercial", "user", "technicien")
+
+
+@projects_bp.route("/projects/<int:record_id>/equipment-usage", methods=["POST"])
+@require_roles(*_USAGE_ROLES)
+def admin_project_equipment_usage(record_id):
+    """Enregistre un lot de pointages (véhicule/tête × jour : utilisé, non utilisé, non pointé)."""
+    payload = request.get_json(silent=True) or {}
+    try:
+        state = set_equipment_usage(
+            record_id, payload.get("changes"), user_id=session.get("admin_user_id")
+        )
+        return jsonify({"status": "success", "usage": state}), 200
+    except LookupError as e:
+        return jsonify({"status": "error", "message": str(e)}), 404
+    except EquipmentUsageError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur pointage matériel projet {record_id} : {e}")
+        return jsonify({"status": "error", "message": "Erreur serveur lors de l'enregistrement du pointage."}), 500
+
+
+@projects_bp.route("/projects/<int:record_id>/equipment-usage/export", methods=["GET"])
+@require_roles(*_USAGE_ROLES)
+def admin_project_equipment_usage_export(record_id):
+    """Relevé d'utilisation du matériel en PDF (document séparé, destiné à la facturation)."""
+    pdf, filename = generate_equipment_usage_pdf(record_id, base_url=request.url_root)
+    if pdf is None:
+        abort(404)
+    return Response(
+        pdf,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
 
 
 # ── Rapports d'équipe ──────────────────────────────────────────

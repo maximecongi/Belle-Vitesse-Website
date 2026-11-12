@@ -16,6 +16,8 @@ class Vehicle(db.Model, SyncRecordMixin):
     __tablename__ = "vehicles"
     daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
     display_order = db.Column(db.Integer, nullable=False, default=0)
+    # Couleur d'identification fixe (clé de la palette EQUIPMENT_COLORS), non écrasée par la synchro Airtable
+    color = db.Column(db.String(20), nullable=True)
 
 
 class Head(db.Model, SyncRecordMixin):
@@ -23,6 +25,8 @@ class Head(db.Model, SyncRecordMixin):
     __tablename__ = "heads"
     daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
     display_order = db.Column(db.Integer, nullable=False, default=0)
+    # Couleur d'identification fixe (clé de la palette EQUIPMENT_COLORS), non écrasée par la synchro Airtable
+    color = db.Column(db.String(20), nullable=True)
 
 
 class GripCategory(db.Model, SyncRecordMixin):

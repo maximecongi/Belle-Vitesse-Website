@@ -18,6 +18,7 @@ PROJECT_CONTACT_ROLES = (
     ("dop_contact", "Chef opérateur"),
     ("first_ac_contact", "1er assistant caméra"),
     ("key_grip_contact", "Chef machiniste"),
+    ("remote_head_operator_contact", "Opérateur Remote Head"),
 )
 
 GROUP_LABELS = {

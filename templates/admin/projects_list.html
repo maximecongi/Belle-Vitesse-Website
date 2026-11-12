@@ -34,6 +34,14 @@ is_archive) }}
                         {{ project.name }} <span class="u-text-xs u-text-muted">{{ project.production }}</span>
 
                         {{ shoot_status_badge(project.shoot_status) }}
+                        {% if project.usage_pending %}
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}#pointage"
+                            class="badge-pill u-bg-warning-light u-text-warning u-text-xs usage-pending-badge"
+                            title="Jours de tournage passés où le matériel n'est pas entièrement pointé">
+                            <i data-lucide="list-checks"></i>
+                            {{ project.usage_pending }} jour{{ 's' if project.usage_pending > 1 else '' }} à pointer
+                        </a>
+                        {% endif %}
                     </div>
                     <br>
                     <div class="project-hub-dates-pills project-table-dates-pills u-mt-2">

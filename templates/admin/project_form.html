@@ -227,6 +227,26 @@
                         </select>
                     </div>
 
+                    <!-- Opérateur Remote Head (contact) : à côté du pilote, affiché uniquement si au moins une tête est sélectionnée -->
+                    {% set has_head_selected = data and data.head_ids and data.head_ids|length > 0 %}
+                    <div class="form-group {% if not has_head_selected %}u-d-none{% endif %}" id="remoteHeadOperatorGroup">
+                        <div class="u-flex u-justify-between u-align-center u-mb-1">
+                            <label class="form-label u-mb-0">Opérateur Remote Head</label>
+                            <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                                data-target="remote_head_operator_contact_id" data-job="Opérateur.rice Remote Head">
+                                <i data-lucide="plus"></i> Nouveau contact
+                            </button>
+                        </div>
+                        <select name="remote_head_operator_contact_id" class="form-input searchable-select">
+                            <option value="">— Sélectionner un opérateur Remote Head —</option>
+                            {% for c in contacts %}
+                            <option value="{{ c.id }}" {% if data and data.remote_head_operator_contact_id|string==c.id|string %}selected{% endif %}>
+                                {{ c.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <div class="u-flex u-justify-between u-align-center u-mb-1">
                             <label class="form-label u-mb-0">1er Assistant Caméra</label>
@@ -266,7 +286,7 @@
                     </div>
                 </div>
 
-                <!-- Côté Belle Vitesse : référents plateau + rôles nominatifs -->
+                <!-- Côté Belle Vitesse : référents plateau + rôles nominatifs (Commercial, Machiniste BV) -->
                 <div class="pf-team-divider"></div>
                 <div class="pf-subtitle">Côté Belle Vitesse</div>
 
@@ -283,7 +303,7 @@
                 </div>
 
                 <!-- Rôles nominatifs -->
-                <div class="u-grid u-grid-3 u-gap-3">
+                <div class="u-grid u-grid-2 u-gap-3">
                     <div class="form-group">
                         <label class="form-label">Commercial</label>
                         <select name="commercial_user_id" class="form-input searchable-select">
@@ -308,19 +328,6 @@
                         </select>
                     </div>
 
-                    <!-- Opérateur Remote Head : affiché uniquement si au moins une tête est sélectionnée -->
-                    {% set has_head_selected = data and data.head_ids and data.head_ids|length > 0 %}
-                    <div class="form-group {% if not has_head_selected %}u-d-none{% endif %}" id="remoteHeadOperatorGroup">
-                        <label class="form-label">Opérateur Remote Head</label>
-                        <select name="remote_head_operator_user_id" class="form-input searchable-select">
-                            <option value="">— Sélectionner —</option>
-                            {% for u in bv_users %}
-                            <option value="{{ u.id }}" {% if data and data.remote_head_operator_user_id|string==u.id|string %}selected{% endif %}>
-                                {{ u.name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
                 </div>
             </section>
 
@@ -477,6 +484,7 @@
                             <option value="Directeur.rice de la photographie">Directeur.rice de la photographie</option>
                             <option value="Opérateur.rice caméra">Opérateur.rice caméra</option>
                             <option value="Opérateur.rice Steadicam">Opérateur.rice Steadicam</option>
+                            <option value="Opérateur.rice Remote Head">Opérateur.rice Remote Head</option>
                             <option value="Premier.ère assistant.e caméra">Premier.ère assistant.e caméra</option>
                             <option value="Second.e assistant.e caméra">Second.e assistant.e caméra</option>
                             <option value="DIT">DIT</option>

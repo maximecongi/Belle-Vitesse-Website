@@ -96,6 +96,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/mcp-modal.js",
     "js/src/admin/vehicle-configs.js",
     "js/src/admin/fleet-filters.js",
+    "js/src/admin/equipment-color.js",
     "js/src/admin/contacts-qr.js",
     "js/src/admin/vehicle-timeline.js",
     "js/src/admin/signature-generator.js",

@@ -85,11 +85,13 @@ def list_projects(
         joinedload(Project.dop_contact),
         joinedload(Project.first_ac_contact),
         joinedload(Project.key_grip_contact),
+        joinedload(Project.remote_head_operator_contact),
         selectinload(Project.waivers),
         selectinload(Project.checkout_vehicles),
         selectinload(Project.checkin_vehicles),
         selectinload(Project.incidents),
         selectinload(Project.reports),
+        selectinload(Project.equipment_usage),
     )
 
     vehicles = get_vehicles()
@@ -216,14 +218,14 @@ def get_project_form_context():
 
 def _apply_bv_team_roles(project, form, head_ids):
     """
-    Affecte les rôles nominatifs de l'équipe BV (Commercial, Machiniste BV, Opérateur Remote Head).
-    L'opérateur Remote Head n'est conservé que si au moins une tête est assignée au projet.
+    Affecte les rôles nominatifs de l'équipe BV (Commercial, Machiniste BV) et le contact
+    Opérateur Remote Head, conservé uniquement si au moins une tête est assignée au projet.
     """
     project.commercial_user_id = _parse_int(form.get("commercial_user_id"))
     project.bv_grip_user_id = _parse_int(form.get("bv_grip_user_id"))
     has_head = any(str(h).strip() for h in (head_ids or []))
-    project.remote_head_operator_user_id = (
-        _parse_int(form.get("remote_head_operator_user_id")) if has_head else None
+    project.remote_head_operator_contact_id = (
+        _parse_int(form.get("remote_head_operator_contact_id")) if has_head else None
     )
 
 
@@ -494,7 +496,7 @@ def get_project_for_edit(record_id):
         "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
         "commercial_user_id": str(p.commercial_user_id) if p.commercial_user_id else "",
         "bv_grip_user_id": str(p.bv_grip_user_id) if p.bv_grip_user_id else "",
-        "remote_head_operator_user_id": str(p.remote_head_operator_user_id) if p.remote_head_operator_user_id else "",
+        "remote_head_operator_contact_id": str(p.remote_head_operator_contact_id) if p.remote_head_operator_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
@@ -545,7 +547,7 @@ def get_project_for_duplicate(record_id):
         "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
         "commercial_user_id": str(p.commercial_user_id) if p.commercial_user_id else "",
         "bv_grip_user_id": str(p.bv_grip_user_id) if p.bv_grip_user_id else "",
-        "remote_head_operator_user_id": str(p.remote_head_operator_user_id) if p.remote_head_operator_user_id else "",
+        "remote_head_operator_contact_id": str(p.remote_head_operator_contact_id) if p.remote_head_operator_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,

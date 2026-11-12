@@ -582,11 +582,14 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False,
         selectinload(Project.pilot_waivers),
         selectinload(Project.risk_assessments),
         selectinload(Project.incidents),
-        selectinload(Project.reports).joinedload(ProjectReport.user)
+        selectinload(Project.reports).joinedload(ProjectReport.user),
+        selectinload(Project.equipment_usage),
     ).first()
 
     if not project:
         return None
+
+    from services.admin.equipment_usage import get_usage_state
 
     # Chargement cartes Airtable
     vehicles = get_vehicles()
@@ -717,22 +720,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False,
             "job_title": c.job_title or role_title,
         }
 
-    contacts_list = []
-    if project.production_contact:
-        contacts_list.append(_format_contact(
-            project.production_contact, "Production"))
-    if project.dop_contact:
-        contacts_list.append(_format_contact(
-            project.dop_contact, "Chef Opérateur"))
-    if project.pilot_contact:
-        contacts_list.append(_format_contact(
-            project.pilot_contact, "Pilote"))
-    if project.first_ac_contact:
-        contacts_list.append(_format_contact(
-            project.first_ac_contact, "1er Assistant Caméra"))
-    if project.key_grip_contact:
-        contacts_list.append(_format_contact(
-            project.key_grip_contact, "Chef Machiniste"))
+    # Contacts clés (les membres de l'équipe BV n'apparaissent que dans « Équipe Belle Vitesse »)
+    contacts_list = [_format_contact(c, label) for label, c in project.key_contacts]
 
     # Incidents
     incidents_list = []
@@ -796,6 +785,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False,
         "report_days": shoot_day_choices(project),
         "report_max_photos": REPORT_MAX_PHOTOS,
         "incidents": incidents_list,
+        "equipment_usage": get_usage_state(project, vehicle_map, heads_map),
         "cgl_waiver": _format_cgl_data(project),
         "safety_rules_waivers": [
             {

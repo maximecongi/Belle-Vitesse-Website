@@ -1119,3 +1119,298 @@
     border-color: #FECACA;
     color: #991b1b;
 }
+/* ══════════════════════════════════════════════════════════════════
+   POINTAGE DU MATÉRIEL PAR JOUR DE TOURNAGE (hub projet)
+   Couleur fixe par matériel : variable --usage-color posée par .eq-color-<clé>.
+   Bordures colorées → angles droits (charte BV).
+   ══════════════════════════════════════════════════════════════════ */
+/* Palette des couleurs du matériel : voir admin-components.css (.eq-color-<clé>) */
+
+.usage-pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+}
+
+.usage-pending-badge .lucide {
+    width: 13px;
+    height: 13px;
+}
+
+/* ── Marqueurs sous le numéro du jour (un carré par matériel) ── */
+.pdu-markers {
+    display: flex;
+    gap: 2px;
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.pdu-marker {
+    width: 6px;
+    height: 6px;
+    border-radius: 0;
+    background: var(--usage-color, #475569);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.pdu-marker.is-unused {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px var(--usage-ink, var(--usage-color, #475569));
+}
+
+.pdu-marker.is-none {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #CBD5E1;
+}
+
+/* Pastilles de jalons remontées en haut quand la case porte des marqueurs */
+.pdp-day-cell.has-usage .pdp-day-badges {
+    top: 3px;
+    bottom: auto;
+}
+
+/* ── Mode pointage : cases ──
+   Même langage que le calendrier : angles droits, fond pâle teinté,
+   chiffre foncé de la couleur du matériel actif. */
+
+/* Jours hors tournage : neutralisés (ni jalons ni couleurs) */
+.is-usage-mode .pdp-day-cell.is-usage-off {
+    background: transparent !important;
+    color: #CBD5E1 !important;
+    font-weight: 500;
+    box-shadow: none !important;
+    cursor: default;
+    pointer-events: none;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-off .pdp-day-badges {
+    display: none;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day {
+    cursor: pointer;
+    touch-action: none;
+    font-weight: 700;
+    box-shadow: none !important;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day .pdp-day-badges {
+    display: none;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day:hover {
+    filter: brightness(0.97);
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day:focus-visible {
+    outline: 2px solid var(--grey-1, #151515);
+    outline-offset: 1px;
+}
+
+/* Non pointé : case blanche à contour pointillé (« à renseigner ») */
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-none {
+    background: #ffffff !important;
+    color: #334155 !important;
+    outline: 1px dashed #CBD5E1;
+    outline-offset: -1px;
+}
+
+/* Utilisé : fond pâle teinté + barre basse pleine de la couleur du matériel */
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-used {
+    background: color-mix(in srgb, var(--usage-color, #334155) 14%, #ffffff) !important;
+    color: var(--usage-ink, var(--usage-color, #334155)) !important;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-used::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: var(--usage-color, #334155);
+    box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Non utilisé : gris neutre, chiffre barré */
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-unused {
+    background: #F3F4F6 !important;
+    color: #9CA3AF !important;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-unused > span:first-child {
+    text-decoration: line-through;
+}
+
+/* Tout le matériel, états différents selon le matériel */
+.is-usage-mode .pdp-day-cell.is-usage-day.usage-state-mixed {
+    background: #F8FAFC !important;
+    color: #334155 !important;
+}
+
+.is-usage-mode .pdp-day-cell.is-usage-day.is-today {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.is-usage-painting,
+.is-usage-painting * {
+    user-select: none;
+}
+
+/* ── Barre matériel permanente (même hauteur en planning et en pointage : le calendrier ne bouge pas) ── */
+.pdu-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Sélecteur de matériel : pastilles de filtre de l'ERP (cf. .report-pill--filter) */
+.pdu-brushes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.pdu-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: #334155;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 0.3rem 0.85rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pdu-chip:hover {
+    border-color: #cbd5e1;
+}
+
+/* Mode planning : puces de récap, non cliquables */
+.pdu-chip.is-static {
+    cursor: default;
+}
+
+.pdu-chip.is-static:hover {
+    border-color: #e2e8f0;
+}
+
+/* Place réservée de « Tout le matériel » en mode planning (même retour à la ligne qu'en pointage) */
+.pdu-chip.is-placeholder {
+    visibility: hidden;
+}
+
+.pdu-chip.is-active {
+    color: #ffffff;
+    background: var(--grey-1, #151515);
+    border-color: var(--grey-1, #151515);
+    font-weight: 600;
+}
+
+.pdu-chip .lucide {
+    width: 14px;
+    height: 14px;
+}
+
+.pdu-chip-swatch {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--usage-color, #334155);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.pdu-chip.is-active .pdu-chip-swatch {
+    box-shadow: 0 0 0 2px #ffffff;
+}
+
+.pdu-chip-count {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Raccourcis (admin-btn-xs) + export */
+.pdu-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem 0.5rem;
+    min-height: 28px;
+}
+
+.pdu-actions-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pdu-export .lucide {
+    width: 14px;
+    height: 14px;
+}
+
+/* ── Légende / récapitulatif ── */
+.pdu-legend-swatch {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+}
+
+.pdu-legend-swatch.is-used {
+    background: color-mix(in srgb, #334155 14%, #ffffff);
+    box-shadow: inset 0 -3px 0 #334155;
+}
+
+.pdu-legend-swatch.is-unused {
+    background: #F3F4F6;
+    outline: 1px solid #E5E7EB;
+    outline-offset: -1px;
+}
+
+.pdu-legend-swatch.is-none {
+    background: #ffffff;
+    outline: 1px dashed #94A3B8;
+    outline-offset: -1px;
+}
+
+.pdu-orphans {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #64748B;
+}
+
+.pdu-orphans .lucide {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+
+@media (pointer: coarse) {
+    .pdu-chip {
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+    }
+}

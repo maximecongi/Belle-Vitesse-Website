@@ -22,22 +22,32 @@ _COLUMNS = (
 def upgrade():
     inspector = sa.inspect(op.get_bind())
     existing = {c["name"] for c in inspector.get_columns("projects")}
-    for col in _COLUMNS:
-        if col in existing:
-            continue
-        op.add_column("projects", sa.Column(col, sa.Integer(), nullable=True))
-        op.create_foreign_key(
-            f"fk_projects_{col}", "projects", "users", [col], ["id"], ondelete="SET NULL"
-        )
-        op.create_index(f"ix_projects_{col}", "projects", [col], unique=False)
+    to_add = [col for col in _COLUMNS if col not in existing]
+    if not to_add:
+        return
+    # Mode batch : compatible SQLite (ALTER de contraintes non supporté)
+    with op.batch_alter_table("projects") as batch:
+        for col in to_add:
+            batch.add_column(sa.Column(col, sa.Integer(), nullable=True))
+            batch.create_foreign_key(f"fk_projects_{col}", "users", [col], ["id"], ondelete="SET NULL")
+            batch.create_index(f"ix_projects_{col}", [col], unique=False)
 
 
 def downgrade():
     inspector = sa.inspect(op.get_bind())
     existing = {c["name"] for c in inspector.get_columns("projects")}
-    for col in _COLUMNS:
-        if col not in existing:
-            continue
-        op.drop_index(f"ix_projects_{col}", table_name="projects")
-        op.drop_constraint(f"fk_projects_{col}", "projects", type_="foreignkey")
-        op.drop_column("projects", col)
+    to_drop = [col for col in _COLUMNS if col in existing]
+    if not to_drop:
+        return
+    # Contraintes/index réellement présents (noms possiblement absents si table créée par create_all)
+    fks = inspector.get_foreign_keys("projects")
+    indexes = inspector.get_indexes("projects")
+    with op.batch_alter_table("projects") as batch:
+        for col in to_drop:
+            for fk in fks:
+                if fk.get("constrained_columns") == [col] and fk.get("name"):
+                    batch.drop_constraint(fk["name"], type_="foreignkey")
+            for ix in indexes:
+                if ix.get("column_names") == [col] and ix.get("name"):
+                    batch.drop_index(ix["name"])
+            batch.drop_column(col)

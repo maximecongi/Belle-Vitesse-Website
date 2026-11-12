@@ -129,21 +129,9 @@ def _build_event_description(project, phase_title="🎬 Tournage", vehicle_map=N
     lines.append("")  # Séparateur
 
     # 1. Équipe & Contacts clés
-    contact_lines = []
-    if project.pilot_contact:
-        contact_lines.append(_format_contact(project.pilot_contact, "Pilote"))
-    if project.dop_contact:
-        contact_lines.append(_format_contact(project.dop_contact, "DOP"))
-    if project.first_ac_contact:
-        contact_lines.append(_format_contact(
-            project.first_ac_contact, "1er Ass. Caméra"))
-    if project.key_grip_contact:
-        contact_lines.append(_format_contact(
-            project.key_grip_contact, "Chef Machiniste"))
-    if project.production_contact:
-        contact_lines.append(_format_contact(
-            project.production_contact, "Contact Prod"))
-
+    contact_lines = [
+        _format_contact(c, label) for label, c in getattr(project, "key_contacts", []) or []
+    ]
     for role_label, u in getattr(project, "bv_team_roles", []) or []:
         name = f"{u.firstname or ''} {u.lastname or ''}".strip() or "Inconnu"
         phone_part = f" ({u.phone})" if u.phone else ""
@@ -301,6 +289,7 @@ def calendar_feed(token=None):
             joinedload(Project.dop_contact),
             joinedload(Project.first_ac_contact),
             joinedload(Project.key_grip_contact),
+            joinedload(Project.remote_head_operator_contact),
         )
         .filter(
             db.or_(

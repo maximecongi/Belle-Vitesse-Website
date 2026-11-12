@@ -99,9 +99,9 @@ class Project(db.Model):
         "users.id", ondelete="SET NULL"), nullable=True, index=True)
     bv_grip_user_id = db.Column(db.Integer, db.ForeignKey(
         "users.id", ondelete="SET NULL"), nullable=True, index=True)
-    # Opérateur Remote Head : uniquement pertinent si au moins une tête est assignée
-    remote_head_operator_user_id = db.Column(db.Integer, db.ForeignKey(
-        "users.id", ondelete="SET NULL"), nullable=True, index=True)
+    # Opérateur Remote Head (contact) : uniquement pertinent si au moins une tête est assignée
+    remote_head_operator_contact_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id", ondelete="SET NULL"), nullable=True, index=True)
     departure_date = db.Column(db.Date, index=True)  # Date de départ (enlèvement)
     shoot_start_date = db.Column(db.Date, index=True)  # Date de début de tournage (ou 1re date ponctuelle)
     shoot_end_date = db.Column(db.Date)  # Date de fin de tournage (ou dernière date ponctuelle)
@@ -164,9 +164,9 @@ class Project(db.Model):
     # Machiniste Belle Vitesse affecté au projet
     bv_grip_user = db.relationship(
         "User", foreign_keys=[bv_grip_user_id], lazy=True)
-    # Opérateur Remote Head affecté au projet
-    remote_head_operator_user = db.relationship(
-        "User", foreign_keys=[remote_head_operator_user_id], lazy=True)
+    # Contact Opérateur Remote Head du projet
+    remote_head_operator_contact = db.relationship(
+        "Contact", foreign_keys=[remote_head_operator_contact_id], backref="remote_head_operator_projects", lazy=True)
     # Décharges associées au projet
     waivers = db.relationship(
         "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
@@ -210,15 +210,75 @@ class Project(db.Model):
         return ", ".join(f"{u.firstname} {u.lastname}".strip() for u in self.bv_referents if (u.firstname or u.lastname))
 
     @property
-    def bv_team_roles(self) -> list:
-        """Rôles nominatifs de l'équipe BV : liste de (libellé, User) renseignés, dans l'ordre d'affichage."""
+    def contact_roles(self) -> list:
+        """Contacts (production) affectés au projet : liste de (libellé du rôle, Contact), dans l'ordre d'affichage."""
         roles = [
-            ("Commercial", self.commercial_user),
-            ("Machiniste BV", self.bv_grip_user),
+            ("Production", self.production_contact),
+            ("Chef Opérateur", self.dop_contact),
+            ("Pilote", self.pilot_contact),
+            ("1er Assistant Caméra", self.first_ac_contact),
+            ("Chef Machiniste", self.key_grip_contact),
         ]
         if self.head_ids_list:
-            roles.append(("Opérateur Remote Head", self.remote_head_operator_user))
-        return [(label, u) for label, u in roles if u is not None]
+            roles.append(("Opérateur Remote Head", self.remote_head_operator_contact))
+        return [(label, c) for label, c in roles if c is not None]
+
+    @staticmethod
+    def _is_same_person(contact, user) -> bool:
+        """Un contact et un utilisateur BV désignent la même personne : même e-mail, sinon même nom complet."""
+        c_mail = (contact.mail or "").strip().lower()
+        u_mail = (user.mail or "").strip().lower()
+        if c_mail and u_mail:
+            return c_mail == u_mail
+
+        def _name(first, last):
+            return " ".join(f"{first or ''} {last or ''}".lower().split())
+
+        c_name = _name(contact.first_name, contact.last_name)
+        return bool(c_name) and c_name == _name(user.firstname, user.lastname)
+
+    def _bv_members(self) -> list:
+        """Membres BV du projet (sans doublon) avec leurs rôles nominatifs : liste de (User, [libellés])."""
+        grouped = {}
+        for label, u in (("Commercial", self.commercial_user), ("Machiniste BV", self.bv_grip_user)):
+            if u is None:
+                continue
+            labels = grouped.setdefault(u.id, (u, []))[1]
+            if label not in labels:
+                labels.append(label)
+        for u in self.bv_referents or []:
+            grouped.setdefault(u.id, (u, []))
+        return list(grouped.values())
+
+    @property
+    def bv_team_roles(self) -> list:
+        """Équipe BV du projet : liste de (libellé(s) de rôle, User), dans l'ordre d'affichage.
+
+        Regroupe tous les membres ayant un rôle sur le projet (Commercial, Machiniste BV, référents plateau).
+        Le libellé est toujours le rôle réel sur le tournage : rôles nominatifs, puis rôles tenus en tant
+        que contact du projet (ex. Opérateur Remote Head, Pilote) ; à défaut, le métier (User.job).
+        Une personne n'apparaît qu'une fois, ses rôles joints par « · ».
+        """
+        contact_roles = self.contact_roles
+        result = []
+        for u, labels in self._bv_members():
+            labels = list(labels)
+            for label, c in contact_roles:
+                if label not in labels and self._is_same_person(c, u):
+                    labels.append(label)
+            if not labels:
+                labels = [(u.job or "").strip() or "Équipe Belle Vitesse"]
+            result.append((" · ".join(labels), u))
+        return result
+
+    @property
+    def key_contacts(self) -> list:
+        """Contacts clés hors équipe BV : (libellé, Contact) ; un membre BV n'est listé que dans l'équipe BV."""
+        members = [u for u, _ in self._bv_members()]
+        return [
+            (label, c) for label, c in self.contact_roles
+            if not any(self._is_same_person(c, u) for u in members)
+        ]
 
     @property
     def vehicle_ids_list(self) -> list:
@@ -606,7 +666,7 @@ class Project(db.Model):
             "key_grip_contact_id": self.key_grip_contact_id,
             "commercial_user_id": self.commercial_user_id,
             "bv_grip_user_id": self.bv_grip_user_id,
-            "remote_head_operator_user_id": self.remote_head_operator_user_id,
+            "remote_head_operator_contact_id": self.remote_head_operator_contact_id,
             "departure_date": self.departure_date.isoformat() if self.departure_date else None,
             "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,
             "shoot_end_date": self.shoot_end_date.isoformat() if self.shoot_end_date else None,

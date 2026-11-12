@@ -180,6 +180,8 @@ ACTION_PERMISSIONS = {
     "fleet_safety_rules_config": _ROLES_MANAGEMENT,
     "fleet_risk_assessment_config": _ROLES_MANAGEMENT,
     "fleet_checkpoints_config": _ROLES_ADMIN,
+    # Couleur d'identification fixe d'un véhicule / d'une tête
+    "fleet_equipment_color": _ROLES_SALES,
     # Tarification
     "pricing_edit": _ROLES_ADMIN,
     # Contrôles : choix libre du responsable du contrôle

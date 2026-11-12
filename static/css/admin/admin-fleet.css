@@ -134,6 +134,11 @@
     /* bordure gauche colorée : jamais d'arrondi */
 }
 
+.fleet-project-alert .lucide {
+    width: 16px;
+    vertical-align: -7px;
+}
+
 .fleet-metrics-grid {
     grid-template-columns: repeat(2, 1fr);
     text-align: center;
@@ -1333,4 +1338,54 @@
     .cp-matrix-search {
         width: 100%;
     }
+}
+
+/* ── Carte véhicule : lien de la carte + couleur d'identification hors du lien ── */
+.fleet-vehicle-card {
+    position: relative;
+}
+
+.fleet-card-link {
+    flex: 1;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.fleet-card-color {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+}
+
+.fleet-card-color .eq-color-trigger {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Têtes gyrostabilisées ── */
+.fleet-head-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.fleet-head-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+.fleet-head-img {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+
+.fleet-head-info {
+    flex: 1;
+    min-width: 0;
 }

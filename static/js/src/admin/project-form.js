@@ -293,7 +293,8 @@
                             'dop_contact_id',
                             'pilot_contact_id',
                             'first_ac_contact_id',
-                            'key_grip_contact_id'
+                            'key_grip_contact_id',
+                            'remote_head_operator_contact_id'
                         ];
 
                         contactSelectNames.forEach(function (name) {

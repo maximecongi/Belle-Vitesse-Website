@@ -1,6 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header, vehicle_status_badge, vehicle_avatar, list_header_actions %}
+{% from "admin/macros.html" import filter_header, vehicle_status_badge, vehicle_avatar, head_avatar, list_header_actions %}
+{% from "admin/_equipment_color.html" import equipment_color_picker %}
 
 {% block title %}Véhicules{% endblock %}
 {% block page_title %}Véhicules{% endblock %}
@@ -73,10 +74,15 @@
 <!-- ═══════════ GRILLE DES VÉHICULES ═══════════ -->
 <div class="u-grid u-gap-4 fleet-vehicle-grid" id="fleet-cards-container">
     {% for v in vehicles %}
-    <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=v.id) }}"
-        class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
+    <div class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-p-0"
         data-name="{{ v.name|lower }}" data-id="{{ v.id|lower }}" data-unique-id="{{ v.unique_id|lower }}"
         data-status="{{ v.operational_status }}">
+        <!-- Couleur d'identification fixe (hors du lien de la carte) -->
+        {{ equipment_color_picker('vehicle', v.id, v.name, v.color, color_palette, color_labels,
+        editable=can('fleet_equipment_color'), class_name='fleet-card-color', owners=color_owners) }}
+
+        <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=v.id) }}"
+            class="fleet-card-link u-flex u-flex-column u-justify-between u-overflow-hidden">
 
         <!-- Visuel véhicule avec overlay de statut -->
         <div class="fleet-media-wrapper vehicle-avatar-img">
@@ -130,7 +136,8 @@
                 </div>
             </div>
         </div>
-    </a>
+        </a>
+    </div>
     {% else %}
     <div class="admin-card u-text-center u-p-5 u-grid-col-span-all">
         <p class="u-text-muted u-text-lg">Aucun véhicule répertorié dans la flotte.</p>
@@ -142,4 +149,27 @@
         <p class="u-text-muted u-text-xs u-m-0">Aucun véhicule ne correspond à ce filtre.</p>
     </div>
 </div>
+
+<!-- ═══════════ TÊTES GYROSTABILISÉES ═══════════ -->
+{% if heads %}
+<div class="u-mt-5">
+    <div class="u-flex u-align-center u-gap-2 u-mb-3">
+        <h2 class="admin-section-title u-m-0">Têtes gyrostabilisées</h2>
+        <span class="badge-pill u-bg-neutral-light u-text-neutral u-text-xs">{{ heads|length }}</span>
+    </div>
+    <div class="u-grid u-gap-3 fleet-head-grid">
+        {% for h in heads %}
+        <div class="admin-card fleet-head-card">
+            {{ head_avatar(h.image_url, h.name, class="fleet-head-img") }}
+            <div class="fleet-head-info">
+                <div class="u-font-bold u-text-sm">{{ h.name }}</div>
+                {% if h.brand %}<div class="u-text-xs u-text-muted">{{ h.brand }}</div>{% endif %}
+            </div>
+            {{ equipment_color_picker('head', h.id, h.name, h.color, color_palette, color_labels,
+            editable=can('fleet_equipment_color'), owners=color_owners) }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 {% endblock %}

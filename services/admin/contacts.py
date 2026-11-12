@@ -99,6 +99,7 @@ def delete_contact(record_id):
             Project.dop_contact_id == record_id,
             Project.first_ac_contact_id == record_id,
             Project.key_grip_contact_id == record_id,
+            Project.remote_head_operator_contact_id == record_id,
         )
     ).all()
 

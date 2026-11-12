@@ -149,14 +149,25 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
         </div>
 
         <!-- COLONNE PRINCIPALE (2/3 : PLANNING & CALENDRIER) -->
+        {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
+        project.shoot_end_date or project.departure_date or project.return_date)) %}
+        {% set can_track_usage = has_dates and equipment_usage.days and equipment_usage.equipment %}
         <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
             <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-                <div class="u-flex u-align-center u-gap-2">
+                <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                     <h2 class="admin-card-title u-m-0">Planning & Dates</h2>
                     {% if is_punctual %}
                     <span class="badge-pill u-bg-project-light u-text-project">Dates ponctuelles</span>
                     {% else %}
                     <span class="badge-pill u-bg-project-light u-text-project">Période continue</span>
+                    {% endif %}
+                    {% if can_track_usage %}
+                    <span class="badge-pill u-bg-warning-light u-text-warning usage-pending-badge" data-usage-pending-badge
+                        title="Jours de tournage passés où le matériel n'est pas entièrement pointé"
+                        {% if not equipment_usage.pending_count %}hidden{% endif %}>
+                        <i data-lucide="list-checks"></i>
+                        <span data-usage-pending-label>{{ equipment_usage.pending_count }} jour{{ 's' if equipment_usage.pending_count > 1 else '' }} à pointer</span>
+                    </span>
                     {% endif %}
                 </div>
                 <!-- Date Pills compactes -->
@@ -187,8 +198,6 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 </div>
             </div>
 
-            {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
-            project.shoot_end_date or project.departure_date or project.return_date)) %}
             {% if has_dates %}
             <div id="projectShootCalendar" class="project-hub-calendar-viewport"></div>
             <script id="projectShootCalendarData" type="application/json">
@@ -200,7 +209,10 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                     "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
                     "departure_date": project.departure_date|string if project.departure_date else None,
                     "return_date": project.return_date|string if project.return_date else None,
-                    "inter_shoot_intervals": inter_shoot_intervals
+                    "inter_shoot_intervals": inter_shoot_intervals,
+                    "usage": equipment_usage if can_track_usage else None,
+                    "usage_url": url_for('admin_projects.admin_project_equipment_usage', record_id=project.id),
+                    "usage_export_url": url_for('admin_projects.admin_project_equipment_usage_export', record_id=project.id)
                 }|tojson|safe }}
             </script>
             {% else %}
@@ -223,6 +235,8 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 </div>
             </div>
 
+            {% set eq_colors = {} %}
+            {% for e in equipment_usage.equipment %}{% set _ = eq_colors.update({e.key: e.color}) %}{% endfor %}
             <!-- Véhicules -->
             <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
                 Véhicules
@@ -237,8 +251,10 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img")
                             }}
                             <div>
-                                <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
-                                    }}</div>
+                                <div class="u-font-bold u-text-sm u-flex u-align-center u-gap-1">
+                                    <span class="eq-color-dot eq-color-{{ eq_colors.get('vehicle:' ~ v.id, 'slate') }}"
+                                        title="Couleur d'identification du véhicule"></span>
+                                    {{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule' }}</div>
                                 <div class="checkout-doc-id">{{ v.fields.unique_id }}</div>
                             </div>
                         </div>
@@ -313,7 +329,10 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                     <div class="u-flex u-align-center u-gap-2">
                         {{ head_avatar(h.image, h.name, class="project-equipment-img") }}
                         <div>
-                            <div class="u-font-bold u-text-sm">{{ h.name }}</div>
+                            <div class="u-font-bold u-text-sm u-flex u-align-center u-gap-1">
+                                <span class="eq-color-dot eq-color-{{ eq_colors.get('head:' ~ h.id, 'slate') }}"
+                                    title="Couleur d'identification de la tête"></span>
+                                {{ h.name }}</div>
                             <div class="u-text-xs u-text-muted">{{ h.brand or 'Tête gyrostabilisée' }}</div>
                         </div>
                     </div>
@@ -548,7 +567,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
             {% endif %}
         </div>
 
-        <!-- Équipe Belle Vitesse : rôles nominatifs (Commercial, Machiniste BV, Opérateur Remote Head) -->
+        <!-- Équipe Belle Vitesse : tous les membres ayant un rôle sur le projet (Commercial, Machiniste BV, Opérateur Remote Head, référents plateau avec leur métier) -->
         {% set bv_team_roles = project.bv_team_roles %}
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-2">

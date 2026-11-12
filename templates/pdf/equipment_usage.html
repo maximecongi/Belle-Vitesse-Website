@@ -1,0 +1,116 @@
+{% extends "pdf/base_pdf.html" %}
+{% from "pdf/macros.html" import pdf_header, pdf_title_banner, pdf_info_grid, pdf_section_title, pdf_footer %}
+
+{% block title %}Relevé d'utilisation — {{ project.name }}{% endblock %}
+
+{% block body_class %}usage-pdf{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/pdf/equipment-usage-pdf.css') }}">
+{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title="Relevé d'utilisation",
+    doc_id=project.project_id,
+    date_str=generated_at_fr,
+    company_name=company_name
+) }}
+{% endblock %}
+
+{% block pdf_title %}
+{{ pdf_title_banner(
+    title=project.name,
+    subtitle="Utilisation du matériel par jour de tournage",
+    badge=None
+) }}
+{% endblock %}
+
+{% block content %}
+{{ pdf_info_grid([
+    ('Production', project.production.name if project.production else ''),
+    ('Période', period_label),
+    ('Jours de tournage', days_count),
+], columns=3) }}
+
+{% if not equipment or not rows %}
+<p class="usage-pdf-empty">Aucun matériel ou aucun jour de tournage à pointer sur ce projet.</p>
+{% else %}
+
+{{ pdf_section_title('Synthèse par matériel') }}
+<table class="pdf-table usage-pdf-summary">
+    <thead>
+        <tr>
+            <th>Matériel</th>
+            <th>Type</th>
+            <th class="text-right">Jours utilisés</th>
+            <th class="text-right">Non utilisés</th>
+            <th class="text-right">Non pointés</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in equipment %}
+        <tr>
+            <td><strong>{{ e.name }}</strong>{% if e.code %} <span class="usage-pdf-code">{{ e.code }}</span>{% endif %}</td>
+            <td>{{ e.type_label }}</td>
+            <td class="text-right usage-pdf-total">{{ e.used_days }}</td>
+            <td class="text-right">{{ e.unused_days }}</td>
+            <td class="text-right">{{ e.pending_days }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{{ pdf_section_title('Détail jour par jour') }}
+<table class="pdf-table usage-pdf-grid">
+    <thead>
+        <tr>
+            <th>Jour</th>
+            {% for e in equipment %}
+            <th class="text-center">{{ e.name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            <td class="usage-pdf-day">{{ row.label }}</td>
+            {% for state in row.cells %}
+            <td class="text-center usage-pdf-cell usage-pdf-cell--{{ state }}">
+                {% if state == 'used' %}Utilisé{% elif state == 'unused' %}Non utilisé{% else %}—{% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td>Total jours utilisés</td>
+            {% for e in equipment %}
+            <td class="text-center usage-pdf-total">{{ e.used_days }}</td>
+            {% endfor %}
+        </tr>
+    </tfoot>
+</table>
+
+{% if pending_count %}
+<p class="usage-pdf-note">
+    {{ pending_count }} pointage{{ 's' if pending_count > 1 else '' }} matériel × jour
+    {{ 'restent' if pending_count > 1 else 'reste' }} à renseigner : ce relevé est provisoire.
+</p>
+{% endif %}
+{% if orphans_count %}
+<p class="usage-pdf-note">
+    {{ orphans_count }} pointage{{ 's' if orphans_count > 1 else '' }} enregistré{{ 's' if orphans_count > 1 else '' }}
+    hors des jours ou du matériel actuels du projet {{ 'ne sont pas comptabilisés' if orphans_count > 1 else "n'est pas comptabilisé" }}.
+</p>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+    left_text=(company_name or 'Belle Vitesse') ~ " — Relevé d'utilisation du matériel",
+    right_text=project.project_id
+) }}
+{% endblock %}

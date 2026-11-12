@@ -2027,28 +2027,26 @@
     font-size: 0.73rem;
     font-weight: 600;
     padding: 0.2rem 0.55rem;
-    border-radius: 5px;
     background: #f8fafc;
-    border: 1px solid #e2e8f0;
     color: #475569;
+    border-left: 3px solid currentColor;
+    border-radius: 0;
+    /* bordure colorée : angles droits (aligné sur les jalons du formulaire projet) */
 }
 
 .project-hub-date-pill.pill-departure {
-    color: var(--entity-checkout, #15803D);
     background: var(--entity-checkout-bg, #DCFCE7);
-    border-color: #bbf7d0;
+    color: var(--entity-checkout, #15803D);
 }
 
 .project-hub-date-pill.pill-shoot {
-    color: var(--entity-project, #F59E0B);
-    background: var(--entity-project-bg, #FEF3C7);
-    border-color: #fde68a;
+    background: var(--status-warning-bg, #FEF3C7);
+    color: var(--status-warning-text, #B45309);
 }
 
 .project-hub-date-pill.pill-return {
-    color: var(--entity-checkin, #3B82F6);
     background: var(--entity-checkin-bg, #DBEAFE);
-    border-color: #bfdbfe;
+    color: var(--entity-checkin-text, #1E40AF);
 }
 
 .project-hub-date-pill .lucide {

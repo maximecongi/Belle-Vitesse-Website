@@ -1,0 +1,59 @@
+/* ==========================================================================
+   BELLE VITESSE — PDF RELEVÉ D'UTILISATION DU MATÉRIEL
+   ========================================================================== */
+
+.usage-pdf .pdf-info-grid--3cols .pdf-info-item:nth-child(2) {
+    align-items: center;
+    text-align: center;
+}
+
+.usage-pdf .pdf-info-grid--3cols .pdf-info-item:last-child {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.usage-pdf-empty,
+.usage-pdf-note {
+    font-size: 8pt;
+    color: #71717a;
+    margin: 6pt 0;
+}
+
+.usage-pdf-code {
+    font-size: 6.5pt;
+    color: #71717a;
+}
+
+.usage-pdf-total {
+    font-weight: 800;
+    color: #18181b;
+}
+
+.usage-pdf-day {
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.usage-pdf-grid tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.usage-pdf-cell--used {
+    font-weight: 700;
+    color: #14532d;
+}
+
+.usage-pdf-cell--unused {
+    color: #991b1b;
+}
+
+.usage-pdf-cell--none {
+    color: #a1a1aa;
+}
+
+.usage-pdf-grid tfoot td {
+    background-color: #f4f4f5;
+    font-weight: 700;
+    border-top: 1pt solid #a1a1aa;
+}

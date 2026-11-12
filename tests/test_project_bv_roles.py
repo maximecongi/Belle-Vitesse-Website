@@ -5,7 +5,7 @@ from services.admin.projects import (
     get_project_for_edit,
     get_project_for_duplicate,
 )
-from models import db, Project, Production, User
+from models import db, Contact, Project, Production, User
 
 
 class _Form(dict):
@@ -25,7 +25,8 @@ class ProjectBvRolesTest(BaseTestCase):
         commercial = User(firstname="Chloé", lastname="Vente", mail="commercial.roles@example.com",
                           role="commercial", phone="0600000001")
         grip = User(firstname="Hugo", lastname="Machino", mail="grip.roles@example.com", role="technicien")
-        operator = User(firstname="Inès", lastname="Remote", mail="operator.roles@example.com", role="technicien")
+        operator = Contact(first_name="Inès", last_name="Remote", mail="operator.roles@example.com",
+                           phone="0600000003")
         prod = Production(name="Production Rôles BV")
         db.session.add_all([commercial, grip, operator, prod])
         db.session.commit()
@@ -37,7 +38,7 @@ class ProjectBvRolesTest(BaseTestCase):
             "production_id": str(prod.id),
             "commercial_user_id": str(commercial.id),
             "bv_grip_user_id": str(grip.id),
-            "remote_head_operator_user_id": str(operator.id),
+            "remote_head_operator_contact_id": str(operator.id),
             "shoot_start": "2026-12-01",
             "shoot_end": "2026-12-03",
         }
@@ -51,19 +52,20 @@ class ProjectBvRolesTest(BaseTestCase):
             project = db.session.get(Project, project.id)
             self.assertEqual(project.commercial_user_id, commercial.id)
             self.assertEqual(project.bv_grip_user_id, grip.id)
-            self.assertEqual(project.remote_head_operator_user_id, operator.id)
+            self.assertEqual(project.remote_head_operator_contact_id, operator.id)
+            # L'opérateur Remote Head est un contact : il n'appartient pas à l'équipe BV
             self.assertEqual(
                 [label for label, _ in project.bv_team_roles],
-                ["Commercial", "Machiniste BV", "Opérateur Remote Head"],
+                ["Commercial", "Machiniste BV"],
             )
 
             edit = get_project_for_edit(project.id)
             self.assertEqual(edit["commercial_user_id"], str(commercial.id))
             self.assertEqual(edit["bv_grip_user_id"], str(grip.id))
-            self.assertEqual(edit["remote_head_operator_user_id"], str(operator.id))
+            self.assertEqual(edit["remote_head_operator_contact_id"], str(operator.id))
 
             dup = get_project_for_duplicate(project.id)
-            self.assertEqual(dup["remote_head_operator_user_id"], str(operator.id))
+            self.assertEqual(dup["remote_head_operator_contact_id"], str(operator.id))
 
     def test_operator_ignored_without_head(self):
         with self.app.app_context():
@@ -73,14 +75,14 @@ class ProjectBvRolesTest(BaseTestCase):
 
             project = db.session.get(Project, project.id)
             self.assertEqual(project.commercial_user_id, commercial.id)
-            self.assertIsNone(project.remote_head_operator_user_id)
+            self.assertIsNone(project.remote_head_operator_contact_id)
 
     def test_operator_cleared_when_heads_removed(self):
         with self.app.app_context():
             commercial, grip, operator, prod = self._setup()
             data = self._base_form(prod, commercial, grip, operator)
             project = create_project(_Form(data, {"head_ids": ["rec_head_1"]}))
-            self.assertEqual(project.remote_head_operator_user_id, operator.id)
+            self.assertEqual(project.remote_head_operator_contact_id, operator.id)
 
             data["commercial_user_id"] = ""
             self.assertTrue(update_project(project.id, _Form(data)))
@@ -88,7 +90,7 @@ class ProjectBvRolesTest(BaseTestCase):
             project = db.session.get(Project, project.id)
             self.assertIsNone(project.commercial_user_id)
             self.assertEqual(project.bv_grip_user_id, grip.id)
-            self.assertIsNone(project.remote_head_operator_user_id)
+            self.assertIsNone(project.remote_head_operator_contact_id)
 
     def test_form_and_detail_pages_render_roles(self):
         with self.app.app_context():
@@ -118,4 +120,37 @@ class ProjectBvRolesTest(BaseTestCase):
             self.assertIn("Équipe Belle Vitesse", html)
             self.assertIn("Chloé Vente", html)
             self.assertIn("Machiniste BV", html)
+            # Opérateur Remote Head affiché dans les contacts clés
+            self.assertIn("Inès Remote", html)
             self.assertIn("Opérateur Remote Head", html)
+            self.assertIn("Opérateur Remote Head", html)
+
+    def test_bv_member_also_contact_listed_once_with_shoot_role(self):
+        """Un membre BV également contact du projet n'apparaît que dans l'équipe BV, avec son rôle de tournage."""
+        with self.app.app_context():
+            commercial, grip, operator, prod = self._setup()
+            referent = User(firstname="Max", lastname="Remote", mail="max.remote@example.com",
+                            role="administrator", job="Directeur opérationnel")
+            op_contact = Contact(first_name="Max", last_name="Remote", mail="MAX.remote@example.com ")
+            pilot_user = User(firstname="Sacha", lastname="Volant", mail="sacha.bv@example.com", job="Pilote")
+            pilot_contact = Contact(first_name="Sacha", last_name="Volant")  # sans e-mail : rapprochement par nom
+            other = Contact(first_name="Emma", last_name="Prod", mail="emma@prod.fr")
+            db.session.add_all([referent, op_contact, pilot_user, pilot_contact, other])
+            db.session.commit()
+
+            data = self._base_form(prod, commercial, grip, operator)
+            data.update({
+                "remote_head_operator_contact_id": str(op_contact.id),
+                "pilot_contact_id": str(pilot_contact.id),
+                "production_contact_id": str(other.id),
+            })
+            project = create_project(_Form(data, {
+                "head_ids": ["rec_head_1"],
+                "bv_referent_ids": [str(referent.id), str(pilot_user.id)],
+            }))
+            project = db.session.get(Project, project.id)
+
+            roles = {u.id: label for label, u in project.bv_team_roles}
+            self.assertEqual(roles[referent.id], "Opérateur Remote Head")
+            self.assertEqual(roles[pilot_user.id], "Pilote")
+            self.assertEqual([(label, c.id) for label, c in project.key_contacts], [("Production", other.id)])
