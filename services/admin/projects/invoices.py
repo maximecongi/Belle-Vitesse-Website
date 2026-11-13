@@ -257,23 +257,32 @@ class _BytesUpload:
             fh.write(self._content)
 
 
-def attach_file(invoice: ProjectInvoice, filename: str, content: bytes) -> ProjectInvoice:
+def check_document_file(filename: str, content: bytes, kind: str = "facture") -> str:
     """
-    Joint (ou remplace) le fichier d'une facture : copie locale puis envoi dans 2_FACTURES sur kDrive,
-    comme depuis le formulaire. PDF, PNG ou JPG, 10 Mo maximum, contenu contrôlé.
+    Contrôle un fichier joint (facture, devis) : PDF, PNG ou JPG, 10 Mo maximum, contenu conforme à
+    l'extension. Retourne le nom de fichier nettoyé ; lève InvoiceError (ValueError) sinon.
     """
     from pathlib import Path
 
     name = Path(str(filename or "").replace("\\", "/")).name.strip()
     ext = Path(name).suffix.lower()
     if not name or ext not in INVOICE_FILE_EXTENSIONS:
-        raise InvoiceError(f"Format de facture non accepté ({filename or 'sans nom'}) : PDF, PNG ou JPG.")
+        raise InvoiceError(f"Format de {kind} non accepté ({filename or 'sans nom'}) : PDF, PNG ou JPG.")
     if not content:
         raise InvoiceError("Fichier vide.")
     if len(content) > INVOICE_FILE_MAX_BYTES:
         raise InvoiceError(f"Fichier trop volumineux ({len(content) / 1048576:.1f} Mo, 10 Mo maximum).")
     if not content.startswith(_SIGNATURES[ext]):
         raise InvoiceError(f"Le contenu ne correspond pas à un fichier {ext.lstrip('.').upper()}.")
+    return name[:255]
+
+
+def attach_file(invoice: ProjectInvoice, filename: str, content: bytes) -> ProjectInvoice:
+    """
+    Joint (ou remplace) le fichier d'une facture : copie locale puis envoi dans 2_FACTURES sur kDrive,
+    comme depuis le formulaire. PDF, PNG ou JPG, 10 Mo maximum, contenu contrôlé.
+    """
+    name = check_document_file(filename, content)
     project = invoice.project
     project._invoice_file_ops = [("upload", invoice, _BytesUpload(name, content))]
     _store_invoice_files(project)

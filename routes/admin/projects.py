@@ -515,6 +515,14 @@ def _commercial_response(record_id, *, message, category="success", status=200, 
     return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id) + "#commercial-timeline")
 
 
+def _uploaded_quote_file():
+    """Fichier de devis envoyé avec le formulaire : (nom, contenu), ou None."""
+    storage = request.files.get("quote_file")
+    if not storage or not storage.filename:
+        return None
+    return storage.filename, storage.read()
+
+
 def _commercial_event_form():
     """Champs du formulaire (modale) d'ajout / de modification d'une prise de contact."""
     form = request.form
@@ -526,6 +534,9 @@ def _commercial_event_form():
         "summary": form.get("summary", ""),
         "lost_reason": form.get("lost_reason") or None,
         "is_planned": form.get("is_planned") or "0",
+        # Devis (« Devis envoyé ») : montant total HT et fichier, facultatifs
+        "quote_amount": form.get("quote_amount"),
+        "quote_file": _uploaded_quote_file(),
         "new_contact": {
             "first_name": form.get("new_contact_first_name"),
             "last_name": form.get("new_contact_last_name"),
@@ -563,7 +574,8 @@ def admin_project_commercial_event_add(record_id):
 @require_roles(*_COMMERCIAL_ROLES)
 def admin_project_commercial_event_edit(record_id, event_id):
     try:
-        update_commercial_event(record_id, event_id, **_commercial_event_form())
+        update_commercial_event(record_id, event_id, **_commercial_event_form(),
+                                remove_quote_file=request.form.get("remove_quote_file") or False)
         return _commercial_response(record_id, message="Prise de contact modifiée.", event_id=event_id)
     except CommercialEventNotFoundError as nf:
         return _commercial_response(record_id, message=str(nf), category="error", status=404)
@@ -575,6 +587,24 @@ def admin_project_commercial_event_edit(record_id, event_id):
         current_app.logger.error(f"❌ Erreur modification prise de contact {event_id} : {e}")
         return _commercial_response(record_id, message="Erreur lors de la modification de la prise de contact.",
                                     category="error", status=500)
+
+
+@projects_bp.route(
+    "/projects/<int:record_id>/commercial-events/<int:event_id>/quote-file", methods=["GET"]
+)
+@require_roles(*_COMMERCIAL_ROLES)
+def admin_project_commercial_quote_file(record_id, event_id):
+    """Téléchargement du devis joint à un « Devis envoyé » (copie locale, également déposée dans 1_DEVIS)."""
+    from flask import send_file
+    from services.admin.commercial_timeline import quote_file_path
+
+    if not _can_see_commercial_timeline():
+        abort(403)
+    found = quote_file_path(record_id, event_id)
+    if not found:
+        abort(404)
+    path, name = found
+    return send_file(path, as_attachment=True, download_name=name)
 
 
 @projects_bp.route(

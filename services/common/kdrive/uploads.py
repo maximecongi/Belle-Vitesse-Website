@@ -67,10 +67,13 @@ class UploadMixin:
         role: str,
         local_file_path: str,
         custom_filename: Optional[str] = None,
+        conflict: str = "error",
     ) -> KDriveObject:
         """
         Upload direct et idempotent d'un fichier physique local vers kDrive.
         Enregistre la trace dans la table kdrive_objects.
+        conflict="rename" : un fichier homonyme déjà présent dans le dossier n'est pas réutilisé, le nouveau
+        est renommé par kDrive (dossiers communs à plusieurs documents, ex. 1_DEVIS).
         """
         full_path = self._resolve_output_path(local_file_path)
         if not full_path.exists():
@@ -116,7 +119,7 @@ class UploadMixin:
                 directory_id=dest_dir_id,
                 filename=filename,
                 content_bytes=file_bytes,
-                conflict="error",
+                conflict=conflict,
             )
             k_obj.kdrive_file_id = res["id"]
             k_obj.kdrive_dir_id = dest_dir_id

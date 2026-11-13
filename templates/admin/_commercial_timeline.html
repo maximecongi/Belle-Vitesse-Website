@@ -39,7 +39,7 @@
 
     <!-- Modale d'ajout d'une prise de contact -->
     {% call admin_modal('ctlModal', 'Nouvelle prise de contact', 'md') %}
-    <form method="POST" class="ctl-form" id="ctlForm" data-ctl-form data-ctl-ajax data-contact-picker
+    <form method="POST" class="ctl-form" id="ctlForm" enctype="multipart/form-data" data-ctl-form data-ctl-ajax data-contact-picker
         action="{{ url_for('admin_projects.admin_project_commercial_event_add', record_id=project.id) }}"
         data-create-action="{{ url_for('admin_projects.admin_project_commercial_event_add', record_id=project.id) }}"
         data-today="{{ tl.today }}">
@@ -93,6 +93,29 @@
                     <option value="{{ key }}">{{ label }}</option>
                     {% endfor %}
                 </select>
+            </div>
+            <!-- Devis (« Devis envoyé ») : montant total HT et fichier, facultatifs ; le fichier est déposé dans 1_DEVIS sur kDrive -->
+            <div class="form-group" data-ctl-quote-field data-quote-types="{{ tl.quote_types|join(' ') }}" hidden>
+                <label class="form-label" for="ctlQuoteAmount">Montant total HT <span class="u-text-muted">(facultatif)</span></label>
+                <div class="ctl-amount">
+                    <input type="text" class="form-input" id="ctlQuoteAmount" name="quote_amount" inputmode="decimal"
+                        autocomplete="off" placeholder="Ex. : 4 850" disabled>
+                    <span class="ctl-amount-unit" aria-hidden="true">€ HT</span>
+                </div>
+            </div>
+            <div class="form-group" data-ctl-quote-field hidden>
+                <label class="form-label" for="ctlQuoteFile">Devis <span class="u-text-muted">(PDF, PNG ou JPG · 10 Mo max)</span></label>
+                <input type="file" class="form-input" id="ctlQuoteFile" name="quote_file"
+                    accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" disabled>
+                <!-- Modification : fichier déjà joint (remplacé si un nouveau est choisi) -->
+                <div class="ctl-quote-current" data-ctl-quote-current hidden>
+                    <a class="ctl-quote-file" data-ctl-quote-link href="#" download>
+                        <i data-lucide="file-text"></i> <span data-ctl-quote-name></span>
+                    </a>
+                    <label class="ctl-quote-remove">
+                        <input type="checkbox" name="remove_quote_file" value="1" data-ctl-quote-remove disabled> Retirer
+                    </label>
+                </div>
             </div>
             <div class="form-group ctl-span-2">
                 <label class="form-label" for="ctlSummary">Résumé</label>
@@ -189,6 +212,12 @@
             </div>
             {% endif %}
             {% if ev.summary %}<p class="ctl-detail-summary">{{ ev.summary }}</p>{% endif %}
+            {% if ev.quote_file_name %}
+            <a class="ctl-quote-file" href="{{ url_for('admin_projects.admin_project_commercial_quote_file', record_id=project.id, event_id=ev.id) }}"
+                title="Télécharger le devis (également dans 1_DEVIS sur kDrive)" download>
+                <i data-lucide="file-down"></i> {{ ev.quote_file_name }}
+            </a>
+            {% endif %}
             {% if ev.author_name %}<span class="u-text-xs u-text-muted">{{ 'Planifié' if ev.is_planned else 'Saisi' }} par {{ ev.author_name }}</span>{% endif %}
         </div>
         <div class="ctl-detail-actions">
@@ -206,6 +235,7 @@
             {% endif %}
             <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs" title="{{ 'Reporter / modifier' if ev.is_planned else 'Modifier' }}"
                 data-ctl-edit data-ctl-edit-data='{{ ev.edit|tojson }}'
+                {% if ev.quote_file_name %}data-ctl-quote-url="{{ url_for('admin_projects.admin_project_commercial_quote_file', record_id=project.id, event_id=ev.id) }}"{% endif %}
                 data-ctl-edit-action="{{ url_for('admin_projects.admin_project_commercial_event_edit', record_id=project.id, event_id=ev.id) }}">
                 {% if ev.is_planned %}<i data-lucide="calendar-arrow-up"></i> Reporter{% else %}<i class="u-m-0" data-lucide="pencil"></i>{% endif %}
             </button>

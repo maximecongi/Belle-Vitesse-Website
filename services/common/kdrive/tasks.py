@@ -128,24 +128,50 @@ def task_retry_pending_kdrive_objects(limit: int = 50):
                 entity_id=obj.entity_id,
                 role=obj.role,
                 local_file_path=obj.source_key,
+                custom_filename=_flat_file_name(obj),
+                conflict=_FLAT_FILE_SYNC.get(obj.entity_type, (None, "error"))[1],
             )
         except Exception as err:
             logger.error(f"❌ Échec resynchro objet {obj.id} ({obj.entity_type}/{obj.entity_id}) : {err}")
 
 
-@_with_app_context
-def task_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
-                           filename: Optional[str] = None):
+# Documents déposés à plat dans un dossier commun du projet : type kDrive → (dossier, conflit de nom)
+_FLAT_FILE_SYNC = {
+    "invoice": ("2_FACTURES", "error"),
+    # Un devis révisé porte souvent le même nom que le précédent : kDrive le renomme au lieu de le confondre
+    "quote": ("1_DEVIS", "rename"),
+}
+
+
+def _flat_file_name(obj) -> Optional[str]:
+    """Nom d'origine d'un devis / d'une facture à renvoyer (la copie locale est préfixée par son id)."""
+    from models import ProjectCommercialEvent, ProjectInvoice
+
+    model = {"quote": ProjectCommercialEvent, "invoice": ProjectInvoice}.get(obj.entity_type)
+    if not model:
+        return None
+    try:
+        record = db.session.get(model, int(str(obj.entity_id).rsplit("-", 1)[-1]))
+    except (TypeError, ValueError):
+        return None
+    if record and record.file_path == obj.source_key:
+        return record.file_name
+    return None
+
+
+def _sync_flat_file(project_id: int, entity_type: str, entity_id: str, source_key: Optional[str] = None,
+                    filename: Optional[str] = None):
     """
-    Tâche RQ : aligne le fichier d'une facture sur kDrive (dossier 2_FACTURES du projet).
-    Supprime les fichiers précédemment envoyés pour cette facture (remplacement ou retrait), puis
+    Aligne le fichier d'un document « à plat » (facture, devis) sur kDrive.
+    Supprime les fichiers précédemment envoyés pour ce document (remplacement ou retrait), puis
     envoie source_key (chemin relatif à OUTPUT_FOLDER) s'il est fourni. Séquentiel, pour qu'une
     suppression ne puisse pas emporter le nouveau fichier.
     """
-    logger.info(f"🚀 [kDrive Job] task_sync_invoice_file {entity_id} -> {source_key or 'retrait'}")
+    folder, conflict = _FLAT_FILE_SYNC[entity_type]
+    logger.info(f"🚀 [kDrive Job] sync {entity_type} {entity_id} ({folder}) -> {source_key or 'retrait'}")
     service = KDriveService()
     stale = KDriveObject.query.filter(
-        KDriveObject.entity_type == "invoice",
+        KDriveObject.entity_type == entity_type,
         KDriveObject.entity_id == entity_id,
         KDriveObject.source_key != (source_key or ""),
     ).all()
@@ -157,12 +183,27 @@ def task_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional
             db.session.commit()
         except Exception as err:
             db.session.rollback()
-            logger.error(f"❌ Échec suppression kDrive de l'ancienne facture {entity_id} ({obj.id}) : {err}")
+            logger.error(f"❌ Échec suppression kDrive de l'ancien fichier {entity_type} {entity_id} ({obj.id}) : {err}")
     if not source_key:
         return
     project = db.session.get(Project, project_id)
     if project:
-        service.upload_file_sync(project, "invoice", entity_id, "file", source_key, custom_filename=filename)
+        service.upload_file_sync(project, entity_type, entity_id, "file", source_key,
+                                 custom_filename=filename, conflict=conflict)
+
+
+@_with_app_context
+def task_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
+                           filename: Optional[str] = None):
+    """Tâche RQ : aligne le fichier d'une facture sur kDrive (dossier 2_FACTURES du projet)."""
+    _sync_flat_file(project_id, "invoice", entity_id, source_key, filename)
+
+
+@_with_app_context
+def task_sync_quote_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
+                         filename: Optional[str] = None):
+    """Tâche RQ : aligne le fichier d'un devis (« Devis envoyé ») sur kDrive (dossier 1_DEVIS du projet)."""
+    _sync_flat_file(project_id, "quote", entity_id, source_key, filename)
 
 
 # ── Fonctions de dispatch appelées par Flask (après commit SQL) ────────────────
@@ -231,6 +272,11 @@ def dispatch_upload_bundle(project_id: int, entity_type: str, entity_id: str, fi
 def dispatch_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
                                filename: Optional[str] = None):
     return _dispatch_task(task_sync_invoice_file, project_id, entity_id, source_key, filename)
+
+
+def dispatch_sync_quote_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
+                             filename: Optional[str] = None):
+    return _dispatch_task(task_sync_quote_file, project_id, entity_id, source_key, filename)
 
 
 def dispatch_move_project(

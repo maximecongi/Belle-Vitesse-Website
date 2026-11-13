@@ -29,10 +29,11 @@ DOC_FOLDERS = {
     "checkin": "4_SÉCURITÉ/6_CHECKINS",
     "incident": "6_INCIDENTS",
     "invoice": "2_FACTURES",
+    "quote": "1_DEVIS",
 }
 
 # Types de documents déposés directement dans leur dossier (pas de sous-dossier par document)
-FLAT_DOC_TYPES = {"invoice"}
+FLAT_DOC_TYPES = {"invoice", "quote"}
 
 ROLE_SUBFOLDERS = {
     ("cgl", "pdf"): "1_CGL",

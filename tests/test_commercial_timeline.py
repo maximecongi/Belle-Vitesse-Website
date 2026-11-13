@@ -143,7 +143,7 @@ class CommercialTimelineServiceTest(BaseTestCase):
                   contact_id=self.contact.id)
         edit = build_commercial_timeline(self.project, now=NOW)["events"][0]["edit"]
         self.assertEqual(edit, {"event_type": "lost", "is_planned": "0", "date": "2026-10-02", "time": "", "contact_id": str(self.contact.id),
-                                "lost_reason": "price", "summary": "Trop cher"})
+                                "lost_reason": "price", "summary": "Trop cher", "quote_amount": "", "quote_file_name": ""})
 
     # ── Relances ───────────────────────────────────────────────
 
@@ -547,7 +547,7 @@ class CommercialStatsTest(BaseTestCase):
             sess["admin_user_role"] = user.role
 
     def test_commercial_kpis_on_admin_indicators_page_only(self):
-        self._project("Perdu", [("lost", date.today().isoformat(), {"lost_reason": "price"})])
+        self._project("Perdu", [("lost", NOW.date().isoformat(), {"lost_reason": "price"})])
         # Le commercial n'a pas accès à la page Indicateurs (réservée aux administrateurs)
         self._login(self.commercial)
         self.assertEqual(self.client.get("/admin/indicators").status_code, 302)

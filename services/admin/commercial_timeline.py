@@ -10,6 +10,7 @@ calcul de la frise (espacement proportionnel au temps) et détection des devis �
 - un silence de plus de BREAK_THRESHOLD_DAYS jours est plafonné et signalé par une coupure « ≈ » ;
 - la partie « à venir » occupe au plus MAX_FUTURE_SHARE_PCT % de la largeur.
 """
+import logging
 import math
 import os
 from datetime import datetime, time
@@ -29,11 +30,13 @@ from models.commercial_event import (
     LOST_REASONS,
     PLANNABLE_EVENT_TYPES,
     PLANNED_ONLY_EVENT_TYPES,
+    QUOTE_EVENT_TYPES,
     ProjectCommercialEvent,
 )
 from services.admin.contacts import NEW_CONTACT_VALUE, find_or_build_contact
 
 PARIS_TZ = ZoneInfo("Europe/Paris")
+logger = logging.getLogger(__name__)
 
 # Échelle de la frise
 BREAK_THRESHOLD_DAYS = 60      # au-delà, l'intervalle est plafonné (coupure « ≈ »)
@@ -77,6 +80,36 @@ def _done(events):
 
 def _planned(events):
     return [e for e in _chronological(events) if e.is_planned]
+
+
+def reference_quote(events, until=None):
+    """
+    Devis de référence d'un projet : le plus récent « Devis envoyé » réalisé dont le montant HT est renseigné
+    (un devis révisé remplace le précédent). `until` (datetime) : seuls les devis envoyés jusqu'à cette date.
+    """
+    quotes = [e for e in _done(events)
+              if e.event_type in QUOTE_EVENT_TYPES and e.quote_amount is not None
+              and (until is None or e.occurred_at <= until)]
+    return quotes[-1] if quotes else None
+
+
+def reference_quote_amount(events, until=None):
+    quote = reference_quote(events, until=until)
+    return quote.quote_total if quote else None
+
+
+def pending_quotes_summary(projects):
+    """
+    Devis en attente de réponse (projets au statut « Devis envoyé ») : nombre, montant HT cumulé des devis
+    de référence et nombre de devis sans montant renseigné.
+    """
+    pending = [p for p in projects if p.commercial_status == "quote_sent"]
+    amounts = [reference_quote_amount(p.commercial_events) for p in pending]
+    return {
+        "count": len(pending),
+        "amount": round(sum(a for a in amounts if a is not None), 2),
+        "without_amount": sum(1 for a in amounts if a is None),
+    }
 
 
 def compute_commercial_status(events, current_status=None):
@@ -141,7 +174,7 @@ def _as_bool(value):
 
 
 def _validated_fields(project, *, event_type, date_str, time_str, contact_id, summary,
-                      lost_reason, new_contact, now, is_planned=False):
+                      lost_reason, new_contact, now, is_planned=False, quote_amount=None):
     """Valide la saisie (ajout ou modification) et retourne les valeurs à enregistrer."""
     if event_type not in EVENT_TYPE_LABELS:
         raise ValueError("Type de prise de contact inconnu.")
@@ -167,6 +200,12 @@ def _validated_fields(project, *, event_type, date_str, time_str, contact_id, su
     else:
         lost_reason = None
 
+    # Montant total HT du devis : facultatif, uniquement sur « Devis envoyé » (0 ou vide = non renseigné)
+    amount = None
+    if event_type in QUOTE_EVENT_TYPES:
+        from services.admin.projects.crud import _parse_amount
+        amount = _parse_amount(quote_amount, "montant total HT du devis") or None
+
     # En dernier : un nouveau contact n'est ajouté à la session qu'une fois tout le reste validé
     contact = None
     if contact_id == NEW_CONTACT_VALUE:
@@ -186,7 +225,84 @@ def _validated_fields(project, *, event_type, date_str, time_str, contact_id, su
         "contact": contact,
         "summary": (summary or "").strip()[:500] or None,
         "lost_reason": lost_reason,
+        "quote_amount": amount,
     }
+
+
+# ── Fichier du devis (« Devis envoyé ») ────────────────────────
+# Copie locale : OUTPUT_FOLDER/DEVIS/<id projet>/<id événement>_<nom>, envoyée dans 1_DEVIS sur kDrive.
+
+def _quote_file_rel_path(event, filename):
+    from werkzeug.utils import secure_filename
+    return f"DEVIS/{event.project_id}/{event.id}_{secure_filename(filename) or 'devis'}"
+
+
+def _checked_quote_file(quote_file):
+    """(nom, contenu) contrôlés (PDF, PNG ou JPG, 10 Mo max), ou None sans fichier."""
+    if not quote_file:
+        return None
+    filename, content = quote_file
+    if not filename and not content:
+        return None
+    from services.admin.projects.invoices import check_document_file
+    return check_document_file(filename, content, kind="devis"), content
+
+
+def _apply_quote_file(event, upload, remove):
+    """
+    Avant commit (id de l'événement connu) : écrit le fichier envoyé, ou retire le fichier joint
+    (retrait demandé, ou l'événement n'est plus un devis). Retourne les opérations à finaliser :
+    {"written": nouveau fichier (à effacer si le commit échoue), "obsolete": ancien fichier, "sync": bool}.
+    """
+    from services.admin.projects.crud import _output_root
+
+    ops = {"written": None, "obsolete": None, "sync": False}
+    if upload and event.is_quote:
+        name, content = upload
+        rel_path = _quote_file_rel_path(event, name)
+        dest = _output_root() / rel_path
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(content)
+        if event.file_path and event.file_path != rel_path:
+            ops["obsolete"] = event.file_path
+        event.file_path, event.file_name = rel_path, name
+        ops.update(written=rel_path, sync=True)
+    elif event.file_path and (remove or not event.is_quote):
+        ops.update(obsolete=event.file_path, sync=True)
+        event.file_path = event.file_name = None
+    return ops
+
+
+def _commit_with_quote_file(event, ops):
+    """Commit, puis nettoyage de l'ancien fichier et synchronisation kDrive (1_DEVIS)."""
+    from services.admin.projects.crud import _remove_local_file
+    from services.common.kdrive.tasks import dispatch_sync_quote_file
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        if ops["written"]:
+            _remove_local_file(ops["written"])
+        raise
+    if ops["obsolete"]:
+        _remove_local_file(ops["obsolete"])
+    if ops["sync"]:
+        dispatch_sync_quote_file(event.project_id, event.kdrive_entity_id, event.file_path, event.file_name)
+
+
+def quote_file_path(project_id, event_id):
+    """(chemin absolu, nom d'origine) du fichier d'un devis, ou None s'il n'existe pas."""
+    from services.admin.projects.crud import _output_root
+
+    event = db.session.get(ProjectCommercialEvent, event_id)
+    if not event or event.project_id != project_id or not event.file_path:
+        return None
+    root = _output_root().resolve()
+    path = (root / event.file_path).resolve()
+    if root not in path.parents or not path.is_file():
+        return None
+    return path, event.file_name or path.name
 
 
 def _active_project(project_id):
@@ -198,11 +314,17 @@ def _active_project(project_id):
 
 def add_commercial_event(project_id, *, event_type, date_str, time_str=None, contact_id=None,
                          summary=None, lost_reason=None, user_id=None, now=None, new_contact=None,
-                         is_planned=False):
+                         is_planned=False, quote_amount=None, quote_file=None):
+    """
+    Ajoute une prise de contact. Pour « Devis envoyé » : quote_amount (montant total HT) et
+    quote_file = (nom, contenu), tous deux facultatifs ; le fichier est déposé dans 1_DEVIS sur kDrive.
+    """
     project = _active_project(project_id)
+    upload = _checked_quote_file(quote_file)
     fields = _validated_fields(
         project, event_type=event_type, date_str=date_str, time_str=time_str, contact_id=contact_id,
         summary=summary, lost_reason=lost_reason, new_contact=new_contact, now=now, is_planned=is_planned,
+        quote_amount=quote_amount,
     )
 
     author_name = None
@@ -215,30 +337,47 @@ def add_commercial_event(project_id, *, event_type, date_str, time_str=None, con
     db.session.add(event)
     db.session.flush()
     recompute_commercial_status(project)
-    db.session.commit()
+    _commit_with_quote_file(event, _apply_quote_file(event, upload, remove=False))
     return event
 
 
 def update_commercial_event(project_id, event_id, *, event_type, date_str, time_str=None, contact_id=None,
-                            summary=None, lost_reason=None, now=None, new_contact=None, is_planned=None):
+                            summary=None, lost_reason=None, now=None, new_contact=None, is_planned=None,
+                            quote_amount=None, quote_file=None, remove_quote_file=False):
     """
     Modifie une prise de contact (l'auteur d'origine est conservé) et recalcule le statut.
     `is_planned` à None conserve la nature actuelle (réalisé / à venir).
+    Devis : quote_amount remplace le montant (vide = retiré) ; quote_file = (nom, contenu) remplace le
+    fichier ; remove_quote_file le retire. Un événement qui n'est plus un devis perd montant et fichier.
     """
     project = _active_project(project_id)
     event = db.session.get(ProjectCommercialEvent, event_id)
     if not event or event.project_id != project.id:
         raise CommercialEventNotFoundError("Prise de contact introuvable.")
+    upload = _checked_quote_file(quote_file)
     fields = _validated_fields(
         project, event_type=event_type, date_str=date_str, time_str=time_str, contact_id=contact_id,
         summary=summary, lost_reason=lost_reason, new_contact=new_contact, now=now,
-        is_planned=event.is_planned if is_planned is None else is_planned,
+        is_planned=event.is_planned if is_planned is None else is_planned, quote_amount=quote_amount,
     )
     for attr, value in fields.items():
         setattr(event, attr, value)
     db.session.flush()
     recompute_commercial_status(project)
-    db.session.commit()
+    _commit_with_quote_file(event, _apply_quote_file(event, upload, remove=_as_bool(remove_quote_file)))
+    return event
+
+
+def set_quote_file(event, quote_file=None, remove=False):
+    """Joint / remplace (quote_file = (nom, contenu)) ou retire (remove) le fichier d'un « Devis envoyé »."""
+    if not event.is_quote:
+        raise ValueError(f"« {event.type_label} » ne porte pas de devis : seul « Devis envoyé » accepte un fichier.")
+    upload = _checked_quote_file(quote_file)
+    if not upload and not remove:
+        raise ValueError("Aucun fichier fourni.")
+    if remove and not event.file_path:
+        raise ValueError("Ce devis n'a pas de fichier joint.")
+    _commit_with_quote_file(event, _apply_quote_file(event, upload, remove=remove))
     return event
 
 
@@ -270,11 +409,18 @@ def delete_commercial_event(project_id, event_id):
     if not event or event.project_id != project_id:
         raise CommercialEventNotFoundError("Prise de contact introuvable.")
     project = event.project
+    file_path, entity_id = event.file_path, event.kdrive_entity_id
     project.commercial_events.remove(event)
     db.session.delete(event)
     db.session.flush()
     recompute_commercial_status(project)
     db.session.commit()
+    if file_path:  # devis joint : copie locale et fichier dans 1_DEVIS sur kDrive
+        from services.admin.projects.crud import _remove_local_file
+        from services.common.kdrive.tasks import dispatch_sync_quote_file
+
+        _remove_local_file(file_path)
+        dispatch_sync_quote_file(project_id, entity_id, None, None)
 
 
 # ── Frise : calcul de l'échelle ────────────────────────────────
@@ -469,6 +615,8 @@ def build_commercial_timeline(project, now=None):
     Frise : prises de contact réelles à gauche, repère « Aujourd'hui », puis événements à venir
     (zone teintée). Un événement prévu dont la date est passée reste à sa date, signalé « en retard ».
     """
+    from services.admin.projects.crud import _format_amount
+
     now = now or paris_now()
     today_d = now.date()
     events = _chronological(project.commercial_events)
@@ -521,6 +669,7 @@ def build_commercial_timeline(project, now=None):
             "is_late": ev.is_late(today_d),
             "can_complete": bool(ev.is_planned) and ev.event_type not in PLANNED_ONLY_EVENT_TYPES,
             "relative": _relative_label(ev.occurred_at.date(), today_d) if ev.is_planned else None,
+            "quote_file_name": ev.file_name if ev.file_path else None,
             "edit": {
                 "event_type": ev.event_type,
                 "is_planned": "1" if ev.is_planned else "0",
@@ -529,6 +678,8 @@ def build_commercial_timeline(project, now=None):
                 "contact_id": str(ev.contact_id) if ev.contact_id else "",
                 "lost_reason": ev.lost_reason or "",
                 "summary": ev.summary or "",
+                "quote_amount": _format_amount(ev.quote_amount),
+                "quote_file_name": ev.file_name if ev.file_path else "",
             },
         }
 
@@ -619,6 +770,7 @@ def build_commercial_timeline(project, now=None):
             for group, keys in EVENT_TYPE_GROUPS
         ],
         "lost_reasons": LOST_REASONS,
+        "quote_types": sorted(QUOTE_EVENT_TYPES),
         "contact_choices": _contact_choices(project),
         "production_choices": [(p.id, p.name) for p in Production.query.order_by(Production.name).all()],
         "new_contact_value": NEW_CONTACT_VALUE,
@@ -697,6 +849,7 @@ def commercial_stats(now=None, followup_days=QUOTE_FOLLOWUP_DAYS):
             if lost and lost[-1].lost_reason in reasons:
                 reasons[lost[-1].lost_reason] += 1
 
+    pending_quotes = pending_quotes_summary(projects)
     won = sum(by_status.get(s, 0) for s in WON_COMMERCIAL_STATUSES)
     lost_count = by_status.get("lost", 0)
     decided = won + lost_count
@@ -710,6 +863,8 @@ def commercial_stats(now=None, followup_days=QUOTE_FOLLOWUP_DAYS):
         ],
         "prospects": by_status.get("prospect", 0),
         "quotes_pending": by_status.get("quote_sent", 0),
+        "quotes_pending_amount": pending_quotes["amount"],
+        "quotes_pending_without_amount": pending_quotes["without_amount"],
         "won": won,
         "lost": lost_count,
         "conversion_rate": round(100 * won / decided) if decided else None,

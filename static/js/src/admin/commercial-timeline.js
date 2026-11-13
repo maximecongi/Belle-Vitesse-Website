@@ -3,6 +3,8 @@
  * - sélection d'une prise de contact (clic / clavier ←→) et affichage de son détail ;
  * - modale d'ajout (focus sur le type à l'ouverture, liste des contacts au-dessus de la modale) ;
  * - champ « Motif de l'abandon » affiché et requis uniquement pour le type « Abandon » ;
+ * - champs du devis (montant HT, fichier) affichés uniquement pour « Devis envoyé » ; en modification,
+ *   le fichier déjà joint est proposé au téléchargement, avec « Retirer » ;
  * - choix « Déjà eu lieu / À venir » : types planifiables, bornes de date, titre et bouton adaptés ;
  * - positionnement des segments « silence en cours », zone et ligne « à venir » (data-ctl-start / data-ctl-end).
  * Les points eux-mêmes sont positionnés par data-bars.js (data-pct → --pct).
@@ -75,6 +77,40 @@
             syncLost();
         }
 
+        // Devis : montant HT et fichier, uniquement pour les types listés dans data-quote-types
+        var quoteFields = Array.prototype.slice.call(root.querySelectorAll('[data-ctl-quote-field]'));
+        var quoteTypes = ((quoteFields[0] && quoteFields[0].dataset.quoteTypes) || '').split(' ');
+        var quoteCurrent = root.querySelector('[data-ctl-quote-current]');
+        var quoteRemove = root.querySelector('[data-ctl-quote-remove]');
+        var syncQuote = function () {
+            var isQuote = !!typeSelect && quoteTypes.indexOf(typeSelect.value) !== -1;
+            quoteFields.forEach(function (field) {
+                field.hidden = !isQuote;
+                field.querySelectorAll('input').forEach(function (input) {
+                    // Le retrait n'est actif que s'il y a un fichier joint affiché
+                    input.disabled = !isQuote || (input === quoteRemove && (!quoteCurrent || quoteCurrent.hidden));
+                });
+            });
+        };
+        if (typeSelect && quoteFields.length) {
+            typeSelect.addEventListener('change', syncQuote);
+            syncQuote();
+        }
+
+        // Fichier déjà joint (modification) : lien de téléchargement + case « Retirer », ou rien (ajout)
+        function setQuoteFile(name, url) {
+            if (!quoteCurrent) return;
+            var link = quoteCurrent.querySelector('[data-ctl-quote-link]');
+            var label = quoteCurrent.querySelector('[data-ctl-quote-name]');
+            quoteCurrent.hidden = !name;
+            if (label) label.textContent = name || '';
+            if (link) link.setAttribute('href', url || '#');
+            if (quoteRemove) quoteRemove.checked = false;
+            var fileInput = root.querySelector('input[name="quote_file"]');
+            if (fileInput) fileInput.value = '';
+            syncQuote();
+        }
+
         // Contact : liste longue (tout l'annuaire) avec recherche au clavier.
         // L'encart « + Nouveau contact » est géré par contact-picker.js ([data-contact-picker]).
         var contactSelect = root.querySelector('[data-ctl-contact]');
@@ -94,8 +130,10 @@
         var submitBtn = form.querySelector('[data-ctl-submit]');
         var defaults = {};
         Array.prototype.forEach.call(form.elements, function (el) {
-            // Les boutons radio « Déjà eu lieu / À venir » sont gérés à part (setWhen)
-            if (el.name && el.name !== 'csrf_token' && el.type !== 'radio') defaults[el.name] = el.value;
+            // Les boutons radio « Déjà eu lieu / À venir », le fichier et la case « Retirer » du devis sont gérés à part
+            if (el.name && el.name !== 'csrf_token' && el.type !== 'radio' && el.type !== 'file' && el.type !== 'checkbox') {
+                defaults[el.name] = el.value;
+            }
         });
 
         function setValue(name, value) {
@@ -180,6 +218,7 @@
         root.querySelectorAll('[data-ctl-create]').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 Object.keys(defaults).forEach(function (name) { setValue(name, defaults[name]); });
+                setQuoteFile(null);
                 setWhen('0');
                 setMode(false);
             });
@@ -198,6 +237,8 @@
                 setValue('contact_id', data.contact_id);
                 setValue('lost_reason', data.lost_reason);
                 setValue('summary', data.summary);
+                setValue('quote_amount', data.quote_amount);
+                setQuoteFile(data.quote_file_name, btn.dataset.ctlQuoteUrl);
                 setMode(true, btn.dataset.ctlEditAction);
                 if (window.adminModal) window.adminModal.open('ctlModal');
                 // Report d'un événement prévu : focus direct sur la date

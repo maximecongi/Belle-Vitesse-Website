@@ -51,6 +51,9 @@ EVENT_CONTACT_PREPOSITIONS = {
 PLANNABLE_EVENT_TYPES = {"meeting", "call_out", "email_out", "quote_followup", "deadline"}
 PLANNED_ONLY_EVENT_TYPES = {"deadline"}
 
+# Types qui portent un devis : montant total HT et fichier (déposé dans 1_DEVIS sur kDrive), tous deux facultatifs
+QUOTE_EVENT_TYPES = {"quote_sent"}
+
 # Regroupement dans le sélecteur du formulaire
 EVENT_TYPE_GROUPS = [
     ("Échanges", ["first_request", "email_in", "email_out", "call_in", "call_out", "meeting"]),
@@ -104,6 +107,11 @@ class ProjectCommercialEvent(db.Model):
     lost_reason = db.Column(db.String(30), nullable=True)
     # Événement à venir (planifié) : n'influe pas sur le statut commercial tant qu'il n'est pas marqué « fait »
     is_planned = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
+    # Devis (« Devis envoyé ») : montant total HT et fichier (copie locale relative à OUTPUT_FOLDER,
+    # envoyée dans 1_DEVIS sur kDrive). Facultatifs, à compléter plus tard si besoin.
+    quote_amount = db.Column(db.Numeric(12, 2), nullable=True)
+    file_path = db.Column(db.String(500), nullable=True)
+    file_name = db.Column(db.String(255), nullable=True)
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     author_name = db.Column(db.String(150), nullable=True)
@@ -138,6 +146,20 @@ class ProjectCommercialEvent(db.Model):
     @property
     def lost_reason_label(self):
         return LOST_REASON_LABELS.get(self.lost_reason) if self.lost_reason else None
+
+    @property
+    def is_quote(self):
+        return self.event_type in QUOTE_EVENT_TYPES
+
+    @property
+    def quote_total(self):
+        """Montant HT du devis en float, ou None s'il n'est pas renseigné."""
+        return float(self.quote_amount) if self.quote_amount is not None else None
+
+    @property
+    def kdrive_entity_id(self) -> str:
+        """Identifiant de suivi kDrive (table kdrive_objects) du fichier de ce devis."""
+        return f"DEVIS-{self.id}"
 
     @property
     def contact_name(self):
@@ -185,6 +207,8 @@ class ProjectCommercialEvent(db.Model):
             "lost_reason_label": self.lost_reason_label,
             "author_name": self.author_name,
             "is_planned": bool(self.is_planned),
+            "quote_amount": self.quote_total,
+            "quote_file_name": self.file_name,
         }
 
     def __repr__(self):

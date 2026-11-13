@@ -156,7 +156,10 @@
                'neutral', c.deltas.revenue) }}
         {{ kpi('Nouvelles demandes', c.new, 'premier contact pendant la période',
                'neutral', c.deltas.new) }}
-        {{ kpi('Devis à relancer', c.followups, 'devis envoyés restés sans réponse',
+        {% set pq = c.pending_quotes %}
+        {{ kpi('Devis en attente', pq.amount_label,
+               (pq.count ~ ' devis HT' ~ ((' · ' ~ c.followups ~ ' à relancer') if c.followups else '')
+                ~ ((' · ' ~ pq.without_amount ~ ' sans montant') if pq.without_amount else '')) if pq.count else 'aucun devis en attente de réponse',
                'neutral', instant=true, href=url_for('admin_projects.admin_projects_list', commercial='quote_sent')) }}
         {{ kpi('Taux de transformation',
                (c.conversion_rate ~ ' %') if c.conversion_rate is not none else '—',
@@ -185,6 +188,19 @@
         <div class="ind-card-section">
             <div class="ind-card-subtitle">Motifs d'abandon</div>
             {{ bars(c.lost_reasons, tone='muted', empty_icon='thumbs-up', empty_text='Aucun abandon sur la période') }}
+        </div>
+        <div class="ind-card-section">
+            <div class="ind-card-subtitle">Devis · montants HT</div>
+            {% if c.quotes.has_data %}
+            {{ bars(c.quotes.rows) }}
+            <p class="ind-table-more">
+                Transformation en valeur : <strong>{{ (c.value_conversion_rate ~ ' %') if c.value_conversion_rate is not none else '—' }}</strong>
+                {% if c.deltas.value_conversion_rate %}<span class="ind-delta ind-delta--{{ c.deltas.value_conversion_rate.tone }}">{{ c.deltas.value_conversion_rate.text }}</span>{% endif %}
+                · confirmés ÷ (confirmés + abandonnés), au montant du dernier devis de chaque projet
+            </p>
+            {% else %}
+            {{ empty_state('file-text', 'Aucun devis chiffré sur la période', class_name='empty-state-sm') }}
+            {% endif %}
         </div>
         {% endcall %}
 

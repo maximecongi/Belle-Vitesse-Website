@@ -81,6 +81,71 @@
     min-height: 4.5rem;
 }
 
+/* ── Devis (« Devis envoyé ») : montant HT et fichier joint ── */
+.ctl-amount {
+    position: relative;
+}
+
+.ctl-amount .form-input {
+    padding-right: 3.4rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.ctl-amount-unit {
+    position: absolute;
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    color: var(--grey-2);
+    pointer-events: none;
+}
+
+.ctl-quote-current {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+}
+
+.ctl-quote-current[hidden] {
+    display: none;
+}
+
+.ctl-quote-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--grey-2);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.ctl-quote-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    color: var(--grey-1);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.ctl-quote-file:hover {
+    text-decoration: underline;
+}
+
+.ctl-quote-file i,
+.ctl-quote-file svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
 .ctl-form-actions {
     display: flex;
     justify-content: flex-end;

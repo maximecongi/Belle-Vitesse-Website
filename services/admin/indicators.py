@@ -183,7 +183,7 @@ def delta(current, previous, unit="", better="up", money=False):
 
 def _project_milestones(project):
     """Dates clés (dates calendaires) de la timeline commerciale réalisée d'un projet."""
-    from services.admin.commercial_timeline import WON_COMMERCIAL_STATUSES, _done
+    from services.admin.commercial_timeline import WON_COMMERCIAL_STATUSES, _done, reference_quote
 
     events = _done(project.commercial_events)
     first_of = lambda t: next((e for e in events if e.event_type == t), None)  # noqa: E731
@@ -191,6 +191,7 @@ def _project_milestones(project):
     quote = first_of("quote_sent")
     lost = [e for e in events if e.event_type == "lost"]
     is_lost = project.commercial_status == "lost"
+    ref_quote = reference_quote(events)
     return {
         "project": project,
         "status": project.commercial_status,
@@ -200,6 +201,9 @@ def _project_milestones(project):
         "won": project.commercial_status in WON_COMMERCIAL_STATUSES,
         "lost": lost[-1].occurred_at if (is_lost and lost) else None,
         "lost_reason": lost[-1].lost_reason if (is_lost and lost) else None,
+        # Devis envoyés (date, montant HT ou None) et devis de référence : le plus récent dont le montant est saisi
+        "quotes": [(e.occurred_at.date(), e.quote_total) for e in events if e.event_type == "quote_sent"],
+        "quote_amount": ref_quote.quote_total if ref_quote else None,
     }
 
 
@@ -209,7 +213,22 @@ def _commercial_window(items, invoices, start, end):
     lost = [i for i in items if i["lost"] and _in(i["lost"].date(), start, end)]
     delays = [(i["confirmed"] - i["first"]).total_seconds() / 86400 for i in won if i["first"]]
     invoiced = [inv for inv in invoices if _in(inv.issued_on, start, end)]
+
+    # Devis (montants HT) : un projet compte une fois, pour son dernier devis chiffré envoyé sur la période ;
+    # confirmés / abandonnés valorisés au devis de référence du projet
+    quoted = []
+    for i in items:
+        in_period = [amount for day, amount in i["quotes"] if amount is not None and _in(day, start, end)]
+        if in_period:
+            quoted.append(in_period[-1])
+    won_amount = sum(i["quote_amount"] for i in won if i["quote_amount"] is not None)
+    lost_amount = sum(i["quote_amount"] for i in lost if i["quote_amount"] is not None)
     return {
+        "quoted_amount": round(sum(quoted), 2),
+        "quoted_count": len(quoted),
+        "won_amount": round(won_amount, 2),
+        "lost_amount": round(lost_amount, 2),
+        "value_conversion_rate": _rate(won_amount, won_amount + lost_amount),
         "revenue": round(sum(inv.total for inv in invoiced), 2),
         "invoiced_count": len(invoiced),
         "invoiced_projects": len({inv.project_id for inv in invoiced}),
@@ -231,6 +250,13 @@ def _commercial_window(items, invoices, start, end):
 def _money(value):
     """Montant en euros arrondi à l'unité, espaces fines : 148600 → « 148 600 € »."""
     return f"{value or 0:,.0f}".replace(",", "\u202f") + "\u202f€"
+
+
+def _money_bars(rows):
+    """Barres de montants dans l'ordre donné : rows = [(clé, libellé, montant)] ; pct relatif au maximum."""
+    top = max([r[2] for r in rows] or [0]) or 1
+    return [{"key": k, "label": label, "count": amount, "pct": round(100 * amount / top),
+             "value_label": _money(amount)} for k, label, amount in rows]
 
 
 def _agenda_rows(agenda, limit=8):
@@ -295,6 +321,7 @@ def commercial_indicators(period, months, now=None):
     from services.admin.commercial_timeline import (
         QUOTE_FOLLOWUP_DAYS,
         find_projects_awaiting_quote_reply,
+        pending_quotes_summary,
         planned_agenda,
     )
 
@@ -327,6 +354,7 @@ def commercial_indicators(period, months, now=None):
     }
 
     followups = find_projects_awaiting_quote_reply(now=now)
+    pending = pending_quotes_summary(projects)
     agenda = _agenda_rows(planned_agenda(now=now))
     chart = _chart(months, [
         ("requests", "Nouvelles demandes", _monthly_series(months, [i["first"].date() for i in items if i["first"]])),
@@ -339,6 +367,17 @@ def commercial_indicators(period, months, now=None):
             "avg_days_to_confirm": delta(cur["avg_days_to_confirm"], prev["avg_days_to_confirm"], " j", better="down"),
             "new": delta(cur["new"], prev["new"]),
             "revenue": delta(cur["revenue"], prev["revenue"], " €", money=True) if (cur["invoiced_count"] or prev["invoiced_count"]) else None,
+            "quoted_amount": delta(cur["quoted_amount"], prev["quoted_amount"], " €", money=True) if (cur["quoted_count"] or prev["quoted_count"]) else None,
+            "value_conversion_rate": delta(cur["value_conversion_rate"], prev["value_conversion_rate"], " pts"),
+        },
+        "pending_quotes": {**pending, "amount_label": _money(pending["amount"])},
+        "quotes": {
+            "rows": _money_bars([
+                ("quoted", "Envoyés", cur["quoted_amount"]),
+                ("won", "Confirmés", cur["won_amount"]),
+                ("lost", "Abandonnés", cur["lost_amount"]),
+            ]),
+            "has_data": bool(cur["quoted_count"] or cur["won_amount"] or cur["lost_amount"]),
         },
         "followups": len(followups),
         "by_status": by_status,

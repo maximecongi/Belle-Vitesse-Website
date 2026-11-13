@@ -90,6 +90,7 @@ def add_commercial_event(
     summary: Optional[str] = None,
     lost_reason: Optional[str] = None,
     is_planned: bool = False,
+    quote_amount: Optional[float] = None,
     new_contact_first_name: Optional[str] = None,
     new_contact_last_name: Optional[str] = None,
     new_contact_phone: Optional[str] = None,
@@ -109,6 +110,8 @@ def add_commercial_event(
     - is_planned: true pour un échange À VENIR (date du jour ou future) ; types planifiables : meeting,
       call_out, email_out, quote_followup, deadline (échéance). Ne change pas le statut commercial tant qu'il
       n'est pas marqué fait (complete_commercial_event)
+    - quote_amount: montant total HT du devis (event_type = quote_sent uniquement, facultatif). Pour joindre le
+      fichier du devis (déposé dans 1_DEVIS sur kDrive) : attach_commercial_quote_file avec l'id renvoyé
     """
     from services.admin.commercial_timeline import (
         NEW_CONTACT_VALUE,
@@ -126,7 +129,7 @@ def add_commercial_event(
             p.id, event_type=event_type, date_str=date, time_str=time,
             contact_id=NEW_CONTACT_VALUE if new_contact else contact_id,
             summary=summary, lost_reason=lost_reason, user_id=_mcp_user_id(), new_contact=new_contact,
-            is_planned=is_planned,
+            is_planned=is_planned, quote_amount=quote_amount,
         )
     except (ValueError, CommercialEventNotFoundError) as e:
         db.session.rollback()
@@ -145,11 +148,14 @@ def update_commercial_event(
     contact_id: Optional[int] = None,
     summary: Optional[str] = None,
     lost_reason: Optional[str] = None,
+    quote_amount: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Modifie une prise de contact. Les champs non fournis conservent leur valeur actuelle
-    (passer contact_id=0 pour retirer le contact, time="" pour retirer l'heure).
+    (passer contact_id=0 pour retirer le contact, time="" pour retirer l'heure, quote_amount=0 pour retirer
+    le montant du devis).
     - event_id: identifiant de la prise de contact (cf. get_project_commercial_timeline)
+    - quote_amount: montant total HT du devis (quote_sent uniquement)
     """
     from models import ProjectCommercialEvent, db
     from services.admin.commercial_timeline import CommercialEventNotFoundError, update_commercial_event as _update
@@ -171,11 +177,87 @@ def update_commercial_event(
             contact_id=contact_value,
             summary=event.summary if summary is None else summary,
             lost_reason=lost_reason or event.lost_reason,
+            quote_amount=event.quote_amount if quote_amount is None else quote_amount,
         )
     except (ValueError, CommercialEventNotFoundError) as e:
         db.session.rollback()
         return {"status": "error", "message": str(e)}
     return {"status": "success", "event": _event_dict(updated), "commercial_status": updated.project.commercial_status}
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("write")
+def attach_commercial_quote_file(event_id: int, filename: str, content_base64: str) -> Dict[str, Any]:
+    """
+    Joint le fichier d'un devis à un événement « Devis envoyé » (remplace le précédent s'il existe).
+    Il est conservé sur le serveur, téléchargeable depuis la timeline commerciale, et déposé dans le
+    dossier 1_DEVIS du projet sur kDrive.
+    - event_id: identifiant de l'événement quote_sent (cf. get_project_commercial_timeline / add_commercial_event)
+    - filename: nom du fichier avec son extension (.pdf, .png, .jpg ou .jpeg), ex. 'Devis-2026-142.pdf'
+    - content_base64: contenu du fichier encodé en base64 (préfixe « data:...;base64, » accepté), 10 Mo maximum
+    """
+    import base64
+    import binascii
+
+    from models import ProjectCommercialEvent, db
+    from services.admin.commercial_timeline import set_quote_file
+
+    event = db.session.get(ProjectCommercialEvent, event_id)
+    if not event:
+        return {"status": "error", "message": f"Prise de contact #{event_id} introuvable."}
+    raw = str(content_base64 or "").strip()
+    if raw.startswith("data:") and "," in raw:
+        raw = raw.split(",", 1)[1]
+    try:
+        content = base64.b64decode("".join(raw.split()), validate=True)
+    except (binascii.Error, ValueError):
+        return {"status": "error", "message": "Contenu base64 invalide."}
+    replaced = event.file_name
+    try:
+        set_quote_file(event, (filename, content))
+    except ValueError as err:
+        db.session.rollback()
+        return {"status": "error", "message": str(err)}
+    return {
+        "status": "success",
+        "event": _event_dict(event),
+        "replaced_file": replaced,
+        "kdrive_folder": "1_DEVIS",
+        "message": "Devis enregistré ; dépôt sur kDrive en cours (1_DEVIS).",
+    }
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("write")
+def remove_commercial_quote_file(event_id: int, confirm: bool = False) -> Dict[str, Any]:
+    """
+    Retire le fichier joint d'un « Devis envoyé » (l'événement et son montant sont conservés) :
+    copie serveur et fichier dans 1_DEVIS sur kDrive.
+    - event_id: identifiant de l'événement
+    - confirm: doit valoir true pour exécuter le retrait
+    """
+    from models import ProjectCommercialEvent, db
+    from services.admin.commercial_timeline import set_quote_file
+
+    event = db.session.get(ProjectCommercialEvent, event_id)
+    if not event:
+        return {"status": "error", "message": f"Prise de contact #{event_id} introuvable."}
+    if not event.file_path:
+        return {"status": "error", "message": "Ce devis n'a pas de fichier joint."}
+    if not confirm:
+        return {
+            "status": "confirmation_required",
+            "message": f"Confirmez le retrait du devis « {event.file_name} » (également supprimé de kDrive) "
+                       "en relançant avec confirm=true.",
+        }
+    try:
+        set_quote_file(event, remove=True)
+    except ValueError as err:
+        db.session.rollback()
+        return {"status": "error", "message": str(err)}
+    return {"status": "success", "event": _event_dict(event)}
 
 
 @mcp.tool()
@@ -206,7 +288,8 @@ def complete_commercial_event(event_id: int) -> Dict[str, Any]:
 @require_mcp_scope("write")
 def delete_commercial_event(event_id: int, confirm: bool = False) -> Dict[str, Any]:
     """
-    Supprime une prise de contact de la timeline (le statut commercial est recalculé).
+    Supprime une prise de contact de la timeline (le statut commercial est recalculé ; le devis joint
+    éventuel est aussi supprimé, y compris dans 1_DEVIS sur kDrive).
     - event_id: identifiant de la prise de contact
     - confirm: doit valoir true pour exécuter la suppression
     """
@@ -220,7 +303,8 @@ def delete_commercial_event(event_id: int, confirm: bool = False) -> Dict[str, A
         return {
             "status": "confirmation_required",
             "message": f"Confirmez la suppression de « {event.type_label} » du "
-                       f"{event.occurred_at.strftime('%d/%m/%Y')} en relançant avec confirm=true.",
+                       f"{event.occurred_at.strftime('%d/%m/%Y')} en relançant avec confirm=true."
+                       + (f" Le devis joint « {event.file_name} » sera aussi supprimé de kDrive." if event.file_path else ""),
         }
     project = event.project
     try:
@@ -235,7 +319,8 @@ def delete_commercial_event(event_id: int, confirm: bool = False) -> Dict[str, A
 @require_mcp_scope("read_only")
 def get_commercial_stats(followup_days: Optional[int] = None) -> Dict[str, Any]:
     """
-    Statistiques commerciales : répartition par statut, taux de transformation, délai moyen entre
+    Statistiques commerciales : répartition par statut, devis en attente (nombre et montant HT cumulé des
+    derniers devis chiffrés : quotes_pending_amount), taux de transformation, délai moyen entre
     premier contact et confirmation, motifs d'abandon, devis à relancer et agenda des échanges prévus
     (overdue = en retard, today, upcoming = 7 prochains jours).
     - followup_days: seuil de relance en jours sans réponse (défaut : 10)
