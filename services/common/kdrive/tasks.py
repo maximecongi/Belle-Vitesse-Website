@@ -135,10 +135,12 @@ def task_retry_pending_kdrive_objects(limit: int = 50):
             logger.error(f"❌ Échec resynchro objet {obj.id} ({obj.entity_type}/{obj.entity_id}) : {err}")
 
 
-# Documents déposés à plat dans un dossier commun du projet : type kDrive → (dossier, conflit de nom)
+# Documents déposés à plat dans un dossier commun du projet : type kDrive → (dossier, conflit de nom).
+# « rename » : deux documents homonymes (devis révisé, factures « facture.pdf »…) restent deux fichiers distincts ;
+# avec « error », kDrive renverrait le fichier existant et le second document pointerait sur le premier
+# (le supprimer effacerait alors le fichier de l'autre).
 _FLAT_FILE_SYNC = {
-    "invoice": ("2_FACTURES", "error"),
-    # Un devis révisé porte souvent le même nom que le précédent : kDrive le renomme au lieu de le confondre
+    "invoice": ("2_FACTURES", "rename"),
     "quote": ("1_DEVIS", "rename"),
 }
 

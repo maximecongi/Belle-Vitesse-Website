@@ -313,3 +313,21 @@ class QuoteMcpToolsTest(_OutputMixin, BaseTestCase):
 
         stats = tools.get_commercial_stats()
         self.assertIn("quotes_pending_amount", stats)
+
+
+class FlatFileSyncTest(BaseTestCase):
+    """Factures et devis homonymes : kDrive renomme le nouveau fichier au lieu de réutiliser l'existant."""
+
+    def test_invoices_and_quotes_upload_with_rename(self):
+        from services.common.kdrive import tasks
+
+        prod = self.create_production("Prod Sync")
+        project = Project(name="Pub Sync", production_id=prod.id)
+        db.session.add(project)
+        db.session.commit()
+        for entity_type, entity_id in (("invoice", "FACT-1"), ("quote", "DEVIS-1")):
+            with patch.object(tasks, "KDriveService") as service_cls:
+                tasks._sync_flat_file(project.id, entity_type, entity_id, "X/1_facture.pdf", "facture.pdf")
+                upload = service_cls.return_value.upload_file_sync
+                upload.assert_called_once()
+                self.assertEqual(upload.call_args.kwargs["conflict"], "rename", entity_type)
