@@ -237,7 +237,9 @@ class IndicatorsPageTest(BaseTestCase):
         self._login("Administrateur")
         html = self.client.get("/admin/indicators").get_data(as_text=True)
         self.assertIn('aria-current="true">12 mois', html)
-        self.assertRegex(html, r'data-ind-tab="commercial"[^>]*aria-selected="true"')
+        self.assertRegex(html, r'data-ind-tab="equipment"[^>]*aria-selected="true"')
+        # Matériel est le premier onglet, avant Commercial
+        self.assertLess(html.index('data-ind-tab="equipment"'), html.index('data-ind-tab="commercial"'))
 
     def test_new_widgets_rendered(self):
         self._login("Administrateur")

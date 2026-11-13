@@ -23,8 +23,8 @@ from utils.formatting import get_today_paris
 
 PERIODS = {"30d": "30 jours", "quarter": "Trimestre", "12m": "12 mois", "year": "Année"}
 DEFAULT_PERIOD = "12m"
-TABS = {"commercial": "Commercial", "equipment": "Matériel", "incidents": "Incidents"}
-DEFAULT_TAB = "commercial"
+TABS = {"equipment": "Matériel", "commercial": "Commercial", "incidents": "Incidents"}
+DEFAULT_TAB = "equipment"
 
 _MONTHS_SHORT = ["janv.", "févr.", "mars", "avr.", "mai", "juin",
                  "juil.", "août", "sept.", "oct.", "nov.", "déc."]

@@ -1,6 +1,6 @@
 """
 Page Indicateurs (administrateurs) : métriques de pilotage de l'ERP, un onglet par domaine
-(commercial, matériel, incidents) sur le même gabarit, et une période commune comparée à la
+(matériel, commercial, incidents) sur le même gabarit, et une période commune comparée à la
 période précédente. Chaque domaine est calculé indépendamment : une erreur sur l'un
 n'empêche pas l'affichage des autres.
 """
