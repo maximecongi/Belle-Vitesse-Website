@@ -140,7 +140,7 @@
                 materiel: form.querySelector('input[name="vehicle_ids"]:checked, input[name="head_ids"]:checked') !== null,
                 equipe: form.querySelector('select[name="bv_referent_ids"] option:checked, select[name="bv_technician_ids"] option:checked') !== null,
                 lieux: locations.some(l => l && String(l.name || '').trim()),
-                facturation: Boolean(valueOf('pfBillingAmount').trim()),
+                facturation: document.querySelectorAll('[data-invoice-list] [data-invoice]').length > 0,
             };
 
             document.querySelectorAll('.pf-nav-link[data-pf-step]').forEach(link => {

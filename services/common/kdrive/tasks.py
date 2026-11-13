@@ -8,7 +8,9 @@ from flask import current_app, has_app_context
 from redis import Redis
 from rq import Queue as RQQueue
 
+from models.db import db
 from models.kdrive import KDriveObject
+from models.project import Project
 from services.common.kdrive.service import KDriveService
 
 logger = logging.getLogger("kdrive.tasks")
@@ -131,6 +133,38 @@ def task_retry_pending_kdrive_objects(limit: int = 50):
             logger.error(f"❌ Échec resynchro objet {obj.id} ({obj.entity_type}/{obj.entity_id}) : {err}")
 
 
+@_with_app_context
+def task_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
+                           filename: Optional[str] = None):
+    """
+    Tâche RQ : aligne le fichier d'une facture sur kDrive (dossier 2_FACTURES du projet).
+    Supprime les fichiers précédemment envoyés pour cette facture (remplacement ou retrait), puis
+    envoie source_key (chemin relatif à OUTPUT_FOLDER) s'il est fourni. Séquentiel, pour qu'une
+    suppression ne puisse pas emporter le nouveau fichier.
+    """
+    logger.info(f"🚀 [kDrive Job] task_sync_invoice_file {entity_id} -> {source_key or 'retrait'}")
+    service = KDriveService()
+    stale = KDriveObject.query.filter(
+        KDriveObject.entity_type == "invoice",
+        KDriveObject.entity_id == entity_id,
+        KDriveObject.source_key != (source_key or ""),
+    ).all()
+    for obj in stale:
+        try:
+            if obj.kdrive_file_id:
+                service.client.delete(obj.kdrive_file_id)
+            db.session.delete(obj)
+            db.session.commit()
+        except Exception as err:
+            db.session.rollback()
+            logger.error(f"❌ Échec suppression kDrive de l'ancienne facture {entity_id} ({obj.id}) : {err}")
+    if not source_key:
+        return
+    project = db.session.get(Project, project_id)
+    if project:
+        service.upload_file_sync(project, "invoice", entity_id, "file", source_key, custom_filename=filename)
+
+
 # ── Fonctions de dispatch appelées par Flask (après commit SQL) ────────────────
 
 def _dispatch_task(func, *args, **kwargs):
@@ -192,6 +226,11 @@ def dispatch_create_project_tree(project_id: int):
 
 def dispatch_upload_bundle(project_id: int, entity_type: str, entity_id: str, file_specs: List[Dict[str, Any]]):
     return _dispatch_task(task_upload_document_bundle, project_id, entity_type, entity_id, file_specs)
+
+
+def dispatch_sync_invoice_file(project_id: int, entity_id: str, source_key: Optional[str] = None,
+                               filename: Optional[str] = None):
+    return _dispatch_task(task_sync_invoice_file, project_id, entity_id, source_key, filename)
 
 
 def dispatch_move_project(

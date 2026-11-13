@@ -151,8 +151,8 @@
     {% set c = commercial %}
     <div class="ind-kpis ind-kpis--5">
         {{ kpi("Chiffre d'affaires", c.revenue_label,
-               (c.invoiced_count ~ ' projet' ~ ('s' if c.invoiced_count > 1 else '') ~ ' facturé' ~ ('s' if c.invoiced_count > 1 else ''))
-               ~ ((' · ' ~ c.invoiced_without_amount ~ ' sans montant') if c.invoiced_without_amount else ''),
+               (c.invoiced_count ~ ' facture' ~ ('s' if c.invoiced_count > 1 else '') ~ ' · '
+                ~ c.invoiced_projects ~ ' projet' ~ ('s' if c.invoiced_projects > 1 else '')) if c.invoiced_count else 'aucune facture émise',
                'neutral', c.deltas.revenue) }}
         {{ kpi('Nouvelles demandes', c.new, 'premier contact pendant la période',
                'neutral', c.deltas.new) }}

@@ -229,15 +229,13 @@ def _apply_sign_form(mode, waiver, data, *, strict, user_agent="", output_base=N
         email = email_value(email)
 
     siret_value = data.get("siret") if "siret" in data else waiver.production_siret
-    siret = (siret_value or "").strip()
+    siret = re.sub(r"\s+", "", siret_value or "")
     legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
     if legal_country in ("FR", "FRANCE"):
         require(siret, "Le numéro SIRET est obligatoire pour une société dont le siège est en France.")
-        siret_clean = re.sub(r"\s+", "", siret)
         if strict:
-            require(siret_clean.isdigit() and len(siret_clean) == 14,
+            require(siret.isdigit() and len(siret) == 14,
                     "Le numéro SIRET doit comporter exactement 14 chiffres pour une société française.")
-            siret = siret_clean
     else:
         siret = clip(siret, 100, "Le numéro d’immatriculation ne peut dépasser 100 caractères.")
 

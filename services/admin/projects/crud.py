@@ -1,4 +1,5 @@
 import json
+import re
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 import logging
 import os
@@ -22,7 +23,7 @@ from services.admin.projects.locations import _parse_shooting_locations
 from services.admin.utils import handle_admin_service_error
 from utils.database import get_heads, get_vehicles
 from utils.entity_resolvers import resolve_project
-from utils.formatting import parse_date
+from utils.formatting import get_today_paris, parse_date
 from utils.pagination import Pagination
 from utils.storage import get_project_base_path
 
@@ -262,8 +263,13 @@ def get_project_form_context():
     }
 
 
-# ── Facturation (montant global HT + montant par matériel) ─────────
-EQUIPMENT_BILLING_PREFIX = "equipment_billing["
+# ── Facturation : factures multiples (ventilation par matériel, autres prestations, fichier) ─────────
+INVOICES_MARKER = "invoices_present"
+INVOICE_FILE_EXTENSIONS = {".pdf", ".png", ".jpg", ".jpeg"}
+_INVOICE_FIELD = re.compile(
+    r"^invoices-(\w+)-(id|number|label|issued_on|amount|is_paid|remove_file|equipment\[(.+)\])$"
+)
+_TRUE = ("1", "on", "true", "yes")
 
 
 def _parse_amount(raw, label):
@@ -280,29 +286,184 @@ def _parse_amount(raw, label):
     return amount
 
 
-def _apply_billing(project, form, veh_ids, head_ids):
+def _invoice_rows_from_form(form):
     """
-    Enregistre la facturation saisie : montant global HT et montants par matériel engagé
-    (champs equipment_billing[vehicle:<id>] / equipment_billing[head:<id>]). Le matériel non engagé
-    est ignoré. La somme du matériel ne peut pas dépasser le montant global.
+    Lignes de facture postées (champs invoices-<n>-<champ>), dans l'ordre du formulaire :
+    [{"_idx", "id", "number", "label", "issued_on", "amount", "is_paid",
+      "remove_file", "equipment": {clé: brut}}].
     """
-    engaged = {f"vehicle:{v}" for v in veh_ids if v} | {f"head:{h}" for h in head_ids if h}
-    per_equipment = {}
+    rows = {}
     for name in form.keys():
-        if not name.startswith(EQUIPMENT_BILLING_PREFIX) or not name.endswith("]"):
+        m = _INVOICE_FIELD.match(name)
+        if not m:
             continue
-        key = name[len(EQUIPMENT_BILLING_PREFIX):-1]
+        idx, field, eq_key = m.group(1), m.group(2), m.group(3)
+        row = rows.setdefault(idx, {"_idx": idx, "equipment": {}})
+        if eq_key:
+            row["equipment"][eq_key] = form.get(name)
+        else:
+            row[field] = form.get(name)
+    return list(rows.values())
+
+
+def _uploaded_invoice_file(files, idx):
+    """Fichier envoyé pour la ligne idx (champ invoices-<idx>-file) ; None si aucun. Contrôle l'extension."""
+    if not files:
+        return None
+    storage = files.get(f"invoices-{idx}-file")
+    if not storage or not getattr(storage, "filename", ""):
+        return None
+    ext = Path(storage.filename).suffix.lower()
+    if ext not in INVOICE_FILE_EXTENSIONS:
+        raise ValueError(f"Format de facture non accepté ({storage.filename}) : PDF, PNG ou JPG.")
+    return storage
+
+
+def _parse_invoice_row(row, position, engaged, has_file=False):
+    """Ligne de formulaire → valeurs de ProjectInvoice ; None si la ligne est entièrement vide."""
+    text = {k: str(row.get(k) or "").strip()
+            for k in ("number", "label", "issued_on", "amount")}
+    equipment_raw = {k: v for k, v in row["equipment"].items() if str(v or "").strip()}
+    if not any(text.values()) and not equipment_raw and not has_file:
+        return None
+    name = text["number"] or text["label"] or f"facture n°{position + 1}"
+
+    issued_on = parse_date(text["issued_on"]) if text["issued_on"] else None
+    if not issued_on:
+        raise ValueError(f"Date d'émission manquante ou invalide ({name}).")
+
+    equipment = {}
+    for key, raw in equipment_raw.items():
         if key not in engaged:
             continue
-        amount = _parse_amount(form.get(name), "montant du matériel")
-        if amount:
-            per_equipment[key] = float(amount)
+        value = _parse_amount(raw, f"matériel de la {name}")
+        if value:
+            equipment[key] = float(value)
+    amount = _parse_amount(text["amount"], f"montant total de la {name}")
+    if amount is None:
+        if not equipment:
+            raise ValueError(f"Montant total manquant ({name}).")
+        amount = Decimal(str(sum(equipment.values()))).quantize(Decimal("0.01"))
+    if sum(equipment.values()) > float(amount) + 0.005:
+        raise ValueError(f"La somme du matériel dépasse le montant total de la {name}.")
 
-    total = _parse_amount(form.get("billing_amount"), "montant global")
-    if total is not None and sum(per_equipment.values()) > float(total) + 0.005:
-        raise ValueError("La somme facturée pour le matériel dépasse le montant global du projet.")
-    project.billing_amount = total
-    project.equipment_billing = per_equipment or None
+    return {
+        "number": text["number"][:60] or None,
+        "label": text["label"][:150] or None,
+        "issued_on": issued_on,
+        "amount": amount,
+        "equipment_billing": equipment or None,
+        "is_paid": str(row.get("is_paid") or "").lower() in _TRUE,
+        "position": position,
+    }
+
+
+def _apply_billing(project, form, veh_ids, head_ids, files=None):
+    """
+    Aligne les factures du projet sur le formulaire (mise à jour par id, ajout, suppression des absentes).
+    Montant total HT saisi, ventilé par véhicule / tête engagé (le matériel non engagé est ignoré) ; le reste
+    forme les « Autres prestations ». La somme du matériel ne peut pas dépasser le montant total.
+    Les fichiers envoyés sont mis de côté dans project._invoice_file_ops et écrits après le commit
+    (_store_invoice_files), une fois les ids connus.
+    """
+    from models import ProjectInvoice
+
+    engaged = {f"vehicle:{v}" for v in veh_ids if v} | {f"head:{h}" for h in head_ids if h}
+    existing = {inv.id: inv for inv in (project.invoices or []) if inv.id}
+    kept, ops = [], []
+    for row in _invoice_rows_from_form(form):
+        upload = _uploaded_invoice_file(files, row["_idx"])
+        values = _parse_invoice_row(row, len(kept), engaged, has_file=bool(upload))
+        if not values:
+            continue
+        invoice = existing.get(_parse_int(row.get("id")))
+        if invoice is None:
+            invoice = ProjectInvoice()
+        was_paid = bool(invoice.is_paid)
+        for key, value in values.items():
+            setattr(invoice, key, value)
+        if invoice.is_paid and not (was_paid and invoice.paid_on):
+            invoice.paid_on = get_today_paris()
+        elif not invoice.is_paid:
+            invoice.paid_on = None
+        if upload:
+            ops.append(("upload", invoice, upload))
+        elif str(row.get("remove_file") or "").lower() in _TRUE and invoice.file_path:
+            ops.append(("remove", invoice, None))
+        kept.append(invoice)
+
+    kept_ids = {inv.id for inv in kept if inv.id}
+    for inv_id, invoice in existing.items():
+        if inv_id not in kept_ids and invoice.file_path:
+            ops.append(("deleted", invoice.kdrive_entity_id, invoice.file_path))
+    project.invoices = kept
+    project._invoice_file_ops = ops
+
+
+def _invoice_file_rel_path(project, invoice, filename):
+    """Chemin relatif (à OUTPUT_FOLDER) de la copie locale : FACTURES/<id projet>/<id facture>_<nom>."""
+    from werkzeug.utils import secure_filename
+    safe = secure_filename(filename) or "facture"
+    return f"FACTURES/{project.id}/{invoice.id}_{safe}"
+
+
+def _output_root():
+    return Path(current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output")))
+
+
+def _remove_local_file(rel_path):
+    try:
+        target = _output_root() / rel_path
+        if target.is_file():
+            target.unlink()
+    except OSError as err:
+        logger.warning(f"⚠️ Suppression du fichier de facture impossible ({rel_path}) : {err}")
+
+
+def _store_invoice_files(project):
+    """Après commit : écrit les fichiers de facture envoyés, retire les fichiers supprimés, synchronise kDrive."""
+    from services.common.kdrive.tasks import dispatch_sync_invoice_file
+
+    ops = getattr(project, "_invoice_file_ops", None) or []
+    project._invoice_file_ops = []
+    if not ops:
+        return
+    syncs = []
+    for kind, target, payload in ops:
+        if kind == "deleted":
+            _remove_local_file(payload)
+            syncs.append((target, None, None))
+        elif kind == "remove":
+            _remove_local_file(target.file_path)
+            target.file_path = target.file_name = None
+            syncs.append((target.kdrive_entity_id, None, None))
+        else:  # upload
+            original = Path(payload.filename).name[:255]
+            rel_path = _invoice_file_rel_path(project, target, original)
+            dest = _output_root() / rel_path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            payload.save(str(dest))
+            if target.file_path and target.file_path != rel_path:
+                _remove_local_file(target.file_path)
+            target.file_path, target.file_name = rel_path, original
+            syncs.append((target.kdrive_entity_id, rel_path, original))
+    db.session.commit()
+    for entity_id, rel_path, filename in syncs:
+        dispatch_sync_invoice_file(project.id, entity_id, rel_path, filename)
+
+
+def invoice_file_path(project_id, invoice_id):
+    """(chemin absolu, nom d'origine) du fichier d'une facture, ou None s'il n'existe pas."""
+    from models import ProjectInvoice
+
+    invoice = db.session.get(ProjectInvoice, invoice_id)
+    if not invoice or invoice.project_id != project_id or not invoice.file_path:
+        return None
+    root = _output_root().resolve()
+    path = (root / invoice.file_path).resolve()
+    if root not in path.parents or not path.is_file():
+        return None
+    return path, invoice.file_name or path.name
 
 
 def _format_amount(value):
@@ -313,11 +474,40 @@ def _format_amount(value):
     return f"{value:.0f}" if value == int(value) else f"{value:.2f}"
 
 
+def _iso(d):
+    return d.isoformat() if d else ""
+
+
 def _billing_form_data(project):
     return {
-        "billing_amount": _format_amount(project.billing_amount),
-        "equipment_billing": {k: _format_amount(v) for k, v in project.equipment_billing_map.items()},
+        "invoices": [
+            {
+                "id": inv.id,
+                "number": inv.number or "",
+                "label": inv.label or "",
+                "issued_on": _iso(inv.issued_on),
+                "amount": _format_amount(inv.amount),
+                "is_paid": bool(inv.is_paid),
+                "file_name": inv.file_name or "",
+                "equipment": {k: _format_amount(v) for k, v in inv.equipment_map.items()},
+            }
+            for inv in project.invoices
+        ],
     }
+
+
+def invoices_for_form(data):
+    """Factures à afficher dans le formulaire : données d'édition, ou lignes re-postées après une erreur."""
+    if not data:
+        return []
+    if isinstance(data, dict) and isinstance(data.get("invoices"), list):
+        return data["invoices"]
+    if hasattr(data, "keys") and INVOICES_MARKER in data:
+        rows = _invoice_rows_from_form(data)
+        for row in rows:
+            row["is_paid"] = str(row.get("is_paid") or "").lower() in _TRUE
+        return rows
+    return []
 
 
 def _apply_bv_team_roles(project, form):
@@ -337,7 +527,7 @@ def _apply_bv_team_roles(project, form):
 
 
 @handle_admin_service_error
-def create_project(form, user_id=None):
+def create_project(form, user_id=None, files=None):
     """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
@@ -401,7 +591,7 @@ def create_project(form, user_id=None):
         last_action_by_id=user_id,
     )
     _apply_bv_team_roles(project, form)
-    _apply_billing(project, form, veh_ids, head_ids)
+    _apply_billing(project, form, veh_ids, head_ids, files)
     bv_referent_ids = [
         _parse_int(uid) for uid in (form.getlist("bv_referent_ids") if hasattr(form, 'getlist') else [])
     ]
@@ -417,6 +607,7 @@ def create_project(form, user_id=None):
     db.session.flush()  # Permet d'obtenir l'ID du projet avant le commit final
 
     db.session.commit()
+    _store_invoice_files(project)
 
     # Déclenchement de la création de l'arborescence kDrive (post-commit)
     from services.common.kdrive import dispatch_create_project_tree
@@ -426,7 +617,7 @@ def create_project(form, user_id=None):
 
 
 @handle_admin_service_error
-def update_project(record_id, form, user_id=None):
+def update_project(record_id, form, user_id=None, files=None):
     """Met à jour un projet existant en base de données."""
     project = resolve_project(record_id)
     if not project or project.deleted_at is not None:
@@ -492,8 +683,8 @@ def update_project(record_id, form, user_id=None):
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
     _apply_bv_team_roles(project, form)
-    if "billing_amount" in form:  # facturation absente du formulaire (ex. outil MCP) : inchangée
-        _apply_billing(project, form, veh_ids, head_ids)
+    if INVOICES_MARKER in form:  # facturation absente du formulaire (ex. outil MCP) : inchangée
+        _apply_billing(project, form, veh_ids, head_ids, files)
     project.last_action_by_id = user_id
 
     # Mise à jour des référents BV du projet
@@ -528,6 +719,7 @@ def update_project(record_id, form, user_id=None):
                 w.safety_technicians = project.bv_referents_names or None
 
     db.session.commit()
+    _store_invoice_files(project)
 
     # Détection de renommage / déplacement kDrive
     new_date = project.departure_date or project.shoot_start_date

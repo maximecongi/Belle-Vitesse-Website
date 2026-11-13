@@ -155,8 +155,10 @@ def list_projects(
 def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
     """
     Récupère les détails enrichis d'un projet par son ID numérique ou code BVPR (ex: 'BVPR-0RLY80RD5LZB').
-    Inclut les contacts résolus, la société de production, les véhicules résolus et le statut des décharges.
+    Inclut les contacts résolus, la société de production, les véhicules résolus, le statut des décharges
+    et la facturation (factures et totaux facturé / encaissé / reste ; détail via get_project_invoices).
     """
+    from services.admin.projects.invoices import project_invoices_payload
     from utils.database import get_vehicles, get_heads
 
     project = _resolve_project(project_id)
@@ -286,6 +288,8 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "heads": resolved_heads,
         "cgl": cgl_data,
         "safety_rules": safety_rules_data,
+        # Facturation : factures (n°, libellé, émission, montant HT, ventilation, payée) et totaux
+        "billing": project_invoices_payload(project),
     }
 
 

@@ -14,7 +14,10 @@ from models import (
     CheckoutVehicle, CheckinVehicle, CheckoutToken,
     ProjectReport, Incident
 )
+import os
 import unittest
+
+from werkzeug.datastructures import MultiDict
 from datetime import date
 
 
@@ -747,9 +750,9 @@ class ProjectsTest(BaseTestCase):
             self.assertIn("— Aucune / Freelance —", html)
             self.assertNotIn("quickContactModal", html)
 
-    def test_project_billing_saved_from_form(self):
-        """Facturation : montant global + montants par matériel engagé (formats français acceptés)."""
-        from models import Vehicle
+    def test_project_invoices_saved_from_form(self):
+        """Facturation : plusieurs factures (matériel engagé + autres prestations, payée)."""
+        from models import ProjectInvoice, Vehicle
         with self.app.app_context():
             self._login_admin("admin_billing@example.com")
             prod = Production(name="Prod Facturation")
@@ -761,38 +764,120 @@ class ProjectsTest(BaseTestCase):
                 "vehicle_ids": "rec_bill_v", "head_ids": "rec_bill_h",
             }
             res = self.client.post("/admin/projects/new", data={
-                **base,
-                "billing_amount": "12 500,50 €",
-                "equipment_billing[vehicle:rec_bill_v]": "8000",
-                "equipment_billing[head:rec_bill_h]": "1 200,5",
-                "equipment_billing[vehicle:rec_not_engaged]": "999",
+                **base, "invoices_present": "1",
+                "invoices-0-number": "F-001", "invoices-0-label": "Semaine 1",
+                "invoices-0-issued_on": "2026-11-07", "invoices-0-amount": "12 500,50 €",
+                "invoices-0-equipment[vehicle:rec_bill_v]": "8000",
+                "invoices-0-equipment[head:rec_bill_h]": "1 200,5",
+                "invoices-0-equipment[vehicle:rec_not_engaged]": "999",
+                "invoices-0-is_paid": "1",
+                "invoices-n3-label": "Semaine 2", "invoices-n3-issued_on": "2026-11-14",
+                "invoices-n3-amount": "3000",
+                "invoices-n4-number": "", "invoices-n4-amount": "",  # ligne vide ignorée
             })
             self.assertEqual(res.status_code, 302)
             p = Project.query.filter_by(name="Projet Facturé").one()
-            self.assertEqual(float(p.billing_amount), 12500.50)
-            self.assertEqual(p.equipment_billing, {"vehicle:rec_bill_v": 8000.0, "head:rec_bill_h": 1200.5})
-            self.assertEqual(p.billing_other, 3300.0)
+            self.assertEqual(len(p.invoices), 2)
+            first, second = p.invoices
+            self.assertEqual((first.number, first.label, str(first.issued_on)), ("F-001", "Semaine 1", "2026-11-07"))
+            self.assertEqual(float(first.amount), 12500.50)
+            self.assertEqual(first.equipment_billing, {"vehicle:rec_bill_v": 8000.0, "head:rec_bill_h": 1200.5})
+            self.assertEqual(first.other, 3300.0)  # 12 500,50 − 8 000 − 1 200,50
+            self.assertTrue(first.is_paid)
+            self.assertIsNotNone(first.paid_on)
+            self.assertEqual((second.label, float(second.amount), second.is_paid), ("Semaine 2", 3000.0, False))
+            self.assertEqual(p.billing_total, 15500.50)
+            first_id = first.id
 
             # Pré-remplissage du formulaire d'édition
             data = get_project_for_edit(p.id)
-            self.assertEqual(data["billing_amount"], "12500.50")
-            self.assertEqual(data["equipment_billing"]["head:rec_bill_h"], "1200.50")
+            self.assertEqual(data["invoices"][0]["amount"], "12500.50")
+            self.assertEqual(data["invoices"][0]["equipment"]["head:rec_bill_h"], "1200.50")
             html = self.client.get(f"/admin/projects/{p.id}/edit").get_data(as_text=True)
-            self.assertIn('id="pf-section-facturation"', html)
-            self.assertIn('name="equipment_billing[vehicle:rec_bill_v]"', html)
-            self.assertIn('value="8000"', html)
+            self.assertIn('enctype="multipart/form-data"', html)
+            self.assertIn('name="invoices-0-equipment[vehicle:rec_bill_v]"', html)
+            self.assertIn(f'name="invoices-0-id" value="{first_id}"', html)
+            self.assertIn('value="Semaine 2"', html)
+            self.assertNotIn("data-invoice-generate", html)
 
-            # Matériel > montant global : refusé, rien ne change
-            self.client.post(f"/admin/projects/{p.id}/edit", data={
-                **base, "billing_amount": "5000", "equipment_billing[vehicle:rec_bill_v]": "8000",
-            })
-            db.session.refresh(p)
-            self.assertEqual(float(p.billing_amount), 12500.50)
+            # Date manquante, ou matériel > montant total : refusés
+            with self.assertRaises(ValueError):
+                update_project(p.id, {**base, "invoices_present": "1", "invoices-0-amount": "100"})
+            db.session.rollback()
+            with self.assertRaises(ValueError):
+                update_project(p.id, MultiDict({**base, "invoices_present": "1", "invoices-0-issued_on": "2026-11-07",
+                                                "invoices-0-amount": "5000", "invoices-0-equipment[vehicle:rec_bill_v]": "8000"}))
+            db.session.rollback()
 
-            # Mise à jour sans les champs de facturation (ex. outil MCP) : facturation conservée
+            # Mise à jour sans la section facturation (ex. outil MCP) : factures conservées
             update_project(p.id, {**base, "vehicle_ids": None})
-            db.session.refresh(p)
-            self.assertEqual(float(p.billing_amount), 12500.50)
+            db.session.expire_all()
+            self.assertEqual(len(p.invoices), 2)
+
+            # Mise à jour par id (la facture garde son identifiant), suppression de l'autre
+            self.client.post(f"/admin/projects/{p.id}/edit", data={
+                **base, "invoices_present": "1", "invoices-0-id": str(first_id),
+                "invoices-0-label": "Semaine 1 bis", "invoices-0-issued_on": "2026-11-07", "invoices-0-amount": "10",
+            })
+            db.session.expire_all()
+            self.assertEqual([(i.id, i.label, float(i.amount)) for i in p.invoices], [(first_id, "Semaine 1 bis", 10.0)])
+            self.assertEqual(ProjectInvoice.query.count(), 1)
+
+    def test_project_invoice_file_upload_download_and_kdrive(self):
+        """Fichier de facture : copie locale téléchargeable, envoi kDrive dans 2_FACTURES, retrait."""
+        import io
+        import tempfile
+        from unittest.mock import patch
+        from services.common.kdrive.paths import build_document_directory_path
+        self.assertEqual(build_document_directory_path(None, "invoice", "FACT-1", "file"), "2_FACTURES")
+
+        with self.app.app_context(), tempfile.TemporaryDirectory() as tmp:
+            self.app.config["OUTPUT_FOLDER"] = tmp
+            self._login_admin("admin_invoice_file@example.com")
+            prod = Production(name="Prod Fichier")
+            db.session.add(prod)
+            db.session.commit()
+            base = {"name": "Projet Fichier", "production_id": str(prod.id), "shoot_start": "2026-11-01"}
+            with patch("services.common.kdrive.tasks.dispatch_sync_invoice_file") as sync:
+                res = self.client.post("/admin/projects/new", data={
+                    **base, "invoices_present": "1",
+                    "invoices-0-issued_on": "2026-11-07", "invoices-0-amount": "500",
+                    "invoices-0-file": (io.BytesIO(b"%PDF-1.4 facture"), "F-2026-11-1.pdf"),
+                }, content_type="multipart/form-data")
+                self.assertEqual(res.status_code, 302)
+                p = Project.query.filter_by(name="Projet Fichier").one()
+                inv = p.invoices[0]
+                self.assertEqual(inv.file_name, "F-2026-11-1.pdf")
+                self.assertEqual(inv.file_path, f"FACTURES/{p.id}/{inv.id}_F-2026-11-1.pdf")
+                sync.assert_called_once_with(p.id, f"FACT-{inv.id}", inv.file_path, "F-2026-11-1.pdf")
+
+                dl = self.client.get(f"/admin/projects/{p.id}/invoices/{inv.id}/file")
+                self.assertEqual(dl.status_code, 200)
+                self.assertEqual(dl.data, b"%PDF-1.4 facture")
+                self.assertIn("F-2026-11-1.pdf", dl.headers["Content-Disposition"])
+                dl.close()
+                html = self.client.get(f"/admin/projects/{p.id}/edit").get_data(as_text=True)
+                self.assertIn(f"/admin/projects/{p.id}/invoices/{inv.id}/file", html)
+
+                # Format refusé
+                with self.assertRaises(ValueError):
+                    update_project(p.id, {**base, "invoices_present": "1", "invoices-0-id": str(inv.id),
+                                          "invoices-0-issued_on": "2026-11-07"},
+                                   files={"invoices-0-file": _FakeUpload("virus.exe")})
+                db.session.rollback()
+
+                # Retrait du fichier : copie locale supprimée, kDrive nettoyé
+                sync.reset_mock()
+                local = os.path.join(tmp, inv.file_path)
+                self.client.post(f"/admin/projects/{p.id}/edit", data={
+                    **base, "invoices_present": "1", "invoices-0-id": str(inv.id),
+                    "invoices-0-issued_on": "2026-11-07", "invoices-0-amount": "500", "invoices-0-remove_file": "1",
+                })
+                db.session.expire_all()
+                self.assertIsNone(p.invoices[0].file_path)
+                self.assertFalse(os.path.exists(local))
+                sync.assert_called_once_with(p.id, f"FACT-{inv.id}", None, None)
+                self.assertEqual(self.client.get(f"/admin/projects/{p.id}/invoices/{inv.id}/file").status_code, 404)
 
     def test_project_billing_rejects_invalid_amounts(self):
         from services.admin.projects.crud import _parse_amount
@@ -931,3 +1016,12 @@ if __name__ == "__main__":
     unittest.main()
 
 
+class _FakeUpload:
+    """Fichier envoyé minimal (FileStorage) pour les tests de facturation."""
+
+    def __init__(self, filename):
+        self.filename = filename
+
+    def save(self, dst):
+        with open(dst, "wb") as fh:
+            fh.write(b"x")

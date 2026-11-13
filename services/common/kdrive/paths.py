@@ -28,7 +28,11 @@ DOC_FOLDERS = {
     "risk_assessment": "4_SÉCURITÉ/5_RISK_ASSESSMENTS",
     "checkin": "4_SÉCURITÉ/6_CHECKINS",
     "incident": "6_INCIDENTS",
+    "invoice": "2_FACTURES",
 }
+
+# Types de documents déposés directement dans leur dossier (pas de sous-dossier par document)
+FLAT_DOC_TYPES = {"invoice"}
 
 ROLE_SUBFOLDERS = {
     ("cgl", "pdf"): "1_CGL",
@@ -158,6 +162,8 @@ def build_document_directory_path(project, entity_type: str, entity_id: str, rol
         raise ValueError(f"Type d'entité inconnu pour kDrive : {entity_type}")
 
     doc_base = DOC_FOLDERS[entity_type]
+    if entity_type in FLAT_DOC_TYPES:
+        return doc_base
     clean_id = clean_segment(entity_id, "entity_id")
 
     subfolder = ROLE_SUBFOLDERS.get((entity_type, role), "") if role else ""

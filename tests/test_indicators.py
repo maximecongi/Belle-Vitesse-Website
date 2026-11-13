@@ -122,32 +122,35 @@ class CommercialRevenueTest(BaseTestCase):
         ])
         db.session.commit()
 
-    def _project(self, name, vehicles, amount, equipment, events):
-        p = Project(name=name, production_id=self.prod.id, vehicles_to_check=vehicles,
-                    billing_amount=amount, equipment_billing=equipment)
+    def _project(self, name, vehicles, invoices, events):
+        from models import ProjectInvoice
+        p = Project(name=name, production_id=self.prod.id, vehicles_to_check=vehicles)
+        p.invoices = [ProjectInvoice(issued_on=date.fromisoformat(day), amount=amount, equipment_billing=equipment)
+                      for day, amount, equipment in invoices]
         db.session.add(p)
         db.session.commit()
         for ev_type, day, extra in events:
             add_commercial_event(p.id, event_type=ev_type, date_str=day, now=NOW, **extra)
         return p
 
-    def test_revenue_counted_at_invoice_date_with_equipment_breakdown(self):
-        self._project("Facturé", "rec_erover,rec_erider", 10000, {"vehicle:rec_erover": 6000, "vehicle:rec_erider": 2500},
-                      [("first_request", "2026-09-01", {}), ("confirmed", "2026-09-10", {}),
-                       ("invoice_sent", "2026-10-25", {})])
-        # Matériel non engagé ignoré ; montant global absent → somme du matériel
-        self._project("Sans global", "rec_erider", None, {"vehicle:rec_erider": 1500, "vehicle:rec_erover": 999},
-                      [("first_request", "2026-09-01", {}), ("invoice_sent", "2026-11-02", {})])
-        self._project("Sans montant", "", None, None,
-                      [("first_request", "2026-09-01", {}), ("invoice_sent", "2026-11-03", {})])
-        # Facturé avant la période : compte pour la comparaison
-        self._project("Ancien", "rec_erover", 4000, {"vehicle:rec_erover": 4000},
-                      [("first_request", "2026-08-01", {}), ("invoice_sent", "2026-09-20", {})])
+    def test_revenue_counted_at_each_invoice_date_with_equipment_breakdown(self):
+        # Facturé en deux fois : acompte avant la période (comparaison), solde pendant
+        self._project("Facturé", "rec_erover,rec_erider",
+                      [("2026-09-20", 4000, {"vehicle:rec_erover": 4000}),
+                       ("2026-10-25", 10000, {"vehicle:rec_erover": 6000, "vehicle:rec_erider": 2500})],
+                      [("first_request", "2026-09-01", {}), ("confirmed", "2026-09-10", {})])
+        # Facturé par semaine pendant la période ; matériel non engagé ignoré
+        self._project("Par semaine", "rec_erider",
+                      [("2026-11-02", 1000, {"vehicle:rec_erider": 1000, "vehicle:rec_erover": 999}),
+                       ("2026-11-09", 500, {"vehicle:rec_erider": 500})],
+                      [("first_request", "2026-09-01", {})])
+        # Facture future : hors période
+        self._project("Futur", "", [("2026-12-20", 9999, None)], [("first_request", "2026-09-01", {})])
 
         period = resolve_period("30d", TODAY)
         c = commercial_indicators(period, last_12_months(period), now=NOW)
         self.assertEqual(c["revenue"], 11500)
-        self.assertEqual((c["invoiced_count"], c["invoiced_without_amount"]), (3, 1))
+        self.assertEqual((c["invoiced_count"], c["invoiced_projects"]), (3, 2))
         self.assertEqual(c["deltas"]["revenue"]["text"], "+7\u202f500 €")
         rbe = c["revenue_by_equipment"]
         self.assertEqual([(r["name"], r["count"]) for r in rbe["rows"]], [("eRover", 6000), ("eRider", 4000)])
@@ -155,7 +158,7 @@ class CommercialRevenueTest(BaseTestCase):
         self.assertEqual(rbe["other_label"], "1\u202f500\u202f€")
 
     def test_agenda_lists_overdue_today_and_next_days(self):
-        p = self._project("Agenda", "", None, None, [("first_request", "2026-10-01", {})])
+        p = self._project("Agenda", "", [], [("first_request", "2026-10-01", {})])
         # Planifiés le 1er novembre ; le 10 est donc en retard au 12
         for day in ("2026-11-10", "2026-11-12", "2026-11-15", "2026-12-30"):
             add_commercial_event(p.id, event_type="call_out", date_str=day, now=datetime(2026, 11, 1, 9, 0),

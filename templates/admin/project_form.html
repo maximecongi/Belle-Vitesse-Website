@@ -3,6 +3,125 @@
 {% from "admin/macros.html" import empty_state, admin_banner, admin_modal %}
 {% from "admin/_contact_picker.html" import contact_select, new_contact_fieldset %}
 
+{% macro invoice_card(idx, inv, sel_vehicle_ids, sel_head_ids, record_id=None, open=False) %}
+{% set prefix = 'invoices-' ~ idx ~ '-' %}
+{% set eq = inv.get('equipment') or {} %}
+{% set has_file = inv.get('id') and inv.get('file_name') %}
+<article class="pf-inv {% if open %}is-open{% endif %}" data-invoice>
+    {% if inv.get('id') %}<input type="hidden" name="{{ prefix }}id" value="{{ inv.get('id') }}">{% endif %}
+    <div class="pf-inv-row">
+        <button type="button" class="pf-inv-toggle" data-invoice-toggle aria-expanded="{{ 'true' if open else 'false' }}"
+            aria-label="Afficher le détail de la facture"><i data-lucide="chevron-down"></i></button>
+        <div class="pf-inv-number" data-invoice-out="number">—</div>
+        <div class="pf-inv-label"><span data-invoice-out="label">—</span></div>
+        <div class="pf-inv-cell" data-invoice-out="issued_on">—</div>
+        <div class="pf-inv-cell pf-inv-num" data-invoice-out="equipment">—</div>
+        <div class="pf-inv-cell pf-inv-num pf-inv-total" data-invoice-out="total">—</div>
+        <div class="pf-inv-actions">
+            <label class="pf-inv-paid">
+                <input type="checkbox" name="{{ prefix }}is_paid" value="1" data-invoice-paid
+                    {% if inv.get('is_paid') %}checked{% endif %}>
+                <span>Payée</span>
+            </label>
+            <input type="file" name="{{ prefix }}file" id="pfInv{{ idx }}File" accept=".pdf,.png,.jpg,.jpeg"
+                class="u-d-none" data-invoice-file>
+            {% if has_file and record_id %}
+            <a class="pf-inv-icon" data-invoice-download
+                href="{{ url_for('admin_projects.admin_project_invoice_file', record_id=record_id, invoice_id=inv.get('id')) }}"
+                title="Télécharger {{ inv.get('file_name') }}" aria-label="Télécharger la facture"><i data-lucide="download"></i></a>
+            {% endif %}
+            <label class="pf-inv-icon" for="pfInv{{ idx }}File" data-invoice-upload {% if has_file and record_id %}hidden{% endif %}
+                title="Joindre la facture (PDF, PNG, JPG)" aria-label="Joindre la facture"><i data-lucide="upload"></i></label>
+            <button type="button" class="pf-inv-icon pf-inv-icon--danger" data-invoice-remove
+                title="Supprimer cette facture" aria-label="Supprimer cette facture"><i data-lucide="trash-2"></i></button>
+        </div>
+    </div>
+
+    <div class="pf-inv-detail" data-invoice-detail {% if not open %}hidden{% endif %}>
+        <div class="pf-inv-fields">
+            <div class="form-group">
+                <label class="pf-inv-caption" for="pfInv{{ idx }}Number">N° de facture</label>
+                <input type="text" class="form-input" id="pfInv{{ idx }}Number" name="{{ prefix }}number"
+                    value="{{ inv.get('number') or '' }}" maxlength="60" placeholder="F-2026-11-1" autocomplete="off"
+                    data-invoice-in="number">
+            </div>
+            <div class="form-group">
+                <label class="pf-inv-caption" for="pfInv{{ idx }}Label">Libellé</label>
+                <input type="text" class="form-input" id="pfInv{{ idx }}Label" name="{{ prefix }}label"
+                    value="{{ inv.get('label') or '' }}" maxlength="150" placeholder="Semaine 1, Acompte, Solde…" autocomplete="off"
+                    data-invoice-in="label">
+            </div>
+            <div class="form-group">
+                <label class="pf-inv-caption" for="pfInv{{ idx }}Date">Date d'émission</label>
+                <input type="date" class="form-input" id="pfInv{{ idx }}Date" name="{{ prefix }}issued_on"
+                    value="{{ inv.get('issued_on') or '' }}" required data-invoice-in="issued_on">
+            </div>
+        </div>
+
+        <div class="pf-inv-caption">Par matériel · HT</div>
+        <p class="pf-billing-empty u-text-sm u-text-muted" data-billing-empty>Sélectionnez des véhicules ou des têtes
+            dans la section Matériel pour ventiler cette facture.</p>
+        <ul class="pf-inv-equipment">
+            {% for kind, items, selected in (('vehicle', vehicles, sel_vehicle_ids), ('head', heads, sel_head_ids)) %}
+            {% for it in items %}
+            {% set key = kind ~ ':' ~ it.id %}
+            {% set is_selected = (it.id|string) in selected %}
+            <li class="form-group" data-billing-row data-billing-type="{{ kind }}" data-billing-id="{{ it.id }}"
+                {% if not is_selected %}hidden{% endif %}>
+                {% set itf = it.fields or {} %}
+                <label class="form-label pf-inv-eq-name" for="pfInv{{ idx }}-{{ kind }}-{{ loop.index }}">
+                    {% if itf.get('thumbnail') %}
+                    <img src="{{ itf.thumbnail[0].thumbnails.small.url }}" alt="" class="pf-inv-eq-thumb" loading="lazy">
+                    {% else %}
+                    <span class="pf-inv-eq-thumb pf-inv-eq-thumb--empty"><i data-lucide="{{ 'car' if kind == 'vehicle' else 'camera' }}"></i></span>
+                    {% endif %}
+                    <span>{{ itf.get('name', '—') }}</span></label>
+                <div class="pf-amount">
+                    <input type="text" inputmode="decimal" id="pfInv{{ idx }}-{{ kind }}-{{ loop.index }}"
+                        name="{{ prefix }}equipment[{{ key }}]" class="form-input" placeholder="0" autocomplete="off"
+                        data-billing-amount value="{{ eq.get(key) or '' }}" {% if not is_selected %}disabled{% endif %}>
+                    <span class="pf-amount-unit">€</span>
+                </div>
+            </li>
+            {% endfor %}
+            {% endfor %}
+        </ul>
+
+        <div class="pf-inv-foot">
+            <div class="form-group">
+                <label class="pf-inv-caption" for="pfInv{{ idx }}Amount">Montant total · HT</label>
+                <div class="pf-amount">
+                    <input type="text" inputmode="decimal" class="form-input" id="pfInv{{ idx }}Amount" name="{{ prefix }}amount"
+                        value="{{ inv.get('amount') or '' }}" placeholder="0" autocomplete="off" required data-invoice-amount>
+                    <span class="pf-amount-unit">€</span>
+                </div>
+            </div>
+            <p class="pf-inv-equation">
+                <span>dont matériel <span data-invoice-out="equipment">—</span></span>
+                <span aria-hidden="true">·</span>
+                <strong>autres prestations <span data-invoice-out="other">—</span></strong>
+            </p>
+            <p class="pf-billing-error u-text-sm" data-billing-error hidden>
+                La somme du matériel dépasse le montant total de la facture.</p>
+        </div>
+
+        <div class="pf-inv-caption">Facture</div>
+        <div class="pf-inv-file {% if not has_file %}is-empty{% endif %}" data-invoice-file-info>
+            <i data-lucide="paperclip"></i>
+            <span class="pf-inv-file-name" data-invoice-file-name>{{ inv.get('file_name') if has_file else 'Aucun fichier joint' }}</span>
+            <div class="pf-inv-file-actions">
+                <label class="pf-inv-link" for="pfInv{{ idx }}File">{{ 'Remplacer' if has_file else 'Joindre' }}</label>
+                {% if has_file %}
+                <label class="pf-inv-link pf-inv-link--danger">
+                    <input type="checkbox" name="{{ prefix }}remove_file" value="1" data-invoice-remove-file> Retirer
+                </label>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</article>
+{% endmacro %}
+
 {% block title %}{% if is_duplicate %}Dupliquer le projet{% elif is_edit %}Modifier le projet{% else %}Nouveau projet{% endif %}{% endblock %}
 
 {% block extra_css %}
@@ -33,7 +152,7 @@
         ) }}
         {% endif %}
 
-        <form method="POST" id="projectMainForm" {% if not is_edit
+        <form method="POST" id="projectMainForm" enctype="multipart/form-data" {% if not is_edit
             %}action="{{ url_for('admin_projects.admin_project_new') }}" {% endif %}
             data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -295,55 +414,56 @@
             </section>
 
             <!-- ⑥ FACTURATION -->
+            {% set sel_vehicle_ids = ((data.vehicle_ids if data and data.vehicle_ids is defined else []) or [])|map('string')|list %}
+            {% set sel_head_ids = ((data.head_ids if data and data.head_ids is defined else []) or [])|map('string')|list %}
+            {% if data and data.getlist is defined %}
+            {% set sel_vehicle_ids = data.getlist('vehicle_ids') %}
+            {% set sel_head_ids = data.getlist('head_ids') %}
+            {% endif %}
+            {% set invoices = invoices_for_form(data) %}
             <section class="admin-card pf-section" id="pf-section-facturation" data-pf-section data-billing>
-                <h2 class="pf-section-title">Facturation</h2>
-                <p class="pf-billing-hint">Montants HT. Le chiffre d'affaires est compté à la date de la facture
-                    (« Facture émise » dans la timeline commerciale).</p>
-                {% set eb = data.equipment_billing if (data and data.equipment_billing is mapping) else {} %}
+                <div class="pf-inv-header">
+                    <h2 class="pf-section-title u-mb-0">Facturation</h2>
+                    <div class="pf-inv-header-actions">
+                        <button type="button" class="admin-btn admin-btn-primary admin-btn-sm" data-invoice-add>
+                            <i data-lucide="plus"></i><span>Ajouter une facture</span></button>
+                    </div>
+                </div>
+                <p class="pf-billing-hint">Une ligne par facture (acompte, semaine, solde…). Montants HT : le chiffre
+                    d'affaires est compté à la date d'émission de chaque facture.</p>
+                <input type="hidden" name="invoices_present" value="1">
 
-                <div class="form-group pf-billing-total">
-                    <label class="form-label" for="pfBillingAmount">Montant global du projet</label>
-                    <div class="pf-amount">
-                        <input type="text" inputmode="decimal" id="pfBillingAmount" name="billing_amount"
-                            class="form-input" placeholder="0" autocomplete="off" data-billing-total
-                            value="{{ (data.get('billing_amount') if data and data.get is defined else '') or '' }}">
-                        <span class="pf-amount-unit">€ HT</span>
+                <div class="pf-inv-summary">
+                    <dl class="pf-inv-stats">
+                        <div><dt>Total facturé</dt><dd data-invoice-total>0,00 €</dd></div>
+                        <div><dt>Encaissé</dt><dd data-invoice-paid-total>0,00 €</dd></div>
+                        <div><dt>Reste à encaisser</dt><dd data-invoice-due>0,00 €</dd></div>
+                    </dl>
+                    <div class="pf-inv-progress">
+                        <div class="pf-inv-progress-bar"><span data-invoice-progress></span></div>
+                        <span class="pf-inv-progress-label" data-invoice-progress-label>0 % encaissé · 0 facture</span>
                     </div>
                 </div>
 
-                <div class="pf-subtitle">Par matériel</div>
-                <p class="pf-billing-empty u-text-sm u-text-muted" data-billing-empty>Sélectionnez des véhicules ou des têtes
-                    dans la section Matériel pour saisir leur facturation.</p>
-                <ul class="pf-billing-list">
-                    {% for kind, items in (('vehicle', vehicles), ('head', heads)) %}
-                    {% for it in items %}
-                    {% set key = kind ~ ':' ~ it.id %}
-                    {% set is_selected = data and ((data.vehicle_ids if kind == 'vehicle' else data.head_ids) or []) and
-                    (it.id in (data.vehicle_ids if kind == 'vehicle' else data.head_ids) or (it.id|string) in
-                    (data.vehicle_ids if kind == 'vehicle' else data.head_ids)) %}
-                    <li class="pf-billing-row" data-billing-row data-billing-type="{{ kind }}" data-billing-id="{{ it.id }}"
-                        {% if not is_selected %}hidden{% endif %}>
-                        <label class="pf-billing-name" for="pfBilling-{{ kind }}-{{ loop.index }}">
-                            <i data-lucide="{{ 'car' if kind == 'vehicle' else 'camera' }}"></i>
-                            {{ it.fields.get('name', '—') if it.fields else '—' }}
-                        </label>
-                        <div class="pf-amount">
-                            <input type="text" inputmode="decimal" id="pfBilling-{{ kind }}-{{ loop.index }}"
-                                name="equipment_billing[{{ key }}]" class="form-input" placeholder="0" autocomplete="off"
-                                data-billing-amount value="{{ eb.get(key) or (data.get('equipment_billing[' ~ key ~ ']') if data and data.get is defined else '') or '' }}" {% if not is_selected %}disabled{% endif %}>
-                            <span class="pf-amount-unit">€ HT</span>
-                        </div>
-                    </li>
-                    {% endfor %}
-                    {% endfor %}
-                </ul>
+                <div class="pf-inv-table">
+                    <div class="pf-inv-row pf-inv-head" aria-hidden="true" data-invoice-head {% if not invoices %}hidden{% endif %}>
+                        <span></span><span>N°</span><span>Libellé</span><span>Émission</span>
+                        <span class="pf-inv-num">Matériel</span>
+                        <span class="pf-inv-num">Montant HT</span><span></span>
+                    </div>
+                    <div class="pf-inv-list" data-invoice-list>
+                        {% for inv in invoices %}
+                        {{ invoice_card(loop.index0, inv, sel_vehicle_ids, sel_head_ids, record_id=record_id if is_edit else None,
+                           open=not inv.get('id')) }}
+                        {% endfor %}
+                    </div>
+                    <p class="pf-invoices-empty u-text-sm u-text-muted" data-invoice-empty {% if invoices %}hidden{% endif %}>
+                        Aucune facture pour l'instant.</p>
+                </div>
 
-                <dl class="pf-billing-summary">
-                    <div><dt>Matériel</dt><dd data-billing-equipment>—</dd></div>
-                    <div><dt>Autres prestations</dt><dd data-billing-other>—</dd></div>
-                </dl>
-                <p class="pf-billing-error u-text-sm" data-billing-error hidden>
-                    La somme du matériel dépasse le montant global.</p>
+                <template data-invoice-template>
+                    {{ invoice_card('__i__', {}, sel_vehicle_ids, sel_head_ids, open=True) }}
+                </template>
             </section>
         </form>
     </div>

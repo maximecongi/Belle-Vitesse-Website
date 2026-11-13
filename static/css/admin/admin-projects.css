@@ -3677,8 +3677,441 @@
     color: var(--grey-2);
 }
 
-.pf-billing-total {
-    max-width: 320px;
+/* Factures : récapitulatif, tableau de lignes repliables (bordure gauche jaune BV, angles droits) */
+.pf-inv-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.pf-inv-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pf-inv-summary {
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--grey-border, #E0E0E0);
+    border-radius: 8px;
+    background: var(--grey-bg, #f8f9fa);
+}
+
+.pf-inv-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 0.9rem;
+}
+
+.pf-inv-stats dt,
+.pf-inv-caption,
+.pf-inv-head {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--grey-2);
+}
+
+.pf-inv-stats dd {
+    margin: 0.3rem 0 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--grey-1, #151515);
+    font-variant-numeric: tabular-nums;
+}
+
+.pf-inv-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pf-inv-progress-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--grey-border, #E0E0E0);
+    overflow: hidden;
+}
+
+.pf-inv-progress-bar span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--green-1, #618B4A);
+    transition: width 0.2s ease;
+}
+
+.pf-inv-progress-label {
+    font-size: 0.75rem;
+    color: var(--grey-2);
+    white-space: nowrap;
+}
+
+.pf-inv-row {
+    display: grid;
+    /* Colonne d'actions à largeur fixe : l'en-tête (cellule vide) et les lignes
+       (case Payée + icônes) doivent partager exactement la même grille. */
+    grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.95fr) 9.75rem;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Compense les bordures des cartes (.pf-inv : 3px à gauche, 1px à droite). */
+.pf-inv-head {
+    padding: 0 calc(0.9rem + 1px) 0.6rem calc(0.9rem + 3px);
+}
+
+.pf-inv-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.pf-inv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.pf-inv {
+    border: 1px solid var(--grey-border, #E0E0E0);
+    border-left: 3px solid var(--admin-accent, #FFC845);
+    border-radius: 0;
+    background: var(--white, #fff);
+}
+
+.pf-inv > .pf-inv-row {
+    min-height: 52px;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+}
+
+.pf-inv-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--grey-1, #151515);
+    cursor: pointer;
+}
+
+.pf-inv-toggle .lucide {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.15s ease;
+}
+
+.pf-inv.is-open .pf-inv-toggle .lucide {
+    transform: rotate(180deg);
+}
+
+.pf-inv-number,
+.pf-inv-total {
+    font-weight: 700;
+}
+
+.pf-inv-number,
+.pf-inv-label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pf-inv-label {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.pf-inv-cell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--grey-2);
+}
+
+.pf-inv-cell.pf-inv-total {
+    color: var(--grey-1, #151515);
+}
+
+.pf-inv-total {
+    font-size: 0.85rem;
+}
+
+.pf-inv-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+}
+
+.pf-inv-paid {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-right: 0.4rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pf-inv-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--grey-1, #151515);
+    cursor: pointer;
+}
+
+.pf-inv-icon[hidden] {
+    display: none;
+}
+
+.pf-inv-icon:hover {
+    background: var(--grey-bg, #f8f9fa);
+}
+
+.pf-inv-icon.is-pending {
+    color: var(--green-1, #618B4A);
+}
+
+.pf-inv-icon--danger {
+    color: var(--status-danger-text, #D92D20);
+}
+
+.pf-inv-icon .lucide {
+    width: 16px;
+    height: 16px;
+}
+
+.pf-inv-detail {
+    padding: 1rem 1.1rem 1.1rem;
+    border-top: 1px solid var(--grey-border, #E0E0E0);
+    background: #FAFAFA;
+}
+
+.pf-inv-detail[hidden],
+.pf-inv-head[hidden],
+.pf-invoices-empty[hidden] {
+    display: none;
+}
+
+.pf-inv-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.pf-inv-detail .form-input {
+    min-width: 0;
+    height: auto;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+}
+
+.pf-inv-detail .pf-amount .form-input {
+    padding-right: 2rem;
+    font-weight: 600;
+}
+
+.pf-inv-detail .pf-amount-unit {
+    font-size: 0.7rem;
+}
+
+.pf-inv-detail .form-label {
+    margin-bottom: 0.45rem;
+    font-size: 0.8rem;
+}
+
+.pf-inv-fields .form-group,
+.pf-inv-foot .form-group {
+    margin-bottom: 0;
+}
+
+.pf-inv-caption {
+    display: block;
+    margin-bottom: 0.45rem;
+}
+
+.pf-inv-eq-name {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    font-weight: 600;
+}
+
+.pf-inv-eq-name > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pf-inv-eq-thumb {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.pf-inv-eq-thumb--empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grey-border, #E0E0E0);
+    color: var(--grey-2);
+}
+
+.pf-inv-eq-thumb--empty .lucide {
+    width: 13px;
+    height: 13px;
+}
+
+.pf-inv-equipment {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.6rem 0.9rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.pf-inv-equipment [hidden] {
+    display: none;
+}
+
+.pf-inv-equipment .form-group {
+    margin-bottom: 0;
+}
+
+.pf-inv-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.pf-inv-foot .form-group {
+    width: min(100%, 185px);
+}
+
+.pf-inv-equation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0;
+    min-height: 2.1rem;
+    align-content: center;
+    font-size: 0.8rem;
+    color: var(--grey-2);
+    font-variant-numeric: tabular-nums;
+}
+
+.pf-inv-equation strong {
+    color: var(--grey-1, #151515);
+}
+
+.pf-inv-file {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--grey-border, #E0E0E0);
+    border-radius: 6px;
+    background: var(--white, #fff);
+    font-size: 0.82rem;
+    color: var(--grey-1, #151515);
+}
+
+.pf-inv-file.is-empty .pf-inv-file-name {
+    color: var(--grey-2);
+}
+
+.pf-inv-file > .lucide {
+    flex-shrink: 0;
+    width: 15px;
+    height: 15px;
+    color: var(--grey-2);
+}
+
+.pf-inv-file-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* « Retirer » coché : le fichier sera supprimé à l'enregistrement */
+.pf-inv-file:has([data-invoice-remove-file]:checked) .pf-inv-file-name {
+    color: var(--grey-2);
+    text-decoration: line-through;
+}
+
+.pf-inv-file-actions {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+}
+
+.pf-inv-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    font-weight: 600;
+    color: var(--grey-1, #151515);
+    cursor: pointer;
+}
+
+.pf-inv-link:last-child {
+    padding-right: 0;
+}
+
+.pf-inv-link + .pf-inv-link {
+    border-left: 1px solid var(--grey-border, #E0E0E0);
+}
+
+.pf-inv-link:hover {
+    text-decoration: underline;
+}
+
+.pf-inv-link input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pf-inv-link--danger {
+    color: var(--status-danger-text, #D92D20);
+}
+
+.pf-inv-link--danger:has(input:checked) {
+    text-decoration: underline;
+}
+
+.pf-invoices-empty {
+    margin: 0.5rem 0 0;
+    padding: 0 0.9rem;
 }
 
 /* Champ montant : saisie alignée à droite, unité en suffixe */
@@ -3777,7 +4210,37 @@
     font-weight: 600;
 }
 
+@media (max-width: 1280px) {
+    .pf-inv-equipment {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
 @media (max-width: 760px) {
+    .pf-inv-stats,
+    .pf-inv-fields,
+    .pf-inv-equipment {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pf-inv-head {
+        display: none;
+    }
+
+    .pf-inv > .pf-inv-row {
+        grid-template-columns: 24px minmax(0, 1fr) auto;
+    }
+
+    .pf-inv > .pf-inv-row > .pf-inv-label,
+    .pf-inv > .pf-inv-row > .pf-inv-cell:not(.pf-inv-total) {
+        display: none;
+    }
+
+    .pf-inv-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+
     .pf-billing-list {
         grid-template-columns: minmax(0, 1fr);
     }

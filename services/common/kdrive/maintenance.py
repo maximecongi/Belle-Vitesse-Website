@@ -92,6 +92,11 @@ class MaintenanceMixin:
         Supprime également toutes les entrées associées dans kdrive_objects.
         Garantit que le dossier du document (ex: BVTC-XXXX, BVSR-XXXX, BVCO-XXXX, BVCI-XXXX, BVIC-XXXX) est lui-même supprimé et ne reste pas vide.
         """
+        from services.common.kdrive.paths import FLAT_DOC_TYPES
+        if entity_type in FLAT_DOC_TYPES:
+            # Pas de dossier propre (ex. factures dans 2_FACTURES) : supprimer le dossier viderait le dossier commun
+            logger.warning(f"⚠️ delete_entity ignoré pour {entity_type} {entity_id} (document sans dossier dédié).")
+            return False
         canonical_type = entity_type
         if entity_type in ("cgl", "cgl_waiver"):
             canonical_type = "cgl"

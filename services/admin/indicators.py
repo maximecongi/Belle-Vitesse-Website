@@ -16,7 +16,7 @@ from statistics import median
 
 from sqlalchemy.orm import selectinload
 
-from models import Head, Project, Vehicle
+from models import Head, Project, ProjectInvoice, Vehicle
 from models.commercial_event import COMMERCIAL_STATUSES, EVENT_TYPE_LABELS, LOST_REASON_LABELS
 from services.admin.equipment_colors import DEFAULT_COLOR, get_color_map
 from utils.formatting import get_today_paris
@@ -191,11 +191,9 @@ def _project_milestones(project):
     quote = first_of("quote_sent")
     lost = [e for e in events if e.event_type == "lost"]
     is_lost = project.commercial_status == "lost"
-    invoice = first_of("invoice_sent")
     return {
         "project": project,
         "status": project.commercial_status,
-        "invoiced": invoice.occurred_at if invoice else None,
         "first": events[0].occurred_at if events else None,
         "confirmed": confirmed.occurred_at if confirmed else None,
         "quoted": bool(quote) or project.commercial_status in WON_COMMERCIAL_STATUSES,
@@ -205,17 +203,16 @@ def _project_milestones(project):
     }
 
 
-def _commercial_window(items, start, end):
+def _commercial_window(items, invoices, start, end):
     new = [i for i in items if i["first"] and _in(i["first"].date(), start, end)]
     won = [i for i in items if i["confirmed"] and _in(i["confirmed"].date(), start, end)]
     lost = [i for i in items if i["lost"] and _in(i["lost"].date(), start, end)]
     delays = [(i["confirmed"] - i["first"]).total_seconds() / 86400 for i in won if i["first"]]
-    invoiced = [i for i in items if i["invoiced"] and _in(i["invoiced"].date(), start, end)]
-    amounts = [i["project"].billing_total for i in invoiced]
+    invoiced = [inv for inv in invoices if _in(inv.issued_on, start, end)]
     return {
-        "revenue": round(sum(a for a in amounts if a), 2),
+        "revenue": round(sum(inv.total for inv in invoiced), 2),
         "invoiced_count": len(invoiced),
-        "invoiced_without_amount": sum(1 for a in amounts if a is None),
+        "invoiced_projects": len({inv.project_id for inv in invoiced}),
         "invoiced_items": invoiced,
         "new": len(new),
         "won": len(won),
@@ -262,12 +259,12 @@ def _agenda_rows(agenda, limit=8):
 
 def _revenue_by_equipment(invoiced_items, revenue):
     """
-    CA facturé par véhicule / tête sur la période (montants saisis par matériel dans la fiche projet),
-    aux couleurs du matériel ; « Autres prestations » = reste des montants globaux.
+    CA facturé par véhicule / tête sur la période (ventilation par matériel de chaque facture),
+    aux couleurs du matériel ; « Autres prestations » = reste des montants des factures.
     """
     totals = {}
-    for item in invoiced_items:
-        for key, amount in item["project"].equipment_billing_map.items():
+    for invoice in invoiced_items:
+        for key, amount in invoice.equipment_map.items():
             totals[key] = totals.get(key, 0) + amount
     catalog = {f"{eq['type']}:{eq['id']}": eq for eq in _equipment_catalog()}
     rows = []
@@ -306,8 +303,15 @@ def commercial_indicators(period, months, now=None):
                 .options(selectinload(Project.commercial_events))
                 .all())
     items = [_project_milestones(p) for p in projects]
-    cur = _commercial_window(items, period["start"], period["end"])
-    prev = _commercial_window(items, period["prev_start"], period["prev_end"])
+    invoices = (ProjectInvoice.query
+                .join(Project, ProjectInvoice.project_id == Project.id)
+                .filter(Project.deleted_at.is_(None),
+                        ProjectInvoice.issued_on >= min(period["start"], period["prev_start"]),
+                        ProjectInvoice.issued_on <= max(period["end"], period["prev_end"]))
+                .options(selectinload(ProjectInvoice.project))
+                .all())
+    cur = _commercial_window(items, invoices, period["start"], period["end"])
+    prev = _commercial_window(items, invoices, period["prev_start"], period["prev_end"])
 
     # Répartition par statut actuel des demandes reçues pendant la période
     cohort = cur.pop("cohort")

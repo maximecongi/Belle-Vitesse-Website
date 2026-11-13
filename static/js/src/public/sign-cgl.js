@@ -106,6 +106,25 @@ function initCglSign() {
 
     updateIdentifierRequirement();
 
+    // Suppression automatique des espaces dans le SIRET / n° d'immatriculation
+    // (saisie, collage, valeur pré-remplie), en préservant la position du curseur.
+    function stripIdentifierSpaces() {
+        if (!identifierInput) return;
+        const raw = identifierInput.value;
+        if (!/\s/.test(raw)) return;
+        const caret = identifierInput.selectionStart;
+        identifierInput.value = raw.replace(/\s+/g, '');
+        if (caret !== null && document.activeElement === identifierInput) {
+            const newCaret = raw.slice(0, caret).replace(/\s+/g, '').length;
+            identifierInput.setSelectionRange(newCaret, newCaret);
+        }
+    }
+
+    if (identifierInput) {
+        identifierInput.addEventListener('input', stripIdentifierSpaces);
+        stripIdentifierSpaces();
+    }
+
     // ── Aperçu PDF live (vrai PDF, zones saisies surlignées et cliquables) ─────
     const previewRoot = document.getElementById('cgl-pdf-preview');
     if (previewRoot && typeof BelleVitessePdfFormPreview !== 'undefined') {

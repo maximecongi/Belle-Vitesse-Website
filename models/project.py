@@ -126,8 +126,6 @@ class Project(db.Model):
     # Facturation (HT, saisie dans le formulaire projet) : montant global du projet, et montant facturé
     # par matériel {"vehicle:<id>": 1200.0, "head:<id>": 300.0}. Le reste = « Autres prestations ».
     # Le chiffre d'affaires est compté à la date de la facture (événement « Facture émise » de la timeline).
-    billing_amount = db.Column(db.Numeric(12, 2), nullable=True)
-    equipment_billing = db.Column(db.JSON, nullable=True)
     # Statut commercial déduit de la timeline des prises de contact (cf. models/commercial_event.py).
     # NULL = projet antérieur au suivi commercial (aucun badge affiché).
     commercial_status = db.Column(db.String(20), nullable=True, default="prospect", index=True)
@@ -301,33 +299,10 @@ class Project(db.Model):
         ]
 
     @property
-    def equipment_billing_map(self) -> dict:
-        """Montants HT facturés par matériel engagé sur le projet : {"vehicle:<id>" | "head:<id>": float}."""
-        engaged = {f"vehicle:{v}" for v in self.vehicle_ids_list} | {f"head:{h}" for h in self.head_ids_list}
-        result = {}
-        for key, value in (self.equipment_billing or {}).items():
-            try:
-                amount = float(value)
-            except (TypeError, ValueError):
-                continue
-            if key in engaged and amount:
-                result[key] = amount
-        return result
-
-    @property
     def billing_total(self):
-        """Montant HT facturé du projet : montant global saisi, sinon somme du matériel ; None si rien n'est saisi."""
-        if self.billing_amount is not None:
-            return float(self.billing_amount)
-        equipment = self.equipment_billing_map
-        return sum(equipment.values()) if equipment else None
-
-    @property
-    def billing_other(self):
-        """Part « Autres prestations » (montant global − matériel), jamais négative ; None sans montant global."""
-        if self.billing_amount is None:
-            return None
-        return max(float(self.billing_amount) - sum(self.equipment_billing_map.values()), 0.0)
+        """Montant HT total des factures du projet ; None si aucune facture."""
+        invoices = getattr(self, "invoices", None) or []
+        return round(sum(i.total for i in invoices), 2) if invoices else None
 
     @property
     def vehicle_ids_list(self) -> list:

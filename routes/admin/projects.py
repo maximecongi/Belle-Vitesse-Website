@@ -65,6 +65,13 @@ from utils.entity_resolvers import resolve_project
 projects_bp = Blueprint("admin_projects", __name__, url_prefix="/admin")
 
 
+@projects_bp.app_template_global()
+def invoices_for_form(data):
+    """Factures du formulaire projet (édition ou re-saisie après erreur)."""
+    from services.admin.projects.crud import invoices_for_form as _invoices_for_form
+    return _invoices_for_form(data)
+
+
 def _project_access_from_url(view_args, scope):
     """Les techniciens n'accèdent qu'aux projets de leur équipe BV (fiche, notes, rapports, pointage…)."""
     target = view_args.get("record_id") or view_args.get("project_code")
@@ -179,7 +186,7 @@ def admin_project_new():
                     is_edit=False,
                     **context,
                 )
-            created = create_project(request.form, user_id=session.get("admin_user_id"))
+            created = create_project(request.form, user_id=session.get("admin_user_id"), files=request.files)
             flash("Projet créé avec succès !", "success")
             new_id = created.id if hasattr(created, "id") else created
             return redirect(
@@ -198,6 +205,20 @@ def admin_project_new():
             )
 
     return render_template("admin/project_form.html", is_edit=False, **context)
+
+
+@projects_bp.route("/projects/<int:record_id>/invoices/<int:invoice_id>/file", methods=["GET"])
+@require_roles("administrator", "manager", "commercial")
+def admin_project_invoice_file(record_id, invoice_id):
+    """Téléchargement du fichier d'une facture (copie locale, également déposée dans 2_FACTURES sur kDrive)."""
+    from flask import send_file
+    from services.admin.projects.crud import invoice_file_path
+
+    found = invoice_file_path(record_id, invoice_id)
+    if not found:
+        abort(404)
+    path, name = found
+    return send_file(path, as_attachment=True, download_name=name)
 
 
 @projects_bp.route("/projects/<int:record_id>/duplicate", methods=["GET"])
@@ -245,7 +266,7 @@ def admin_project_edit(record_id):
     try:
         if request.method == "POST":
             update_project(
-                record_id, request.form, user_id=session.get("admin_user_id")
+                record_id, request.form, user_id=session.get("admin_user_id"), files=request.files
             )
             flash("Projet modifié avec succès !", "success")
             return redirect(
