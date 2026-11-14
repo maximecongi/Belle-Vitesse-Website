@@ -55,6 +55,7 @@ ADMIN_CSS_FILES: List[str] = [
     "css/admin/admin-mcp.css",
     "css/admin/photo-annotator.css",
     "css/admin/admin-meeting-report.css",
+    "css/admin/admin-read-only.css",
 ]
 
 ADMIN_JS_FILES: List[str] = [
@@ -109,6 +110,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/signature-generator.js",
     "js/src/admin/meeting-report.js",
     "js/src/admin/catalog-preview.js",
+    "js/src/admin/read-only.js",
     "js/src/admin.js",
 ]
 

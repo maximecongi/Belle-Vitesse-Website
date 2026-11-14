@@ -29,6 +29,11 @@
         try { storage.removeItem(key); } catch (e) { /* stockage indisponible */ }
     }
 
+    // Fiche projet atteinte après l'envoi = enregistrement réussi
+    function isSavedProjectPage(path) {
+        return /\/projects\/\d+\/?$/.test(path || '');
+    }
+
     function getStorageKey() {
         const path = window.location.pathname;
         let m = path.match(/\/projects\/(\d+)\/edit/);
@@ -105,13 +110,15 @@
         return banner;
     }
 
-    // ── 1. Nettoyage après une soumission réussie (la page suivante n'est plus le formulaire) ──
+    // ── 1. Nettoyage après une soumission RÉUSSIE uniquement ──
+    // Un enregistrement réussi redirige toujours vers la fiche du projet (/admin/projects/<id>).
+    // Toute autre page (formulaire réaffiché après une erreur, connexion expirée, page d'erreur…)
+    // conserve le brouillon : il sera proposé à la restauration au retour sur le formulaire.
     const pendingKey = safeGet(sessionStorage, PENDING_FLAG);
     const form = document.getElementById(FORM_ID);
     if (pendingKey) {
         safeRemove(sessionStorage, PENDING_FLAG);
-        // Formulaire réaffiché = erreur de validation côté serveur : on conserve le brouillon
-        if (!form) safeRemove(localStorage, pendingKey);
+        if (!form && isSavedProjectPage(window.location.pathname)) safeRemove(localStorage, pendingKey);
     }
     if (!form) return;
 

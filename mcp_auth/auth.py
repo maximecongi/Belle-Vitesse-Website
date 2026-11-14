@@ -12,6 +12,8 @@ ROLE_LEVELS = {
     "manager": 3,
     "administrateur": 4,
     "administrator": 4,
+    "associé": 4,
+    "associe": 4,
     "super administrateur": 5,
     "super administrator": 5,
 }
@@ -53,6 +55,8 @@ ROLE_MAX_MCP_SCOPE = {
     "administrateur": "admin",
     "administrator": "admin",
     "manager": "write",
+    "associé": "read_only",
+    "associe": "read_only",
     "commercial": "read_only",
     "technicien": None,
     "user": None,

@@ -5,7 +5,7 @@ from flask import g, request, session, has_request_context
 from extensions import cache
 from models import AppSetting, User, db
 from models.user import ROLE_TRANSLATION
-from utils.decorators import normalize_role
+from utils.decorators import ASSOCIATE_ROLE, READ_ONLY_ROLES, normalize_role
 from utils.i18n import t, ts, alt_url, DEFAULT_LANG
 from utils.database import get_vehicles, get_heads, get_grips_categories
 from services.admin.status_mapping import (
@@ -131,6 +131,9 @@ _NAV_ADMINISTRATEUR = _NAV_MANAGER | {
     "api_docs",
 }
 
+# Associé : navigation de l'administrateur, hors entrées qui ne servent qu'à écrire.
+_NAV_ASSOCIE = _NAV_ADMINISTRATEUR - {"catalog_update"}
+
 _SECTIONS_FULL = {
     "dashboard",
     "tournages",
@@ -168,6 +171,8 @@ ROLE_PERMISSIONS = {
     "administrator": {"sections": _SECTIONS_FULL, "nav": _NAV_ADMINISTRATEUR},
     "super administrateur": {"sections": {"all"}, "nav": {"all"}},
     "super administrator": {"sections": {"all"}, "nav": {"all"}},
+    # Associé : mêmes écrans que l'administrateur, en lecture seule (sans actions d'écriture)
+    ASSOCIATE_ROLE: {"sections": _SECTIONS_FULL, "nav": _NAV_ASSOCIE},
 }
 
 # Actions ponctuelles (boutons, champs éditables) → rôles autorisés.
@@ -175,6 +180,13 @@ ROLE_PERMISSIONS = {
 _ROLES_SALES = {"commercial", "manager", "administrateur"}
 _ROLES_MANAGEMENT = {"manager", "administrateur"}
 _ROLES_ADMIN = {"administrateur"}
+
+# Actions de pure consultation (visibilité de données) : accordées à l'Associé comme à
+# l'administrateur. Toutes les autres actions (écriture) lui sont refusées.
+READ_ACTIONS = frozenset({
+    "project_commercial_timeline",
+    "equipment_usage_admin",
+})
 
 ACTION_PERMISSIONS = {
     # Projets
@@ -204,6 +216,8 @@ def role_can(user_role: str, action: str, is_admin: bool = False) -> bool:
     role = normalize_role(user_role)
     if role == "super administrateur":
         return True
+    if role in READ_ONLY_ROLES:
+        return action in READ_ACTIONS and "administrateur" in ACTION_PERMISSIONS.get(action, set())
     if is_admin and role in ("administrateur", "administrator"):
         role = "administrateur"
     return role in ACTION_PERMISSIONS.get(action, set())
@@ -219,6 +233,7 @@ def _permission_helpers(user_role: str, perms: dict, is_admin: bool = False) -> 
         "has_any_item": lambda *items: "all" in perms["nav"]
         or any(i in perms["nav"] for i in items),
         "can": lambda action: role_can(user_role, action, is_admin=is_admin),
+        "is_read_only": normalize_role(user_role) in READ_ONLY_ROLES,
     }
 
 
@@ -235,6 +250,8 @@ def resolve_user_role(current_user_dict: dict, session_role: str = "") -> str:
 
     if "super" in raw_role:
         return "super administrateur"
+    elif normalize_role(raw_role) in READ_ONLY_ROLES:
+        return ASSOCIATE_ROLE
     elif "admin" in raw_role:
         return "administrateur"
     elif "manager" in raw_role:

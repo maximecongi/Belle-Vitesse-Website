@@ -26,17 +26,19 @@ ROLE_HIERARCHY = {
     'manager': 3,
     'administrateur': 4,
     'administrator': 4,
+    'associé': 4,
     'super administrateur': 5,
     'super administrator': 5,
 }
 
 # Rôles assignables par chaque rôle (rôle-1 et en dessous)
 ASSIGNABLE_ROLES = {
-    'super administrateur': ['Administrateur', 'Manager', 'Commercial', 'Technicien'],
-    'super administrator': ['Administrateur', 'Manager', 'Commercial', 'Technicien'],
+    'super administrateur': ['Administrateur', 'Associé', 'Manager', 'Commercial', 'Technicien'],
+    'super administrator': ['Administrateur', 'Associé', 'Manager', 'Commercial', 'Technicien'],
     'administrateur': ['Manager', 'Commercial', 'Technicien'],
     'administrator': ['Manager', 'Commercial', 'Technicien'],
     'manager': ['Commercial', 'Technicien'],
+    'associé': [],
     'commercial': [],
     'technicien': [],
     'user': [],

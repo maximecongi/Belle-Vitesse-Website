@@ -405,10 +405,10 @@ def complete_commercial_event(project_id, event_id, now=None):
 
 
 def delete_commercial_event(project_id, event_id):
+    project = _active_project(project_id)  # projet supprimé : refus, comme l'ajout et la modification
     event = db.session.get(ProjectCommercialEvent, event_id)
-    if not event or event.project_id != project_id:
+    if not event or event.project_id != project.id:
         raise CommercialEventNotFoundError("Prise de contact introuvable.")
-    project = event.project
     file_path, entity_id = event.file_path, event.kdrive_entity_id
     project.commercial_events.remove(event)
     db.session.delete(event)

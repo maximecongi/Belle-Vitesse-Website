@@ -1,7 +1,7 @@
 """
 Périmètre d'accès aux projets par rôle.
 
-Les rôles « privilégiés » (Commercial, Manager, Administrateur, Super Administrateur) voient tous
+Les rôles « privilégiés » (Commercial, Manager, Administrateur, Super Administrateur, Associé) voient tous
 les projets. Les autres rôles (Technicien et tout rôle non reconnu, par sécurité) ne voient que les
 projets dont ils font partie : Commercial du projet, Technicien BV, Référent plateau, ou contact
 Pilote / Opérateur Remote Head rapproché de leur fiche utilisateur (même e-mail, sinon même nom).
@@ -16,7 +16,9 @@ from flask import abort, g, has_request_context, session
 from models import Project, User, db
 from utils.decorators import normalize_role
 
-FULL_ACCESS_ROLES = frozenset({"commercial", "manager", "administrateur", "super administrateur"})
+FULL_ACCESS_ROLES = frozenset({
+    "commercial", "manager", "administrateur", "super administrateur", "associé",
+})
 
 
 def is_project_restricted_role(role) -> bool:

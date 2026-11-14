@@ -658,6 +658,8 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
         </div>
 
         <!-- COLONNE LATÉRALE (1/3 : DOCUMENTS & CONFORMITÉ) -->
+        {# Actions sur les documents (inviter, envoyer, copier le lien, supprimer) : mêmes rôles que les routes admin_waivers #}
+        {% set can_manage_docs = can('project_edit') %}
         <div class="admin-card project-docs-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="u-flex u-align-center u-gap-2">
@@ -687,11 +689,13 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                         {% endif %}
                     </div>
                     {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
+                    {% if can_manage_docs %}
                     <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
                         data-signer-modal-open="addCglSignerModal"
                         title="Inviter le représentant de la production à signer les CGL">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
+                    {% endif %}
                     {% endif %}
                 </div>
 
@@ -716,6 +720,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                         {{ status_badge(cgl_waiver.status, cgl_waiver.raw_status) }}
 
                         {% if cgl_waiver.raw_status in ['to_send', 'to_generate'] %}
+                        {% if can_manage_docs %}
                         <form
                             action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             method="POST" class="u-m-0">
@@ -726,12 +731,16 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                 <i data-lucide="send"></i>
                             </button>
                         </form>
+                        {% endif %}
+                        {% if can_manage_docs %}
                         <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                             data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             title="Copier le lien de signature">
                             <i data-lucide="copy"></i>
                         </button>
+                        {% endif %}
                         {% elif cgl_waiver.raw_status == 'to_sign' %}
+                        {% if can_manage_docs %}
                         <form
                             action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             method="POST" class="u-m-0">
@@ -742,11 +751,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                 <i data-lucide="bell"></i>
                             </button>
                         </form>
+                        {% endif %}
+                        {% if can_manage_docs %}
                         <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                             data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             title="Copier le lien de signature">
                             <i data-lucide="copy"></i>
                         </button>
+                        {% endif %}
                         {% elif cgl_waiver.raw_status == 'signed' %}
                         <a href="{{ cgl_waiver.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary"
                             target="_blank" rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
@@ -754,6 +766,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                         </a>
                         {% endif %}
 
+                        {% if can_manage_docs %}
                         <form
                             action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
                             method="POST" class="u-m-0"
@@ -764,12 +777,13 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </form>
+                        {% endif %}
                     </div>
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
-                    Aucun signataire invité. Cliquez sur <strong>Inviter</strong> pour envoyer les Conditions
-                    Générales de Location au représentant de la production.
+                    Aucun signataire invité.{% if can_manage_docs %} Cliquez sur <strong>Inviter</strong> pour envoyer les Conditions
+                    Générales de Location au représentant de la production.{% endif %}
                 </p>
                 {% endif %}
             </div>
@@ -785,11 +799,13 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ safety_rules_waivers|length }} signataire{{ 's' if safety_rules_waivers|length > 1 else '' }}
                         </span>
                     </div>
+                    {% if can_manage_docs %}
                     <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
                         data-signer-modal-open="addSafetyRulesSignerModal"
                         title="Inviter un nouveau signataire aux règles de sécurité (Pilote, 1er AD, Cadreur, Régie...)">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
+                    {% endif %}
                 </div>
 
                 {% if safety_rules_waivers and safety_rules_waivers|length > 0 %}
@@ -814,6 +830,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ status_badge(sr.status, sr.raw_status) }}
 
                             {% if sr.raw_status in ['to_send', 'to_generate'] %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -823,12 +840,16 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="send"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif sr.raw_status == 'to_sign' %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -838,11 +859,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="bell"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif sr.raw_status == 'signed' %}
                             <a href="{{ sr.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
                                 rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
@@ -850,6 +874,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             </a>
                             {% endif %}
 
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=sr.waiver_id) }}"
                                 method="POST" class="u-m-0"
                                 data-confirm="Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?">
@@ -859,13 +884,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="trash-2"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
                 <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
-                    Aucun signataire invité. Cliquez sur <strong>Inviter</strong>.
+                    Aucun signataire invité.{% if can_manage_docs %} Cliquez sur <strong>Inviter</strong>.{% endif %}
                 </p>
                 {% endif %}
             </div>
@@ -881,11 +907,13 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ pilot_waivers|length }} pilote{{ 's' if pilot_waivers|length > 1 else '' }}
                         </span>
                     </div>
+                    {% if can_manage_docs %}
                     <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
                         data-signer-modal-open="addPilotSignerModal"
                         title="Inviter un pilote ou cascadeur à signer l'attestation Annexe 3">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
+                    {% endif %}
                 </div>
 
                 {% if pilot_waivers and pilot_waivers|length > 0 %}
@@ -915,6 +943,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ status_badge(pw.status, pw.raw_status) }}
 
                             {% if pw.raw_status in ['to_send', 'to_generate'] %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -924,12 +953,16 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="send"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif pw.raw_status == 'to_sign' %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -939,11 +972,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="bell"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif pw.raw_status == 'signed' %}
                             <a href="{{ pw.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
                                 rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
@@ -951,6 +987,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             </a>
                             {% endif %}
 
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=pw.waiver_id) }}"
                                 method="POST" class="u-m-0"
                                 data-confirm="Supprimer cette attestation pilote pour {{ pw.signer_name }} ?">
@@ -960,6 +997,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="trash-2"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -967,7 +1005,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 {% else %}
                 <div class="u-flex u-justify-between u-align-center u-mt-2">
                     <p class="u-text-2xs u-text-muted u-mb-0">
-                        Aucun pilote invité. Cliquez sur <strong>Inviter</strong>.
+                        Aucun pilote invité.{% if can_manage_docs %} Cliquez sur <strong>Inviter</strong>.{% endif %}
                     </p>
                 </div>
                 {% endif %}
@@ -984,11 +1022,13 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ risk_assessment_waivers|length }} signataire{{ 's' if risk_assessment_waivers|length > 1 else '' }}
                         </span>
                     </div>
+                    {% if can_manage_docs %}
                     <button type="button" class="admin-btn admin-btn-xs admin-btn-primary"
                         data-signer-modal-open="addRiskSignerModal"
                         title="Inviter un signataire à l'analyse des risques (Production, Cascade, Machinerie, Régie...)">
                         <i data-lucide="user-plus"></i> Inviter
                     </button>
+                    {% endif %}
                 </div>
 
                 {% if risk_assessment_waivers and risk_assessment_waivers|length > 0 %}
@@ -1013,6 +1053,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             {{ status_badge(ra.status, ra.raw_status) }}
 
                             {% if ra.raw_status in ['to_send', 'to_generate'] %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1022,12 +1063,16 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="send"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif ra.raw_status == 'to_sign' %}
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_risk_assessment_send', waiver_id=ra.waiver_id) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -1037,11 +1082,14 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="bell"></i>
                                 </button>
                             </form>
+                            {% endif %}
+                            {% if can_manage_docs %}
                             <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
                                 data-copy-url="{{ url_for('admin_waivers.admin_risk_assessment_copy_link', waiver_id=ra.waiver_id) }}"
                                 title="Copier le lien de signature">
                                 <i data-lucide="copy"></i>
                             </button>
+                            {% endif %}
                             {% elif ra.raw_status == 'signed' %}
                             <a href="{{ ra.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
                                 rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
@@ -1049,6 +1097,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                             </a>
                             {% endif %}
 
+                            {% if can_manage_docs %}
                             <form action="{{ url_for('admin_waivers.admin_risk_assessment_delete', waiver_id=ra.waiver_id) }}"
                                 method="POST" class="u-m-0"
                                 data-confirm="Supprimer cette analyse des risques pour {{ ra.signer_name }} ?">
@@ -1058,6 +1107,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                                     <i data-lucide="trash-2"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </div>
                     {% endfor %}
@@ -1065,7 +1115,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
                 {% else %}
                 <div class="u-flex u-justify-between u-align-center u-mt-2">
                     <p class="u-text-2xs u-text-muted u-mb-0">
-                        Aucun signataire invité. Cliquez sur <strong>Inviter</strong>.
+                        Aucun signataire invité.{% if can_manage_docs %} Cliquez sur <strong>Inviter</strong>.{% endif %}
                     </p>
                 </div>
                 {% endif %}
@@ -1109,6 +1159,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
 </div>
 
 
+{% if can('project_edit') %}
 <!-- ═══════════ MODALES D'INVITATION DES SIGNATAIRES (composant unifié : admin/_signer_invite.html) ═══════════ -->
 {% set prod_contact = project.production_contact %}
 {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
@@ -1229,6 +1280,7 @@ initials, empty_state, doc_download_badge, vehicle_avatar, head_avatar, danger_z
     icon='shield-alert', icon_class='u-text-danger',
     roles=risk_roles, default_role='production',
     submit_label="Créer l'invitation BVRA") }}
+{% endif %}
 {% if can('project_delete') %}
 {{ danger_zone(url_for('admin_projects.admin_project_delete', record_id=project.id), 'Supprimer ce projet ? Son dossier kDrive sera également supprimé. Cette action est irréversible.', 'Supprimer ce projet', desc='Supprime le projet, ses documents rattachés et son dossier kDrive.') }}
 {% endif %}

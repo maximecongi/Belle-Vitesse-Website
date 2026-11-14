@@ -4,7 +4,6 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 import logging
 import os
 import shutil
-from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -60,7 +59,7 @@ def commercial_status_counts(is_archive: Optional[bool] = None, scope: Optional[
 
 
 def _filter_archive(query, is_archive: Optional[bool]):
-    today = date.today()
+    today = get_today_paris()
     if is_archive is True:
         return query.filter(Project.return_date.isnot(None), Project.return_date < today)
     if is_archive is False:
@@ -87,7 +86,7 @@ def list_projects(
 
     query = scope_project_query(Project.query.filter(Project.deleted_at.is_(None)), scope)
 
-    today = date.today()
+    today = get_today_paris()
 
     if is_archive is True:
         query = query.filter(Project.return_date.isnot(None), Project.return_date < today)
@@ -319,6 +318,16 @@ def _uploaded_invoice_file(files, idx):
     return storage
 
 
+def _equipment_label(key):
+    """Nom lisible d'une clé de ventilation « vehicle:<id> » / « head:<id> » (repli : la clé)."""
+    kind, _, item_id = str(key).partition(":")
+    items = get_vehicles() if kind == "vehicle" else get_heads() if kind == "head" else []
+    for item in items or []:
+        if str(item.get("id")) == item_id:
+            return (item.get("fields") or {}).get("name") or item_id
+    return item_id or str(key)
+
+
 def _parse_invoice_row(row, position, engaged, has_file=False):
     """Ligne de formulaire → valeurs de ProjectInvoice ; None si la ligne est entièrement vide."""
     text = {k: str(row.get(k) or "").strip()
@@ -334,9 +343,14 @@ def _parse_invoice_row(row, position, engaged, has_file=False):
 
     equipment = {}
     for key, raw in equipment_raw.items():
-        if key not in engaged:
-            continue
         value = _parse_amount(raw, f"matériel de la {name}")
+        if key not in engaged:
+            if value:  # un montant sur un matériel retiré du projet ne doit pas disparaître en silence
+                raise ValueError(
+                    f"La {name} ventile {_format_amount(value)} € sur « {_equipment_label(key)} », "
+                    "qui n'est plus engagé sur le projet : retirez ce montant ou réengagez le matériel."
+                )
+            continue
         if value:
             equipment[key] = float(value)
     amount = _parse_amount(text["amount"], f"montant total de la {name}")
@@ -361,7 +375,7 @@ def _parse_invoice_row(row, position, engaged, has_file=False):
 def _apply_billing(project, form, veh_ids, head_ids, files=None):
     """
     Aligne les factures du projet sur le formulaire (mise à jour par id, ajout, suppression des absentes).
-    Montant total HT saisi, ventilé par véhicule / tête engagé (le matériel non engagé est ignoré) ; le reste
+    Montant total HT saisi, ventilé par véhicule / tête engagé (un montant sur un matériel non engagé est refusé) ; le reste
     forme les « Autres prestations ». La somme du matériel ne peut pas dépasser le montant total.
     Les fichiers envoyés sont mis de côté dans project._invoice_file_ops et écrits après le commit
     (_store_invoice_files), une fois les ids connus.
@@ -708,6 +722,7 @@ def update_project(record_id, form, user_id=None, files=None):
         ([project.active_cgl] if project.active_cgl else [])
         + list(project.active_safety_rules or [])
         + list(project.active_pilot_waivers or [])
+        + list(project.active_risk_assessments or [])
     )
     for w in waivers_to_sync:
         if w and w.status in ("to_generate", "to_send"):
@@ -807,6 +822,63 @@ def get_project_for_edit(record_id):
     }
 
 
+def form_data_from_post(form, record_id=None):
+    """
+    Saisie postée (request.form) → même structure que get_project_for_edit, pour réafficher le formulaire
+    après une erreur d'enregistrement sans rien perdre (dates, matériel, équipe, lieux, factures).
+    `record_id` (modification) : identifiants et fichiers de facture déjà joints repris du projet en base.
+    """
+    def getlist(name):
+        return [v for v in (form.getlist(name) if hasattr(form, "getlist") else []) if str(v).strip()]
+
+    locations = _parse_shooting_locations(form)
+    shoot_dates = _parse_shoot_dates(form)
+    date_mode = form.get("date_mode") or "continuous"
+    immob_raw = form.get("is_immobilized_between")
+    data = {
+        "id": None,
+        "record_id": None,
+        "project_id": None,
+        "name": form.get("name") or "",
+        "departure_date_raw": form.get("departure_date") or "",
+        "shoot_start_raw": form.get("shoot_start") or "",
+        "shoot_end_raw": form.get("shoot_end") or "",
+        "return_date_raw": form.get("return_date") or "",
+        "date_mode": date_mode,
+        "is_punctual": date_mode == "punctual",
+        "is_immobilized_between": immob_raw is None or str(immob_raw).lower() in _TRUE,
+        "shoot_dates": shoot_dates,
+        "shoot_dates_json": json.dumps(shoot_dates),
+        "inter_shoot_statuses_json": json.dumps(_parse_inter_shoot_statuses(form)),
+        "shooting_locations": locations,
+        "locations_list": locations,
+        "shooting_locations_json": json.dumps(locations),
+        "notes": form.get("notes") or "",
+        "vehicle_ids": getlist("vehicle_ids"),
+        "head_ids": getlist("head_ids"),
+        "bv_referent_ids": getlist("bv_referent_ids"),
+        "bv_technician_ids": getlist("bv_technician_ids"),
+    }
+    for key in ("production_id", "pilot_contact_id", "production_contact_id", "dop_contact_id",
+                "first_ac_contact_id", "key_grip_contact_id", "commercial_user_id",
+                "remote_head_operator_contact_id"):
+        data[key] = form.get(key) or ""
+
+    rows = _invoice_rows_from_form(form) if INVOICES_MARKER in form else []
+    existing = {}
+    if record_id is not None:
+        project = resolve_project(record_id)
+        if project and project.deleted_at is None:
+            data.update(id=project.id, record_id=project.id, project_id=project.project_id)
+            existing = {inv.id: inv for inv in project.invoices}
+    for row in rows:
+        row["is_paid"] = str(row.get("is_paid") or "").lower() in _TRUE
+        known = existing.get(_parse_int(row.get("id")))
+        row["file_name"] = (known.file_name or "") if known and known.file_path else ""
+    data["invoices"] = rows
+    return data
+
+
 def get_project_for_duplicate(record_id):
     """
     Récupère un projet existant et le formate pour la duplication dans le formulaire de création.
@@ -887,6 +959,7 @@ def delete_project(record_id, user_id=None):
         try:
             from services.admin.waivers import (
                 delete_cgl_internal,
+                delete_risk_assessment_internal,
                 delete_safety_rules_internal,
             )
             from services.admin.waivers.pilot import delete_pilot_waiver_internal
@@ -894,6 +967,7 @@ def delete_project(record_id, user_id=None):
             delete_cgl_internal(p.id)
             delete_safety_rules_internal(p.id)
             delete_pilot_waiver_internal(p.id)
+            delete_risk_assessment_internal(p.id)
         except Exception as waiver_err:
             logger.error(f"❌ Erreur suppression décharges pour projet {p.id} : {waiver_err}")
 

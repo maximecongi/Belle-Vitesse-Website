@@ -6,6 +6,7 @@ import logging
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional, Union
 
+from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 from models import Project
@@ -33,8 +34,33 @@ def _expand_date_range(d_start: date, d_end: date) -> set:
     return res
 
 
+def _with_transit_days(dates: set, departure: Optional[date], return_: Optional[date]) -> set:
+    """
+    Ajoute les jours où le matériel est hors du parc sans tourner : du départ au premier jour de tournage,
+    et du dernier jour de tournage au retour (bornes incluses). Sans jour de tournage : départ → retour.
+    """
+    dates = set(dates)
+    if dates:
+        first, last = min(dates), max(dates)
+        if departure and departure <= first:
+            dates |= _expand_date_range(departure, first)
+        if return_ and return_ >= last:
+            dates |= _expand_date_range(last, return_)
+    elif departure or return_:
+        dates = _expand_date_range(departure or return_, return_ or departure)
+    return dates
+
+
 def _get_project_active_dates(p: Project) -> set:
-    """Retourne l'ensemble des dates où le matériel est effectivement en tournage pour le projet p (exclusion départ/retour)."""
+    """
+    Jours où le matériel du projet p est mobilisé : jours de tournage, intervalles immobilisés,
+    et jours de transport (du départ au tournage, du tournage au retour).
+    """
+    return _with_transit_days(_get_project_shoot_dates(p), p.departure_date, p.return_date)
+
+
+def _get_project_shoot_dates(p: Project) -> set:
+    """Jours de tournage du projet p (et intervalles immobilisés en mode ponctuel), hors départ/retour."""
     # 1. Mode ponctuel : considérer uniquement les dates de tournage (shoot_dates) et les jours d'intervalles immobilisés
     if getattr(p, "date_mode", None) == "punctual":
         dates = set()
@@ -103,12 +129,16 @@ def check_booking_conflicts(
     is_immobilized_between: Optional[bool] = True,
     shoot_dates: Optional[List[Union[str, date]]] = None,
     inter_shoot_statuses: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
+    departure_date_val: Optional[Union[str, date]] = None,
+    return_date_val: Optional[Union[str, date]] = None,
 ) -> Dict[str, Any]:
     """
     Vérifie si un ou plusieurs matériels (véhicules, têtes) sont déjà réservés
     sur une période chevauchante par d'autres projets non supprimés.
 
     Supporte le mode continu, le mode dates ponctuelles, et la gestion d'immobilisation par intervalle.
+    Les jours de départ et de retour (`departure_date_val`, `return_date_val`) comptent comme jours mobilisés,
+    de part et d'autre ; les projets abandonnés (statut commercial « Perdu ») sont ignorés.
     """
     start_date = _parse_date(start_date_val)
     end_date = _parse_date(end_date_val)
@@ -174,6 +204,10 @@ def check_booking_conflicts(
         if effective_start and effective_end:
             req_active_dates = _expand_date_range(effective_start, effective_end)
 
+    req_active_dates = _with_transit_days(
+        req_active_dates, _parse_date(departure_date_val), _parse_date(return_date_val)
+    )
+
     if not req_active_dates:
         return {
             "has_conflicts": False,
@@ -208,9 +242,11 @@ def check_booking_conflicts(
     }
 
     # Recherche des projets candidats
-    query = Project.query.filter(Project.deleted_at.is_(None)).options(
-        joinedload(Project.production)
-    )
+    # Projets abandonnés (statut commercial « Perdu ») : le matériel n'est plus réservé
+    query = Project.query.filter(
+        Project.deleted_at.is_(None),
+        or_(Project.commercial_status.is_(None), Project.commercial_status != "lost"),
+    ).options(joinedload(Project.production))
 
     if exclude_project_id is not None:
         clean_exclude = str(exclude_project_id).strip()
@@ -251,8 +287,8 @@ def check_booking_conflicts(
         p_heads = set(h.strip() for h in raw_h.split(",") if h.strip())
 
         prod_name = p.production.name if p.production else "—"
-        p_start = p.shoot_start_date or (min(p_active_dates) if p_active_dates else None)
-        p_end = p.shoot_end_date or (max(p_active_dates) if p_active_dates else p_start)
+        p_start = min(p_active_dates)
+        p_end = max(p_active_dates)
 
         sorted_overlaps = sorted(list(overlap_dates))
         if len(sorted_overlaps) == 1:

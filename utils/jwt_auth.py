@@ -68,6 +68,14 @@ def require_api_auth(*allowed_roles):
             # Check role — Super Administrateur bypasse toutes les vérifications
             from utils.decorators import normalize_role
             user_role = normalize_role(user.role)
+
+            # Associé : lecture seule (GET) avec le périmètre de l'administrateur
+            from utils.decorators import READ_ONLY_ROLES, SAFE_METHODS
+            if user_role in READ_ONLY_ROLES:
+                if request.method.upper() not in SAFE_METHODS:
+                    return jsonify({"error": "Accès en lecture seule : action non autorisée pour le rôle Associé"}), 403
+                user_role = "administrateur"
+
             if user_role != "super administrateur":
                 allowed = [normalize_role(r) for r in allowed_roles]
                 if allowed and user_role not in allowed:

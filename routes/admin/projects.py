@@ -56,7 +56,11 @@ from services.admin.commercial_timeline import (
     update_commercial_event,
 )
 from models.commercial_event import COMMERCIAL_STATUS_LABELS, COMMERCIAL_STATUSES
-from services.admin.projects.crud import UNTRACKED_COMMERCIAL_FILTER, commercial_status_counts
+from services.admin.projects.crud import (
+    UNTRACKED_COMMERCIAL_FILTER,
+    commercial_status_counts,
+    form_data_from_post,
+)
 from utils.context_processors import resolve_user_role, role_can
 from utils.decorators import require_roles, session_is_admin, session_is_super_admin
 from utils.entity_resolvers import resolve_project
@@ -182,10 +186,10 @@ def admin_project_new():
                 flash("Le nom du projet est requis.", "error")
                 return render_template(
                     "admin/project_form.html",
-                    data=request.form,
+                    data=form_data_from_post(request.form),
                     is_edit=False,
                     **context,
-                )
+                ), 422
             created = create_project(request.form, user_id=session.get("admin_user_id"), files=request.files)
             flash("Projet créé avec succès !", "success")
             new_id = created.id if hasattr(created, "id") else created
@@ -200,9 +204,10 @@ def admin_project_new():
                 format_user_friendly_error(e, "Erreur lors de la création du projet."),
                 "error",
             )
+            # Saisie conservée : le formulaire est réaffiché tel qu'envoyé, avec le message d'erreur
             return render_template(
-                "admin/project_form.html", data=request.form, is_edit=False, **context
-            )
+                "admin/project_form.html", data=form_data_from_post(request.form), is_edit=False, **context
+            ), 422
 
     return render_template("admin/project_form.html", is_edit=False, **context)
 
@@ -263,35 +268,45 @@ def admin_project_duplicate(record_id):
 def admin_project_edit(record_id):
     context = get_project_form_context()
 
-    try:
-        if request.method == "POST":
-            update_project(
+    if request.method == "POST":
+        try:
+            updated = update_project(
                 record_id, request.form, user_id=session.get("admin_user_id"), files=request.files
             )
-            flash("Projet modifié avec succès !", "success")
-            return redirect(
-                url_for("admin_projects.admin_project_detail", record_id=record_id)
+        except Exception as e:
+            from services.admin.utils import format_user_friendly_error
+
+            current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
+            flash(
+                format_user_friendly_error(e, "Erreur lors de la modification du projet."),
+                "error",
             )
-
-        data = get_project_for_edit(record_id)
-        if not data:
+            # Saisie conservée : le formulaire est réaffiché tel qu'envoyé, avec le message d'erreur
+            data = form_data_from_post(request.form, record_id=record_id)
+            if not data.get("id"):
+                abort(404)
+            return render_template(
+                "admin/project_form.html",
+                data=data,
+                is_edit=True,
+                record_id=record_id,
+                **context,
+            ), 422
+        if not updated:  # projet introuvable ou supprimé
             abort(404)
-        return render_template(
-            "admin/project_form.html",
-            data=data,
-            is_edit=True,
-            record_id=record_id,
-            **context,
-        )
-    except Exception as e:
-        from services.admin.utils import format_user_friendly_error
+        flash("Projet modifié avec succès !", "success")
+        return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
 
-        current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
-        flash(
-            format_user_friendly_error(e, "Erreur lors de la modification du projet."),
-            "error",
-        )
-        return redirect(url_for("admin_projects.admin_projects_list"))
+    data = get_project_for_edit(record_id)
+    if not data:
+        abort(404)
+    return render_template(
+        "admin/project_form.html",
+        data=data,
+        is_edit=True,
+        record_id=record_id,
+        **context,
+    )
 
 
 @projects_bp.route("/projects/<int:record_id>/delete", methods=["POST"])
@@ -970,6 +985,8 @@ def admin_api_check_conflicts():
             is_immobilized_between=is_immob,
             shoot_dates=shoot_dates,
             inter_shoot_statuses=inter_shoot_statuses,
+            departure_date_val=payload.get("departure_date"),
+            return_date_val=payload.get("return_date"),
         )
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:

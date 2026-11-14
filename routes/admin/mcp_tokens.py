@@ -14,7 +14,7 @@ def get_allowed_scopes_for_role(role_name: str) -> list:
         return ["read_only", "write", "admin"]
     elif norm == "manager":
         return ["read_only", "write"]
-    elif norm == "commercial":
+    elif norm in ("commercial", "associé"):
         return ["read_only"]
     return []
 

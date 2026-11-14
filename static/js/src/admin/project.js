@@ -405,6 +405,9 @@ function initPilotSignerModal() {
 }
 
 function initRoadLegalToggle() {
+    // Écouteur délégué unique : l'init est appelée au chargement et à DOMContentLoaded
+    if (document._roadLegalToggleBound) return;
+    document._roadLegalToggleBound = true;
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('.js-toggle-road-legal');
         if (!btn || btn.classList.contains('is-loading')) return;

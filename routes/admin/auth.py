@@ -97,6 +97,8 @@ def admin_dev_switch_role():
         "super administrator": "Super Administrateur",
         "administrateur": "Administrateur",
         "administrator": "Administrateur",
+        "associé": "Associé",
+        "associe": "Associé",
         "manager": "Manager",
         "commercial": "Commercial",
         "technicien": "Technicien",

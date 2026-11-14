@@ -1,0 +1,61 @@
+/* ── Mode lecture seule (rôle Associé) ─────────────────────────────────────── */
+
+/* Encart fixe en bas à gauche de la zone de contenu (les toasts occupent le bas droit). */
+.admin-read-only-banner {
+    position: fixed;
+    bottom: 1rem;
+    left: calc(var(--admin-sidebar-width) + 1rem);
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    max-width: min(520px, calc(100vw - var(--admin-sidebar-width) - 2rem));
+    padding: 0.625rem 1rem;
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border-left: 3px solid var(--status-neutral);
+    border-radius: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+}
+
+.admin-read-only-banner-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--status-neutral);
+}
+
+/* Évite que l'encart masque le bas des pages */
+.is-read-only .admin-content {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+}
+
+.is-read-only .u-read-only-hidden {
+    display: none !important;
+}
+
+.is-read-only form.is-read-only-locked :disabled {
+    cursor: not-allowed;
+}
+
+/* Tablette / mobile : sidebar repliée → encart pleine largeur, toasts remontés au-dessus */
+@media (max-width: 1200px) {
+    .admin-read-only-banner {
+        left: 1rem;
+        right: 1rem;
+        bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+        max-width: none;
+    }
+
+    .is-read-only .admin-flash-container {
+        bottom: calc(5rem + env(safe-area-inset-bottom, 0));
+    }
+}
+
+@media print {
+    .admin-read-only-banner {
+        display: none;
+    }
+}

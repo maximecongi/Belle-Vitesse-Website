@@ -6,6 +6,9 @@ ROLE_TRANSLATION = {
     'super administrateur': 'Super Administrateur',
     'administrator': 'Administrateur',
     'administrateur': 'Administrateur',
+    'associé': 'Associé',
+    'associe': 'Associé',
+    'partner': 'Associé',
     'manager': 'Manager',
     'commercial': 'Commercial',
     'user': 'Technicien',
@@ -42,6 +45,8 @@ class User(db.Model):
             return 'administrateur'
         if r in ('user', 'technicien'):
             return 'technicien'
+        if r in ('associé', 'associe', 'partner'):
+            return 'associé'
         return r
 
     @property
@@ -54,10 +59,15 @@ class User(db.Model):
         """Retourne True si l'utilisateur est Administrateur ou Super Administrateur."""
         return self.role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator')
 
+    @property
+    def is_read_only(self):
+        """Retourne True si l'utilisateur n'a qu'un accès en lecture seule (Associé)."""
+        return self.role_lower == 'associé'
+
     def is_mcp_capable(self):
         """Retourne True si l'utilisateur est autorisé à générer/utiliser des clés API MCP."""
         excluded_roles = ['technicien', 'user', 'guest', 'pilot']
-        return self.is_admin and self.role_lower not in excluded_roles
+        return (self.is_admin or self.is_read_only) and self.role_lower not in excluded_roles
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""

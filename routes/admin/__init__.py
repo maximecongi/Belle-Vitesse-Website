@@ -90,6 +90,12 @@ def init_admin_routes(app):
         if bp.name not in app.blueprints:
             app.register_blueprint(bp)
 
+    # Rôle Associé : garde globale bloquant toute écriture sur l'ERP (lecture seule)
+    from utils.decorators import enforce_read_only_guard
+
+    if enforce_read_only_guard not in app.before_request_funcs.get(None, []):
+        app.before_request(enforce_read_only_guard)
+
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         app.logger.warning(f"⚠️ CSRF Error: {e.description}")

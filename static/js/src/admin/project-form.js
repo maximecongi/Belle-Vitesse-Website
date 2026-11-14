@@ -9,6 +9,16 @@
  */
 
 (function () {
+    // Échappement des valeurs issues de la base (noms de projets, productions, matériel) avant insertion HTML
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function initProjectForm() {
         if (typeof window.jQuery === 'undefined') return;
         const $ = window.jQuery;
@@ -362,6 +372,9 @@
                     data: JSON.stringify({
                         start_date: startDate,
                         end_date: endDate,
+                        // Jours de départ et de retour : le matériel est déjà / encore mobilisé
+                        departure_date: $('#departure_date_input').val() || null,
+                        return_date: $('#return_date_input').val() || null,
                         date_mode: dateMode,
                         is_immobilized_between: isImmobilized,
                         shoot_dates: shootDates,
@@ -386,10 +399,10 @@
 
                             // 1. Marquer individuellement les cartes des équipements en conflit
                             data.conflicts_list.forEach(function (c) {
-                                const $card = $('.project-checkbox-card[data-item-id="' + c.item_id + '"]');
+                                const $card = $('.project-checkbox-card').filter(function () { return String($(this).data('itemId')) === String(c.item_id); });
                                 $card.addClass('has-conflict');
                                 $card.find('.conflict-placeholder').html(
-                                    '<span class="conflict-badge" title="Déjà réservé par ' + c.production + ' (' + c.period_label + ')"><i data-lucide="triangle-alert"></i> ' + c.project_name + '</span>'
+                                    '<span class="conflict-badge" title="Déjà réservé par ' + escapeHtml(c.production) + ' (' + escapeHtml(c.period_label) + ')"><i data-lucide="triangle-alert"></i> ' + escapeHtml(c.project_name) + '</span>'
                                 );
                             });
 
@@ -429,7 +442,7 @@
                                     return (
                                         '<span class="booking-conflict-pill ' + pillClass + '">' +
                                         '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
-                                        '<span>' + item.item_name + '</span>' +
+                                        '<span>' + escapeHtml(item.item_name) + '</span>' +
                                         '</span>'
                                     );
                                 }).join('');
@@ -441,12 +454,12 @@
                                     '<div class="booking-conflict-row-details">' +
                                     '<span class="booking-conflict-row-project">' +
                                     '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
-                                    '<strong>' + group.project_name + '</strong>' +
-                                    (group.production ? ' <span class="booking-conflict-production">(' + group.production + ')</span>' : '') +
+                                    '<strong>' + escapeHtml(group.project_name) + '</strong>' +
+                                    (group.production ? ' <span class="booking-conflict-production">(' + escapeHtml(group.production) + ')</span>' : '') +
                                     '</span>' +
                                     '<span class="booking-conflict-row-period">' +
                                     '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
-                                    group.period_label +
+                                    escapeHtml(group.period_label) +
                                     '</span>' +
                                     '</div>'
                                 );

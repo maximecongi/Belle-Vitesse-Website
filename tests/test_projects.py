@@ -769,7 +769,6 @@ class ProjectsTest(BaseTestCase):
                 "invoices-0-issued_on": "2026-11-07", "invoices-0-amount": "12 500,50 €",
                 "invoices-0-equipment[vehicle:rec_bill_v]": "8000",
                 "invoices-0-equipment[head:rec_bill_h]": "1 200,5",
-                "invoices-0-equipment[vehicle:rec_not_engaged]": "999",
                 "invoices-0-is_paid": "1",
                 "invoices-n3-label": "Semaine 2", "invoices-n3-issued_on": "2026-11-14",
                 "invoices-n3-amount": "3000",

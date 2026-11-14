@@ -6,6 +6,7 @@
  *   « Autres prestations » = montant total − matériel (alerte si le matériel dépasse le total) ;
  * - fichier de facture : l'icône d'envoi ouvre le sélecteur, le fichier part à l'enregistrement du projet
  *   (copie locale + dossier 2_FACTURES sur kDrive) ; l'icône de téléchargement apparaît ensuite ;
+ * - champ requis invalide dans une facture repliée : la facture est dépliée et le champ signalé ;
  * - récapitulatif : total facturé, encaissé (factures « Payée »), reste à encaisser, barre de progression.
  */
 (function (document) {
@@ -197,6 +198,27 @@
             if (e.target.matches && e.target.matches('[data-invoice-paid]')) syncTotals();
         });
         section.addEventListener('input', syncTotals);
+
+        // Champ requis invalide dans une facture repliée : le navigateur ne peut ni l'afficher ni y placer
+        // le focus, et l'envoi est bloqué sans message. On déplie la facture, puis on signale le champ.
+        var revealing = false;
+        section.addEventListener('invalid', function (e) {
+            var card = e.target.closest && e.target.closest('[data-invoice]');
+            if (!card || revealing) return;
+            var detail = card.querySelector('[data-invoice-detail]');
+            if (!detail || !detail.hidden) return;
+            revealing = true; // un seul signalement par tentative d'envoi
+            e.preventDefault();
+            openOnly(card);
+            var target = e.target;
+            setTimeout(function () {
+                revealing = false;
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                target.focus({ preventScroll: true });
+                if (target.reportValidity) target.reportValidity();
+            }, 0);
+        }, true);
+
         // Au chargement (ex. re-saisie après erreur), seule la première facture dépliée le reste
         var firstOpen = list.querySelector('[data-invoice].is-open');
         if (firstOpen) openOnly(firstOpen);

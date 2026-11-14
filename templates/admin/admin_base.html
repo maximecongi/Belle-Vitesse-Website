@@ -45,7 +45,7 @@
     {% block extra_css %}{% endblock %}
 </head>
 
-<body>
+<body{% if is_read_only %} class="is-read-only"{% endif %}>
     <div class="admin-layout">
         <!-- Voile d'arrière-plan pour tablette/mobile -->
         <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
@@ -84,8 +84,8 @@
                         <div class="admin-dev-role-wrapper">
                             <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select"
                                 data-val="{{ current_user.role }}" data-autosubmit>
-                                {% for r in ['Super Administrateur', 'Administrateur', 'Manager', 'Commercial',
-                                'Technicien'] %}
+                                {% for r in ['Super Administrateur', 'Administrateur', 'Associé', 'Manager',
+                                'Commercial', 'Technicien'] %}
                                 <option value="{{ r }}" {% if current_user.role_lower==r.lower() %}selected{% endif %}>
                                     {{ r }}
                                 </option>
@@ -235,6 +235,13 @@
                     {% block header_actions %}{% endblock %}
                 </div>
             </header>
+
+            {% if is_read_only %}
+            <div class="admin-read-only-banner" role="status">
+                <i data-lucide="eye" class="admin-read-only-banner-icon"></i>
+                <span><strong>Mode lecture seule</strong></span>
+            </div>
+            {% endif %}
 
             <div class="admin-content">
                 {% block content %}{% endblock %}

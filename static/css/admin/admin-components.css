@@ -708,6 +708,13 @@ a.badge-pill:hover {
     border: 1px solid var(--entity-waiver-border);
 }
 
+.badge-pill[data-val="Associé"],
+.badge-pill[data-val="associé"] {
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid var(--status-neutral-border);
+}
+
 .badge-pill[data-val="Manager"],
 .badge-pill[data-val="manager"] {
     background: var(--entity-checkin-bg);
@@ -1949,7 +1956,7 @@ input[type="checkbox"]:checked {
     background-color: var(--entity-project-bg, #fef3c7);
     color: var(--entity-project-text, #b45309);
     border: 1px solid var(--entity-project, #f59e0b);
-    border-radius: 8px;
+    border-radius: 0; /* DA : bloc à bordure colorée = angles droits */
     margin-bottom: 1.25rem;
     font-size: 0.875rem;
 }
